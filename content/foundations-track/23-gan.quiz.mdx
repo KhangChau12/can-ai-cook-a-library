@@ -1,0 +1,43 @@
+---
+quiz_for: 23-gan
+---
+
+## Q1
+Generator trong GAN khác decoder trong Autoencoder ở mục tiêu nào?
+
+- [x] Generator tạo ra dữ liệu HOÀN TOÀN MỚI từ vector ngẫu nhiên; decoder khôi phục lại ĐÚNG một input cụ thể đã biết (dựa trên reconstruction loss)
+- [ ] Generator không dùng vector chiều thấp làm input
+- [ ] Decoder tạo dữ liệu mới, generator khôi phục dữ liệu cũ
+- [ ] Cả hai đều có mục tiêu giống hệt nhau, chỉ khác tên gọi
+
+> Generator nhận vector ngẫu nhiên z (không phải nén từ dữ liệu thật) và tạo ra G(z) — dữ liệu mới, không so khớp với bất kỳ input cụ thể nào, chỉ cần "đủ giống" toàn bộ phân phối dữ liệu thật theo đánh giá của discriminator.
+
+## Q2
+Discriminator trong GAN về bản chất là bài toán gì đã học trước đó?
+
+- [x] Classification nhị phân (thật/giả), dùng lại kiến trúc và cross-entropy loss của Logistic Regression
+- [ ] Regression, dự đoán một giá trị số liên tục
+- [ ] Clustering, phân nhóm dữ liệu không nhãn
+- [ ] Reinforcement learning, tối đa hoá reward
+
+> Discriminator nhận một mẫu dữ liệu, phân loại đúng "thật" hay "giả" — chính xác là bài toán classification nhị phân, huấn luyện bằng cross-entropy loss đã quen thuộc từ Logistic Regression.
+
+## Q3
+Mục tiêu huấn luyện GAN được viết dưới dạng bài toán gì?
+
+- [x] Minimax — Discriminator cố TỐI ĐA HOÁ khả năng phân loại đúng, Generator cố TỐI THIỂU HOÁ đúng khả năng đó của Discriminator
+- [ ] Chỉ tối thiểu hoá 1 hàm loss duy nhất cho cả 2 mạng
+- [ ] Tối đa hoá reward kỳ vọng, giống policy gradient
+- [ ] Tìm eigenvector của ma trận hiệp phương sai, giống PCA
+
+> Hai mục tiêu ngược chiều được tối ưu cùng lúc trong một hàm mục tiêu chung — đây là bản chất minimax của trò chơi đối kháng giữa generator và discriminator.
+
+## Q4
+Điểm cân bằng lý tưởng của GAN là khi nào?
+
+- [x] Generator tạo dữ liệu đủ tốt khiến discriminator không thể phân biệt tốt hơn việc đoán ngẫu nhiên
+- [ ] Discriminator luôn phân biệt đúng 100% mọi mẫu dữ liệu
+- [ ] Generator ngừng cập nhật tham số sau vòng đầu tiên
+- [ ] Discriminator và generator có cùng kiến trúc mạng nơ-ron
+
+> Nếu generator đạt trạng thái "bắt chước hoàn hảo" dữ liệu thật, discriminator không còn cách nào phân biệt được thật/giả tốt hơn đoán ngẫu nhiên — đây chính là điểm cân bằng lý tưởng của trò chơi hai người này.

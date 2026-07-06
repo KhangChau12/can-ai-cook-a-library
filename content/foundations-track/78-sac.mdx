@@ -1,0 +1,105 @@
+---
+title: "SAC — Tối đa hoá Cả Reward Lẫn Entropy Để Explore Tốt Hơn, Off-policy Hiệu quả Hơn"
+track: foundations-track
+module: "Reinforcement Learning"
+submodule: "Policy-based"
+order: 78
+status: stable
+prerequisites: ["19-policy-gradient", "47-ppo"]
+summary: "PPO (đã học) là on-policy — mỗi dữ liệu thu thập chỉ dùng được vài epoch rồi phải bỏ, kém hiệu quả dữ liệu. Haarnoja và cộng sự (2018) đề xuất SAC: off-policy (dùng lại được dữ liệu cũ qua replay buffer, như DQN) nhưng vẫn ổn định hơn các phương pháp off-policy trước đó (như DDPG) nhờ mục tiêu maximum entropy — tối đa hoá reward VÀ độ ngẫu nhiên của policy cùng lúc, ép agent khám phá nhiều chiến lược gần-tối-ưu thay vì hội tụ sớm vào một chiến lược duy nhất."
+last_touched_by_task: "Viết mới 2026-07-06: mở nhánh mới trong sub-module Policy-based — toàn bộ dòng Policy Gradient (19) → A3C (77) → PPO (47) đều on-policy; SAC là đại diện off-policy đầu tiên của nhánh policy-based, đối lập trực tiếp với on-policy đã học, đồng thời liên hệ ngược lại off-policy Q-learning/DQN (18, submodule Value-based) qua cùng cơ chế replay buffer. Nguồn: arxiv 1801.01290 (paper gốc Haarnoja et al. 2018) + lilianweng.github.io/posts/2018-04-08-policy-gradient (đã dùng cho bài 19/47/77, xác nhận qua WebFetch có phần SAC riêng: kiến trúc 3 mạng, temperature parameter, so sánh DDPG/PPO)."
+---
+
+Toàn bộ dòng tiến hoá đã học trong sub-module này — [Policy Gradient](19-policy-gradient.mdx)
+→ [A3C](77-a3c.mdx) → [PPO](47-ppo.mdx) — đều là **on-policy**: dữ liệu
+thu thập từ chính policy hiện tại chỉ dùng được cho một số lần cập nhật
+giới hạn (PPO cho phép vài epoch nhờ clipping, nhưng vẫn phải bỏ dữ liệu
+sau đó), rồi phải thu thập dữ liệu mới. Bài này giới thiệu một hướng khác
+hẳn: **off-policy** cho policy-based method — tái sử dụng dữ liệu cũ hiệu
+quả hơn nhiều, như [Q-learning/DQN](18-q-learning.mdx) đã làm ở nhánh
+Value-based.
+
+## Vấn đề: on-policy kém hiệu quả dữ liệu, off-policy trước đó bất ổn định
+
+On-policy (PPO, A3C) có nhược điểm cố hữu: không thể tái sử dụng kinh
+nghiệm cũ một cách hiệu quả, vì dữ liệu thu thập từ policy **cũ** không
+còn phản ánh đúng phân phối của policy **hiện tại** sau khi đã cập nhật
+nhiều lần — với các bài toán cần rất nhiều tương tác môi trường (ví dụ
+robot thật, tương tác chậm và tốn kém), đây là một hạn chế nghiêm trọng.
+
+Off-policy method cho policy liên tục (như DDPG — Deep Deterministic
+Policy Gradient) đã tồn tại trước SAC, tận dụng được replay buffer để
+dùng lại dữ liệu cũ (giống DQN). Nhưng **Haarnoja và cộng sự (2018)**,
+trong bài báo "Soft Actor-Critic: Off-Policy Maximum Entropy Deep
+Reinforcement Learning with a Stochastic Actor", chỉ ra các phương pháp
+off-policy này có **tính chất hội tụ giòn** (brittle convergence) —
+nhạy cảm cao với lựa chọn hyperparameter, và kết quả có thể dao động
+mạnh giữa các lần chạy với random seed khác nhau.
+
+## Giải pháp: mục tiêu maximum entropy — tối đa hoá reward VÀ độ ngẫu nhiên
+
+Ý tưởng cốt lõi của SAC: thay vì chỉ tối đa hoá reward kỳ vọng (như mọi
+policy-based method đã học trước đó), SAC tối đa hoá **đồng thời** reward
+kỳ vọng **và** entropy (độ ngẫu nhiên/độ "khó đoán") của chính policy đó.
+Mục tiêu hình thức hoá thành: "thành công ở nhiệm vụ, nhưng đồng thời hành
+động càng ngẫu nhiên càng tốt" (trong phạm vi vẫn đạt reward tốt).
+
+Trực giác: một policy có entropy cao hơn nghĩa là nó **không** hội tụ sớm
+vào việc luôn chọn đúng một hành động cố định cho mỗi state, mà vẫn giữ
+xác suất đáng kể cho các hành động khác gần-tối-ưu. Điều này mang lại hai
+lợi ích cụ thể:
+
+- **Khám phá (exploration) tốt hơn tự nhiên** — không cần thêm cơ chế
+  khám phá thủ công (như epsilon-greedy đã gặp ở Q-learning), vì bản thân
+  mục tiêu huấn luyện đã khuyến khích sự đa dạng trong hành động.
+- **Nắm bắt được nhiều chiến lược gần-tối-ưu cùng lúc**, thay vì chỉ hội
+  tụ cứng nhắc vào một chiến lược duy nhất — giúp quá trình học ổn định
+  hơn, ít nhạy cảm với việc "kẹt" ở một cực trị cục bộ tồi.
+
+Một tham số **temperature** (thường ký hiệu `α`) điều khiển mức độ đánh
+đổi giữa hai mục tiêu: `α` lớn hơn ưu tiên entropy (khám phá nhiều hơn),
+`α` nhỏ hơn ưu tiên tối đa hoá reward thuần tuý (giống các phương pháp
+trước, ít ngẫu nhiên hơn).
+
+## Kiến trúc: ba mạng nơ-ron phối hợp
+
+SAC dùng ba thành phần mạng nơ-ron riêng biệt:
+
+- **Policy network** (actor): học policy ngẫu nhiên (stochastic), khác
+  DDPG dùng policy tất định (deterministic).
+- **Soft Q-value function:** ước lượng giá trị hành động, đã tính cả
+  thành phần entropy trong công thức cập nhật (không chỉ Q-value thông
+  thường như Q-learning).
+- **Soft state-value function:** ước lượng giá trị trạng thái, cũng đã
+  tính cả entropy — giúp ổn định huấn luyện, dù về mặt lý thuyết có thể
+  suy ra được từ Q-function và policy.
+
+## Kết quả: SOTA continuous control, ổn định hơn qua nhiều random seed
+
+Haarnoja và cộng sự báo cáo SAC đạt hiệu năng hiện đại nhất (SOTA) trên
+nhiều benchmark continuous control (điều khiển hành động liên tục, ví dụ
+robot mô phỏng), vượt qua cả DDPG (off-policy trước đó) lẫn PPO
+(on-policy đã học) — đặc biệt nhấn mạnh tính **ổn định nhất quán** giữa
+các lần chạy với random seed khác nhau, khắc phục đúng điểm yếu "hội tụ
+giòn" của các phương pháp off-policy trước.
+
+## Liên hệ lại với các bài trước
+
+- SAC là ví dụ đầu tiên trong sub-module Policy-based dùng **off-policy**
+  (qua replay buffer) — cùng cơ chế tái sử dụng dữ liệu cũ đã học ở
+  [Q-learning/DQN](18-q-learning.mdx), nhưng áp dụng cho policy liên tục
+  thay vì Q-table/Q-network rời rạc.
+- Mục tiêu maximum entropy là một cách khác để giải quyết vấn đề
+  exploration-exploitation đã gặp ở Q-learning (epsilon-greedy) — thay vì
+  thêm một cơ chế khám phá **bên ngoài** mục tiêu huấn luyện, SAC tích
+  hợp thẳng động lực khám phá **vào chính** hàm mục tiêu.
+- Cùng với [A3C](77-a3c.mdx) và [PPO](47-ppo.mdx), SAC hoàn thiện bức
+  tranh "ba cách khác nhau để làm cho Actor-Critic ổn định/hiệu quả hơn":
+  A3C song song hoá thu thập dữ liệu, PPO giới hạn mức độ thay đổi mỗi
+  bước cập nhật, SAC đổi hẳn sang off-policy kèm mục tiêu entropy — ba
+  hướng giải quyết ba khía cạnh độc lập của cùng một họ thuật toán.
+
+## Nguồn tham khảo
+
+- [arXiv — Soft Actor-Critic: Off-Policy Maximum Entropy Deep Reinforcement Learning with a Stochastic Actor](https://arxiv.org/abs/1801.01290) — paper gốc của Haarnoja và cộng sự (2018), dùng cho vấn đề cụ thể (on-policy kém hiệu quả dữ liệu, off-policy trước đó hội tụ giòn/nhạy hyperparameter), giải pháp (mục tiêu maximum entropy kết hợp off-policy), và kết quả (SOTA continuous control, ổn định hơn DDPG/PPO qua nhiều random seed).
+- [Lil'Log — Policy Gradient Algorithms (Lilian Weng)](https://lilianweng.github.io/posts/2018-04-08-policy-gradient/) — dùng cho kiến trúc 3 mạng cụ thể (policy network, soft Q-value function, soft state-value function), vai trò tham số temperature `α`, và so sánh trực tiếp với DDPG (policy tất định) và PPO (on-policy, clipping thủ công).

@@ -1,0 +1,43 @@
+---
+quiz_for: 22-autoencoder
+---
+
+## Q1
+Vì sao một autoencoder không thể chỉ "copy thẳng" input sang output dù mục tiêu là tái tạo lại chính input?
+
+- [x] Vì kiến trúc buộc dữ liệu phải đi qua một tầng trung gian (bottleneck) có kích thước nhỏ hơn nhiều so với input, ép mạng phải nén thông tin lại
+- [ ] Vì hàm loss cấm việc copy trực tiếp
+- [ ] Vì autoencoder không có lớp output
+- [ ] Vì input và output luôn có định dạng khác nhau
+
+> Bottleneck buộc mạng phải giữ lại thông tin quan trọng nhất, bỏ qua nhiễu và chi tiết dư thừa — nếu không có bottleneck, mạng có thể "gian lận" bằng cách copy thẳng input sang output.
+
+## Q2
+Autoencoder được huấn luyện bằng hàm loss nào, và cần nhãn y không?
+
+- [x] Reconstruction loss (thường là squared error) — KHÔNG cần nhãn y, vì chính x đóng vai trò vừa là input vừa là "nhãn" cần khớp lại
+- [ ] Cross-entropy loss, cần nhãn y như logistic regression
+- [ ] Không cần hàm loss nào, chỉ cần kiến trúc đúng
+- [ ] REINFORCE, giống policy gradient
+
+> Đây là lý do autoencoder thuộc nhóm unsupervised learning dù dùng chung công cụ huấn luyện (backpropagation, gradient descent) với mọi mạng nơ-ron supervised đã học.
+
+## Q3
+Autoencoder và K-means cùng là unsupervised learning nhưng khác nhau ở kết quả tìm được như thế nào?
+
+- [x] K-means tìm ra NHÓM RỜI RẠC (cụm) mà dữ liệu thuộc về; autoencoder tìm ra một BIỂU DIỄN LIÊN TỤC, chiều thấp cho mỗi điểm dữ liệu
+- [ ] Cả hai đều tìm nhóm rời rạc, chỉ khác số lượng cụm
+- [ ] K-means tìm biểu diễn liên tục, autoencoder tìm nhóm rời rạc
+- [ ] Cả hai đều cần nhãn y để huấn luyện
+
+> K-means gán mỗi điểm vào 1 trong k cụm rời rạc; autoencoder nén mỗi điểm thành một vector chiều thấp liên tục — không gán cụm, mà nén thông tin.
+
+## Q4
+Ứng dụng nào KHÔNG PHẢI là một trong 3 ứng dụng thực tế của autoencoder đã học trong bài?
+
+- [ ] Giảm chiều dữ liệu (dimensionality reduction)
+- [ ] Khử nhiễu (denoising)
+- [ ] Phát hiện bất thường (anomaly detection) qua reconstruction loss cao bất thường
+- [x] Tính điểm F1 score cho bài toán classification
+
+> Ba ứng dụng chính của bottleneck vector z sau huấn luyện là: giảm chiều dữ liệu, khử nhiễu (huấn luyện với input nhiễu, target sạch), và phát hiện bất thường (reconstruction loss cao bất thường = điểm dữ liệu khác biệt). Tính F1 score không liên quan tới autoencoder.

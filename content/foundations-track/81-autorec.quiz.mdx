@@ -1,0 +1,56 @@
+---
+quiz_for: 81-autorec
+---
+
+## Q1
+AutoRec coi bài toán dự đoán rating là loại bài toán gì?
+
+- [ ] Bài toán phân loại nhị phân (rating cao/thấp)
+- [x] Bài toán tái tạo (reconstruction) — nhận một vector rating thưa, nén qua encoder rồi tái tạo lại chính vector đó ở decoder
+- [ ] Bài toán tìm kiếm hàng xóm gần nhất (k-NN)
+- [ ] Bài toán tối ưu hoá pairwise ranking
+
+> AutoRec dùng đúng cơ chế Autoencoder: mỗi cột (I-AutoRec) hoặc hàng
+> (U-AutoRec) của ma trận rating là một vector input, được nén qua encoder
+> rồi tái tạo lại ở decoder — khác hẳn cách NeuMF học hàm tương tác giữa
+> 2 embedding riêng biệt.
+
+## Q2
+Vì sao không thể huấn luyện AutoRec bằng cách coi các ô rating trống là
+giá trị 0 và tính loss trên toàn bộ vector?
+
+- [ ] Vì giá trị 0 không hợp lệ về mặt toán học trong công thức Autoencoder
+- [x] Vì ô trống nghĩa là "chưa biết", không phải "rating bằng 0 thật" — tính loss trên đó sẽ khiến mô hình học sai, cố tái tạo cả những giá trị 0 giả tạo
+- [ ] Vì Autoencoder chỉ chấp nhận input có giá trị dương
+- [ ] Vì D2L.ai yêu cầu bắt buộc phải điền giá trị trung bình vào ô trống trước khi huấn luyện
+
+> Ô trống đơn giản là chưa có dữ liệu, không mang ý nghĩa "người dùng cho
+> 0 điểm". Nếu tính loss trên các ô này, mô hình sẽ bị lệch — đây là lý
+> do cần gradient masking, chỉ tính loss trên rating thực sự quan sát được.
+
+## Q3
+Kỹ thuật "gradient masking" trong AutoRec hoạt động như thế nào?
+
+- [ ] Xoá ngẫu nhiên một số gradient trong lúc huấn luyện để tránh overfitting
+- [x] Chỉ tính loss và cho gradient lan truyền ngược trên đúng những vị trí có rating quan sát được, bỏ qua hoàn toàn các ô trống (tương đương nhân dự đoán với sign(input))
+- [ ] Che toàn bộ gradient của lớp encoder, chỉ giữ gradient của lớp decoder
+- [ ] Tính trung bình gradient của mọi user để áp dụng chung cho toàn bộ ma trận
+
+> Gradient masking đảm bảo các vị trí trống không đóng góp gì vào việc
+> cập nhật trọng số — chỉ những rating thật sự đã quan sát mới ảnh hưởng
+> tới quá trình huấn luyện, giải quyết đúng vấn đề dữ liệu thưa của ma
+> trận rating.
+
+## Q4
+AutoRec và NeuMF giống nhau ở điểm nào, và khác nhau ở điểm nào?
+
+- [ ] Giống nhau hoàn toàn, chỉ khác tên gọi
+- [x] Giống nhau ở động cơ (thay công thức cố định của Matrix Factorization bằng mạng nơ-ron tự học), nhưng khác kiến trúc nền tảng: NeuMF dùng MLP học hàm tương tác giữa 2 embedding riêng biệt, còn AutoRec dùng Autoencoder tái tạo trực tiếp vector rating
+- [ ] AutoRec dùng MLP, NeuMF dùng Autoencoder
+- [ ] AutoRec chỉ áp dụng được cho implicit feedback, NeuMF chỉ áp dụng được cho explicit feedback
+
+> Cả hai đều là nhánh mở rộng từ Matrix Factorization theo hướng "phi
+> tuyến hoá" nhưng đi hai con đường khác nhau: NeuMF giữ khái niệm
+> embedding user/item riêng biệt rồi học hàm tương tác; AutoRec bỏ hẳn
+> khái niệm đó, coi toàn bộ vector rating của một user/item là input cần
+> tái tạo trực tiếp.

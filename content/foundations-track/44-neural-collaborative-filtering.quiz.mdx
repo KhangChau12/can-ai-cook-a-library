@@ -1,0 +1,43 @@
+---
+quiz_for: 44-neural-collaborative-filtering
+---
+
+## Q1
+Vấn đề cụ thể mà NeuMF (He và cộng sự, 2017) chỉ ra ở Matrix Factorization truyền thống là gì?
+
+- [x] Tích vô hướng giữa 2 vector latent factor là một hàm tuyến tính đơn giản, giới hạn khả năng biểu diễn các dạng tương tác phức tạp giữa người dùng và item
+- [ ] Matrix Factorization không thể chạy trên GPU
+- [ ] Matrix Factorization chỉ hoạt động với dữ liệu ảnh, không hoạt động với dữ liệu rating
+- [ ] Matrix Factorization yêu cầu ma trận rating phải đầy đủ, không được có ô trống
+
+> Tích vô hướng (inner product) áp đặt trước một dạng tương tác tuyến tính cố định — dù tăng số chiều latent factor k, vẫn khó biểu diễn các tương tác phức tạp hơn giữa sở thích người dùng và đặc điểm item.
+
+## Q2
+Kiến trúc NeuMF kết hợp hai nhánh nào chạy song song?
+
+- [x] Nhánh GMF (tái tạo tinh thần Matrix Factorization qua tích element-wise + biến đổi tuyến tính) và nhánh MLP (học hàm tương tác phi tuyến tổng quát qua nhiều lớp ẩn)
+- [ ] Một nhánh CNN và một nhánh RNN
+- [ ] Hai nhánh Matrix Factorization giống hệt nhau chạy song song để lấy trung bình
+- [ ] Một nhánh Decision Tree và một nhánh SVM
+
+> GMF giữ lại khả năng biểu diễn của Matrix Factorization gốc (tích Hadamard + biến đổi tuyến tính), trong khi MLP bổ sung khả năng học các tương tác phi tuyến mà tích vô hướng thuần không biểu diễn được.
+
+## Q3
+NeuMF hợp nhất (fusion) kết quả của 2 nhánh GMF và MLP bằng cách nào?
+
+- [x] Ghép nối (concatenate) output ở lớp áp chót của cả 2 nhánh thành 1 vector đặc trưng kết hợp, rồi đưa qua 1 lớp cuối để ra điểm dự đoán
+- [ ] Chỉ lấy kết quả của nhánh GMF, bỏ qua hoàn toàn nhánh MLP
+- [ ] Cộng đơn giản 2 kết quả với trọng số cố định 50/50, không học được
+- [ ] Chạy tuần tự: GMF trước, MLP xử lý lại kết quả của GMF
+
+> Cách ghép nối này cho phép mô hình tự học tỷ trọng đóng góp tương đối giữa phần tuyến tính (GMF) và phần phi tuyến (MLP), thay vì cố định trước bằng công thức cộng đơn giản.
+
+## Q4
+Quan hệ giữa Matrix Factorization → NeuMF giống với quan hệ nào đã học trước đó trong track?
+
+- [x] PCA → Autoencoder: cả hai đều là bước chuyển từ một phép biến đổi tuyến tính đơn giản (có nghiệm đóng) sang một mạng nơ-ron học phi tuyến tổng quát hơn
+- [ ] RNN → LSTM: cả hai đều giải quyết vấn đề vanishing gradient qua chuỗi dài
+- [ ] AlexNet → VGG: cả hai đều là thay đổi độ sâu mạng CNN
+- [ ] Q-learning → Policy Gradient: cả hai đều chuyển từ học value-function sang học policy trực tiếp
+
+> Matrix Factorization (tích vô hướng, tuyến tính, có nghiệm đóng qua tối ưu) và NeuMF (MLP, phi tuyến, học qua backpropagation) đi đúng con đường tương tự PCA (tuyến tính) → Autoencoder (phi tuyến) — cùng mẫu hình "tổng quát hoá bằng mạng nơ-ron".

@@ -1,0 +1,392 @@
+---
+title: "Nền tảng AI/ML"
+track: foundations-track
+summary: "Lộ trình bài bản chinh phục AI/ML từ gốc, từ các thuật toán học máy cổ điển đến kiến trúc Deep Learning và LLM hiện đại."
+---
+
+Mục lục dự kiến (agent cập nhật khi thêm/sửa/sắp xếp lại bài — đây là danh
+sách sống, không phải cam kết cố định). Tổ chức lại thành module theo yêu
+cầu người vận hành (2026-07-05) để dễ theo dõi hơn so với 1 dải bài liên
+tục — số thứ tự bài (`order`) và `prerequisites` giữ nguyên như cũ, module
+chỉ là cách nhóm hiển thị.
+
+**Cột mốc (cập nhật 2026-07-06, sau bài 45 BERT):** sau đợt "đổi triết
+lý nội dung" (xem CLAUDE.md mục 1 "Phiên gần nhất"), toàn bộ 45 bài
+foundations-track đã qua rà soát lại — **45/45 đạt `status: stable`**.
+Các bài "dòng tiến hoá nhiều model" (CNN/AlexNet/VGG/ResNet/MobileNet/
+EfficientNet, RNN/LSTM/Attention/Transformer, Ensemble Methods, GAN,
+Object Detection/YOLO, Image Segmentation/U-Net/Mask R-CNN, Q-learning/
+DQN, Policy Gradient, Perceptron, Regularization, RAG, Prompting/GPT-3,
+Scaling Laws, Decision Tree) được viết lại/viết mới thêm dòng lịch sử ý
+tưởng cụ thể (ai, vấn đề gì, giải pháp gì, trade-off gì). Các bài khái
+niệm/thuật toán đơn (không có tiền thân cạnh tranh trực tiếp — ví dụ
+PCA, Autoencoder, SVM, k-NN, K-means, RL Framework, MDP, Backpropagation,
+Logistic/Linear Regression, Biểu diễn Âm thanh...) được xác nhận đã đạt
+chuẩn từ trước, không ép buộc thêm lịch sử. exam-track (9 bài) đã được
+lấy mẫu kiểm tra riêng (Task 32) và cũng xác nhận đạt chuẩn.
+
+## Module 1 — Nền tảng Toán & ML cổ điển
+
+1. [Xác suất & thống kê cơ bản cho ML](01-xac-suat-thong-ke-co-ban.mdx) — `stable` (rà lại 2026-07-06, đạt chuẩn không cần viết lại)
+2. [Linear Regression — Hồi quy tuyến tính](02-linear-regression.mdx) — `stable` (rà lại 2026-07-06, đạt chuẩn không cần viết lại)
+3. [Logistic Regression — Phân loại nhị phân](03-logistic-regression.mdx) — `stable` (rà lại 2026-07-06, đạt chuẩn không cần viết lại)
+4. [Decision Tree — Cây quyết định](04-decision-tree.mdx) — `stable` (viết lại 2026-07-06: dòng tiến hoá ID3 (Quinlan, 1986) → C4.5 → CART)
+5. [k-Nearest Neighbors (k-NN)](05-k-nearest-neighbors.mdx) — `stable` (rà lại 2026-07-06, đạt chuẩn không cần viết lại)
+6. [Support Vector Machine (SVM) — Phân loại bằng Margin lớn nhất](06-svm.mdx) — `stable` (rà lại 2026-07-06, đạt chuẩn nội dung — không tìm được nguồn lịch sử Vapnik/Cortes 1995 đọc được, nhưng SVM không thuộc dạng dòng tiến hoá nên không bắt buộc)
+7. [K-means Clustering — Phân cụm không giám sát](07-k-means-clustering.mdx) — `stable` (rà lại 2026-07-06, đạt chuẩn không cần viết lại)
+20. [Ensemble Methods — Kết hợp nhiều mô hình yếu thành một mô hình mạnh](20-ensemble-methods.mdx) — `stable` (chuyển về module này 2026-07-06, theo yêu cầu người vận hành — dùng lại nguyên vẹn Decision Tree (bài 4), thuộc đúng nhóm ML cổ điển supervised, không nên đứng chung module với PCA/Autoencoder/GAN vốn khác bản chất. Nội dung: Random Forest (Breiman 2001, bagging giảm variance) → AdaBoost (Freund & Schapire 1997, boosting giảm bias))
+53. [Naive Bayes — Phân loại Nhanh Bằng Giả định Độc lập Có điều kiện](53-naive-bayes.mdx) — `stable` (mới, 2026-07-06: lấp khoảng trống — track đã dạy Bayes lý thuyết ở bài 01 nhưng chưa có thuật toán classification áp dụng trực tiếp, nguồn scikit-learn)
+
+Bài 20 (Ensemble Methods) nối tiếp trực tiếp bài 4 (Decision Tree) về mặt
+nội dung dù số thứ tự file không liền kề — thêm vào track ở một đợt mở
+rộng sau, module chỉ mới được sửa đúng lại 2026-07-06 (xem CLAUDE.md
+mục 2.1). Bài 53 (Naive Bayes) nối tiếp bài 01 (Xác suất & thống kê) —
+áp dụng trực tiếp định lý Bayes cho bài toán classification.
+
+## Module 2 — Deep Learning Nền tảng
+
+8. [Perceptron & Mạng nơ-ron nhiều lớp](08-perceptron-va-mang-no-ron.mdx) — `stable` (viết lại 2026-07-06: thêm lịch sử McCulloch & Pitts 1943)
+9. [Backpropagation — Cách huấn luyện mạng nơ-ron nhiều lớp](09-backpropagation.mdx) — `stable` (rà lại 2026-07-06, đạt chuẩn không cần viết lại)
+10. [Regularization — Kiểm soát Overfitting khi Mạng nơ-ron ngày càng sâu](10-regularization.mdx) — `stable` (viết lại 2026-07-06: dòng tiến hoá Bishop 1995 → Srivastava et al. 2014 cho dropout)
+
+## Module 3 — Computer Vision
+
+Module đã tách xong 3 sub-module (hoàn thành 2026-07-06, xem CLAUDE.md
+mục 2.1 phần "Cấu trúc sub-module"): **Cơ bản** (dòng kiến trúc
+classification LeNet→AlexNet→VGG→ResNet→MobileNet→EfficientNet, 6 bài,
+HOÀN THIỆN TRỌN VẸN), **Detection** (Object Detection/R-CNN family +
+YOLO, 2 bài), **Segmentation** (Image Segmentation/FCN + U-Net + Mask
+R-CNN, 3 bài). Tổng 12 bài — module Computer Vision được coi là bão hoà
+(xem CLAUDE.md mục 4, không có kế hoạch mở rộng thêm trừ khi phát hiện
+khoảng trống rõ ràng).
+
+### Sub-module: Cơ bản
+
+11. [CNN — Vì sao cần mạng nơ-ron tích chập cho ảnh](11-convolutional-neural-network.mdx) — `stable` (viết lại 2026-07-06: thêm lịch sử LeNet/AlexNet)
+35. [AlexNet — Bước ngoặt khiến Deep Learning thống trị Computer Vision](35-alexnet.mdx) — `stable` (mới, 2026-07-06)
+36. [VGG — Từ Thiết kế Thủ công tới Khối Kiến trúc Có hệ thống](36-vgg.mdx) — `stable` (mới, 2026-07-06; cập nhật Task 88: thêm lại con số 138 triệu tham số VGG-16, xác nhận qua nhiều nguồn arxiv độc lập sau khi D2L.ai không xác nhận trực tiếp)
+37. [ResNet — Skip Connection Giải quyết Vấn đề Degradation khi Mạng Quá Sâu](37-resnet.mdx) — `stable` (mới, 2026-07-06)
+38. [MobileNet — Depthwise Separable Convolution cho Thiết bị Hạn chế Tài nguyên](38-mobilenet.mdx) — `stable` (mới, 2026-07-06; cập nhật Task 87: thêm số liệu cụ thể 8-9 lần ít tính toán hơn cho kernel 3×3, xác nhận qua WebSearch sau khi WebFetch PDF thất bại trước đó)
+41. [EfficientNet — Compound Scaling Cân bằng Có hệ thống Độ sâu/Rộng/Phân giải](41-efficientnet.mdx) — `stable` (mới, 2026-07-06)
+55. [Vision Transformer (ViT) — Thách thức Giả định 'CNN là Bắt buộc cho Ảnh'](55-vision-transformer.mdx) — `stable` (mới, 2026-07-06: Dosovitskiy et al. 2020, patch embedding + Transformer thuần tuý, thắng CNN khi pretrain đủ lớn (300 triệu ảnh), nguồn arxiv 2010.11929 + D2L.ai)
+58. [Swin Transformer — Shifted Window Attention Giải quyết Độ phức tạp Bậc hai của ViT](58-swin-transformer.mdx) — `stable` (mới, 2026-07-06: Liu et al. 2021, shifted window + cấu trúc phân cấp, backbone tổng quát cho cả classification/detection/segmentation, nguồn arxiv 2103.14030 + D2L.ai)
+
+**Cột mốc: dòng tiến hoá sub-module "Cơ bản" đã hoạch định từ đầu
+(LeNet→AlexNet→VGG→ResNet→MobileNet→EfficientNet) đã HOÀN THIỆN TRỌN
+VẸN** (2026-07-06), sau đó mở rộng thêm 1 nhánh hoàn toàn mới: ViT (55)
+— kiến trúc dựa trên Transformer thay vì CNN, kết nối trực tiếp với bài
+15 (module Sequence Model). LeNet không tách bài riêng — đã kể đủ chi
+tiết (kiến trúc, kết quả, ứng dụng thực tế) trong phần lịch sử của bài 11
+(CNN), vì LeNet không có tiền thân trực tiếp để đối chiếu tiến hoá (nó
+chính là điểm khởi đầu). AlexNet (35), VGG (36), ResNet (37), MobileNet
+(38), EfficientNet (41) tách bài riêng vì mỗi bài có đủ nội dung kỹ
+thuật cụ thể đối chiếu trực tiếp với bài ngay trước để đứng độc lập
+không lan man (AlexNet: kiến trúc 8 lớp/ReLU/dropout/GPU đối chiếu
+LeNet; VGG: khối lặp lại/kernel 3×3 đối chiếu thiết kế thủ công của
+AlexNet; ResNet: skip connection giải quyết degradation mà VGG không xử
+lý được; MobileNet: depthwise separable convolution chuyển hướng mục
+tiêu từ "chính xác hơn" sang "hiệu quả tính toán hơn"; EfficientNet:
+compound scaling giải quyết vấn đề mở rộng quy mô thiếu hệ thống).
+
+### Sub-module: Detection
+
+33. [Object Detection — Không chỉ Phân loại, mà còn Định vị Vật thể](33-object-detection.mdx) — `stable` (viết lại 2026-07-06: thêm dòng tiến hoá R-CNN → Fast R-CNN → Faster R-CNN với bottleneck cụ thể mỗi bước)
+39. [YOLO — Biến Object Detection thành Bài toán Hồi quy Một Bước](39-yolo.mdx) — `stable` (mới, 2026-07-06: nhánh one-stage song song với R-CNN family)
+56. [SSD — Multi-scale Feature Maps Giải quyết Vấn đề Phát hiện Vật thể Nhiều Kích thước](56-ssd.mdx) — `stable` (mới, 2026-07-06: Liu et al. 2016, giải quyết hạn chế single-scale feature map của YOLO gốc, nguồn arxiv 1512.02325 + D2L.ai)
+60. [Anchor-free Detection — Bỏ hẳn Anchor Box, Dự đoán Trực tiếp Theo Điểm/Pixel](60-anchor-free-detection.mdx) — `stable` (mới, 2026-07-06: FCOS (Tian et al. 2019) + CenterNet (Zhou et al. 2019), 2 nhóm tác giả độc lập cùng chủ đề anchor-free, nguồn arxiv 1904.01355 + 1904.07850)
+
+4 bài, kể trọn dòng tiến hoá two-stage (R-CNN family) + 3 nhánh one-stage
+(YOLO — hồi quy 1 bước; SSD — multi-scale; Anchor-free/FCOS+CenterNet —
+bỏ hẳn anchor box). Bài học rút ra khi viết bài 60: khi không tìm được
+nguồn giải thích trực giác, thử tìm paper KHÁC của nhóm tác giả khác
+cùng chủ đề — có thể dùng 2 paper học thuật làm 2 nguồn độc lập.
+
+### Sub-module: Segmentation
+
+34. [Image Segmentation — Gán nhãn tới từng Pixel](34-image-segmentation.mdx) — `stable` (viết lại 2026-07-06: thêm dòng tiến hoá FCN → U-Net với vấn đề/giải pháp cụ thể)
+40. [U-Net — Encoder-Decoder Đối xứng Giải quyết Bài toán Dữ liệu Y tế Khan hiếm](40-unet.mdx) — `stable` (mới, 2026-07-06: đào sâu kiến trúc U-Net, so sánh sliding-window)
+42. [Mask R-CNN — Kết hợp Detection và Segmentation trong Một Kiến trúc](42-mask-rcnn.mdx) — `stable` (mới, 2026-07-06: mở rộng Faster R-CNN bằng nhánh mask, kết nối trực tiếp 2 sub-module)
+57. [DeepLab — Atrous Convolution Giải quyết Đánh đổi Giữa Ngữ cảnh Đa tỷ lệ và Độ phân giải](57-deeplab.mdx) — `stable` (mới, 2026-07-06: Chen et al. 2017/2018 — atrous convolution + ASPP + decoder, 89.0% PASCAL VOC/82.1% Cityscapes, nguồn arxiv 1706.05587 + 1802.02611)
+59. [SegFormer — Kết hợp Transformer Phân cấp với Decoder MLP Nhẹ cho Segmentation](59-segformer.mdx) — `stable` (mới, 2026-07-06: Xie et al. 2021 NeurIPS, bỏ positional encoding + decoder MLP siêu nhẹ, 50.3% mIoU ADE20K nhỏ hơn 5 lần/chính xác hơn SOTA trước, nguồn arxiv 2105.15203 + D2L.ai)
+
+5 bài — kể 2 nhánh song song cho segmentation nâng cao: DeepLab (CNN +
+atrous convolution + ASPP) và SegFormer (Transformer phân cấp + decoder
+MLP nhẹ, nối tiếp Swin Transformer ở sub-module Cơ bản). Đã rà lại
+nghiêm túc theo câu hỏi trực tiếp của người vận hành ("segmentation hết
+gì đáng học rồi sao?") — xác nhận đây là khoảng trống thật, không phải
+"đã bão hoà" như đánh giá vội vàng ở Task 53.
+
+**Cột mốc (2026-07-06): module Computer Vision bão hoà, 12 bài tổng** —
+Cơ bản (CNN, AlexNet, VGG, ResNet, MobileNet, EfficientNet — 6 bài,
+HOÀN THIỆN TRỌN VẸN), Detection (Object Detection/R-CNN family, YOLO —
+2 bài), Segmentation (Image Segmentation/FCN, U-Net, Mask R-CNN — 3
+bài).
+
+Object Detection/Image Segmentation (33-34) nối tiếp trực tiếp CNN (11)
+về mặt nội dung dù số thứ tự file không liền kề — được thêm ở đợt mở
+rộng CV nâng cao (2026-07-05), xem CLAUDE.md mục 2.1.
+
+## Module 4 — Sequence Model
+
+**Tách 2 sub-module (2026-07-06, theo yêu cầu người vận hành — nhận xét
+RNN/LSTM/GRU "vẫn còn nhiều điều để nói" và toàn bộ họ Transformer đủ
+dày để đứng riêng):** module này thực chất gộp 2 mảng khác bản chất — họ
+kiến trúc hồi quy cổ điển (RNN/LSTM/GRU) và họ kiến trúc dựa trên
+attention/Transformer — nay tách rõ để mỗi mảng có không gian đào sâu
+riêng, tương tự tiền lệ đã áp dụng cho Computer Vision.
+
+### Sub-module: RNN Family
+
+12. [RNN — Mạng nơ-ron hồi quy cho dữ liệu chuỗi](12-recurrent-neural-network.mdx) — `stable` (viết lại 2026-07-06: đào sâu vấn đề input/output độ dài biến đổi + cơ chế vanishing gradient qua tanh, thêm nguồn cs231n)
+13. [LSTM & GRU — Giải quyết vấn đề nhớ phụ thuộc xa của RNN](13-lstm-gru.mdx) — `stable` (viết lại 2026-07-06: thêm lịch sử Hochreiter 1991/1997, Cho et al. 2014, sắc thái "không đảm bảo tuyệt đối" từ cs231n; cập nhật Task 70: thêm đoạn peephole connections (Gers & Schmidhuber 2000) + kết luận "LSTM: A Search Space Odyssey" (Greff et al. 2015) không biến thể nào cải thiện đáng kể, nguồn arxiv 1503.04069)
+63. [Bidirectional RNN/LSTM/GRU — Dùng Cả Ngữ cảnh Tương lai, Không Chỉ Quá khứ](63-bidirectional-rnn.mdx) — `stable` (mới, 2026-07-06: kỹ thuật WRAPPER tổng quát cho mọi cell hồi quy — không riêng RNN, xác nhận rõ với người vận hành — chạy 2 mạng ngược chiều + ghép hidden state, đánh đổi không dùng được cho sinh tuần tự, nguồn D2L.ai)
+68. [Deep RNN — Xếp chồng Nhiều Lớp Hồi quy Để Học Quan hệ Phức tạp Hơn](68-deep-rnn.mdx) — `stable` (mới, 2026-07-06: xếp chồng nhiều lớp hồi quy theo chiều input-to-output, công thức H_t^(l) kết hợp trục thời gian + trục độ sâu, đánh đổi khó hội tụ hơn (gradient lan truyền 2 chiều), nguồn D2L.ai + arxiv 1312.6026 Pascanu et al.)
+
+73. [Seq2seq (Encoder-Decoder) — Ánh xạ Chuỗi sang Chuỗi Độ dài Khác nhau](73-seq2seq-encoder-decoder.mdx) — `stable` (mới, 2026-07-06: Sutskever/Vinyals/Le 2014, LSTM encoder nén câu nguồn thành vector ngữ cảnh cố định + LSTM decoder sinh câu đích từng token, giải quyết bài toán input/output độ dài khác nhau mà RNN/LSTM thường không xử lý được; nguồn arxiv 1409.3215 + D2L.ai; chèn logic ngay trước Attention (14) — bài 14 đã đổi `prerequisites` trỏ sang bài này)
+
+**Đánh giá (Task 68, 2026-07-06):** "Deep Bidirectional LSTM" (kết hợp
+Deep RNN + Bidirectional) được xác nhận qua WebSearch d2l.ai — chỉ là
+ghép cơ học 2 kỹ thuật đã dạy, không phát sinh công thức/trade-off mới
+(D2L.ai cũng chỉ dành đúng 1 câu cho ý này), không đủ chất liệu cho 1 bài
+riêng. Câu nhắc đã có sẵn trong bài Deep RNN (68) là đủ.
+
+**Đánh giá (Task 70, 2026-07-06):** "Peephole connections" cũng được xác
+nhận không đủ chất liệu cho 1 bài riêng (nghiên cứu "Search Space Odyssey"
+cho thấy nó không cải thiện đáng kể so với LSTM chuẩn) — đã thêm 1 đoạn
+vào bài 13 (LSTM & GRU) thay vì tách bài. Sub-module RNN Family (5 bài:
+12, 13, 63, 68, 73) coi là đã khai thác hết các hướng đào sâu có nguồn
+whitelist phù hợp — không còn khoảng trống rõ ràng nào khác được ghi
+nhận.
+
+### Sub-module: Transformer Architecture
+
+14. [Attention — Cơ chế học cách 'chú ý' có chọn lọc](14-attention.mdx) — `stable` (viết lại 2026-07-06: thêm lịch sử Bahdanau/Cho/Bengio 2015, nguồn Lil'Log)
+15. [Transformer — Kiến trúc dựa hoàn toàn trên Attention](15-transformer.mdx) — `stable` (viết lại 2026-07-06: thêm lịch sử Vaswani et al. 2017, số liệu BLEU/thời gian huấn luyện, nguồn arxiv)
+45. [BERT — Kết hợp Ngữ cảnh Hai chiều với Kiến trúc Task-agnostic](45-bert.mdx) — `stable` (mới, 2026-07-06: nhánh encoder-only, đối lập GPT decoder-only đã học ở bài 24 — Devlin et al. 2018, MLM/NSP, GLUE 80.5%/SQuAD F1 93.2, nguồn arxiv 1810.04805 + D2L.ai)
+54. [T5 — Thống nhất Mọi Tác vụ NLP Thành Một Định dạng Text-to-Text](54-t5.mdx) — `stable` (mới, 2026-07-06: nhánh encoder-decoder, kết nối BERT (45) và GPT (24) — Raffel et al. 2020, text-to-text framework, nguồn arxiv 1910.10683 + Lil'Log)
+61. [Transformer-XL — Segment-level Recurrence Giải quyết Vấn đề Context Fragmentation](61-transformer-xl.mdx) — `stable` (mới, 2026-07-06: Dai et al. 2019, tái sử dụng hidden state qua segment + relative positional encoding, dài hơn Transformer gốc 450%/nhanh hơn 1800 lần, nguồn arxiv 1901.02860 + Lil'Log)
+62. [Longformer & Efficient Attention — Giải quyết Trực tiếp Độ phức tạp Bậc hai của Self-Attention](62-longformer-efficient-attention.mdx) — `stable` (mới, 2026-07-06: Beltagy et al. 2020, local windowed + global attention, kết nối trực tiếp Swin Transformer (58, CV) — cùng nguyên lý khác modality, nguồn arxiv 2004.05150 + Lil'Log)
+69. [ALBERT — Giảm 18 Lần Tham số BERT Bằng Chia sẻ Trọng số và Factorized Embedding](69-albert.mdx) — `stable` (mới, 2026-07-06: Lan et al. 2019, factorized embedding parameterization + cross-layer parameter sharing + Sentence-Order Prediction, giảm 18 lần tham số/nhanh hơn 1.7 lần vẫn SOTA, nguồn arxiv 1909.11942 + Lil'Log)
+74. [Reformer — LSH Attention và Reversible Layers Giải quyết Cả Compute lẫn Bộ nhớ](74-reformer.mdx) — `stable` (mới, 2026-07-06: đào sâu nhánh đã nhắc sơ qua ở bài 62 — Kitaev/Kaiser/Levskaya 2020, LSH attention O(L log L) + reversible residual layers giải quyết luôn cả bộ nhớ huấn luyện, nguồn arxiv 2001.04451 + Lil'Log)
+75. [RoBERTa — BERT Bị Huấn luyện Chưa Tới, Không Phải Kiến trúc Sai](75-roberta.mdx) — `stable` (mới, 2026-07-06: Liu et al. 2019, bỏ NSP + dynamic masking + 10 lần dữ liệu + train lâu hơn, không đổi kiến trúc nhưng vượt qua các model công bố sau BERT — đối lập triết lý với ALBERT (69), nguồn arxiv 1907.11692, bài ngắn hơn thường lệ vì không tìm được nguồn giải thích trực giác thứ 2 trong whitelist, theo đúng tiền lệ bài 67 WordPiece)
+
+9 bài, kể trọn dòng tiến hoá Attention → Transformer → 3 nhánh kiến trúc
+(GPT decoder-only/BERT encoder-only/T5 encoder-decoder) → 3 hướng giải
+quyết văn bản dài/hiệu quả (Transformer-XL: segment recurrence;
+Longformer: mẫu hình cố định cục bộ+global; Reformer: nhóm động qua LSH
+hashing + giải quyết luôn bộ nhớ) → 2 hướng cải tiến BERT trái ngược nhau
+(ALBERT: đổi kiến trúc giảm tham số; RoBERTa: giữ kiến trúc, tăng tài
+nguyên huấn luyện). Sub-module Transformer Architecture coi là đã khai
+thác hết hướng đào sâu có nguồn whitelist phù hợp — GPT-2/GPT-3 kiến
+trúc chi tiết bị loại vì rủi ro trùng lặp cao với bài 24 (Pretraining)
+và bài 25 (Scaling Laws) đã có sẵn trong series LLM.
+
+### Sub-module: Tokenization
+
+**Phạm vi (làm rõ 2026-07-06, theo người vận hành):** không chỉ dừng ở
+segmentation (cắt văn bản thành token) — còn phải bao gồm cả **word
+embedding** (cách biến token rời rạc thành vector số liên tục), vì đây
+cũng là một phần bắt buộc của "chuẩn bị input" cho mọi mô hình chuỗi.
+Hai nhánh con của sub-module này, cả hai đều đã hoàn thành:
+- **Segmentation** (cắt token): word-level → BPE (64) → WordPiece (67) →
+  SentencePiece (72).
+- **Embedding** (token → vector số): one-hot (hạn chế: chiều cực lớn,
+  không mang thông tin ngữ nghĩa, mọi từ "cách đều" nhau) → word2vec (65,
+  Skip-gram/CBOW, Mikolov et al. 2013) → GloVe (66) → ELMo (76,
+  contextual embedding, cầu nối trực tiếp sang BERT/Transformer đã học).
+
+64. [Tokenization — Từ Cấp độ Từ tới Subword, Vì sao Byte Pair Encoding Hiệu quả](64-tokenization-word-to-subword.mdx) — `stable` (mới, 2026-07-06: Sennrich/Haddow/Birch 2015, BPE giải quyết từ vựng khổng lồ + out-of-vocabulary, +1.1/+1.3 BLEU WMT 15, nguồn arxiv 1508.07909 + D2L.ai)
+65. [Word2vec — Biến Token Rời rạc Thành Vector Số Mang Nghĩa](65-word2vec.mdx) — `stable` (mới, 2026-07-06: Mikolov/Chen/Corrado/Dean 2013, one-hot có cosine similarity luôn = 0 → Skip-gram/CBOW học dense vector từ ngữ cảnh, huấn luyện dưới 1 ngày trên 1.6 tỷ từ, nguồn arxiv 1301.3781 + D2L.ai)
+66. [GloVe — Tận dụng Thống kê Đồng xuất hiện Toàn cục Thay vì Chỉ Ngữ cảnh Cục bộ](66-glove.mdx) — `stable` (mới, 2026-07-06: Pennington/Socher/Manning 2014, ma trận đếm đồng xuất hiện toàn cục + phân rã ma trận thay vì dự đoán cục bộ, triết lý count-based đối lập predictive của word2vec, nguồn D2L.ai + machinelearningmastery.com — paper gốc không có trên arxiv, chỉ trên domain ngoài whitelist)
+67. [WordPiece — Tiêu chí Ghép Dựa trên Khả năng, Không Chỉ Tần suất](67-wordpiece.mdx) — `stable` (mới, 2026-07-06: kỹ thuật tokenize dùng trong BERT — cùng sơ đồ ghép cặp subword như BPE nhưng đổi tiêu chí từ tần suất thô sang tăng likelihood dữ liệu, nguồn gốc Nhật/Hàn, nguồn lilianweng.github.io — bài ngắn hơn thường lệ do hạn chế nguồn WebFetch với PDF arxiv, đã xin ý kiến người vận hành trước khi viết)
+72. [SentencePiece — Tokenize Trực tiếp Từ Văn bản Thô, Không Cần Tách Từ Trước](72-sentencepiece.mdx) — `stable` (mới, 2026-07-06: Kudo/Richardson 2018, bỏ giả định "đã tách từ sẵn" của BPE/WordPiece — coi khoảng trắng là ký hiệu bình thường, xử lý trực tiếp Unicode thô, độc lập ngôn ngữ; kèm thuật toán Unigram Language Model top-down (khác bottom-up của BPE/WordPiece); T5 (bài 54) dùng SentencePiece — kết nối trực tiếp 2 sub-module, nguồn arxiv 1808.06226 + machinelearningmastery.com)
+76. [ELMo — Embedding Phụ thuộc Ngữ cảnh, Cầu nối Giữa Word2vec và BERT](76-elmo.mdx) — `stable` (mới, 2026-07-06: đóng khoảng trống "liên hệ contextual embedding" đã ghi từ lâu — Peters et al. 2018, character-CNN + biLSTM nhiều lớp, polysemy ("crane"), cầu nối lịch sử trực tiếp giữa word2vec/GloVe tĩnh và BERT contextual, nguồn arxiv 1802.05365 + D2L.ai bert.html)
+
+Nhánh Embedding giờ có 3 bài (word2vec predictive → GloVe count-based →
+ELMo contextual, cầu nối trực tiếp sang BERT ở sub-module Transformer
+Architecture). Nhánh Segmentation có 3 bài (BPE tần suất thô → WordPiece
+likelihood bottom-up → SentencePiece/Unigram likelihood top-down + độc
+lập ngôn ngữ) — hoàn thiện dòng tiến hoá segmentation. Tokenization
+sub-module giờ 6 bài — coi là đã khai thác hết khoảng trống đã ghi nhận.
+
+## Module 5 — Reinforcement Learning
+
+**Tách 2 sub-module (2026-07-06, theo yêu cầu người vận hành):** bài
+16-17 là nền tảng chung (framework + hình thức hoá toán học), không gán
+`submodule` riêng — không thuộc nhánh thuật toán nào. Bài 18-19 tách
+theo 2 trường phái thuật toán RL kinh điển, mỗi sub-module hiện có đúng
+1 bài (chấp nhận mỏng hơn chuẩn CV — người vận hành xác nhận tách ngay
+thay vì đợi mở rộng thêm).
+
+16. [Reinforcement Learning — Framework Agent/Environment/Reward](16-reinforcement-learning-framework.mdx) — `stable` (rà lại 2026-07-06, đạt chuẩn không cần viết lại)
+17. [Markov Decision Process (MDP) — Hình thức hoá bài toán RL](17-markov-decision-process.mdx) — `stable` (rà lại 2026-07-06, đạt chuẩn không cần viết lại)
+
+### Sub-module: Value-based
+
+18. [Q-learning — Học Q-function tối ưu qua thử-sai](18-q-learning.mdx) — `stable` (viết lại 2026-07-06: thêm giới hạn Q-table + DQN Mnih et al. 2013, `submodule: "Value-based"`)
+71. [Double DQN & Dueling DQN — Hai Cách Sửa Lỗi Của DQN Gốc](71-double-dueling-dqn.mdx) — `stable` (mới, 2026-07-06: 2 paper độc lập kết hợp 1 bài — Van Hasselt/Guez/Silver 2015 sửa overestimation bias bằng decouple action selection/evaluation; Wang et al. 2015 DeepMind sửa generalize kém qua action bằng tách Value/Advantage function, nguồn arxiv 1509.06461 + 1511.06581)
+
+Sub-module Value-based giờ 2 bài — Policy-based đã lên 4 bài (19, 77, 47,
+78) nên Value-based tạm mỏng hơn. Đã thử tìm nguồn giải thích trực giác
+thứ 2 (D2L.ai, lilianweng.github.io, machinelearningmastery.com) nhưng
+không xác nhận được nội dung phù hợp qua WebFetch trực tiếp — dùng chính
+2 paper gốc (2 nhóm tác giả độc lập, cùng chủ đề "sửa lỗi DQN") làm 2
+nguồn, theo đúng mẫu hình đã áp dụng thành công cho Anchor-free Detection
+(FCOS+CenterNet).
+
+**Đánh giá (Task 79, 2026-07-06):** Rainbow DQN (Hessel et al. 2017, kết
+hợp 6 cải tiến bao gồm Double/Dueling DQN đã học + Prioritized Experience
+Replay + multi-step learning + distributional RL/C51 + Noisy Networks) —
+thêm 1 đoạn ngắn nhắc trong bài 71 thay vì viết bài riêng, vì thử tìm
+nguồn thứ 2 cho Prioritized Experience Replay (thành phần dễ tách nhất)
+không thành công qua D2L.ai/machinelearningmastery.com, chỉ có arxiv gốc
+— chưa đủ chuẩn 2 nguồn theo mục 2.1. Hướng đào sâu còn để ngỏ nếu tìm
+được nguồn tốt hơn sau này.
+
+### Sub-module: Policy-based
+
+19. [Policy Gradient — Học trực tiếp Policy thay vì Q-function](19-policy-gradient.mdx) — `stable` (viết lại 2026-07-06: thêm baseline + Actor-Critic cụ thể hoá phần "nâng cao hơn" trước đây mập mờ, `submodule: "Policy-based"`)
+77. [A3C — Song song hoá Actor-Critic Bằng Nhiều Luồng Độc lập](77-a3c.mdx) — `stable` (mới, 2026-07-06: Mnih et al. 2016, nhiều actor-learner song song phá tương quan mẫu (khác replay buffer của DQN), định nghĩa tường minh advantage function A=G-V(s), nhắc thêm biến thể đồng bộ A2C, nguồn arxiv 1602.01783 + Lil'Log)
+47. [PPO — Cập nhật Policy An toàn Bằng Clipped Surrogate Objective](47-ppo.mdx) — `stable` (mới, 2026-07-06: Schulman et al. 2017, clipped surrogate objective đơn giản hoá TRPO, liên hệ trực tiếp bài 27 RLHF, nguồn arxiv 1707.06347 + Lil'Log; cập nhật: advantage Â giờ trỏ sang định nghĩa tường minh ở bài 77)
+78. [SAC — Tối đa hoá Cả Reward Lẫn Entropy Để Explore Tốt Hơn, Off-policy Hiệu quả Hơn](78-sac.mdx) — `stable` (mới, 2026-07-06: Haarnoja et al. 2018, mở nhánh off-policy đầu tiên của sub-module (đối lập on-policy 19/77/47), mục tiêu maximum entropy tối đa hoá reward+entropy, kiến trúc 3 mạng, ổn định hơn DDPG/PPO, nguồn arxiv 1801.01290 + Lil'Log)
+
+Policy Gradient (19) → A3C (77) → PPO (47): dòng tiến hoá on-policy 3
+bước — A3C giải quyết vấn đề tương quan mẫu bằng song song hoá + định
+nghĩa tường minh advantage function; PPO giải quyết hạn chế "chỉ dùng dữ
+liệu 1 lần mỗi cập nhật" và rủi ro cập nhật quá lớn phá hỏng policy. SAC
+(78) mở nhánh riêng: off-policy (tái sử dụng replay buffer như DQN) kèm
+mục tiêu maximum entropy, khắc phục cả nhược điểm data-inefficiency của
+on-policy lẫn brittle convergence của off-policy trước đó (DDPG).
+
+**Cập nhật (Task 66, 2026-07-06):** Value-based đã lên 2 bài — xem bài
+71 ở trên. Giải quyết vấn đề "thiếu nguồn thứ 2" bằng cách kết hợp 2
+paper độc lập (Double DQN + Dueling DQN) thành 1 bài, mỗi paper là 1
+nguồn, thay vì cố tìm 1 nguồn giải thích trực giác thứ 2 không tồn tại
+trong whitelist cho chủ đề này.
+
+## Module 6 — Dimensionality Reduction
+
+**Tái cấu trúc (2026-07-06, theo yêu cầu người vận hành):** module cũ
+"Ensemble, Giảm chiều & Generative" thực chất ghép 3 mảng không liên
+quan chặt với nhau (Ensemble thuộc supervised, Dimensionality Reduction
+và Generative đều thuộc unsupervised nhưng khác mục tiêu). Tách lại theo
+đúng bản chất: Ensemble Methods (bài 20) chuyển về Module 1 (ML cổ điển,
+dùng lại Decision Tree). PCA + Autoencoder ở lại thành module riêng
+"Dimensionality Reduction". GAN tách thành module riêng "Generative
+Models" (xem Module 6.5 bên dưới).
+
+21. [PCA (Principal Component Analysis) — Giảm chiều dữ liệu bằng Đại số tuyến tính](21-pca.mdx) — `stable` (rà lại 2026-07-06, đạt chuẩn không cần viết lại)
+22. [Autoencoder — Mạng nơ-ron tự học nén dữ liệu không cần nhãn](22-autoencoder.mdx) — `stable` (đã cải thiện thêm ví dụ cụ thể ở Task 34; chuyển module 2026-07-06)
+48. [t-SNE — Giảm chiều Phi tuyến để Trực quan hoá Cấu trúc Cục bộ](48-tsne.mdx) — `stable` (mới, 2026-07-06: giữ cấu trúc lân cận cục bộ bằng Gaussian/Student-t + KL divergence, đối lập PCA tuyến tính, nguồn scikit-learn)
+50. [UMAP — Giữ Cấu trúc Toàn cục Tốt hơn t-SNE Với Tốc độ Nhanh hơn](50-umap.mdx) — `stable` (mới, 2026-07-06: McInnes/Healy/Melville 2018, giải quyết 3 hạn chế cụ thể của t-SNE — compute, cấu trúc toàn cục, giới hạn chiều — nguồn arxiv 1802.03426)
+
+4 bài đều là unsupervised learning tìm biểu diễn **chiều thấp liên tục**
+cho dữ liệu (khác K-means — tìm nhóm rời rạc, ở Module 1): PCA bằng đại
+số tuyến tính (nghiệm đóng, giữ phương sai toàn cục), Autoencoder bằng
+mạng nơ-ron phi tuyến (nén/tái tạo), t-SNE bằng tối ưu hoá phi tuyến
+(giữ cấu trúc lân cận cục bộ), UMAP (nền tảng Riemannian geometry/
+algebraic topology, giải quyết đúng 3 hạn chế của t-SNE). Module giờ có
+4 bài, kể trọn dòng tiến hoá t-SNE→UMAP.
+
+## Module 6.5 — Generative Models
+
+23. [GAN — Hai mạng nơ-ron thi đấu để tạo dữ liệu giả chân thực](23-gan.mdx) — `stable` (viết lại 2026-07-06: thêm lịch sử Goodfellow et al. 2014, động cơ lý thuyết cụ thể; tách thành module riêng 2026-07-06)
+46. [DCGAN — Kiến trúc Convolutional Ổn định hoá Huấn luyện GAN](46-dcgan.mdx) — `stable` (mới, 2026-07-06: Radford/Metz/Chintala 2015 thay MLP bằng convolutional architecture, batch norm + LeakyReLU, nguồn arxiv 1511.06434 + D2L.ai)
+49. [Diffusion Models — Sinh Dữ liệu Bằng Cách Học Khử nhiễu Dần](49-diffusion-models.mdx) — `stable` (mới, 2026-07-06: Ho/Jain/Abbeel 2020, bỏ hẳn cơ chế đối kháng, forward/reverse process, FID 3.17 SOTA CIFAR-10, nguồn arxiv 2006.11239 + Lil'Log)
+70. [DDIM — Sinh Nhanh Hơn 10-50 Lần Bằng Quá trình Non-Markovian Tất định](70-ddim.mdx) — `stable` (mới, 2026-07-06: Song/Meng/Ermon 2020, quá trình reverse non-Markovian chia sẻ training objective với DDPM, tham số η điều khiển tất định/ngẫu nhiên, nhanh hơn 10-50 lần vẫn giữ chất lượng, nguồn arxiv 2010.02502 + Lil'Log)
+
+GAN (23) → DCGAN (46): dòng tiến hoá đầu tiên, giải quyết "MLP không
+khai thác cấu trúc không gian ảnh" bằng kiến trúc convolutional. GAN
+(23) → Diffusion Models (49): dòng tiến hoá thứ hai, giải quyết "huấn
+luyện đối kháng bất ổn định/mode collapse" bằng cách bỏ hẳn cơ chế đối
+kháng, thay bằng quy trình forward/reverse cố định. Diffusion Models (49)
+→ DDIM (70): dòng tiến hoá thứ ba, giải quyết vấn đề tốc độ sinh chậm
+của DDPM bằng quá trình sample non-Markovian bỏ qua bước. Module giờ có
+4 bài, kể được 3 hướng cải tiến khác nhau — không còn là module mỏng
+nhất track.
+
+**Đánh giá (Task 80, 2026-07-06):** Consistency Models (Song, Dhariwal,
+Chen, Sutskever 2023 — sinh ảnh single-step, nhanh hơn cả DDIM) — không
+viết bài: model quá mới, không tìm được nguồn giải thích trực giác nào
+trong whitelist (D2L.ai chưa có chương này, lilianweng.github.io không
+có bài riêng qua WebSearch), chỉ có kết quả arxiv chung chung. Chưa đủ
+2 nguồn theo mục 2.1 — để ngỏ nếu tìm được nguồn tốt hơn sau này.
+
+## Module 7 — LLM
+
+**Tách 2 sub-module (2026-07-06, theo yêu cầu người vận hành — module
+LLM là 1 dòng thời gian tuyến tính, không có nhánh song song như CV,
+nên chia theo ranh giới tự nhiên "thay đổi tham số" vs "không đổi tham
+số" mà chính bài 28 đã tự phân biệt):**
+
+### Sub-module: Huấn luyện & Alignment
+
+24. [Pretraining — Vì sao LLM học được từ hàng tỷ trang văn bản không nhãn](24-pretraining-llm.mdx) — `stable` (rà lại 2026-07-06, đạt chuẩn không cần viết lại)
+25. [Scaling Laws — Vì sao LLM cứ to hơn lại thường tốt hơn](25-scaling-laws.mdx) — `stable` (viết lại 2026-07-06: paper gốc Kaplan et al. 2020, power-law, sample efficiency; cập nhật Task 86: thêm Chinchilla — Hoffmann et al. 2022, điều chỉnh lại kết luận Kaplan, MMLU 67.5%/+7pp so với Gopher)
+26. [Fine-tuning & Instruction Tuning — Từ 'hoàn thành văn bản' sang 'làm theo hướng dẫn'](26-fine-tuning-instruction-tuning.mdx) — `stable` (rà lại 2026-07-06, đạt chuẩn không cần viết lại; cập nhật Task 85: thêm liên kết sang bài 80 LoRA)
+80. [LoRA — Fine-tune Hàng Tỷ Tham số Bằng Cách Chỉ Học Một Ma trận Hạng Thấp](80-lora.mdx) — `stable` (mới, 2026-07-06: đóng khoảng trống fine-tuning hiệu quả tham số — Hu et al. 2021, W'=W+BA hạng thấp, giảm 10.000 lần tham số/3 lần GPU memory trên GPT-3, không thêm inference latency (merge weights), nguồn arxiv 2106.09685)
+27. [RLHF & Alignment — Dùng Reinforcement Learning để LLM 'hợp ý' con người hơn](27-rlhf-alignment.mdx) — `stable` (cải thiện thêm 2026-07-06: tìm được paper gốc InstructGPT — Ouyang et al. 2022, arxiv 2203.02155 — bổ sung tên tác giả + quy trình 3 bước SFT→reward model→RL/PPO, liên kết trực tiếp sang bài 47 PPO mới viết; cập nhật Task 83: thêm liên kết sang bài 79 DPO)
+79. [DPO — Ngôn ngữ Mô hình 'Bí mật' Chính là Reward Model](79-dpo.mdx) — `stable` (mới, 2026-07-06: đóng khoảng trống DPO đã nhắc ở bài 27/47 nhưng chưa có công thức cụ thể — Rafailov et al. 2023, reward reparameterization + Bradley-Terry triệt tiêu partition function, rút về binary cross-entropy loss, vượt PPO ở sentiment control, nguồn arxiv 2305.18290)
+
+Cả 6 bài đều là các bước **thay đổi tham số** mô hình theo trình tự thời
+gian: pretrain từ đầu → hiểu quy luật mở rộng quy mô → dạy làm theo
+hướng dẫn (kèm kỹ thuật fine-tune hiệu quả tham số LoRA) → dạy hợp ý con
+người hơn (RLHF) → cách đơn giản hoá cùng mục tiêu đó bằng toán học
+thuần tuý (DPO).
+
+### Sub-module: Ứng dụng & Inference-time
+
+28. [Prompting & In-context Learning — 'Dạy' một tác vụ mới mà không cần huấn luyện lại](28-prompting-in-context-learning.mdx) — `stable` (viết lại 2026-07-06: bằng chứng thực nghiệm GPT-3/Brown et al. 2020; cập nhật Task 84: đoạn chain-of-thought bổ sung paper gốc Wei et al. 2022, kết quả PaLM 540B SOTA GSM8K, tính chất emergent)
+29. [RAG, Embedding & Agent — Đưa LLM vào Sản phẩm thật](29-rag-embedding-agent.mdx) — `stable` (cải thiện thêm 2026-07-06: tìm được paper gốc ReAct — Yao et al. 2022, arxiv 2210.03629 — bổ sung vấn đề cụ thể mỗi cách tiếp cận đơn lẻ + kết quả thực nghiệm ALFWorld/WebShop/HotpotQA)
+
+Cả 2 bài đều khai thác một mô hình **đã huấn luyện xong**, không cập
+nhật thêm tham số nào — chỉ thay đổi cách hỏi (prompting) hoặc thêm
+thông tin/khả năng hành động bên ngoài (RAG/Agent). Tiếp theo dự kiến
+(không bắt buộc): multi-agent systems, evaluation/benchmark cho LLM, nếu
+tìm được nguồn whitelist phù hợp.
+
+## Module 8 — Audio
+
+30. [Biểu diễn Âm thanh cho ML — Từ Waveform tới Spectrogram](30-bieu-dien-am-thanh.mdx) — `stable` (rà lại 2026-07-06, đạt chuẩn không cần viết lại)
+31. [Speech-to-Text — Từ Spectrogram sang Chuỗi Văn bản](31-speech-to-text.mdx) — `stable` (rà lại 2026-07-06, đạt chuẩn không cần viết lại)
+32. [Text-to-Speech — Sinh Giọng nói từ Văn bản](32-text-to-speech.mdx) — `stable` (rà lại 2026-07-06; cải thiện Task 82: thêm ví dụ cụ thể WaveNet — van den Oord et al. 2016, dilated causal convolution, nguồn arxiv 1609.03499 — thay cho đoạn "vocoder" trừu tượng trước đó)
+
+## Module 9 — Recommendation Systems (mới, 2026-07-06)
+
+Module mới, được đánh giá lại khả thi hơn nhiều so với lúc xếp ưu tiên
+thấp ở đợt mở rộng lần 4 (CLAUDE.md mục 2.1) — track giờ có sẵn nền tảng
+liên hệ tự nhiên: k-NN, K-means, PCA, Autoencoder, và đặc biệt Embedding/
+vector search (bài 29, series LLM/RAG dùng đúng kỹ thuật tìm "điểm gần
+nhau trong không gian latent" mà recommendation systems cũng dùng).
+
+43. [Collaborative Filtering & Matrix Factorization — Gợi ý Từ Hành vi Đám đông](43-collaborative-filtering-matrix-factorization.mdx) — `stable` (mới, 2026-07-06: vấn đề information overload + ma trận rating thưa, giải pháp Matrix Factorization, lịch sử Netflix Prize 2006/Simon Funk, nguồn D2L.ai chương Recommender Systems)
+44. [Neural Collaborative Filtering (NeuMF) — Thay Tích Vô Hướng Bằng Mạng Nơ-ron](44-neural-collaborative-filtering.mdx) — `stable` (mới, 2026-07-06: nối tiếp trực tiếp bài 43, He et al. 2017 thay tích vô hướng bằng MLP học tương tác phi tuyến, kiến trúc GMF+MLP hợp nhất, nguồn arxiv 1708.05031 + D2L.ai; cập nhật Task 89: liên kết sang bài 81 AutoRec)
+51. [DeepFM — Kết hợp Factorization Machines với Deep Learning để Tự động Học Tương tác Feature](51-deepfm.mdx) — `stable` (mới, 2026-07-06: nối tiếp NeuMF, Guo et al. 2017, chuyển hướng "chỉ ID" sang "feature-rich", kiến trúc FM+Deep song song, nguồn arxiv 1703.04247 + D2L.ai)
+52. [Bayesian Personalized Ranking (BPR) — Tối ưu Trực tiếp Cho Xếp hạng Thay vì Dự đoán Điểm](52-bayesian-personalized-ranking.mdx) — `stable` (mới, 2026-07-06: nối tiếp Matrix Factorization bài 43, Rendle et al. 2009, pairwise ranking thay vì dự đoán điểm tuyệt đối, nguồn arxiv 1205.2618 + D2L.ai)
+81. [AutoRec — Coi Dự đoán Rating Là Bài toán Tái tạo Của Autoencoder](81-autorec.mdx) — `stable` (mới, 2026-07-06: đóng khoảng trống đã ghi ở bài 43/44 — nhánh song song với NeuMF, Sedhain et al. 2015, encoder-decoder tái tạo vector rating + gradient masking cho missing ratings, RMSE 0.900 MovieLens 100K, nguồn D2L.ai autorec.html)
+
+Module giờ có 5 bài, kể được 4 hướng: 2 nhánh song song mở rộng phi
+tuyến từ MF (NeuMF học hàm tương tác qua MLP; AutoRec tái tạo trực tiếp
+qua Autoencoder), bước chuyển feature-rich (DeepFM), và bước chuyển tiêu
+chí tối ưu hoá đúng bài toán xếp hạng (BPR, áp dụng lại cho chính MF).
+
+**Đánh giá (Task 81, 2026-07-06):** Two-Tower model/DSSM (kiến trúc
+retrieval quy mô lớn — khác các bài đã học vì tập trung vào "tìm candidate
+nhanh trong hàng triệu item" thay vì chỉ dự đoán điểm số, liên hệ trực
+tiếp vector search đã học ở bài 29 RAG) — không viết bài: D2L.ai chương
+Recommender Systems (đã xác nhận qua WebFetch mục lục) không có phần này,
+không tìm được nguồn whitelist thứ 2 phù hợp. Để ngỏ nếu tìm được nguồn
+tốt hơn sau này.
+
+---
+
+**Lịch sử mở rộng (tóm tắt, xem CLAUDE.md mục 2.1/4 cho chi tiết đầy đủ):**
+track khởi đầu ở phạm vi "ML cổ điển → DL cơ bản" (module 1-3 một phần),
+sau đó mở rộng qua nhiều quyết định có xác nhận với người vận hành:
+Sequence Model → Reinforcement Learning → Ensemble/PCA/Autoencoder/GAN →
+LLM → Audio → Computer Vision nâng cao (Object Detection/Segmentation).
+Ngày 2026-07-05, toàn bộ 34 bài được tổ chức lại thành 8 module như trên
+để dễ theo dõi — không đổi nội dung, `order`, hay `prerequisites` của bất
+kỳ bài nào.
+
+Xem quy tắc nội dung Sườn B ở `../../CLAUDE.md` mục 2.1 trước khi thêm bài.

@@ -1,0 +1,43 @@
+---
+quiz_for: 59-segformer
+---
+
+## Q1
+2 vấn đề cụ thể mà SegFormer giải quyết khi áp dụng Transformer cho segmentation là gì?
+
+- [x] Positional encoding cố định của ViT gây giảm hiệu năng khi độ phân giải test khác lúc train (cần nội suy), và các decoder segmentation trước đó (U-Net, DeepLab) thường phức tạp/tốn tính toán
+- [ ] Transformer không thể học được qua backpropagation cho bài toán segmentation
+- [ ] Segmentation không thể đo được bằng chỉ số mIoU
+- [ ] CNN không thể dùng làm backbone cho bất kỳ kiến trúc segmentation nào
+
+> Đây chính xác là 2 vấn đề SegFormer nhắm tới — cả 2 đều liên quan tới việc "mượn" trực tiếp thiết kế ViT/decoder truyền thống cho segmentation mà không tối ưu riêng.
+
+## Q2
+SegFormer giải quyết vấn đề positional encoding bằng cách nào?
+
+- [x] Bỏ hẳn positional encoding trong encoder Transformer phân cấp — tránh hoàn toàn vấn đề nội suy vị trí khi đổi độ phân giải
+- [ ] Dùng 2 loại positional encoding khác nhau cùng lúc để tăng độ chính xác
+- [ ] Tăng gấp đôi kích thước positional encoding so với ViT gốc
+- [ ] Thay positional encoding bằng một mạng CNN riêng biệt
+
+> Loại bỏ hoàn toàn thành phần gây vấn đề (positional encoding) thay vì cố sửa nó — một cách đơn giản hoá triệt để.
+
+## Q3
+Decoder của SegFormer có đặc điểm gì khác biệt so với decoder của U-Net/DeepLab?
+
+- [x] Chỉ là một MLP nhẹ (vài lớp fully-connected, không có convolution/attention) tổng hợp đặc trưng từ TẤT CẢ các tầng của encoder phân cấp
+- [ ] Decoder của SegFormer phức tạp hơn nhiều, dùng hàng chục lớp convolution
+- [ ] SegFormer không có decoder, chỉ dùng đúng encoder
+- [ ] Decoder của SegFormer chỉ nhận thông tin từ đúng 1 tầng cuối cùng của encoder
+
+> Vì đặc trưng ở tầng nông (chi tiết cục bộ) và tầng sâu (ngữ cảnh toàn cục) đã được kết hợp qua cấu trúc phân cấp, decoder chỉ cần tổng hợp lại bằng MLP đơn giản, không cần cơ chế phức tạp.
+
+## Q4
+Kết quả cụ thể của SegFormer-B4 trên ADE20K là gì?
+
+- [x] 50.3% mIoU với 64 triệu tham số — nhỏ hơn 5 lần và chính xác hơn 2.2 điểm phần trăm so với phương pháp tốt nhất trước đó
+- [ ] SegFormer-B4 đạt độ chính xác thấp hơn tất cả các phương pháp trước đó
+- [ ] SegFormer-B4 chỉ hoạt động được trên bộ dữ liệu Cityscapes, không hoạt động trên ADE20K
+- [ ] SegFormer-B4 lớn hơn 10 lần so với các phương pháp trước nhưng bù lại chính xác hơn
+
+> Đây là kết quả hiếm gặp giống EfficientNet — vừa chính xác hơn vừa nhỏ hơn nhiều, nhờ thiết kế loại bỏ đúng những thành phần không cần thiết (positional encoding, decoder phức tạp).

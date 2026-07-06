@@ -1,0 +1,43 @@
+---
+quiz_for: 02-quy-trinh-thi-dau-tu-du-lieu-den-nop-bai
+---
+
+## Q1
+Vì sao bước EDA (khám phá dữ liệu) chỉ nên thực hiện trên tập train, không phải trên toàn bộ dữ liệu gộp cả test?
+
+- [ ] Vì tập test thường có định dạng khác tập train
+- [x] Vì nhìn trước cấu trúc thống kê của tập test, dù chỉ để "hiểu dữ liệu", vẫn là một hình thức rò rỉ thông tin tinh vi
+- [ ] Vì hệ thống platform không cho phép tải tập test về máy
+- [ ] Vì EDA trên tập test luôn cho kết quả sai lệch
+
+> Đây là data leakage dạng tinh vi: dù không trực tiếp dùng thông tin test để train, việc quyết định mô hình hoá dựa trên đặc điểm thống kê riêng của tập test vẫn có thể khiến lựa chọn của bạn thiên vị theo bộ test đó.
+
+## Q2
+Một cột category "trình độ" có 3 giá trị "thấp/trung bình/cao". Loại encoding nào phù hợp nhất?
+
+- [ ] One-hot encoding, vì luôn an toàn cho mọi loại category
+- [x] Label encoding, vì category này có thứ tự tự nhiên
+- [ ] Không cần encoding vì mô hình tự hiểu được text
+- [ ] Standardization, vì đây là feature dạng số
+
+> Label encoding (gán số nguyên theo thứ tự) phù hợp khi category có thứ tự tự nhiên như thấp/trung bình/cao — dùng one-hot ở đây làm mất thông tin thứ tự sẵn có.
+
+## Q3
+Submission của bạn đứng ở trạng thái `pending` bất thường lâu so với các submission khác cùng thời điểm. Bạn nên làm gì?
+
+- [ ] Nộp lại nhiều lần liên tiếp với hy vọng lần sau sẽ xử lý nhanh hơn
+- [ ] Đợi tới khi competition kết thúc, hệ thống sẽ tự xử lý
+- [x] Báo cho admin/ban tổ chức — đây là dấu hiệu lỗi hệ thống, không có cơ chế tự động thử lại
+- [ ] Xoá submission đó và tạo tài khoản mới
+
+> Không có cơ chế tự động retry phía hệ thống. Nộp lại không giải quyết được lỗi hệ thống và vẫn tính vào giới hạn nộp bài trong ngày — báo cho admin là cách xử lý đúng.
+
+## Q4
+Đội thi 5 người, `daily_submission_limit = 5`. Nếu mỗi thành viên tự ý nộp 2 lần trong cùng một ngày mà không trao đổi trước, điều gì xảy ra?
+
+- [x] Đội vượt quá giới hạn nộp trong ngày rất nhanh, vì giới hạn tính chung cho cả đội chứ không phải từng người
+- [ ] Không sao, vì mỗi người có giới hạn 5 lần riêng
+- [ ] Chỉ người nộp đầu tiên trong ngày bị tính vào giới hạn
+- [ ] Giới hạn tự động nhân theo số thành viên trong đội
+
+> `daily_submission_limit`/`total_submission_limit` tính cho cả đội, không phải từng thành viên — phối hợp trước khi nộp là bắt buộc để tránh lãng phí lượt nộp chung.

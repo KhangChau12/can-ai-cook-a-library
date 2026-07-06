@@ -1,0 +1,96 @@
+---
+title: "GAN — Hai mạng nơ-ron thi đấu để tạo dữ liệu giả chân thực"
+track: foundations-track
+module: "Generative Models"
+order: 23
+status: stable
+prerequisites: ["22-autoencoder"]
+summary: "Goodfellow và cộng sự (2014) giải quyết vấn đề cụ thể của generative model truyền thống (rất khó viết công thức toán học trực tiếp cho 'dữ liệu này chân thực tới đâu') bằng một ý tưởng táo bạo: dùng một mạng nơ-ron khác (discriminator) làm giám khảo học được, thay vì tự định nghĩa hàm loss."
+last_touched_by_task: "Viết lại theo triết lý nội dung mới (2026-07-06): thêm tên tác giả/năm cụ thể (Goodfellow et al., 2014) và động cơ lý thuyết cụ thể — vấn đề generative model truyền thống khó định nghĩa hàm loss trực tiếp đo độ chân thực, GAN giải quyết bằng cách dùng chính 1 mạng nơ-ron (discriminator) làm 'giám khảo' học được — trước đó bài chỉ mô tả cơ chế minimax mà không có ai/năm/động cơ. Đã thử tra thêm nguồn thứ 2 (Lil'Log 'From GAN to WGAN') nhưng sau khi đọc kỹ, bài đó không thực sự bàn về động cơ ra đời GAN (chỉ liệt kê Goodfellow 2014 trong reference list, nội dung chính về KL/JS divergence và WGAN) — không trích dẫn nguồn chưa thực sự dùng được, đúng nguyên tắc mục 2.5. GAN không thuộc dạng bài 'dòng tiến hoá nhiều model' (là 1 phát minh đơn, không tiền thân trực tiếp) nên giữ 1 nguồn D2L.ai là đủ theo mục 2.1/2.5."
+---
+
+Bài [Autoencoder](22-autoencoder.mdx) dùng decoder để khôi phục lại dữ
+liệu đã biết (`x` gốc). Nhưng nếu muốn tạo dữ liệu **hoàn toàn mới** (một
+khuôn mặt chưa từng tồn tại nhưng trông như thật), generative model
+truyền thống gặp một vấn đề khó: rất khó viết ra một công thức toán học
+trực tiếp để đo "dữ liệu này chân thực tới đâu" — không giống như
+reconstruction loss của autoencoder (so khớp trực tiếp với `x` gốc đã
+biết), ở đây không có "đáp án đúng" cụ thể nào để so sánh.
+
+**Goodfellow và cộng sự (2014)** giải quyết vấn đề này bằng một ý tưởng
+táo bạo: thay vì cố tự định nghĩa hàm loss đo độ chân thực, dùng chính
+**một mạng nơ-ron khác** làm "giám khảo" học được từ dữ liệu. **GAN**
+(Generative Adversarial Network — mạng đối kháng sinh) dùng một mạng có
+vai trò tương tự decoder — gọi là **generator** — nhưng cho một mục tiêu
+khác hẳn: tạo ra dữ liệu **hoàn toàn mới**, chưa từng tồn tại, nhưng đủ
+chân thực để đánh lừa được mạng giám khảo đó.
+
+## Hai mạng, hai mục tiêu đối lập
+
+GAN gồm hai mạng nơ-ron huấn luyện **đồng thời**, với mục tiêu ngược nhau:
+
+- **Generator (G):** nhận một vector ngẫu nhiên `z` (giống `z` ở
+  bottleneck của autoencoder, nhưng lần này lấy ngẫu nhiên, không phải nén
+  từ dữ liệu thật), cố gắng biến `z` thành dữ liệu giả **G(z)** trông
+  giống dữ liệu thật nhất có thể.
+- **Discriminator (D):** nhận một mẫu dữ liệu (có thể là thật hoặc do G
+  tạo ra), cố gắng phân loại đúng: mẫu này là **thật** hay **giả**.
+
+Generator muốn "đánh lừa" discriminator (khiến D phân loại sai — nói dữ
+liệu giả là thật); discriminator muốn phân biệt đúng. Đây là một trò chơi
+**đối kháng** (adversarial) — thành công của bên này là thất bại của bên
+kia.
+
+## Huấn luyện: minimax — hai mạng cùng cải thiện qua từng vòng
+
+Hai mạng được huấn luyện xen kẽ:
+
+1. **Cập nhật Discriminator:** cho D xem cả dữ liệu thật (nhãn "thật") và
+   dữ liệu do G tạo ra (nhãn "giả"), huấn luyện D bằng cross-entropy loss
+   (đã quen thuộc từ bài [Logistic Regression](03-logistic-regression.mdx))
+   để phân loại tốt hơn.
+2. **Cập nhật Generator:** cho G tạo dữ liệu mới, đưa qua D, rồi cập nhật
+   tham số của G theo hướng làm D **dễ bị đánh lừa hơn** (D phân loại nhầm
+   dữ liệu giả thành thật).
+3. Lặp lại — sau nhiều vòng, cả hai mạng cùng "giỏi" lên: G tạo dữ liệu
+   ngày càng chân thực, D ngày càng tinh vi trong việc phát hiện giả —
+   cho tới khi đạt trạng thái cân bằng, nơi G tạo dữ liệu đủ tốt khiến D
+   không thể phân biệt tốt hơn việc đoán ngẫu nhiên.
+
+Về mặt toán học, mục tiêu huấn luyện được viết dưới dạng một bài toán
+**minimax** — D cố **tối đa hoá** khả năng phân loại đúng, G cố **tối
+thiểu hoá** đúng khả năng đó của D — hai mục tiêu ngược chiều được tối ưu
+cùng lúc trong một hàm mục tiêu chung.
+
+## Điểm cân bằng lý tưởng của trò chơi hai người
+
+Nếu generator đạt được trạng thái "bắt chước hoàn hảo" phân phối dữ liệu
+thật, discriminator sẽ không còn cách nào phân biệt được thật/giả tốt
+hơn việc đoán ngẫu nhiên (xác suất đúng tiến về 50%) — đây chính là điểm
+cân bằng lý tưởng của trò chơi minimax hai người này. Trong thực hành,
+huấn luyện GAN nổi tiếng là khó ổn định (hai mạng có thể dao động qua
+lại thay vì hội tụ mượt mà tới điểm cân bằng đó), nhưng nguyên lý cốt lõi
+— dùng một mạng học được thay cho một hàm loss viết tay — vẫn là điểm
+đột phá khiến bài báo năm 2014 của Goodfellow và cộng sự được D2L.ai gọi
+là một "breakthrough paper" (bài báo đột phá) cho generative model.
+
+## Liên hệ lại với các bài trước
+
+- Generator trong GAN đóng vai trò tương tự decoder trong autoencoder
+  (bài [Autoencoder](22-autoencoder.mdx)) — cả hai đều biến một vector
+  chiều thấp thành dữ liệu chiều cao. Khác biệt cốt lõi: decoder học cách
+  khôi phục lại **đúng** một input cụ thể đã biết (reconstruction loss so
+  với `x` gốc); generator học cách tạo ra dữ liệu **mới**, không so khớp
+  với bất kỳ input cụ thể nào, chỉ cần "đủ giống" toàn bộ phân phối dữ
+  liệu thật, theo đánh giá của discriminator.
+- Discriminator về bản chất là một bài toán **classification nhị phân**
+  (thật/giả) — dùng lại chính xác kiến trúc và cross-entropy loss đã học
+  từ bài [Logistic Regression](03-logistic-regression.mdx).
+- Cả hai mạng vẫn huấn luyện bằng
+  [backpropagation](09-backpropagation.mdx) và gradient descent như mọi
+  mạng nơ-ron khác trong giáo trình — điểm mới của GAN nằm ở **cách đặt
+  ra hai mục tiêu đối kháng nhau**, không phải ở kỹ thuật tối ưu hoá.
+
+## Nguồn tham khảo
+
+- [Dive into Deep Learning — Generative Adversarial Networks](http://d2l.ai/chapter_generative-adversarial-networks/gan.html) — dùng cho cơ chế đối kháng generator/discriminator, quy trình huấn luyện xen kẽ (discriminator học phân loại thật/giả bằng cross-entropy, generator học đánh lừa discriminator), mục tiêu minimax cùng trạng thái cân bằng lý tưởng, và trích dẫn gốc "breakthrough paper" Goodfellow et al. (2014).

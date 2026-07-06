@@ -1,0 +1,43 @@
+---
+quiz_for: 03-baseline-nang-cap-mo-hinh-va-chien-luoc-nop-bai
+---
+
+## Q1
+Vì sao nên nộp một baseline đơn giản ngay trong giờ đầu tiên, thay vì dành thời gian tối ưu mô hình phức tạp trước?
+
+- [x] Để xác nhận toàn bộ pipeline (đọc dữ liệu, xuất CSV đúng format) hoạt động đúng trước khi đầu tư thời gian vào mô hình phức tạp
+- [ ] Vì platform yêu cầu bắt buộc phải nộp baseline trước
+- [ ] Vì baseline luôn cho điểm cao hơn mô hình phức tạp
+- [ ] Vì baseline không tính vào giới hạn số lần nộp trong ngày
+
+> Nộp baseline sớm giúp phát hiện lỗi format/pipeline ngay từ đầu, thay vì tốn hàng giờ tối ưu một mô hình phức tạp rồi mới phát hiện submission bị invalid vì lý do không liên quan tới mô hình.
+
+## Q2
+Vì sao gradient boosting (XGBoost/LightGBM/CatBoost) thường là bước nâng cấp tự nhiên sau baseline cho dữ liệu dạng bảng?
+
+- [x] Vì đây là lựa chọn chiếm ưu thế đã được chứng minh rộng rãi trong thi đấu ML thực tế trên dữ liệu bảng (ví dụ 17/29 giải pháp chiến thắng Kaggle 2015 dùng XGBoost)
+- [ ] Vì gradient boosting là mô hình duy nhất platform hỗ trợ
+- [ ] Vì gradient boosting không cần cross-validation để kiểm chứng
+- [ ] Vì gradient boosting luôn nhanh hơn linear/logistic regression
+
+> Gradient boosting triển khai thuật toán boosting (nhiều cây tuần tự sửa lỗi nhau) ở mức tối ưu hoá cao, và có bằng chứng thống kê thực tế cho vị thế mặc định mạnh trên dữ liệu bảng — nhưng vẫn cần kiểm chứng bằng cross-validation trước khi giữ lại, không có gì đảm bảo tuyệt đối cho mọi bài toán.
+
+## Q3
+Tại sao nên đánh giá cải tiến mô hình bằng cross-validation thay vì một lần tách train/validation đơn lẻ?
+
+- [x] Vì một lần tách đơn lẻ cho ước lượng không ổn định, dễ dẫn tới kết luận sai về việc mô hình nào thực sự tốt hơn
+- [ ] Vì cross-validation luôn cho điểm cao hơn một lần tách đơn lẻ
+- [ ] Vì platform chỉ chấp nhận submission đã qua cross-validation
+- [ ] Vì một lần tách đơn lẻ không thể áp dụng cho bài toán classification
+
+> Hai lần tách khác nhau (ngẫu nhiên) có thể cho điểm chênh lệch dù cùng một mô hình — cross-validation (nhiều fold, lấy trung bình) cho kết quả ổn định hơn nhiều để so sánh các lựa chọn.
+
+## Q4
+Competition 4-phase còn nhiều lượt nộp (`total_submission_limit`) nhưng bạn đã dùng gần hết trong giai đoạn public test. Vấn đề ở đây là gì?
+
+- [x] `total_submission_limit` tính chung cho cả 2 giai đoạn — dùng gần hết ở public test khiến bạn thiếu lượt nộp cho private test, giai đoạn thực sự quyết định hạng cuối cùng
+- [ ] Không có vấn đề gì, vì mỗi giai đoạn có ngân sách nộp bài riêng
+- [ ] Vấn đề chỉ xảy ra nếu bạn thi theo đội, không xảy ra khi thi cá nhân
+- [ ] Giới hạn nộp bài sẽ tự động reset khi private test bắt đầu
+
+> `total_submission_limit` không reset riêng cho từng giai đoạn — nên chủ động giữ lại một phần ngân sách nộp bài cho private test thay vì tiêu gần hết lúc còn ở public test.

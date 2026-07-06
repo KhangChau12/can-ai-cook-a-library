@@ -1,0 +1,120 @@
+---
+title: "Transfer Learning & Fine-tuning — Tận dụng Model đã học sẵn"
+track: exam-track
+module: "Kỹ thuật thi đấu nâng cao"
+order: 4
+status: stable
+prerequisites: ["03-baseline-nang-cap-mo-hinh-va-chien-luoc-nop-bai", "foundations-track/11-convolutional-neural-network"]
+summary: "Vì sao gần như không bao giờ nên train một mạng nơ-ron từ đầu (from scratch) khi thi đấu có dữ liệu ảnh/văn bản, cách fine-tune một model pretrained, và ba chiến lược freeze layer phổ biến."
+last_touched_by_task: "Rà lại dưới góc nhìn triết lý mới (2026-07-06): đọc kỹ, xác nhận bài đã đạt chuẩn đúng tiêu chí exam-track (mục 2.1 sườn A) — quy trình 4 bước fine-tuning rõ ràng, 3 chiến lược freeze layer cụ thể (full/partial/gradual unfreezing), nguyên tắc thực dụng chọn chiến lược theo kích thước dataset. Không 'vỏ rỗng', không cần viết lại. Giữ nguyên nội dung, chỉ nâng status."
+---
+
+Ba bài trước đã đủ để bắt đầu thi đấu: hiểu leaderboard, có baseline, biết
+gradient boosting cho dữ liệu bảng. Nhưng nếu competition bạn tham gia có
+dữ liệu **ảnh, âm thanh, hoặc văn bản**, có một kỹ thuật gần như luôn nên
+dùng trước khi nghĩ tới bất cứ điều gì khác: **transfer learning** — tận
+dụng một mạng nơ-ron đã được huấn luyện sẵn trên một lượng dữ liệu khổng
+lồ, thay vì train một kiến trúc mới từ số 0.
+
+## Vì sao gần như không bao giờ nên train from scratch
+
+Nhớ lại [CNN](../foundations-track/11-convolutional-neural-network.mdx):
+một mạng nơ-ron tích chập học cách nhận diện đặc trưng thị giác qua nhiều
+lớp — các lớp đầu học đặc trưng rất tổng quát (cạnh, góc, texture, màu
+sắc), các lớp sau học đặc trưng ngày càng cụ thể cho đúng bài toán đã
+train. Đặc trưng tổng quát ở các lớp đầu (cạnh, texture...) gần như **giống
+nhau** bất kể bài toán ảnh cụ thể là gì — nhận diện chó/mèo hay nhận diện
+khối u trên ảnh y tế đều cần "biết nhận ra cạnh" trước tiên.
+
+Hệ quả thực chiến: nếu bạn train một CNN từ đầu (khởi tạo trọng số ngẫu
+nhiên) trên dataset của một competition — thường chỉ có vài nghìn tới vài
+chục nghìn ảnh — mô hình phải tự học lại từ số 0 cả những đặc trưng tổng
+quát cơ bản nhất, trong khi dữ liệu bạn có gần như luôn quá ít để làm điều
+đó tốt. Ngược lại, một model đã pretrain trên hàng triệu ảnh (ví dụ
+ImageNet) đã "biết sẵn" toàn bộ đặc trưng tổng quát đó — bạn chỉ cần dạy
+nó phần cụ thể cho bài toán của mình.
+
+Đây không phải một mẹo nhỏ — với hầu hết bài toán ảnh/văn bản trong thi
+đấu ML thực tế, dùng model pretrain rồi fine-tune gần như luôn cho kết quả
+tốt hơn đáng kể so với train from scratch với cùng lượng dữ liệu và thời
+gian, đặc biệt khi dataset của competition nhỏ.
+
+## Quy trình fine-tuning cơ bản
+
+Fine-tuning là quá trình lấy một model đã pretrain và tiếp tục huấn luyện
+nó trên dữ liệu của bài toán cụ thể. Quy trình chuẩn gồm 4 bước:
+
+1. **Lấy kiến trúc và trọng số của model nguồn** đã pretrain trên một
+   dataset lớn (ví dụ CNN pretrain trên ImageNet, hoặc Transformer
+   pretrain trên corpus văn bản khổng lồ).
+2. **Bỏ layer đầu ra (output layer) của model nguồn** — layer này gắn chặt
+   với nhãn của bài toán gốc (ví dụ 1000 lớp của ImageNet), không liên
+   quan gì tới bài toán của bạn.
+3. **Gắn một layer đầu ra mới**, khởi tạo ngẫu nhiên, có số lượng output
+   khớp đúng với bài toán của bạn (ví dụ 2 lớp nếu competition là phân
+   loại nhị phân).
+4. **Huấn luyện tiếp trên dữ liệu của competition** — nhưng với một điều
+   chỉnh quan trọng về tốc độ học, nói ở phần sau.
+
+## Learning rate khác nhau cho phần cũ và phần mới
+
+Một chi tiết dễ bỏ qua nhưng ảnh hưởng lớn tới kết quả: layer đầu ra mới
+(khởi tạo ngẫu nhiên) cần học từ số 0, nên cần learning rate **lớn hơn**
+để hội tụ trong thời gian hợp lý. Ngược lại, các layer đã pretrain đã
+mang thông tin hữu ích — dùng learning rate **nhỏ hơn nhiều** (thường nhỏ
+hơn khoảng 10 lần) để **tinh chỉnh nhẹ nhàng** thay vì phá vỡ những gì đã
+học được. Dùng chung một learning rate lớn cho toàn bộ model là sai lầm
+phổ biến nhất khi mới làm fine-tuning — nó phá huỷ các đặc trưng tổng
+quát hữu ích đã học được từ pretraining, khiến kết quả không tốt hơn (đôi
+khi còn tệ hơn) train from scratch.
+
+## Ba chiến lược freeze layer
+
+"Freeze" một layer nghĩa là **giữ nguyên trọng số** của layer đó trong
+suốt quá trình huấn luyện tiếp theo — không cập nhật gradient cho layer
+này. Ba chiến lược phổ biến, từ ít can thiệp nhất tới nhiều nhất:
+
+- **Full freezing (đóng băng toàn bộ):** giữ nguyên toàn bộ layer đã
+  pretrain, chỉ huấn luyện layer đầu ra mới. Phù hợp khi dữ liệu
+  competition **rất ít** — buộc model dựa hoàn toàn vào đặc trưng đã học
+  sẵn, không có đủ dữ liệu để chỉnh sửa an toàn các layer sâu hơn mà
+  không overfit.
+- **Partial freezing (đóng băng một phần):** giữ nguyên các layer đầu
+  (học đặc trưng tổng quát: cạnh, texture), chỉ cho phép các layer sau
+  (gần đầu ra hơn, học đặc trưng cụ thể hơn) cùng layer đầu ra mới được
+  cập nhật. Đây là lựa chọn cân bằng phổ biến nhất khi dữ liệu competition
+  ở mức vừa phải.
+- **Full fine-tuning (không freeze gì):** cho phép toàn bộ model cập nhật,
+  chỉ khác biệt ở learning rate nhỏ hơn cho phần pretrain. Phù hợp khi
+  dữ liệu competition đủ lớn và đủ khác biệt so với dữ liệu pretrain gốc,
+  cần model thích nghi sâu hơn.
+
+Một biến thể nâng cao của partial freezing là **gradual unfreezing**:
+bắt đầu với gần như toàn bộ model bị freeze (chỉ train layer đầu ra), sau
+vài epoch thì "mở khoá" dần từng layer từ sau ra trước, mỗi lần mở thêm
+một ít. Cách này giảm nguy cơ **catastrophic forgetting** — hiện tượng
+model "quên" mất kiến thức tổng quát đã pretrain nếu bị ép cập nhật quá
+nhanh, quá mạnh ngay từ đầu.
+
+## Chọn chiến lược nào cho competition của bạn
+
+Nguyên tắc thực dụng khi thi đấu:
+
+- **Dataset rất nhỏ** (vài trăm tới vài nghìn mẫu) → full freezing, chỉ
+  train layer đầu ra. Rủi ro overfit quá cao nếu mở thêm layer.
+- **Dataset vừa** (vài nghìn tới vài chục nghìn mẫu) → partial freezing,
+  bắt đầu bằng cách chỉ mở vài layer cuối, tăng dần nếu cross-validation
+  cho thấy còn dư địa cải thiện.
+- **Dataset lớn và/hoặc khác biệt nhiều so với domain pretrain gốc** (ví
+  dụ pretrain trên ảnh tự nhiên nhưng bài toán là ảnh y tế/vệ tinh) → cân
+  nhắc full fine-tuning, vì đặc trưng tổng quát từ domain gốc có thể kém
+  liên quan hơn.
+
+Luôn kiểm chứng lựa chọn bằng cross-validation (đã học ở bài
+[Baseline & Nâng cấp Mô hình](03-baseline-nang-cap-mo-hinh-va-chien-luoc-nop-bai.mdx))
+— không có chiến lược nào "luôn đúng", chỉ có chiến lược phù hợp với đúng
+lượng dữ liệu và mức độ tương đồng domain bạn đang có.
+
+## Nguồn tham khảo
+
+- [Dive into Deep Learning — Fine-Tuning](https://d2l.ai/chapter_computer-vision/fine-tuning.html) — dùng cho quy trình 4 bước fine-tuning (copy kiến trúc/trọng số, bỏ output layer gốc, gắn output layer mới, train với learning rate khác biệt giữa phần pretrain và phần mới), và cơ chế freeze layer bằng cách khoá gradient.

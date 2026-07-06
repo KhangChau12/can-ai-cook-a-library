@@ -1,0 +1,91 @@
+---
+title: "MobileNet — Depthwise Separable Convolution cho Thiết bị Hạn chế Tài nguyên"
+track: foundations-track
+module: "Computer Vision"
+submodule: "Cơ bản"
+order: 38
+status: stable
+prerequisites: ["37-resnet"]
+summary: "ResNet/VGG đạt độ chính xác cao nhưng quá nặng để chạy trên điện thoại/thiết bị nhúng. Howard và cộng sự (2017) giải quyết bằng depthwise separable convolution — tách phép tích chập chuẩn thành 2 bước riêng biệt (lọc không gian + trộn kênh), cùng 2 siêu tham số cho phép đánh đổi có kiểm soát giữa độ trễ và độ chính xác."
+last_touched_by_task: "Bài mới (2026-07-06) tiếp nối ResNet (37) trong sub-module CV 'Cơ bản', chuyển hướng mục tiêu từ 'độ chính xác tối đa' (LeNet→AlexNet→VGG→ResNet) sang 'hiệu quả tính toán' — nhánh mới trong cùng dòng tiến hoá. Nguồn: arxiv (paper gốc Howard et al. 2017, xác nhận qua WebFetch trực tiếp abstract). Lưu ý quan trọng: đã thử tìm chi tiết công thức toán học cụ thể (tỷ lệ giảm computation) qua D2L.ai (không có chương MobileNet riêng, xác nhận qua WebFetch) và qua PDF paper gốc (không đọc được, trả về binary stream như nhiều PDF khác trong phiên) — chỉ giữ mô tả khái niệm (2 bước depthwise + pointwise) đã xác nhận qua abstract, KHÔNG đưa công thức/số liệu giảm computation cụ thể vì chưa xác nhận được qua nguồn đọc được trực tiếp, đúng kỷ luật không suy diễn/bịa đã áp dụng nhất quán toàn phiên. Cập nhật (2026-07-06, Task 87): thử lại tìm số liệu cụ thể qua WebSearch (khác WebFetch PDF đã thất bại trước đó) — xác nhận được con số 8-9 lần ít tính toán hơn cho kernel 3×3, thêm vào bài."
+---
+
+Bài [ResNet](37-resnet.mdx) giải quyết vấn đề degradation, cho phép
+huấn luyện mạng sâu chưa từng có tiền lệ — nhưng đổi lại, các mạng như
+ResNet-152 hay VGG-19 có số lượng tham số và chi phí tính toán rất lớn.
+Điều đó ổn khi chạy trên máy chủ có GPU mạnh, nhưng đặt ra một câu hỏi
+khác hẳn: **nếu cần chạy một mô hình thị giác máy tính ngay trên điện
+thoại hoặc một thiết bị nhúng có tài nguyên hạn chế, phải làm sao?**
+
+## Vấn đề: độ chính xác cao thường đi kèm chi phí tính toán cao
+
+Toàn bộ dòng kiến trúc đã học từ AlexNet tới ResNet đều đi theo một
+hướng chung: đánh đổi thêm tham số/tính toán để lấy độ chính xác cao
+hơn. Hướng đi này hợp lý khi mục tiêu là tối đa hoá độ chính xác trên
+một bộ dữ liệu chuẩn như ImageNet, chạy trên phần cứng mạnh — nhưng
+hoàn toàn không phù hợp khi mô hình cần chạy trên điện thoại di động
+hay thiết bị nhúng, nơi bộ nhớ, năng lượng pin, và tốc độ xử lý đều bị
+giới hạn nghiêm ngặt. Cần một hướng thiết kế khác: không chỉ hỏi "làm
+sao chính xác hơn?" mà còn hỏi "làm sao **hiệu quả hơn** trên mỗi đơn vị
+tính toán?".
+
+## Giải pháp: tách phép tích chập chuẩn thành hai bước riêng biệt
+
+**Howard và cộng sự (2017)**, trong bài báo "MobileNets: Efficient
+Convolutional Neural Networks for Mobile Vision Applications", giải
+quyết vấn đề này bằng **depthwise separable convolution** — một cách tổ
+chức lại phép tích chập chuẩn thành hai bước tách biệt, mỗi bước đảm
+nhận đúng một vai trò, thay vì làm cả hai việc cùng lúc trong một phép
+tích chập duy nhất như các kiến trúc trước:
+
+- **Depthwise convolution:** áp dụng một bộ lọc **không gian** (spatial
+  filtering) riêng biệt cho **từng kênh** đầu vào — mỗi kênh được xử lý
+  độc lập, không trộn thông tin giữa các kênh với nhau ở bước này.
+- **Pointwise convolution:** một phép tích chập `1×1` áp dụng ngay sau
+  đó, đảm nhận việc **trộn thông tin giữa các kênh** (cross-channel
+  mixing) — bước mà phép tích chập chuẩn thông thường làm đồng thời với
+  việc lọc không gian.
+
+Bằng cách tách hai việc "lọc không gian" và "trộn kênh" thành hai bước
+riêng thay vì gộp chung trong một phép tích chập chuẩn (vốn làm cả hai
+việc cùng lúc, tốn nhiều tham số và phép tính hơn), MobileNet giảm đáng
+kể chi phí tính toán và số lượng tham số so với kiến trúc dùng tích chập
+chuẩn thông thường ở mỗi lớp — cụ thể, với kernel kích thước phổ biến
+`3×3`, depthwise separable convolution tốn ít hơn khoảng **8-9 lần**
+phép tính so với tích chập chuẩn cùng kích thước, trong khi độ chính xác
+giảm không đáng kể.
+
+## Hai siêu tham số để kiểm soát đánh đổi tốc độ/độ chính xác
+
+Ngoài depthwise separable convolution, Howard và cộng sự giới thiệu
+thêm **hai siêu tham số toàn cục** cho phép người dùng tự điều chỉnh
+điểm cân bằng giữa độ trễ (latency) và độ chính xác tuỳ theo giới hạn
+phần cứng cụ thể — thay vì chỉ có một kiến trúc cố định duy nhất, MobileNet
+là một **họ mô hình** có thể "co giãn" theo yêu cầu triển khai thực tế
+(ví dụ một mô hình nhỏ hơn, nhanh hơn cho điện thoại đời cũ; một mô hình
+lớn hơn, chính xác hơn cho điện thoại flagship). Nhóm tác giả xác nhận
+hiệu suất mạnh trên phân loại ImageNet, đồng thời chứng minh MobileNet
+hiệu quả trên nhiều ứng dụng thực tế khác: phát hiện vật thể, phân loại
+chi tiết (fine-grained classification), nhận diện khuôn mặt, và định vị
+địa lý quy mô lớn.
+
+## Liên hệ lại với các bài trước
+
+- MobileNet không thay đổi nguyên lý convolution cốt lõi đã học ở bài
+  [CNN](11-convolutional-neural-network.mdx) (translation invariance,
+  locality) — nó tổ chức lại **cách tính** phép tích chập để hiệu quả
+  hơn, không thay đổi nguyên lý nền tảng.
+- Đây là một điểm rẽ nhánh thú vị trong dòng tiến hoá: nếu AlexNet→VGG→
+  ResNet đều nhắm tới "chính xác hơn" (chấp nhận đánh đổi thêm chi phí
+  tính toán), MobileNet đặt câu hỏi ngược lại "hiệu quả hơn với cùng
+  hoặc gần cùng độ chính xác" — cùng một họ bài toán (classification
+  ảnh) nhưng mục tiêu tối ưu hoá khác hẳn, tuỳ vào ràng buộc triển khai
+  thực tế.
+- Vẫn huấn luyện bằng [backpropagation](09-backpropagation.mdx) như mọi
+  kiến trúc CNN khác — depthwise separable convolution chỉ thay đổi
+  cách tổ chức phép tính trong mỗi lớp, không thay đổi cơ chế tính
+  gradient hay cập nhật tham số.
+
+## Nguồn tham khảo
+
+- [arXiv — MobileNets: Efficient Convolutional Neural Networks for Mobile Vision Applications](https://arxiv.org/abs/1704.04861) — paper gốc của Howard và cộng sự (2017), dùng cho vấn đề cụ thể (ứng dụng thị giác trên thiết bị di động/nhúng có tài nguyên hạn chế), giải pháp depthwise separable convolution (tách lọc không gian và trộn kênh thành 2 bước), hai siêu tham số toàn cục cân bằng latency/độ chính xác, và các ứng dụng thực tế đã thử nghiệm (object detection, fine-grained classification, face recognition, geo-localization).

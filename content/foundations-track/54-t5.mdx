@@ -1,0 +1,102 @@
+---
+title: "T5 — Thống nhất Mọi Tác vụ NLP Thành Một Định dạng Text-to-Text"
+track: foundations-track
+module: "Sequence Model"
+submodule: "Transformer Architecture"
+order: 54
+status: stable
+prerequisites: ["45-bert", "24-pretraining-llm"]
+summary: "BERT (encoder-only) phù hợp các tác vụ hiểu ngôn ngữ nhưng cần thêm lớp output khác nhau cho từng loại tác vụ; GPT (decoder-only) task-agnostic nhưng chỉ tự nhiên cho sinh văn bản tuần tự. Raffel và cộng sự (2020) giải quyết bằng T5: dùng nguyên vẹn kiến trúc Transformer encoder-decoder gốc, ép MỌI tác vụ NLP (phân loại, dịch, tóm tắt, hỏi-đáp) vào cùng một khuôn dạng input-output là văn bản thuần tuý — một mô hình, một định dạng, áp dụng cho mọi bài toán."
+last_touched_by_task: "Bài mới (2026-07-06), hoàn thiện dòng tiến hoá kiến trúc Transformer trong module Sequence Model — sau khi đã kể nhánh decoder-only (GPT, series LLM 24-29) và encoder-only (BERT, bài 45), T5 là nhánh thứ 3 dùng cả encoder-decoder, kết nối trực tiếp cả 2 bài trước. Nguồn: arxiv 1910.10683 (paper gốc Raffel et al. 2020, xác nhận qua WebFetch abstract: vấn đề NLP phân mảnh thành nhiều kiến trúc/task riêng lẻ, giải pháp text-to-text framework, kết quả SOTA nhiều benchmark) + lilianweng.github.io/posts/2019-01-31-lm (Lil'Log, xác nhận qua WebFetch: kiến trúc encoder-decoder gốc Transformer, cơ chế task prefix, T5-11B SOTA). Đã thử D2L.ai bert.html nhưng xác nhận KHÔNG có T5 (chỉ so sánh ELMo/GPT/BERT)."
+---
+
+Bài [BERT](45-bert.mdx) dùng riêng phần **encoder** của Transformer (ngữ
+cảnh hai chiều, phù hợp tác vụ hiểu ngôn ngữ). Bài [Pretraining](24-pretraining-llm.mdx)
+kể cách GPT dùng riêng phần **decoder** (autoregressive, phù hợp sinh văn
+bản tuần tự). Bài này kể cách một kiến trúc thứ ba — dùng **cả hai phần**
+encoder và decoder cùng lúc — giải quyết một vấn đề khác hẳn: sự phân
+mảnh của cả lĩnh vực NLP thành quá nhiều cách tiếp cận riêng lẻ.
+
+## Vấn đề: mỗi tác vụ NLP một kiến trúc/định dạng riêng
+
+Trước T5, dù BERT đã giúp một kiến trúc nền (encoder Transformer) dùng
+được cho nhiều tác vụ khác nhau qua fine-tuning, mỗi loại tác vụ vẫn
+thường cần một **cách đặt bài toán khác nhau**: phân loại văn bản cần
+một lớp output softmax trên số lớp cố định; hỏi-đáp trích xuất cần dự
+đoán vị trí bắt đầu/kết thúc của câu trả lời trong đoạn văn; dịch máy cần
+sinh ra một chuỗi token mới hoàn toàn. Mỗi kiểu bài toán đòi hỏi thiết kế
+đầu ra và hàm loss khác nhau — lĩnh vực NLP vì vậy vẫn phân mảnh thành
+nhiều cách tiếp cận rời rạc, dù phần lớn dùng chung nền tảng Transformer.
+
+## Giải pháp: ép mọi tác vụ vào cùng một khuôn dạng text-to-text
+
+**Raffel và cộng sự (2020)**, trong bài báo "Exploring the Limits of
+Transfer Learning with a Unified Text-to-Text Transformer", giải quyết
+vấn đề đó bằng một ý tưởng đơn giản nhưng triệt để: dùng nguyên vẹn kiến
+trúc **Transformer encoder-decoder gốc** (giống bản Vaswani và cộng sự
+2017 đã học ở bài [Transformer](15-transformer.mdx), không phải chỉ
+encoder như BERT hay chỉ decoder như GPT), và **ép mọi tác vụ NLP** —
+phân loại, dịch máy, tóm tắt, hỏi-đáp — vào cùng một khuôn dạng:
+**input là văn bản, output cũng là văn bản**.
+
+Cách thực hiện cụ thể: mỗi tác vụ được gắn thêm một **task prefix** (tiền
+tố mô tả nhiệm vụ) ngay đầu input, để mô hình biết cần làm gì. Ví dụ:
+
+- Dịch: input `"translate English to German: That is good."` → output
+  `"Das ist gut."`
+- Phân loại cảm xúc: input `"sentiment: this movie is great"` → output
+  trực tiếp là chuỗi văn bản `"positive"` (không phải một chỉ số lớp).
+- Tóm tắt: input `"summarize: <đoạn văn bản dài>"` → output là bản tóm
+  tắt dạng văn bản.
+
+Vì mọi tác vụ đều được "dịch" thành bài toán sinh văn bản từ văn bản,
+T5 có thể dùng **đúng một kiến trúc, một hàm loss** (cross-entropy trên
+từng token output, giống next-token prediction đã học ở bài Pretraining)
+cho toàn bộ các tác vụ khác nhau — không cần thiết kế lớp output riêng
+hay hàm loss riêng cho mỗi loại bài toán.
+
+## Vì sao chọn encoder-decoder, không phải chỉ encoder hay chỉ decoder
+
+Kiến trúc encoder-decoder phù hợp tự nhiên với khuôn dạng text-to-text:
+**encoder** đọc toàn bộ input (có ngữ cảnh hai chiều, giống BERT) để hiểu
+đầy đủ nhiệm vụ và nội dung cần xử lý, còn **decoder** sinh ra output
+từng token một (autoregressive, giống GPT) dựa trên biểu diễn đã mã hoá
+từ encoder. Nói cách khác, T5 không chọn "hoặc BERT hoặc GPT" — nó dùng
+đúng bản gốc Transformer đã có sẵn cả hai thành phần, tận dụng ưu điểm
+ngữ cảnh hai chiều của encoder (hiểu đúng input) và khả năng sinh tuần
+tự linh hoạt của decoder (tạo output đa dạng cho nhiều loại tác vụ).
+
+## Kết quả: SOTA nhiều benchmark, và bộ dữ liệu C4
+
+Nhóm tác giả tiến hành so sánh có hệ thống nhiều yếu tố (mục tiêu
+pretraining, kiến trúc, bộ dữ liệu, chiến lược transfer learning) để tìm
+ra cấu hình tốt nhất, đạt kết quả **hiện đại nhất (SOTA)** trên nhiều
+benchmark khác nhau — bao gồm tóm tắt văn bản, hỏi-đáp, phân loại văn
+bản. Họ cũng giới thiệu **Colossal Clean Crawled Corpus (C4)** — một bộ
+dữ liệu văn bản quy mô lớn đã qua làm sạch, dùng cho pretraining, cùng
+với việc công bố công khai mô hình đã huấn luyện và mã nguồn để hỗ trợ
+nghiên cứu sau này. Phiên bản lớn nhất, T5-11B, đạt kết quả SOTA trên
+nhiều benchmark NLP.
+
+## Liên hệ lại với các bài trước
+
+- T5 hoàn thiện bức tranh 3 nhánh kiến trúc dựa trên Transformer đã học
+  trong track: **decoder-only** (GPT, series LLM — phù hợp sinh văn bản
+  tự do), **encoder-only** (BERT — phù hợp hiểu ngôn ngữ, cần thêm lớp
+  output riêng cho từng tác vụ), và **encoder-decoder** (T5 — thống nhất
+  mọi tác vụ dưới một khuôn dạng, dùng chung một kiến trúc và một hàm
+  loss cho tất cả).
+- Task prefix của T5 là một hình thức đơn giản của **prompting** đã học
+  ở bài [Prompting & In-context Learning](28-prompting-in-context-learning.mdx)
+  — dùng văn bản để "chỉ dẫn" mô hình cần làm gì, dù T5 vẫn cần
+  fine-tune trên từng tác vụ cụ thể (khác hẳn zero-shot/few-shot
+  prompting của GPT-3, không cần cập nhật tham số nào).
+- Vẫn huấn luyện bằng cross-entropy loss trên next-token prediction (đã
+  học ở bài [Pretraining](24-pretraining-llm.mdx)) — điểm mới của T5
+  không phải hàm loss hay thuật toán tối ưu, mà là cách **thống nhất mọi
+  bài toán** dưới cùng một khuôn dạng input-output.
+
+## Nguồn tham khảo
+
+- [arXiv — Exploring the Limits of Transfer Learning with a Unified Text-to-Text Transformer](https://arxiv.org/abs/1910.10683) — paper gốc của Raffel và cộng sự (2020), dùng cho vấn đề cụ thể (NLP phân mảnh thành nhiều kiến trúc/định dạng riêng cho từng tác vụ), giải pháp (khuôn dạng text-to-text thống nhất), và kết quả (SOTA nhiều benchmark, bộ dữ liệu C4).
+- [Lil'Log — Generalized Language Models (Lilian Weng)](https://lilianweng.github.io/posts/2019-01-31-lm/) — dùng cho chi tiết kiến trúc encoder-decoder gốc Transformer của T5, cơ chế task prefix để phân biệt nhiệm vụ, và kết quả T5-11B đạt SOTA nhiều benchmark NLP.

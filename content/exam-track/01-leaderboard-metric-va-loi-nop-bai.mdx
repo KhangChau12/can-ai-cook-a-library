@@ -1,0 +1,278 @@
+---
+title: "Leaderboard, Scoring Metric & Lỗi nộp bài trên The Noders Platform"
+track: exam-track
+module: "Hướng dẫn dùng nền tảng"
+order: 1
+status: stable
+prerequisites: ["foundations-track/03-logistic-regression"]
+summary: "Ba mảnh ghép bắt buộc phải hiểu trước khi nộp submission đầu tiên: cơ chế leaderboard 2 giai đoạn, công thức chính xác của 6 scoring metric, và các lỗi phổ biến khiến submission bị invalid hoặc điểm ảo."
+last_touched_by_task: "Rà lại dưới góc nhìn triết lý mới (2026-07-06, đã đọc kỹ ở task 15 trong phiên này): xác nhận bài đạt chuẩn đúng tiêu chí exam-track (mục 2.1 sườn A) — confusion matrix/TP-FP-FN-TN với ví dụ số cụ thể (100 điểm dữ liệu), công thức 6 metric chính xác khớp SCORING_METRIC_INFO, leaderboard shakeup giải thích rõ nguyên nhân, data leakage phân biệt train-test contamination vs target leakage. Không 'vỏ rỗng', không cần viết lại. Giữ nguyên nội dung, chỉ nâng status."
+---
+
+Ba câu hỏi đầu tiên bất kỳ ai mới thi đấu trên The Noders Platform đều cần
+trả lời được, trước khi quan tâm tới việc chọn mô hình gì: **Leaderboard
+hoạt động thế nào?** **Điểm số được tính ra sao?** và **Vì sao submission
+của tôi có thể bị mất điểm dù mô hình không hề tệ?** Bài này gộp cả ba, vì
+chúng là ba mặt của cùng một vấn đề: hiểu đúng luật chơi trước khi chơi.
+
+## Phần 1 — Cơ chế Leaderboard 2 giai đoạn (và biến thể 4-phase)
+
+Nếu bạn từng nộp bài và thấy điểm mình đứng top bảng public rồi tụt hạng
+thảm hại khi kết quả cuối cùng công bố — phần này giải thích chính xác vì
+sao. Hiểu đúng cơ chế leaderboard không giúp bạn code giỏi hơn, nhưng nó
+quyết định bạn có **tin sai vào điểm số của chính mình** hay không, và
+niềm tin sai đó là nguyên nhân phổ biến nhất khiến người mới thi đấu ML bị
+"rớt hạng" bất ngờ.
+
+Mỗi competition trên platform có một trong hai loại:
+
+- **3-phase:** registration → public test → ended. Chỉ có leaderboard
+  public, dùng luôn làm kết quả cuối cùng.
+- **4-phase:** registration → public test → private test → ended. Có
+  **cả hai** leaderboard public và private, cộng thêm một tab **Final**
+  chỉ hiện ra sau khi competition kết thúc hẳn.
+
+Với competition 4-phase — loại quan trọng cần hiểu kỹ nhất — cơ chế hoạt
+động như sau:
+
+- Trong giai đoạn **public test**, mọi submission của bạn được chấm điểm
+  dựa trên một bộ dữ liệu đáp án (gọi là public test set), và điểm số hiện
+  ngay trên leaderboard public để bạn (và mọi người) thấy real-time.
+- Khi chuyển sang giai đoạn **private test**, bạn nộp submission mới, được
+  chấm bằng một bộ đáp án **khác** (private test set) — bộ này bạn chưa bao
+  giờ nhận được phản hồi điểm số trong suốt giai đoạn public.
+- Sau khi competition `ended`, tab **Final** mở ra: với mỗi người/đội có
+  **cả** điểm public tốt nhất lẫn điểm private tốt nhất, điểm cuối cùng là
+  **trung bình cộng của hai điểm đó** — `(điểm_public + điểm_private) / 2`.
+  Người/đội chỉ có một trong hai điểm (ví dụ không nộp bài ở giai đoạn
+  private) bị xếp hạng sau tất cả những người có đủ cả hai, dùng điểm đơn
+  lẻ của họ để xếp.
+
+Điểm mấu chốt: **leaderboard public bạn nhìn thấy trong suốt competition
+không phải là kết quả cuối cùng.** Nó chỉ là ước lượng dựa trên một phần dữ
+liệu. Hạng thật sự chỉ chốt ở tab Final, sau khi cả điểm private được tính
+vào.
+
+### Vì sao điểm public cao không đảm bảo hạng cuối cao
+
+Đây là hiện tượng được cộng đồng thi đấu ML gọi là **leaderboard shakeup**
+— thứ hạng thay đổi đáng kể giữa leaderboard public và kết quả cuối cùng.
+Nguyên nhân phổ biến nhất là **overfitting vào public test set**: khi bạn
+nộp bài nhiều lần và mỗi lần chỉnh model dựa trên điểm public tăng hay
+giảm, bạn đang vô tình "học" luôn cả nhiễu đặc trưng riêng của bộ dữ liệu
+public đó — không phải quy luật tổng quát của bài toán. Model càng bị tinh
+chỉnh sát theo phản hồi public, càng có nguy cơ đạt điểm cao "ảo" trên đúng
+bộ dữ liệu đó nhưng kém hơn trên private test set mà nó chưa từng thấy
+phản hồi.
+
+Nói cách khác: liên tục đuổi theo điểm public giống như học thuộc lòng đề
+thi thử thay vì học hiểu bản chất — điểm thi thử rất cao, nhưng đề thi thật
+(khác đề thi thử) thì không đảm bảo.
+
+Cách phòng tránh, được cộng đồng Kaggle khuyến nghị: **xây dựng validation
+set riêng từ dữ liệu training của chính bạn**, coi điểm leaderboard public
+là một phép kiểm tra tham khảo (sanity check), không phải tín hiệu chính
+để quyết định chọn model nào. Vài dấu hiệu cụ thể để tự cảnh giác:
+
+- Bạn nộp rất nhiều lần chỉ để "canh" điểm public nhích lên từng chút, mà
+  không có thay đổi nào về mặt phương pháp (chỉ chỉnh tham số nhỏ lặp lại).
+- Điểm trên validation set tự tách của bạn không tăng tương ứng khi điểm
+  public tăng — dấu hiệu rõ ràng bạn đang fit vào đặc trưng riêng của bộ
+  public, không phải cải thiện model thật.
+
+Cơ chế 2 giai đoạn này áp dụng như nhau bất kể competition dùng metric nào
+— và metric chính xác là gì, tính ra sao, là chủ đề của phần tiếp theo.
+
+## Phần 2 — Cách tính điểm theo từng Scoring Metric
+
+Mỗi competition trên The Noders Platform dùng đúng **một** trong 6 metric
+để chấm điểm mọi submission: `f1_score`, `accuracy`, `precision`, `recall`
+(cho bài toán classification), hoặc `mae`, `rmse` (cho bài toán
+regression). Metric nào được chọn quyết định "điểm cao" nghĩa là gì —
+hiểu sai công thức đồng nghĩa với việc bạn có thể tối ưu sai thứ suốt cả
+competition mà không biết.
+
+Phần này giả sử bạn đã đọc [Logistic Regression](../foundations-track/03-logistic-regression.mdx)
+để biết khái niệm classification, ngưỡng quyết định (threshold), và xác
+suất `ŷ`.
+
+### Confusion matrix — nền tảng của 4 metric classification
+
+Với bài toán phân loại nhị phân (2 lớp: dương/positive và âm/negative),
+sau khi mô hình đưa ra nhãn dự đoán cho mọi điểm dữ liệu, mỗi dự đoán rơi
+vào đúng 1 trong 4 ô:
+
+| | Thực tế dương | Thực tế âm |
+|---|---|---|
+| **Dự đoán dương** | True Positive (TP) | False Positive (FP) |
+| **Dự đoán âm** | False Negative (FN) | True Negative (TN) |
+
+- **TP:** dự đoán dương, thực tế đúng là dương (đoán đúng).
+- **FP:** dự đoán dương, nhưng thực tế là âm (báo động giả).
+- **FN:** dự đoán âm, nhưng thực tế là dương (bỏ sót).
+- **TN:** dự đoán âm, thực tế đúng là âm (đoán đúng).
+
+Toàn bộ 4 metric classification bên dưới chỉ là những cách tổ hợp khác
+nhau của 4 con số này.
+
+**Ví dụ dùng chung cho cả phần này:** một mô hình dự đoán trên 100 điểm dữ
+liệu, cho ra kết quả `TP = 40`, `FP = 10`, `FN = 20`, `TN = 30` (tổng đúng
+100). Các công thức bên dưới sẽ dùng lại đúng 4 con số này.
+
+**accuracy — tỷ lệ đoán đúng tổng thể**
+
+```
+accuracy = (TP + TN) / (TP + TN + FP + FN)
+```
+
+`accuracy = (40 + 30) / 100 = 0.70` — 70% dự đoán đúng. Nhược điểm lớn
+nhất: với dữ liệu **mất cân bằng** (ví dụ 95% điểm dữ liệu thuộc lớp âm),
+một mô hình luôn đoán âm vẫn đạt `accuracy = 95%` mà không học được gì hữu
+ích. Nếu competition bạn tham gia dùng `accuracy` và bạn biết trước dữ
+liệu mất cân bằng, điểm cao không tự động nghĩa là mô hình tốt.
+
+**precision — trong số dự đoán dương, bao nhiêu đúng thật**
+
+```
+precision = TP / (TP + FP)
+```
+
+Trả lời câu hỏi: "Khi mô hình nói 'dương', nó đúng bao nhiêu phần trăm?"
+`precision = 40 / (40 + 10) = 0.80`. Quan trọng khi **chi phí của báo
+động giả (FP) cao** — ví dụ hệ thống lọc spam đánh dấu nhầm email quan
+trọng thành spam gây hại nhiều hơn để lọt vài email spam.
+
+**recall — trong số thực tế dương, bao nhiêu được tìm ra**
+
+```
+recall = TP / (TP + FN)
+```
+
+Trả lời câu hỏi ngược lại: "Trong tất cả trường hợp thực sự là dương, mô
+hình tìm ra được bao nhiêu?" `recall = 40 / (40 + 20) ≈ 0.67`. Quan trọng
+khi **chi phí của bỏ sót (FN) cao** — ví dụ mô hình phát hiện gian lận mà
+bỏ sót một giao dịch gian lận thật thường tốn kém hơn nhiều so với gắn cờ
+nhầm một giao dịch hợp lệ.
+
+`precision` và `recall` thường **đánh đổi lẫn nhau**: dời ngưỡng quyết
+định xuống thấp hơn 0.5 khiến mô hình gắn nhãn "dương" dễ dàng hơn →
+`recall` tăng nhưng `precision` giảm, và ngược lại.
+
+**f1_score — cân bằng giữa precision và recall**
+
+```
+f1_score = 2 * (precision * recall) / (precision + recall)
+```
+
+Đây là **trung bình điều hoà (harmonic mean)**, không phải trung bình
+cộng thông thường. Với ví dụ trên (`precision = 0.80`, `recall ≈ 0.67`):
+`f1_score ≈ 0.73`. Trung bình điều hoà có đặc điểm: nếu một trong hai giá
+trị rất thấp, kết quả cũng bị kéo xuống thấp. Ví dụ cực đoan để thấy rõ:
+`precision = 1.0`, `recall = 0.01` → trung bình cộng ra `0.505` (nhìn có
+vẻ ổn), nhưng `f1_score` chỉ khoảng `0.02` (phản ánh đúng thực tế là mô
+hình gần như bỏ sót toàn bộ ca dương thật). `f1_score` là lựa chọn phổ
+biến khi **cả FP và FN đều tốn kém tương đương**.
+
+**mae — sai số tuyệt đối trung bình (regression)**
+
+```
+mae = (1/n) * sum( |y_i - ŷ_i| )
+```
+
+Đo khoảng cách trung bình (giá trị tuyệt đối) giữa dự đoán và giá trị
+thật, cùng đơn vị với target. `mae` phạt mọi sai số theo đúng tỷ lệ tuyến
+tính — sai gấp đôi thì bị phạt gấp đôi.
+
+**rmse — sai số bình phương trung bình, khai căn (regression)**
+
+```
+rmse = sqrt( (1/n) * sum( (y_i - ŷ_i)^2 ) )
+```
+
+Khác `mae` ở chỗ bình phương sai số trước khi lấy trung bình rồi khai căn
+lại để đơn vị khớp target. Vì bình phương lên, `rmse` **phạt nặng hơn
+nhiều** với những điểm dữ liệu có sai số lớn (outlier) so với `mae`.
+
+`mae` và `rmse` đều thuộc nhóm **càng thấp càng tốt** (khác 4 metric
+classification ở trên là càng cao càng tốt) — leaderboard cho competition
+dùng `mae`/`rmse` sắp xếp tăng dần thay vì giảm dần. Nhầm lẫn hai chiều
+này là lỗi rất dễ mắc khi lần đầu đọc leaderboard của một competition
+mới, đặc biệt nếu bạn đã quen với metric ngược lại từ competition trước.
+
+## Phần 3 — Sai lầm thường gặp khi nộp bài
+
+Nắm được leaderboard và metric là điều kiện cần, nhưng phần lớn thời gian
+"mất điểm oan" khi thi đấu trên platform lại không đến từ việc chọn sai
+thuật toán, mà từ ba loại lỗi rất cụ thể: nộp sai định dạng file, để lộ
+thông tin không nên biết vào lúc train (data leakage), hoặc tự đánh lừa
+chính mình bằng điểm public ảo (đã nói ở Phần 1). Phần này đi qua từng
+loại, kèm cách nhận biết và tránh.
+
+### 1. Sai format CSV — lỗi khiến submission bị `invalid` ngay lập tức
+
+Khi submission được xử lý, hệ thống kiểm tra định dạng CSV trước khi tính
+điểm. Các lỗi phổ biến khiến submission bị đánh dấu `validation_status:
+invalid` (không được tính điểm, không tính vào giới hạn số lần nộp còn
+hợp lệ trong ngày):
+
+- **Sai tên cột.** File chấm điểm luôn cần đúng 2 cột: `id` và
+  `prediction`. Đặt tên khác (`ID`, `Id`, `pred`, `label`...) — dù nhìn
+  "đúng ý nghĩa" — vẫn khiến hệ thống không nhận diện được cột cần thiết.
+- **Thiếu dòng hoặc thừa dòng** so với test set gốc — mỗi `id` cần có
+  đúng một dòng dự đoán tương ứng, không thiếu, không thừa, không trùng.
+- **`id` không khớp** — copy nhầm cột `id` từ một phiên bản dữ liệu cũ,
+  hoặc merge/join dữ liệu sai thứ tự khiến `id` bị xáo trộn.
+- **File không phải CSV thuần** — ví dụ xuất từ Excel giữ định dạng số có
+  dấu phẩy phân cách hàng nghìn (`1,234`), hoặc encoding lạ gây lỗi đọc.
+
+Cách phòng tránh đơn giản nhất: **luôn tự đọc lại file CSV vừa xuất ra
+bằng chính ngôn ngữ bạn dùng để train** (ví dụ `pandas.read_csv()` rồi in
+ra vài dòng đầu, kiểm tra số dòng, kiểm tra tên cột) trước khi nộp — đừng
+tin tưởng mù quáng vào bước export.
+
+### 2. Data leakage — lỗi khiến điểm cao một cách "ảo"
+
+**Data leakage** xảy ra khi thông tin mà mô hình *không nên biết* tại thời
+điểm dự đoán thực tế lại vô tình lọt vào quá trình huấn luyện — khiến mô
+hình đạt điểm rất cao khi tự đánh giá, nhưng thực chất đang "ăn gian" chứ
+không học được quy luật tổng quát. Hai dạng phổ biến nhất:
+
+**Train-test contamination.** Xảy ra khi áp dụng một bước xử lý dữ liệu
+(chuẩn hoá/normalize, điền giá trị thiếu, mã hoá category...) lên **toàn
+bộ** dữ liệu (cả train và test) trước khi tách ra, thay vì chỉ tính toán
+tham số xử lý (mean, std, danh sách category...) từ **riêng phần train**.
+
+**Target leakage.** Xảy ra khi một feature đưa vào mô hình vô tình chứa
+thông tin gần như trực tiếp suy ra được target — thông tin mà trong tình
+huống dự đoán thực tế sẽ không có sẵn. Ví dụ kinh điển: dự đoán "bệnh nhân
+có bị biến chứng hay không" nhưng vô tình dùng luôn feature "đã được kê
+đơn thuốc điều trị biến chứng" — feature này chỉ tồn tại *sau khi* biến
+chứng đã xảy ra.
+
+Cách phòng tránh: mọi bước tính toán tham số từ dữ liệu phải được tính
+**chỉ trên tập train**, sau đó áp dụng lại (không tính lại) lên tập
+validation/test. Nếu dùng cross-validation, bước xử lý dữ liệu phải nằm
+**bên trong** từng fold.
+
+### Danh sách tự kiểm tra trước khi nộp bài
+
+- [ ] File là CSV thuần, đúng 2 cột `id` và `prediction`, không thừa/thiếu
+      cột.
+- [ ] Số dòng khớp chính xác với số `id` trong test set gốc, không trùng
+      lặp `id`.
+- [ ] Mọi bước chuẩn hoá/encode dữ liệu chỉ tính tham số từ tập train, áp
+      dụng lại (không tính lại) cho tập test.
+- [ ] Không có feature nào trong mô hình chứa thông tin chỉ có được *sau*
+      thời điểm cần dự đoán trong thực tế.
+- [ ] Có validation set riêng để đối chiếu trước khi tin vào điểm public
+      leaderboard.
+
+Ba mảnh ghép này — leaderboard, metric, lỗi nộp bài — là nền tảng bắt
+buộc trước khi bước sang quy trình thi đấu cụ thể (bài tiếp theo) và các
+kỹ thuật nâng cao dùng trong thi đấu thật.
+
+## Nguồn tham khảo
+
+- [Overfitting the Leaderboard (Kaggle)](https://www.kaggle.com/code/caseyftw/overfitting-the-leaderboard) — dùng cho khái niệm overfitting vào public leaderboard và khuyến nghị ưu tiên tin vào validation set tự tách thay vì chạy theo điểm leaderboard public.
+- [scikit-learn — Model evaluation: quantifying the quality of predictions](https://scikit-learn.org/stable/modules/model_evaluation.html) — dùng làm nguồn chính cho công thức chính xác của accuracy, precision, recall, F1 score theo TP/FP/FN/TN, và công thức MAE, RMSE.
+- [Data Leakage in Machine Learning (MachineLearningMastery)](https://machinelearningmastery.com/data-leakage-machine-learning/) — dùng cho định nghĩa data leakage, phân biệt train-test contamination và target leakage.

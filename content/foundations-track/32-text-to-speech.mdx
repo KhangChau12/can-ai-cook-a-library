@@ -1,0 +1,101 @@
+---
+title: "Text-to-Speech — Sinh Giọng nói từ Văn bản"
+track: foundations-track
+module: "Audio"
+order: 32
+status: stable
+prerequisites: ["31-speech-to-text", "22-autoencoder"]
+summary: "Bài cuối series Audio: chiều ngược lại của Speech-to-Text — sinh ra audio từ văn bản. Vẫn là bài toán sequence-to-sequence (text → mel-spectrogram), nhưng thêm một bước đặc thù chỉ audio mới cần: chuyển mel-spectrogram (biểu diễn nén, thiếu thông tin pha) ngược lại thành waveform nghe được — công việc của một vocoder."
+last_touched_by_task: "Rà lại theo triết lý nội dung mới (2026-07-06): đọc kỹ, xác nhận bài đã đạt chuẩn (2 giai đoạn rõ ràng, liên hệ generative model tốt, không 'vỏ rỗng', đã thận trọng không bịa tên mô hình cụ thể từ trước). Cải thiện thêm (2026-07-06, Task 82): thay thế đoạn 'vocoder' trừu tượng bằng ví dụ cụ thể WaveNet (van den Oord et al. 2016) — dilated causal convolution, liên hệ causal mask đã học ở bài Pretraining — nguồn arxiv 1609.03499, xác nhận qua WebFetch/WebSearch."
+---
+
+Bài [Speech-to-Text](31-speech-to-text.mdx) chuyển audio thành văn bản.
+**Text-to-Speech (TTS)** đi chiều ngược lại: nhận văn bản, sinh ra
+**giọng nói nghe được**. Vẫn là bài toán sequence-to-sequence, nhưng có
+một bước đặc thù không xuất hiện ở bất kỳ bài toán nào khác trong giáo
+trình: cần **tạo ra** một tín hiệu âm thanh hoàn toàn mới, không chỉ phân
+loại hay dịch giữa các dạng dữ liệu rời rạc.
+
+## Hai giai đoạn: sinh spectrogram, rồi sinh waveform
+
+Kiến trúc TTS hiện đại thường tách thành hai giai đoạn riêng biệt, mỗi
+giai đoạn giải quyết một phần của bài toán:
+
+**Giai đoạn 1 — Text-to-Spectrogram:** một mô hình sequence-to-sequence
+(kiến trúc tương tự encoder-decoder đã học ở
+[Speech-to-Text](31-speech-to-text.mdx), chỉ đảo chiều input/output) nhận
+chuỗi ký tự/token văn bản, sinh ra một **mel-spectrogram** dự đoán (biểu
+diễn tần số theo thời gian, đã học ở bài
+[Biểu diễn Âm thanh](30-bieu-dien-am-thanh.mdx)) — về bản chất, mô hình
+đang "tưởng tượng" ra âm thanh sẽ trông như thế nào (dưới dạng biểu diễn
+tần số) nếu đọc đúng văn bản đó lên.
+
+**Giai đoạn 2 — Vocoder (Spectrogram-to-Waveform):** mel-spectrogram là
+một biểu diễn **nén**, đã mất đi một phần thông tin so với waveform gốc
+(cụ thể là thông tin về **pha** của tín hiệu — chi tiết kỹ thuật không
+cần đi sâu, chỉ cần biết mel-spectrogram không đủ để "phát lại" trực tiếp
+thành âm thanh nghe được). Cần một mô hình riêng — gọi là **vocoder** — để
+chuyển mel-spectrogram ngược lại thành waveform thực sự có thể nghe qua
+loa. Đây là bước không tồn tại ở bài toán ngược (Speech-to-Text) — ở đó,
+mô hình chỉ cần **đọc hiểu** biểu diễn tần số, không cần tái tạo lại
+waveform từ nó.
+
+Một vocoder cụ thể, có ảnh hưởng lớn trong lịch sử TTS hiện đại:
+**WaveNet** (van den Oord và cộng sự, 2016, DeepMind) — mô hình sinh
+trực tiếp từng mẫu (sample) của waveform thô, dùng **dilated causal
+convolution** (tích chập giãn nở, nhân quả): "nhân quả" nghĩa là mỗi mẫu
+output chỉ phụ thuộc vào các mẫu input đã có trước đó (không nhìn "tương
+lai" — cùng nguyên tắc causal mask đã học ở [Pretraining](24-pretraining-llm.mdx)),
+còn "giãn nở" nghĩa là khoảng cách giữa các điểm được tích chập tăng dần
+theo cấp số nhân qua mỗi lớp, giúp mở rộng phạm vi "nhìn thấy" (receptive
+field) rất xa mà không cần quá nhiều lớp. WaveNet là mô hình đầu tiên tạo
+ra giọng nói tổng hợp đạt độ tự nhiên chưa từng có trong lĩnh vực TTS tại
+thời điểm công bố.
+
+## Liên hệ với generative models đã học: đây là bài toán sinh dữ liệu mới
+
+Vocoder về bản chất là một bài toán **sinh dữ liệu** (generative) —
+giống tinh thần của [Autoencoder](22-autoencoder.mdx) (decoder khôi phục
+dữ liệu từ biểu diễn nén) và [GAN](23-gan.mdx) (generator tạo dữ liệu mới
+chân thực từ một biểu diễn chiều thấp). Vocoder nhận một biểu diễn nén
+(mel-spectrogram) và phải "khôi phục/tạo ra" một waveform chi tiết, chân
+thực — chính xác là vai trò của decoder/generator đã học, chỉ khác loại
+dữ liệu đầu ra (waveform âm thanh thay vì ảnh hay dữ liệu bảng).
+
+## Vì sao cần tách 2 giai đoạn thay vì làm 1 bước duy nhất
+
+Tách bài toán thành 2 mô hình riêng (text→spectrogram, rồi
+spectrogram→waveform) giúp mỗi mô hình chỉ cần giải quyết một phần việc
+rõ ràng hơn: mô hình đầu tập trung vào đúng **nội dung ngôn ngữ** cần
+"nói" (từ nào, ngắt nghỉ ở đâu, ngữ điệu câu), còn vocoder tập trung
+riêng vào việc tái tạo **chi tiết âm thanh** chân thực từ một đặc trưng
+tần số đã cho — tương tự tinh thần chia nhỏ vấn đề phức tạp thành các bước
+con dễ quản lý hơn, thay vì huấn luyện một mô hình khổng lồ giải quyết
+toàn bộ đầu-cuối cùng lúc.
+
+## Liên hệ lại với các bài trước
+
+- TTS là ví dụ generative model thứ ba trong giáo trình (sau
+  [Autoencoder](22-autoencoder.mdx) và [GAN](23-gan.mdx)) — nhưng áp dụng
+  cho một loại dữ liệu hoàn toàn mới (audio) thay vì ảnh hay dữ liệu
+  bảng, cho thấy nguyên lý encoder/decoder-generator tổng quát hoá được
+  qua nhiều modality khác nhau.
+- Giai đoạn text-to-spectrogram dùng lại chính xác kiến trúc sequence-
+  to-sequence đã học ở [Speech-to-Text](31-speech-to-text.mdx), chỉ đảo
+  ngược chiều input/output — một minh hoạ rõ cho việc cùng một công cụ
+  (encoder-decoder) giải quyết được cả hai chiều của cùng một cặp
+  modality (text ↔ audio).
+- Việc tách 2 giai đoạn (text→spectrogram, spectrogram→waveform) là một
+  ví dụ khác của nguyên tắc module hoá đã gặp ở
+  [RAG/Agent](29-rag-embedding-agent.mdx) (tách retrieval và generation
+  thành 2 bước riêng) — chia một bài toán phức tạp thành các bước con rõ
+  ràng thường dễ huấn luyện và debug hơn một mô hình đơn khối làm tất cả.
+
+Với bài này, series Audio (30-32: Biểu diễn Âm thanh → Speech-to-Text →
+Text-to-Speech) hoàn thành, đúng phạm vi "Speech recognition + TTS cơ
+bản" đã xác nhận với người vận hành.
+
+## Nguồn tham khảo
+
+- [Multimodal Browser AI with Transformers.js for Images and Speech (MachineLearningMastery)](https://machinelearningmastery.com/multimodal-browser-ai-with-transformers-js-for-images-and-speech/) — dùng để xác nhận text-to-speech là một khả năng audio thực tế được hỗ trợ trong hệ sinh thái multimodal AI hiện đại, đối lập chiều với speech-to-text đã học ở bài trước.
+- [arXiv — WaveNet: A Generative Model for Raw Audio](https://arxiv.org/abs/1609.03499) — paper gốc của van den Oord và cộng sự (2016, DeepMind), dùng cho kiến trúc dilated causal convolution cụ thể (nhân quả + giãn nở tăng dần theo cấp số nhân), và kết quả tổng hợp giọng nói đạt độ tự nhiên chưa từng có tại thời điểm công bố.

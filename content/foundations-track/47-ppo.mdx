@@ -1,0 +1,126 @@
+---
+title: "PPO — Cập nhật Policy An toàn Bằng Clipped Surrogate Objective"
+track: foundations-track
+module: "Reinforcement Learning"
+submodule: "Policy-based"
+order: 47
+status: stable
+prerequisites: ["19-policy-gradient"]
+summary: "Policy gradient chuẩn (kể cả với Actor-Critic) chỉ dùng mỗi batch dữ liệu cho đúng 1 lần cập nhật — kém hiệu quả dữ liệu, và cập nhật quá lớn có thể phá hỏng policy không thể phục hồi. TRPO giải quyết bằng ràng buộc trust region phức tạp; Schulman và cộng sự (2017) đơn giản hoá bằng PPO: một hàm mục tiêu 'clipped surrogate' cho phép nhiều epoch cập nhật trên cùng dữ liệu mà vẫn ổn định, dễ cài đặt hơn nhiều."
+last_touched_by_task: "Bài mới (2026-07-06), bài thứ 2 sub-module Policy-based (Reinforcement Learning) — nối tiếp trực tiếp bài 19 (Policy Gradient/Actor-Critic), lấp khoảng trống PPO đã liên hệ nhiều lần ở bài 27 (RLHF) nhưng chưa từng giải thích cơ chế cụ thể. Nguồn: arxiv 1707.06347 (paper gốc Schulman et al. 2017, xác nhận qua WebFetch abstract: vấn đề data efficiency của policy gradient chuẩn, đóng góp clipped surrogate objective, kết quả thực nghiệm) + lilianweng.github.io (Lil'Log, xác nhận qua WebFetch: công thức chính xác J^CLIP với r(θ) và clip(r(θ), 1-ε, 1+ε), so sánh với TRPO). Đã thử tìm nguồn cho Double DQN (sub-module Value-based) trước đó nhưng chỉ có 1 nguồn arxiv xác nhận được — không đủ chuẩn 2 nguồn nên KHÔNG viết bài đó, ưu tiên PPO vì tìm đủ 2 nguồn. Cập nhật (2026-07-06, cùng task viết bài 77 A3C): định nghĩa tường minh advantage `Â` bằng công thức A(s,a)=G-V(s), trỏ sang bài 77 thay vì chỉ nói mập mờ 'liên quan chặt tới baseline'."
+---
+
+Bài [Policy Gradient](19-policy-gradient.mdx) giới thiệu REINFORCE và
+cải tiến bằng baseline/Actor-Critic để giảm phương sai. Bài
+[RLHF & Alignment](27-rlhf-alignment.mdx) đã nhắc tới **PPO** như thuật
+toán RL cụ thể dùng để huấn luyện RLHF truyền thống, nhưng chưa giải
+thích cơ chế của nó. Bài này lấp đúng khoảng trống đó.
+
+## Vấn đề: policy gradient chuẩn lãng phí dữ liệu, và cập nhật lớn có thể phá hỏng policy
+
+Policy gradient chuẩn (kể cả với Actor-Critic đã học ở bài 19) có một
+hạn chế thực tế: mỗi batch dữ liệu thu thập được (chạy thử policy hiện
+tại, quan sát reward) chỉ được dùng cho **đúng một lần cập nhật** tham
+số. Sau khi cập nhật, dữ liệu đó không còn "hợp lệ" nữa — vì nó được thu
+thập từ policy **cũ**, còn policy đã thay đổi sau bước cập nhật (đây là
+tính chất **on-policy** đã nhắc ở bài 19). Điều này khiến quá trình học
+tốn kém: phải liên tục thu thập dữ liệu mới, dùng xong rồi bỏ, không thể
+tái sử dụng để học thêm.
+
+Vấn đề thứ hai còn nghiêm trọng hơn: nếu bước cập nhật tham số quá lớn
+(learning rate không phù hợp, hoặc gradient ước lượng không chính xác),
+policy mới có thể **tệ hơn hẳn** policy cũ — và vì các bước cập nhật
+sau đó lại dựa trên policy hiện tại để thu thập dữ liệu, một cập nhật
+tồi có thể khiến toàn bộ quá trình học sụp đổ, khó phục hồi lại được.
+
+**TRPO** (Trust Region Policy Optimization) là một giải pháp trước đó
+cho vấn đề thứ hai — ràng buộc mỗi bước cập nhật không được đi quá xa so
+với policy cũ (dùng một ràng buộc toán học phức tạp dựa trên KL-divergence,
+đo "khoảng cách" giữa hai policy). TRPO hiệu quả nhưng **phức tạp để cài
+đặt** — đòi hỏi tính toán tối ưu hoá ràng buộc bậc hai, tốn kém về mặt kỹ
+thuật.
+
+## Giải pháp: PPO — giới hạn cập nhật bằng một hàm mục tiêu đơn giản, "cắt" (clip) trực tiếp
+
+**Schulman và cộng sự (2017)**, trong bài báo "Proximal Policy
+Optimization Algorithms", đề xuất **PPO** (Proximal Policy Optimization)
+— giữ lại ý tưởng cốt lõi của TRPO (không để policy mới đi quá xa policy
+cũ trong một bước cập nhật) nhưng thay ràng buộc toán học phức tạp bằng
+một cách đơn giản hơn nhiều: **cắt (clip) trực tiếp** trong chính hàm
+mục tiêu.
+
+Định nghĩa tỷ lệ xác suất giữa policy mới và policy cũ cho một hành động
+`a` tại state `s`:
+
+```
+r(θ) = π_θ(a|s) / π_θ_old(a|s)
+```
+
+Nếu `r(θ) = 1`, hai policy y hệt nhau; nếu `r(θ)` lớn hơn hoặc nhỏ hơn 1
+nhiều, policy mới đã thay đổi đáng kể so với policy cũ. Hàm mục tiêu
+**clipped surrogate objective** của PPO:
+
+```
+J_CLIP(θ) = E[ min( r(θ) * Â, clip(r(θ), 1-ε, 1+ε) * Â ) ]
+```
+
+Trong đó `Â` là ước lượng advantage — đo hành động đó tốt hơn/kém hơn
+trung bình bao nhiêu tại state đó, định nghĩa tường minh là
+`A(s,a) = G - V(s)` (return trừ giá trị ước lượng bởi critic, xem bài
+[A3C](77-a3c.mdx) — về bản chất là công thức "trừ baseline" đã học ở bài
+19, với baseline cụ thể là `V(s)`) — và `ε` (epsilon) là một hằng số nhỏ
+(ví dụ 0.2) giới hạn khoảng cho phép của `r(θ)`.
+
+Trực giác của công thức: nếu `r(θ)` vượt ra ngoài khoảng
+`[1-ε, 1+ε]` (nghĩa là policy mới đã thay đổi quá nhiều so với policy
+cũ), phần `clip(...)` sẽ "cắt" giá trị lại đúng ở biên của khoảng đó —
+loại bỏ động lực để cập nhật đi xa hơn nữa theo hướng đó. Việc lấy `min`
+giữa giá trị gốc và giá trị đã cắt đảm bảo hàm mục tiêu luôn là một
+**giới hạn dưới bi quan** (pessimistic bound) của cải thiện thực sự —
+tránh trường hợp thuật toán "quá tự tin" vào một ước lượng advantage có
+thể sai lệch.
+
+## Vì sao cách này cho phép nhiều epoch cập nhật trên cùng dữ liệu
+
+Vì cơ chế clipping đã tự giới hạn mức độ thay đổi của policy trong mỗi
+lần cập nhật, PPO có thể an toàn chạy **nhiều epoch cập nhật minibatch**
+trên cùng một tập dữ liệu đã thu thập, thay vì chỉ dùng đúng một lần rồi
+bỏ như policy gradient chuẩn — cải thiện đáng kể hiệu quả sử dụng dữ
+liệu (data efficiency), vì không cần liên tục thu thập dữ liệu mới cho
+mỗi bước cập nhật nhỏ.
+
+## Kết quả: đơn giản hơn TRPO, hiệu năng tương đương hoặc tốt hơn
+
+Schulman và cộng sự công bố PPO đạt được **một số lợi ích của TRPO**
+(ổn định, không để policy thay đổi quá đột ngột) nhưng **đơn giản hơn
+nhiều để cài đặt, tổng quát hơn, và có sample complexity tốt hơn** (đo
+thực nghiệm) — không cần tính toán ràng buộc bậc hai phức tạp như TRPO,
+chỉ cần một phép `clip` đơn giản trong hàm mục tiêu. Thử nghiệm trên
+nhiều benchmark (robot control mô phỏng, game Atari) cho thấy PPO vượt
+trội các phương pháp policy gradient online khác, đạt cân bằng tốt giữa
+sample complexity, độ đơn giản, và thời gian chạy thực tế (wall-time).
+
+Đây là lý do PPO trở thành một trong những thuật toán RL được dùng phổ
+biến nhất trong thực hành hiện đại — bao gồm cả vai trò thuật toán RL
+tiêu chuẩn trong quy trình RLHF truyền thống đã nhắc ở bài 27.
+
+## Liên hệ lại với các bài trước
+
+- PPO không thay đổi nguyên lý cốt lõi của policy gradient đã học ở bài
+  [Policy Gradient](19-policy-gradient.mdx) — vẫn tối ưu hoá trực tiếp
+  tham số `θ` của policy bằng gradient ascent, vẫn dùng khái niệm
+  advantage liên quan tới baseline đã học. Điểm mới chỉ là **cách giới
+  hạn mức độ thay đổi mỗi bước cập nhật** để tránh phá hỏng policy.
+- Đây là ví dụ cụ thể của mẫu hình đã lặp lại nhiều lần trong track: một
+  giải pháp phức tạp (TRPO, ràng buộc KL-divergence bậc hai) được đơn
+  giản hoá bằng một công cụ dễ cài đặt hơn nhưng vẫn giữ được lợi ích cốt
+  lõi — tương tự cách DPO (bài 27) đơn giản hoá RLHF bằng cách bỏ hẳn
+  bước RL.
+- PPO là mảnh ghép còn thiếu để hiểu trọn vẹn cơ chế RLHF đã học ở bài
+  [RLHF & Alignment](27-rlhf-alignment.mdx) — "dùng thuật toán RL (kiểu
+  policy gradient)" ở bài đó chính xác thường là PPO trong thực hành.
+
+## Nguồn tham khảo
+
+- [arXiv — Proximal Policy Optimization Algorithms](https://arxiv.org/abs/1707.06347) — paper gốc của Schulman và cộng sự (2017), dùng cho vấn đề cụ thể (policy gradient chuẩn chỉ cập nhật 1 lần mỗi batch dữ liệu, kém hiệu quả dữ liệu), đóng góp (hàm mục tiêu cho phép nhiều epoch cập nhật minibatch trên cùng dữ liệu), và kết quả thực nghiệm (vượt trội các phương pháp policy gradient online khác trên robot control/Atari).
+- [Lil'Log — Policy Gradient Algorithms (Lilian Weng)](https://lilianweng.github.io/posts/2018-04-08-policy-gradient/) — dùng cho công thức chính xác clipped surrogate objective (`J^CLIP(θ) = E[min(r(θ)Â, clip(r(θ), 1-ε, 1+ε)Â)]`), định nghĩa tỷ lệ xác suất `r(θ)`, và so sánh cơ chế "soft clipping" của PPO với ràng buộc KL-divergence "cứng" của TRPO.

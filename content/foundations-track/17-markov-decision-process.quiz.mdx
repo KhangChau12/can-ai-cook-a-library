@@ -1,0 +1,43 @@
+---
+quiz_for: 17-markov-decision-process
+---
+
+## Q1
+MDP được định nghĩa đầy đủ bởi bộ 5 thành phần nào?
+
+- [x] (S, A, T, γ, R) — state, action, xác suất chuyển trạng thái, discount factor, reward
+- [ ] (X, Y, W, b, loss) — giống các mô hình supervised đã học
+- [ ] (Q, K, V, softmax, output) — giống framework attention
+- [ ] (encoder, decoder, attention, loss, optimizer)
+
+> MDP là bộ 5 thành phần: S (tập state), A (tập action), T(s,a,s') (xác suất chuyển trạng thái), γ (discount factor), R(s,a) (hàm reward) — hình thức hoá chính xác framework RL đã học ở bài trước bằng toán học.
+
+## Q2
+"Tính chất Markov" nghĩa là gì?
+
+- [x] Xác suất chuyển sang state tiếp theo chỉ phụ thuộc vào state HIỆN TẠI và action vừa thực hiện, không phụ thuộc toàn bộ lịch sử trước đó
+- [ ] Mọi action đều dẫn tới cùng một state tiếp theo
+- [ ] Reward luôn là một hằng số cố định
+- [ ] Chỉ áp dụng được cho bài toán có dưới 10 state
+
+> State hiện tại được coi là đã "tóm tắt" đủ mọi thông tin cần thiết từ quá khứ để dự đoán tương lai — đây là giả định đơn giản hoá quan trọng, không cần nhớ lại toàn bộ chuỗi sự kiện đã xảy ra.
+
+## Q3
+Discount factor `γ` gần 0 (so với gần 1) khiến agent có xu hướng gì?
+
+- [x] Gần như chỉ quan tâm reward ngay lập tức (nhìn gần), ít coi trọng reward xa trong tương lai
+- [ ] Coi trọng ngang nhau reward hiện tại và tương lai xa
+- [ ] Bỏ qua hoàn toàn mọi reward, chỉ quan tâm state
+- [ ] Luôn chọn action ngẫu nhiên, không tối ưu gì
+
+> `γ` gần 0 nghĩa là "chiết khấu" mạnh reward tương lai, khiến agent gần như chỉ quan tâm reward ngay lập tức; `γ` gần 1 khiến agent coi trọng gần như ngang nhau cả reward xa trong tương lai.
+
+## Q4
+Q-function (action-value function) `Q^π(s,a)` khác value function `V^π(s)` ở điểm nào?
+
+- [x] Q^π(s,a) đo kỳ vọng reward nếu thực hiện action a NGAY LÚC NÀY tại state s (dù a có thể không phải action policy π sẽ chọn), rồi mới quay lại tuân theo π
+- [ ] Q-function chỉ dùng được cho bài toán có 1 action duy nhất
+- [ ] Q-function không liên quan gì tới policy π
+- [ ] Q-function và value function là hoàn toàn giống nhau, chỉ khác tên gọi
+
+> V^π(s) đo giá trị nếu LUÔN hành động theo π từ state s; Q^π(s,a) đo giá trị nếu thực hiện action a cụ thể ngay lúc này (có thể khác π) rồi mới quay lại π — Q sẽ là trung tâm của thuật toán Q-learning ở bài tiếp theo.

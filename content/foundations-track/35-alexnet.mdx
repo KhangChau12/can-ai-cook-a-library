@@ -1,0 +1,101 @@
+---
+title: "AlexNet — Bước ngoặt khiến Deep Learning thống trị Computer Vision"
+track: foundations-track
+module: "Computer Vision"
+submodule: "Cơ bản"
+order: 35
+status: stable
+prerequisites: ["11-convolutional-neural-network", "10-regularization"]
+summary: "Vì sao AlexNet (2012) không phát minh convolution mới nhưng lại tạo ra cú sốc lớn nhất lịch sử computer vision: giải quyết đúng 2 giới hạn khiến LeNet 'ngủ đông' 14 năm (dữ liệu quy mô lớn, phần cứng) bằng ImageNet + GPU + ReLU + dropout."
+last_touched_by_task: "Bài mới đầu tiên (2026-07-06) lấp khoảng trống sub-module CV 'Cơ bản', nối tiếp trực tiếp phần lịch sử LeNet→AlexNet đã thêm vào bài 11 (CNN) trong task trước — tách AlexNet thành bài riêng thay vì gộp chung vì đủ nội dung kỹ thuật cụ thể (kiến trúc, ReLU, dropout, GPU) để đứng độc lập, tránh bài 11 quá dài lan man 2 chủ đề (nguyên lý convolution tổng quát vs chi tiết kỹ thuật huấn luyện một mô hình cụ thể)."
+---
+
+Bài [CNN](11-convolutional-neural-network.mdx) đã kể câu chuyện: LeCun
+xây dựng LeNet từ 1989-1998, chứng minh convolution hoạt động tốt cho bài
+toán hẹp (nhận diện chữ số viết tay), rồi CNN gần như "biến mất" khỏi
+computer vision trong hơn một thập kỷ vì thiếu dữ liệu quy mô lớn và
+phần cứng đủ mạnh. Bài này kể tiếp phần thứ hai: điều gì đã xảy ra năm
+2012 khiến CNN quay lại và thống trị computer vision cho tới tận bây giờ.
+
+## Bối cảnh: cuộc thi ImageNet và các phương pháp không dùng deep learning
+
+Đầu những năm 2010, cuộc thi **ImageNet Large Scale Visual Recognition
+Challenge (ILSVRC)** trở thành thước đo chuẩn cho bài toán phân loại ảnh
+quy mô lớn: hàng triệu ảnh, 1000 lớp vật thể khác nhau — quy mô mà LeNet
+chưa từng được kiểm chứng. Trước 2012, các đội thi hàng đầu dùng
+phương pháp **không phải deep learning**: trích xuất đặc trưng thủ công
+(hand-crafted features như SIFT, HOG) rồi đưa vào các mô hình classification
+cổ điển. Đội thắng cuộc năm 2011 đạt tỷ lệ lỗi top-5 khoảng 26% — vẫn còn
+rất cao cho một bài toán 1000 lớp.
+
+## AlexNet: giảm gần một nửa tỷ lệ lỗi trong một năm
+
+Năm 2012, đội của **Alex Krizhevsky, Ilya Sutskever, và Geoffrey Hinton**
+(Đại học Toronto) tham gia ILSVRC với một mạng CNN — sau này được gọi là
+**AlexNet** — và đạt tỷ lệ lỗi top-5 khoảng **16%**, so với khoảng **26%**
+của đội á quân dùng phương pháp cổ điển. Một bước nhảy gần 10 điểm phần
+trăm trong một năm là chưa từng có tiền lệ trong lịch sử cuộc thi này —
+đây là thời điểm cộng đồng computer vision bắt đầu chuyển hướng ồ ạt sang
+deep learning, không còn coi hand-crafted features là hướng đi mặc định.
+
+Về kiến trúc, AlexNet **không phát minh lại convolution** — nó vẫn dùng
+đúng nguyên lý translation invariance + locality mà LeNet đã chứng minh
+từ 1998. Điểm khác biệt là quy mô và ba cải tiến kỹ thuật giúp huấn luyện
+một mạng sâu hơn nhiều trở nên khả thi:
+
+**Kiến trúc sâu hơn.** AlexNet gồm 8 lớp có trọng số: 5 lớp tích chập xếp
+chồng lên nhau, theo sau bởi 3 lớp fully-connected — nhiều hơn đáng kể so
+với 2 lớp tích chập của LeNet-5, và số tham số lớn hơn nhiều bậc.
+
+**ReLU thay vì sigmoid.** LeNet dùng hàm kích hoạt sigmoid — nhưng
+sigmoid có đạo hàm rất nhỏ ở hai đầu (bão hoà), khiến gradient "biến mất"
+dần khi lan truyền qua nhiều lớp (vấn đề vanishing gradient, xem lại
+[Backpropagation](09-backpropagation.mdx)). Với một mạng sâu gấp nhiều
+lần LeNet, sigmoid sẽ khiến việc huấn luyện gần như không hội tụ được.
+AlexNet dùng **ReLU** (`f(x) = max(0, x)`) — đạo hàm bằng 1 với mọi input
+dương, không bị bão hoà ở nhánh dương, giúp gradient lan truyền ổn định
+hơn qua nhiều lớp và huấn luyện nhanh hơn đáng kể so với sigmoid/tanh.
+
+**Dropout chống overfitting.** Mạng sâu hơn đồng nghĩa số tham số tăng
+mạnh — nguy cơ overfitting cao hơn nhiều so với LeNet (xem
+[Regularization](10-regularization.mdx)). AlexNet là một trong những kiến
+trúc CNN quy mô lớn đầu tiên áp dụng **dropout** ở các lớp fully-connected
+để kiểm soát overfitting, cùng với việc mở rộng dữ liệu train bằng các
+phép biến đổi ảnh đơn giản (data augmentation).
+
+**GPU để huấn luyện khả thi.** Với hàng triệu ảnh và một mạng 8 lớp, huấn
+luyện trên CPU thời đó sẽ mất thời gian không thực tế. AlexNet được huấn
+luyện trên GPU — bước ngoặt hạ tầng khiến deep learning quy mô lớn lần
+đầu tiên khả thi về mặt thời gian/chi phí.
+
+## Điểm mấu chốt: ý tưởng cũ + điều kiện mới = đột phá
+
+Câu chuyện LeNet → AlexNet là một minh hoạ rõ cho một mẫu hình sẽ lặp lại
+nhiều lần trong lịch sử deep learning: một ý tưởng đúng (convolution) có
+thể "nằm im" rất lâu không phải vì nó sai, mà vì **điều kiện xung quanh**
+(dữ liệu, phần cứng, các kỹ thuật huấn luyện bổ trợ) chưa đủ chín muồi.
+AlexNet không thay thế LeNet bằng một nguyên lý khác — nó chứng minh
+nguyên lý cũ mở rộng được lên quy mô lớn, một khi ImageNet cung cấp đủ
+dữ liệu, GPU cung cấp đủ tốc độ tính toán, và ReLU + dropout giải quyết
+đúng hai vấn đề kỹ thuật (vanishing gradient, overfitting) phát sinh khi
+mạng sâu hơn nhiều. Đây cũng là điểm khởi đầu của làn sóng kiến trúc CNN
+hiện đại tiếp theo (VGG, ResNet — các bài sau trong sub-module này), mỗi
+kiến trúc lại giải quyết một hạn chế cụ thể của kiến trúc ngay trước nó.
+
+## Liên hệ lại với các bài trước
+
+- AlexNet không đổi cơ chế huấn luyện — vẫn
+  [backpropagation](09-backpropagation.mdx) và gradient descent như mọi
+  mạng nơ-ron khác. Thay đổi nằm ở kiến trúc (sâu hơn), hàm kích hoạt
+  (ReLU), và kỹ thuật chống overfitting (dropout) — ba mảnh ghép cụ thể
+  đã học riêng ở các bài trước, nay kết hợp lại để giải quyết một bài
+  toán quy mô lớn hơn hẳn.
+- Đây là minh hoạ cụ thể cho nguyên tắc đã nói ở bài
+  [Regularization](10-regularization.mdx): mạng càng nhiều tham số càng
+  cần kỹ thuật kiểm soát overfitting rõ ràng — AlexNet không thể đạt kết
+  quả đó nếu bỏ qua dropout.
+
+## Nguồn tham khảo
+
+- [Stanford CS231n — Convolutional Neural Networks (Case Studies)](https://cs231n.github.io/convolutional-networks/) — dùng cho số liệu tỷ lệ lỗi top-5 (AlexNet ~16% so với đội á quân ~26% tại ILSVRC 2012), bối cảnh AlexNet là công trình đầu tiên phổ biến CNN rộng rãi trong computer vision, và mô tả kiến trúc (các lớp tích chập xếp chồng).
+- [Dive into Deep Learning — Deep Convolutional Neural Networks (AlexNet)](https://d2l.ai/chapter_convolutional-modern/alexnet.html) — dùng cho chi tiết kiến trúc (8 lớp: 5 conv + 3 fully-connected), vai trò ReLU giải quyết vanishing gradient so với sigmoid của LeNet, dropout chống overfitting, và vai trò GPU trong việc huấn luyện khả thi.

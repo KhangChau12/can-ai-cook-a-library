@@ -1,0 +1,63 @@
+---
+title: "Bổ trợ thi đấu"
+track: exam-track
+summary: "Bí kíp thực chiến chinh phục các cuộc thi AI/ML: từ quy trình nộp bài chuẩn hóa đến kỹ thuật tối ưu hóa model nâng cao."
+---
+
+Mục lục dự kiến (agent cập nhật khi thêm/sửa/sắp xếp lại bài — đây là danh
+sách sống, không phải cam kết cố định). Track chia đúng 2 module theo mục
+đích, tách rõ ràng trong viewer (2026-07-05):
+
+## Module 1 — Hướng dẫn dùng nền tảng
+
+Bắt buộc đọc trước khi nộp submission đầu tiên — cách đọc leaderboard,
+tính điểm, tránh lỗi nộp bài, và quy trình tối thiểu từ dữ liệu tới bài
+nộp hợp lệ.
+
+1. [Leaderboard, Scoring Metric & Lỗi nộp bài trên The Noders Platform](01-leaderboard-metric-va-loi-nop-bai.mdx) — `stable` (rà lại 2026-07-06, đạt chuẩn không cần viết lại)
+2. [Quy trình thi đấu: Từ Dữ liệu thô tới Submission hợp lệ](02-quy-trinh-thi-dau-tu-du-lieu-den-nop-bai.mdx) — `stable` (rà lại 2026-07-06, đạt chuẩn không cần viết lại)
+3. [Baseline, Nâng cấp Mô hình & Chiến lược Nộp bài](03-baseline-nang-cap-mo-hinh-va-chien-luoc-nop-bai.mdx) — `stable` (rà lại 2026-07-06, đạt chuẩn không cần viết lại)
+
+## Module 2 — Kỹ thuật thi đấu nâng cao
+
+Trick và kỹ thuật thi đấu thật, áp dụng sau khi đã nắm module 1: tận dụng
+model pretrained, quản lý checkpoint, tuỳ chỉnh kiến trúc, tìm
+hyperparameter có hệ thống, kết hợp nhiều model, và kỹ thuật riêng cho dữ
+liệu dạng bảng.
+
+4. [Transfer Learning & Fine-tuning — Tận dụng Model đã học sẵn](04-transfer-learning-va-fine-tuning.mdx) — `stable` (rà lại 2026-07-06, đạt chuẩn không cần viết lại)
+5. [Checkpoint — Lưu, Load & Dùng lại Trạng thái Model](05-load-va-dung-pretrained-checkpoint.mdx) — `stable` (rà lại 2026-07-06, đạt chuẩn không cần viết lại)
+6. [Tuỳ chỉnh Kiến trúc — Thêm/Bớt/Thay Layer trên Model Pretrained](06-thay-doi-kien-truc-them-bot-layer.mdx) — `stable` (rà lại 2026-07-06, đạt chuẩn không cần viết lại)
+7. [Hyperparameter Tuning — Tìm cấu hình tốt nhất một cách có hệ thống](07-hyperparameter-tuning.mdx) — `stable` (rà lại 2026-07-06, đạt chuẩn không cần viết lại)
+8. [Model Ensembling — Kết hợp nhiều Model để tăng điểm số](08-model-ensembling.mdx) — `stable` (rà lại 2026-07-06, đạt chuẩn không cần viết lại)
+9. [Kỹ thuật riêng cho Dữ liệu Tabular — Target Encoding & Feature Interaction](09-ky-thuat-rieng-cho-tabular.mdx) — `stable` (rà lại 2026-07-06, đạt chuẩn không cần viết lại)
+10. [Data Augmentation — Nhân bản Dữ liệu Ảnh Có Chủ đích Để Giảm Overfitting](10-data-augmentation.mdx) — `stable` (mới, 2026-07-06: flip/crop/multi-scale/PCA color perturbation từ AlexNet, nguyên tắc chỉ augment train, test-time augmentation, nguồn machinelearningmastery.com)
+11. [Cross-Validation cho Dữ liệu Có Tính Thời gian — Walk-Forward Validation](11-cross-validation-cho-du-lieu-thoi-gian.mdx) — `stable` (mới, 2026-07-06: k-fold ngẫu nhiên phá vỡ cấu trúc thời gian → walk-forward validation, expanding vs sliding window, temporal leakage qua feature engineering, nguồn machinelearningmastery.com)
+
+---
+
+**Ghi chú tái cấu trúc (2026-07-05):** track này được tái cấu trúc lớn
+theo yêu cầu người vận hành — 11 bài cũ (thiên về "hướng dẫn quy trình
+dùng platform") được gộp/rút gọn còn 3 bài (module 1), giữ vai trò nền
+tảng bắt buộc. Từ bài 4 trở đi (module 2) là nội dung hoàn toàn mới, đúng
+phạm vi ban đầu của exam-track: dạy trick/kỹ thuật thi đấu thật.
+
+**Ghi chú tách module (2026-07-05):** 2 nhóm này đã tồn tại ngầm trong
+`_index.mdx` từ đợt tái cấu trúc trước ("Nhóm nền tảng" / "Nhóm kỹ thuật
+nâng cao") nhưng chưa phải structured data — nay chính thức hoá thành
+field `module` trong frontmatter mỗi bài, hiển thị thành 2 nhóm rõ ràng
+trong sidebar viewer, khớp đúng ý định gốc "section 1: hướng dẫn dùng web
+đơn giản, section 2: technique thi đấu" của người vận hành.
+
+Xem quy tắc nội dung Sườn A ở `../../CLAUDE.md` mục 2.1 trước khi thêm bài.
+
+**Cột mốc (2026-07-06):** toàn bộ 9 bài exam-track đã rà lại dưới góc
+nhìn triết lý mới — **9/9 đạt `status: stable`**. Không bài nào cần viết
+lại nội dung: cả 9 bài đều đã đạt chuẩn "thực chiến, gọn, bám platform
+thật" (mục 2.1 sườn A) từ đợt tái cấu trúc lớn 2026-07-05, không "vỏ
+rỗng". Kết hợp với foundations-track (42/42 stable, sau khi hoàn thiện
+module Computer Vision với bài 42 Mask R-CNN), **toàn bộ 51 bài giáo
+trình đã đạt 100% `stable`** — hoàn tất trọn vẹn đợt "đổi triết lý nội
+dung" bắt đầu từ phiên 2026-07-06. Đợt rà soát bổ sung (Task 30-32,
+9 mẫu trải đều cả 2 track) xác nhận chất lượng thực chất, không chỉ
+`status` trên giấy tờ.

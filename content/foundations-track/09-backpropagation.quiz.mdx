@@ -1,0 +1,43 @@
+---
+quiz_for: 09-backpropagation
+---
+
+## Q1
+Vì sao mạng cần lưu lại các giá trị trung gian (h1, h2...) trong lúc chạy forward pass?
+
+- [x] Vì backward pass sẽ cần dùng lại chính những giá trị này để tính gradient qua chain rule
+- [ ] Để hiển thị lên giao diện cho người dùng theo dõi
+- [ ] Vì đây là yêu cầu bắt buộc của gradient descent, không liên quan backprop
+- [ ] Chỉ cần lưu nếu mạng có trên 100 lớp
+
+> Backward pass tính gradient bằng chain rule, cần các giá trị trung gian đã tính ở forward pass — đây là lý do huấn luyện tốn nhiều bộ nhớ hơn hẳn so với chỉ chạy dự đoán (không cần giữ lại giá trị sau khi dùng xong).
+
+## Q2
+Chain rule (`dy/dx = (dy/du) * (du/dx)`) đóng vai trò gì trong backpropagation?
+
+- [x] Cho phép "truyền" đạo hàm qua từng lớp trung gian của mạng, thay vì viết một công thức khổng lồ tính trực tiếp từ đầu tới cuối
+- [ ] Giúp tính nghiệm đóng cho mạng nơ-ron, giống normal equation
+- [ ] Chỉ áp dụng được cho mạng có đúng 2 lớp
+- [ ] Thay thế hoàn toàn cho gradient descent
+
+> Mạng nơ-ron nhiều lớp là một chuỗi hàm số lồng nhau — chain rule là nền tảng toán học cho phép tính gradient của loss theo tham số ở lớp đầu tiên bằng cách "truyền" qua từng lớp trung gian.
+
+## Q3
+Vì sao backpropagation tính gradient theo chiều NGƯỢC (từ output về input) thay vì tính độc lập từng tham số?
+
+- [x] Vì gradient của một lớp được tính dựa trên gradient đã tính ở lớp ngay sau nó, tiết kiệm rất nhiều phép tính trùng lặp
+- [ ] Vì tính xuôi từ input sẽ cho kết quả sai
+- [ ] Vì máy tính chỉ có thể tính đạo hàm theo chiều ngược
+- [ ] Để tiết kiệm bộ nhớ, không cần lưu giá trị trung gian
+
+> Tái sử dụng gradient đã tính ở lớp sau (không tính lại từ đầu mỗi lần) là lý do backpropagation hiệu quả — đây chính là lý do mạng có hàng triệu tham số vẫn huấn luyện được trong thời gian hợp lý.
+
+## Q4
+Sau khi backward pass hoàn tất và có gradient của mọi tham số, bước cập nhật tham số tiếp theo là gì?
+
+- [x] Gradient descent — giống hệt công thức đã học ở Linear Regression, chỉ áp dụng đồng loạt cho hàng nghìn/triệu tham số
+- [ ] Tính lại normal equation cho toàn bộ mạng
+- [ ] Chạy lại forward pass để kiểm tra gradient có đúng không
+- [ ] Backpropagation tự động cập nhật tham số, không cần bước riêng
+
+> Backpropagation KHÔNG phải một thuật toán tối ưu hoá mới — nó chỉ là cách tính gradient hiệu quả. Bước cập nhật tham số vẫn là `tham_so := tham_so - learning_rate * gradient`, đúng công thức gradient descent quen thuộc.

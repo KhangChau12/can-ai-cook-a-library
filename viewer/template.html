@@ -1,0 +1,1272 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<title>AI Learn — Autopilot Viewer</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root {
+    --bg-primary: #0F172A;
+    --bg-surface: #1E293B;
+    --bg-elevated: #334155;
+    --bg-inset: #0B1220;
+    --border-default: #334155;
+    --border-subtle: #475569;
+    --text-primary: #F8FAFC;
+    --text-secondary: #CBD5E1;
+    --text-tertiary: #94A3B8;
+    --text-disabled: #64748B;
+    --blue: #2563EB;
+    --blue-soft: rgba(37,99,235,0.14);
+    --cyan: #06B6D4;
+    --cyan-soft: rgba(6,182,212,0.12);
+    --success: #059669;
+    --warning: #D97706;
+    --error: #DC2626;
+    --accent: var(--blue);
+    --accent-soft: var(--blue-soft);
+    --shadow-card: 0 1px 2px rgba(0,0,0,0.24), 0 8px 20px -8px rgba(0,0,0,0.35);
+    --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition-duration: 0.001ms !important; animation-duration: 0.001ms !important; }
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+    height: 100vh;
+    overflow: hidden;
+    font-variant-numeric: tabular-nums;
+  }
+  #app { display: flex; height: 100%; }
+  ::selection { background: rgba(37,99,235,0.35); color: var(--text-primary); }
+  :focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; border-radius: 4px; }
+
+  /* ================= Sidebar ================= */
+  #sidebar {
+    width: 340px;
+    flex-shrink: 0;
+    background: var(--bg-surface);
+    border-right: 1px solid var(--border-default);
+    display: flex;
+    flex-direction: column;
+    transition: margin-left 0.2s var(--ease);
+  }
+  #sidebar.collapsed { margin-left: -340px; }
+  #sidebar-head { padding: 18px 18px 12px; flex-shrink: 0; }
+  #sidebar-head h1 {
+    font-size: 15px; color: var(--text-primary); margin: 0 0 2px; font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .meta-line { font-size: 11px; color: var(--text-disabled); margin-bottom: 16px; }
+
+  .search-row { position: relative; margin-bottom: 12px; }
+  .search-row svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-disabled); pointer-events: none; }
+  #search-input {
+    width: 100%; padding: 8px 30px 8px 32px; font-size: 13px; font-family: inherit;
+    background: var(--bg-inset); border: 1px solid var(--border-default); border-radius: 8px;
+    color: var(--text-primary); transition: all 0.2s var(--ease);
+  }
+  #search-input::placeholder { color: var(--text-disabled); }
+  #search-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+    outline: none;
+  }
+  .search-kbd {
+    position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+    font-size: 10px; color: var(--text-disabled); background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle); border-radius: 4px; padding: 1px 5px;
+    font-family: "JetBrains Mono", ui-monospace, monospace; pointer-events: none;
+  }
+  #search-input:focus ~ .search-kbd, .search-row.has-value .search-kbd { display: none; }
+
+  .progress-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+  .progress-track {
+    flex: 1; height: 5px; background: var(--bg-inset); border-radius: 999px; overflow: hidden;
+  }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--cyan)); border-radius: 999px; transition: width 0.3s var(--ease); }
+  .progress-label { font-size: 10.5px; color: var(--text-disabled); flex-shrink: 0; font-family: "JetBrains Mono", ui-monospace, monospace; }
+
+  #page-list-wrap { flex: 1; overflow-y: auto; padding: 4px 12px 20px; }
+
+  ul.page-list { list-style: none; margin: 0; padding: 0; overflow: hidden; }
+
+  ul.page-list li {
+    position: relative;
+    padding: 9px 10px 9px 12px; border-radius: 8px; cursor: pointer; margin-bottom: 2px;
+    font-size: 13px; display: flex; align-items: center; gap: 9px;
+    border: 1px solid transparent;
+    line-height: 1.4;
+    transition: background 0.15s var(--ease), border-color 0.15s var(--ease);
+  }
+  ul.page-list li:hover { background: var(--bg-elevated); }
+  ul.page-list li.active { background: var(--accent-soft); border-color: var(--accent); color: var(--text-primary); }
+  ul.page-list li.active::before {
+    content: ""; position: absolute; left: -12px; top: 8px; bottom: 8px; width: 3px;
+    background: var(--accent); border-radius: 0 3px 3px 0;
+  }
+  ul.page-list li.hidden { display: none; }
+
+  .page-num {
+    flex-shrink: 0; width: 20px; height: 20px; border-radius: 6px;
+    background: var(--bg-elevated); color: var(--text-tertiary);
+    font-size: 10.5px; font-weight: 700; font-family: "JetBrains Mono", ui-monospace, monospace;
+    display: flex; align-items: center; justify-content: center;
+  }
+  li.active .page-num { background: var(--accent); color: white; }
+  .page-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* ---------- Progress icon: unread (rỗng) / viewed (đặc) / quiz_done (check) ---------- */
+  .progress-icon { flex-shrink: 0; width: 15px; height: 15px; display: flex; align-items: center; justify-content: center; }
+  .progress-icon svg { width: 15px; height: 15px; }
+  .progress-icon.unread svg circle { fill: none; stroke: var(--border-subtle); stroke-width: 1.6; }
+  .progress-icon.viewed svg circle { fill: var(--accent); stroke: var(--accent); stroke-width: 1.6; }
+  .progress-icon.quiz_done svg circle { fill: var(--success); stroke: var(--success); stroke-width: 1.6; }
+  .progress-icon.quiz_done svg path { stroke: white; stroke-width: 2.2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+
+  .status-dot { flex-shrink: 0; width: 7px; height: 7px; border-radius: 999px; cursor: help; }
+  .status-dot.stable { background: #34d399; }
+  .status-dot.needs-review { background: #fbbf24; }
+  .status-dot.draft { background: var(--text-disabled); }
+
+  .empty-search { padding: 24px 8px; text-align: center; color: var(--text-disabled); font-size: 12.5px; }
+
+  /* ================= Top bar (mobile / collapse toggle) ================= */
+  #topbar {
+    display: none; align-items: center; gap: 10px; padding: 10px 14px;
+    background: var(--bg-surface); border-bottom: 1px solid var(--border-default);
+    flex-shrink: 0;
+  }
+  #sidebar-toggle {
+    background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: 7px;
+    color: var(--text-secondary); width: 32px; height: 32px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  #sidebar-toggle:hover { background: var(--border-subtle); }
+  #topbar-title { font-size: 13px; color: var(--text-primary); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* ================= Main / content ================= */
+  #app-inner { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  #main { flex: 1; overflow-y: auto; padding: 36px 5% 80px; }
+  #content-wrap {
+    max-width: 1080px; width: 100%; margin: 0 auto;
+    display: grid; grid-template-columns: minmax(0,1fr) 200px; gap: 48px; align-items: start;
+  }
+  #content-col { min-width: 0; }
+
+  .breadcrumb {
+    display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-disabled);
+    margin-bottom: 14px; flex-wrap: wrap;
+  }
+  .breadcrumb .sep { color: var(--border-subtle); }
+  .breadcrumb .crumb-track { color: var(--accent); font-weight: 600; }
+  .breadcrumb .crumb-module { color: var(--text-tertiary); }
+
+  .page-header { margin-bottom: 30px; padding-bottom: 22px; border-bottom: 1px solid var(--border-default); }
+  .page-header h1 { font-size: 27px; color: var(--text-primary); margin: 0 0 12px; line-height: 1.28; letter-spacing: -0.01em; text-wrap: balance; }
+  .page-header-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .badge {
+    font-size: 10px; padding: 3px 8px; border-radius: 999px; flex-shrink: 0;
+    font-family: "JetBrains Mono", ui-monospace, monospace; text-transform: uppercase;
+    letter-spacing: 0.03em; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;
+  }
+  .badge.stable { background: rgba(5,150,105,0.15); color: #34d399; }
+  .badge.needs-review { background: rgba(217,119,6,0.15); color: #fbbf24; }
+  .badge.draft { background: rgba(148,163,184,0.15); color: var(--text-tertiary); }
+  .meta-pill { font-size: 11.5px; color: var(--text-tertiary); }
+
+  .prereq {
+    font-size: 12.5px; color: var(--text-tertiary); margin-top: 20px;
+    background: var(--bg-surface); border: 1px solid var(--border-default);
+    border-radius: 8px; padding: 10px 14px; line-height: 1.6;
+  }
+  .prereq strong { color: var(--text-secondary); }
+
+  #content { font-size: 15.5px; line-height: 1.75; }
+  #content h2 {
+    font-size: 20px; color: var(--text-primary); margin: 42px 0 16px;
+    padding-top: 4px; scroll-margin-top: 24px; letter-spacing: -0.005em;
+  }
+  #content h2:first-child { margin-top: 0; }
+  #content h3 { font-size: 17px; color: var(--text-primary); margin: 28px 0 12px; scroll-margin-top: 24px; }
+  #content h4 { font-size: 15px; color: var(--text-primary); margin: 20px 0 10px; scroll-margin-top: 24px; }
+  #content p { margin: 0 0 16px; }
+  #content strong { color: var(--text-primary); font-weight: 600; }
+  #content code {
+    background: var(--bg-elevated); padding: 2px 6px; border-radius: 4px;
+    font-size: 0.88em; font-family: "JetBrains Mono", ui-monospace, monospace;
+    color: #7dd3fc;
+  }
+  #content pre {
+    background: var(--bg-inset); border: 1px solid var(--border-default);
+    padding: 16px 18px; border-radius: 10px; overflow-x: auto; margin: 0 0 20px;
+    line-height: 1.6; box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);
+  }
+  #content pre code { background: none; padding: 0; color: var(--text-secondary); font-size: 0.87em; }
+  #content a { color: var(--cyan); text-decoration: none; border-bottom: 1px solid rgba(6,182,212,0.35); transition: border-color 0.15s var(--ease); }
+  #content a:hover { border-bottom-color: var(--cyan); }
+
+  #content ul, #content ol { margin: 0 0 16px; padding-left: 26px; }
+  #content ul.checklist { list-style: none; padding-left: 4px; }
+  #content li { margin-bottom: 8px; }
+  #content ul.checklist li { display: flex; align-items: flex-start; gap: 8px; }
+  #content .chk { flex-shrink: 0; margin-top: 3px; width: 15px; height: 15px; border-radius: 4px; border: 1px solid var(--border-subtle); display: inline-block; }
+  #content .chk.done { background: var(--success); border-color: var(--success); }
+
+  #content .table-wrap { overflow-x: auto; margin: 0 0 20px; border: 1px solid var(--border-default); border-radius: 8px; }
+  #content table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  #content th, #content td { padding: 9px 14px; text-align: left; border-bottom: 1px solid var(--border-default); }
+  #content th { background: var(--bg-elevated); color: var(--text-primary); font-weight: 600; white-space: nowrap; }
+  #content tr:last-child td { border-bottom: none; }
+  #content tr:hover td { background: rgba(51,65,85,0.3); }
+
+  #content blockquote {
+    margin: 0 0 20px; padding: 4px 16px; border-left: 3px solid var(--accent);
+    background: var(--accent-soft); color: var(--text-secondary); border-radius: 0 6px 6px 0;
+  }
+  #content hr { border: none; border-top: 1px solid var(--border-default); margin: 32px 0; }
+
+  .empty-state {
+    color: var(--text-disabled); font-size: 14px; padding: 100px 20px; text-align: center;
+    display: flex; flex-direction: column; align-items: center; gap: 14px;
+  }
+  .empty-state svg { color: var(--border-subtle); }
+
+  /* ---------- Table of contents ---------- */
+  #toc {
+    position: sticky; top: 0; font-size: 12.5px; padding-top: 2px;
+  }
+  #toc .toc-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-disabled); margin-bottom: 10px; }
+  #toc ul { list-style: none; margin: 0; padding: 0; border-left: 1px solid var(--border-default); }
+  #toc li { margin: 0; }
+  #toc a {
+    display: block; padding: 5px 0 5px 14px; color: var(--text-tertiary); text-decoration: none;
+    border-left: 2px solid transparent; margin-left: -1px; transition: color 0.15s var(--ease), border-color 0.15s var(--ease);
+  }
+  #toc a.h3 { padding-left: 26px; font-size: 12px; }
+  #toc a:hover { color: var(--text-secondary); }
+  #toc a.active { color: var(--accent); border-left-color: var(--accent); font-weight: 600; }
+  @media (max-width: 980px) { #toc-col { display: none; } #content-wrap { grid-template-columns: 1fr; } }
+
+  /* ---------- Prev/Next nav ---------- */
+  .pn-nav { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 44px; }
+  .pn-link {
+    display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; border-radius: 10px;
+    background: var(--bg-surface); border: 1px solid var(--border-default); text-decoration: none;
+    transition: border-color 0.15s var(--ease), background 0.15s var(--ease), transform 0.15s var(--ease);
+    min-width: 0;
+  }
+  .pn-link:hover { border-color: var(--accent); background: var(--bg-elevated); transform: translateY(-1px); }
+  .pn-link.next { text-align: right; align-items: flex-end; }
+  .pn-dir { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-disabled); display: flex; align-items: center; gap: 5px; }
+  .pn-title { font-size: 13.5px; color: var(--text-primary); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+  .pn-spacer { visibility: hidden; }
+
+  /* ---------- Quiz ---------- */
+  .quiz-toggle-row { margin: 26px 0 0; display: flex; gap: 10px; }
+  .quiz-btn {
+    padding: 9px 18px; font-size: 13px; font-weight: 600; border-radius: 8px;
+    background: var(--bg-elevated); color: var(--text-primary);
+    border: 1px solid var(--border-subtle); cursor: pointer;
+    transition: background 0.15s var(--ease), border-color 0.15s var(--ease);
+  }
+  .quiz-btn:hover { background: var(--border-subtle); }
+  .quiz-btn.active { background: var(--accent); border-color: var(--accent); }
+  #quiz-panel { margin-top: 24px; }
+  .quiz-progress-row { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+  .quiz-progress-track { flex: 1; height: 6px; background: var(--bg-inset); border-radius: 999px; overflow: hidden; }
+  .quiz-progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--cyan)); border-radius: 999px; transition: width 0.3s var(--ease); }
+  .quiz-progress-text { font-size: 12px; color: var(--text-tertiary); font-family: "JetBrains Mono", ui-monospace, monospace; flex-shrink: 0; }
+  .quiz-q {
+    background: var(--bg-surface); border: 1px solid var(--border-default);
+    border-radius: 10px; padding: 18px 20px; margin-bottom: 14px;
+    box-shadow: var(--shadow-card);
+  }
+  .quiz-q-prompt { color: var(--text-primary); font-weight: 600; margin-bottom: 14px; line-height: 1.5; }
+  .quiz-opt {
+    display: flex; align-items: flex-start; gap: 10px; padding: 9px 12px;
+    border-radius: 8px; border: 1px solid var(--border-default); margin-bottom: 8px;
+    cursor: pointer; font-size: 14px; transition: background 0.15s var(--ease), border-color 0.15s var(--ease);
+  }
+  .quiz-opt:hover { background: var(--bg-elevated); }
+  .quiz-opt .dot {
+    flex-shrink: 0; width: 16px; height: 16px; border-radius: 999px; margin-top: 2px;
+    border: 1px solid var(--border-subtle); display: inline-block;
+  }
+  .quiz-opt.selected .dot { border-color: var(--accent); background: var(--accent-soft); }
+  .quiz-opt.answered { cursor: default; }
+  .quiz-opt.correct { border-color: var(--success); background: rgba(5,150,105,0.12); }
+  .quiz-opt.correct .dot { background: var(--success); border-color: var(--success); }
+  .quiz-opt.incorrect { border-color: var(--error); background: rgba(220,38,38,0.10); }
+  .quiz-opt.incorrect .dot { background: var(--error); border-color: var(--error); }
+  .quiz-explain {
+    margin-top: 12px; padding: 10px 14px; border-radius: 8px; font-size: 13.5px;
+    line-height: 1.6; color: var(--text-secondary);
+    background: var(--cyan-soft); border-left: 3px solid var(--cyan);
+  }
+  .quiz-summary {
+    background: var(--bg-elevated); border-radius: 10px; padding: 16px 20px;
+    margin-bottom: 20px; color: var(--text-primary); font-size: 14.5px; font-weight: 600;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  }
+  .quiz-retry-btn {
+    padding: 7px 16px; font-size: 12.5px; border-radius: 7px;
+    background: var(--bg-inset); color: var(--text-secondary); border: 1px solid var(--border-subtle);
+    cursor: pointer; transition: background 0.15s var(--ease), color 0.15s var(--ease);
+  }
+  .quiz-retry-btn:hover { background: var(--border-subtle); color: var(--text-primary); }
+
+  /* ================= Library (màn hình chọn track/module/submodule) ================= */
+  #library { flex: 1; overflow-y: auto; display: none; }
+  #app.library-mode #library { display: block; }
+  #app.library-mode #reader { display: none; }
+
+  #library-inner { width: 100%; margin: 0 auto; max-width: 1720px; padding: 44px clamp(28px, 4.5vw, 64px) 80px; }
+
+  .lib-header {
+    display: flex; align-items: flex-end; justify-content: space-between; gap: 32px;
+    flex-wrap: wrap; margin-bottom: 34px; padding-bottom: 26px;
+    border-bottom: 1px solid var(--border-default);
+  }
+  .lib-header-left { min-width: 0; }
+  .lib-header h1 {
+    font-size: 22px; color: var(--text-primary); margin: 0 0 6px; font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .lib-header .meta-line { font-size: 12px; color: var(--text-disabled); margin: 0; }
+
+  .lib-header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; flex-shrink: 0; }
+  .lib-tabs { display: flex; gap: 4px; background: var(--bg-inset); padding: 3px; border-radius: 9px; border: 1px solid var(--border-default); }
+  .lib-tab-btn {
+    padding: 8px 18px; font-size: 13px; font-weight: 600; text-align: center;
+    background: transparent; color: var(--text-tertiary);
+    border: none; border-radius: 6px; cursor: pointer;
+    transition: background 0.15s var(--ease), color 0.15s var(--ease);
+  }
+  .lib-tab-btn:hover { color: var(--text-secondary); }
+  .lib-tab-btn.active[data-track="exam-track"] { background: var(--blue); color: white; }
+  .lib-tab-btn.active[data-track="foundations-track"] { background: var(--cyan); color: #052a30; }
+
+  .lib-search-row { position: relative; width: 280px; }
+  .lib-search-row svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--text-disabled); pointer-events: none; }
+  #lib-search-input {
+    width: 100%; padding: 8px 12px 8px 34px; font-size: 13px; font-family: inherit;
+    background: var(--bg-inset); border: 1px solid var(--border-default); border-radius: 8px;
+    color: var(--text-primary); transition: border-color 0.15s var(--ease);
+  }
+  #lib-search-input::placeholder { color: var(--text-disabled); }
+  #lib-search-input:focus { border-color: var(--accent); outline: none; }
+
+  #lib-search-results {
+    position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 5;
+    background: var(--bg-surface); border: 1px solid var(--border-default); border-radius: 10px;
+    box-shadow: var(--shadow-card); max-height: 340px; overflow-y: auto; display: none;
+  }
+  #lib-search-results.show { display: block; }
+  .lib-search-item {
+    padding: 10px 14px; cursor: pointer; border-bottom: 1px solid var(--border-default);
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  .lib-search-item:last-child { border-bottom: none; }
+  .lib-search-item:hover { background: var(--bg-elevated); }
+  .lib-search-item .lsi-title { font-size: 13.5px; color: var(--text-primary); font-weight: 600; }
+  .lib-search-item .lsi-path { font-size: 11px; color: var(--text-disabled); }
+
+  .lib-track-summary {
+    font-size: 14.5px; color: var(--text-secondary); line-height: 1.6; max-width: 900px; margin: -18px 0 36px;
+  }
+
+  .lib-module-block { margin-top: 46px; }
+  .lib-module-block:first-child { margin-top: 0; }
+
+  .lib-module-title {
+    font-size: 18px; font-weight: 700; letter-spacing: -0.005em;
+    color: var(--text-primary); margin-bottom: 6px;
+    display: flex; align-items: baseline; gap: 10px;
+  }
+  .lib-module-title .lib-module-count {
+    font-weight: 500; color: var(--text-disabled); font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 12px; letter-spacing: 0;
+  }
+  .lib-module-desc { font-size: 13.5px; color: var(--text-tertiary); line-height: 1.55; margin-bottom: 18px; max-width: 880px; }
+
+  .lib-card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+  .lib-card {
+    background: var(--bg-surface); border: 1px solid var(--border-default); border-radius: 12px;
+    padding: 18px 20px; cursor: pointer; text-align: left;
+    display: flex; flex-direction: column; gap: 14px;
+    transition: border-color 0.15s var(--ease), background 0.15s var(--ease), transform 0.15s var(--ease);
+  }
+  .lib-card:hover { border-color: var(--accent); background: var(--bg-elevated); transform: translateY(-1px); }
+  .lib-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+  .lib-card-name { font-size: 15.5px; font-weight: 700; color: var(--text-primary); line-height: 1.35; }
+  .lib-card-count {
+    flex-shrink: 0; font-size: 10.5px; font-weight: 600; color: var(--text-tertiary);
+    background: var(--bg-inset); border-radius: 999px; padding: 3px 9px; margin-top: 1px;
+    font-family: "JetBrains Mono", ui-monospace, monospace; white-space: nowrap;
+  }
+  .lib-card-desc {
+    font-size: 13px; color: var(--text-tertiary); line-height: 1.55; flex: 1;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .lib-card-progress {
+    display: flex; align-items: center; gap: 9px;
+    border-top: 1px solid var(--border-default); padding-top: 12px;
+  }
+  .lib-card-progress .progress-track {
+    flex: 1; height: 4px; background: var(--bg-inset); border-radius: 999px; overflow: hidden;
+    display: flex;
+  }
+  .lib-card-progress .progress-fill.seg-viewed { height: 100%; background: var(--accent); }
+  .lib-card-progress .progress-fill.seg-quiz { height: 100%; background: var(--success); }
+  .lib-card-progress .progress-label { font-size: 10.5px; color: var(--text-disabled); font-family: "JetBrains Mono", ui-monospace, monospace; flex-shrink: 0; }
+
+  #back-to-library {
+    display: flex; align-items: center; gap: 6px; background: none; border: none; cursor: pointer;
+    color: var(--text-tertiary); font-size: 12px; font-weight: 600; padding: 0 0 12px; font-family: inherit;
+    transition: color 0.15s var(--ease);
+  }
+  #back-to-library:hover { color: var(--text-primary); }
+
+  #reader { flex: 1; display: flex; min-width: 0; height: 100%; }
+
+  /* ---------- Scrollbars (thin, dark) ---------- */
+  #page-list-wrap::-webkit-scrollbar, #main::-webkit-scrollbar { width: 8px; }
+  #page-list-wrap::-webkit-scrollbar-thumb, #main::-webkit-scrollbar-thumb { background: var(--border-subtle); border-radius: 4px; }
+  #page-list-wrap::-webkit-scrollbar-track, #main::-webkit-scrollbar-track { background: transparent; }
+
+  @media (max-width: 760px) {
+    #topbar { display: flex; }
+    #sidebar { position: fixed; inset: 0 auto 0 0; z-index: 20; box-shadow: var(--shadow-card); }
+    #sidebar.collapsed { margin-left: -340px; }
+    #main { padding: 24px 5% 60px; }
+  }
+</style>
+</head>
+<body>
+  <div id="app" class="library-mode">
+    <div id="library">
+      <div id="library-inner">
+        <div class="lib-header">
+          <div class="lib-header-left">
+            <h1>AI Learn — Autopilot</h1>
+            <div class="meta-line" id="generated-at">đang tải...</div>
+          </div>
+          <div class="lib-header-right">
+            <div class="lib-tabs">
+              <div class="lib-tab-btn active" data-track="exam-track">Bổ trợ thi đấu</div>
+              <div class="lib-tab-btn" data-track="foundations-track">Nền tảng</div>
+            </div>
+            <div class="lib-search-row">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input id="lib-search-input" type="text" placeholder="Tìm bài viết trong track này…" autocomplete="off" />
+              <div id="lib-search-results"></div>
+            </div>
+          </div>
+        </div>
+        <div class="lib-track-summary" id="lib-track-summary"></div>
+        <div id="lib-modules"></div>
+      </div>
+    </div>
+    <div id="reader">
+      <div id="sidebar">
+        <div id="sidebar-head">
+          <button id="back-to-library">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            Thư viện
+          </button>
+          <h1 id="sidebar-title">AI Learn — Autopilot</h1>
+          <div class="meta-line" id="sidebar-crumb"></div>
+          <div class="search-row">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input id="search-input" type="text" placeholder="Tìm bài viết…" autocomplete="off" />
+            <span class="search-kbd">/</span>
+          </div>
+          <div class="progress-row">
+            <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+            <span class="progress-label" id="progress-label">0/0</span>
+          </div>
+        </div>
+        <div id="page-list-wrap">
+          <div id="module-groups"></div>
+        </div>
+      </div>
+      <div id="app-inner">
+        <div id="topbar">
+          <button id="sidebar-toggle" aria-label="Mở/đóng danh sách bài" title="Mở/đóng danh sách bài">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+          </button>
+          <div id="topbar-title">Chọn một bài để bắt đầu</div>
+        </div>
+        <div id="main">
+          <div id="content-wrap">
+            <div id="content-col">
+              <div id="content" class="empty-state">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                <div>Chọn một bài ở bên trái để xem nội dung.<br>Nhấn <span class="search-kbd" style="position:static;display:inline-block;margin:0 2px;">/</span> để tìm nhanh.</div>
+              </div>
+            </div>
+            <div id="toc-col"><div id="toc"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+// Dữ liệu được build-data.js nhúng trực tiếp vào đây (không dùng fetch()),
+// vì fetch('data.json') bị trình duyệt chặn bởi CORS khi mở file qua
+// file:// (double-click) thay vì qua một server thật.
+const DATA = /*__DATA_JSON__*/null/*__END_DATA_JSON__*/;
+
+const STORAGE_KEY = 'ai-learn-viewer-progress-v2';
+const LEGACY_STORAGE_KEY = 'ai-learn-viewer-read-pages';
+let libraryTrack = 'exam-track';   // track đang xem trong màn Library
+let currentTrack = 'exam-track';   // track của submodule đang mở trong Reader
+let currentModule = null;
+let currentSubmodule = null;
+let currentIndex = -1;
+let searchQuery = '';
+
+// Trạng thái đọc mỗi bài, 3 mức: 'unread' (mặc định, không lưu) / 'viewed'
+// (đã mở bài) / 'quiz_done' (đã trả lời hết mọi câu quiz của bài đó).
+// quiz_done chỉ có thể đạt được SAU viewed — không có quiz thì tối đa là viewed.
+
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function slugify(text) {
+  return text.toLowerCase().trim()
+    .replace(/[^\p{L}\p{N}\s-]/gu, '')
+    .replace(/\s+/g, '-')
+    .slice(0, 60);
+}
+
+function loadProgress() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) { /* ignore */ }
+  // Di trú từ định dạng cũ (chỉ có "đã xem" dạng Set) nếu có, để không mất
+  // tiến độ người dùng đã tích luỹ trước khi tính năng này tồn tại.
+  try {
+    const legacy = JSON.parse(localStorage.getItem(LEGACY_STORAGE_KEY) || '[]');
+    const migrated = {};
+    legacy.forEach((file) => { migrated[file] = 'viewed'; });
+    return migrated;
+  } catch (e) { return {}; }
+}
+function saveProgress(map) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(map)); } catch (e) {}
+}
+let progressMap = loadProgress(); // file -> 'viewed' | 'quiz_done'
+
+function getProgress(file) {
+  return progressMap[file] || 'unread';
+}
+function markViewed(file) {
+  if (progressMap[file]) return; // đã 'viewed' hoặc 'quiz_done', không hạ cấp
+  progressMap[file] = 'viewed';
+  saveProgress(progressMap);
+}
+function markQuizDone(file) {
+  if (progressMap[file] === 'quiz_done') return;
+  progressMap[file] = 'quiz_done';
+  saveProgress(progressMap);
+}
+
+function inline(text) {
+  let t = escapeHtml(text);
+  t = t.replace(/`([^`]+)`/g, '<code>$1</code>');
+  t = t.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  t = t.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+  t = t.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+  return t;
+}
+
+function parseTableRow(line) {
+  return line.trim().replace(/^\||\|$/g, '').split('|').map((c) => c.trim());
+}
+
+// Renderer Markdown tối giản (heading, code block, list thường/checklist/số,
+// table, blockquote, hr, bold/italic/inline-code/link) — đủ cho nội dung
+// .mdx hiện có. Không cần đúng 100% MDX (viewer nội bộ, không phải trang publish).
+// Heading h2/h3 được gắn id (slugify) để table-of-contents nhảy tới.
+function renderMarkdown(md) {
+  const lines = md.split(/\r?\n/);
+  let html = '';
+  let inCode = false;
+  let listType = null; // 'ul' | 'ol' | 'checklist' | null
+  let i = 0;
+  const usedIds = new Set();
+
+  function closeList() {
+    if (listType) { html += `</${listType === 'ol' ? 'ol' : 'ul'}>`; listType = null; }
+  }
+
+  function uniqueId(text) {
+    let base = slugify(text) || 'section';
+    let id = base, n = 2;
+    while (usedIds.has(id)) { id = `${base}-${n++}`; }
+    usedIds.add(id);
+    return id;
+  }
+
+  while (i < lines.length) {
+    const line = lines[i];
+
+    if (line.trim().startsWith('```')) {
+      closeList();
+      html += inCode ? '</code></pre>' : '<pre><code>';
+      inCode = !inCode;
+      i++;
+      continue;
+    }
+    if (inCode) { html += escapeHtml(line) + '\n'; i++; continue; }
+
+    if (/^\s*---+\s*$/.test(line) && line.trim() !== '') {
+      closeList();
+      html += '<hr>';
+      i++;
+      continue;
+    }
+
+    // Table: header line + separator line (|---|---|)
+    if (line.trim().startsWith('|') && lines[i + 1] && /^\s*\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)+\|?\s*$/.test(lines[i + 1])) {
+      closeList();
+      const headerCells = parseTableRow(line);
+      let tableHtml = '<div class="table-wrap"><table><thead><tr>';
+      headerCells.forEach((c) => { tableHtml += `<th>${inline(c)}</th>`; });
+      tableHtml += '</tr></thead><tbody>';
+      i += 2;
+      while (i < lines.length && lines[i].trim().startsWith('|')) {
+        const cells = parseTableRow(lines[i]);
+        tableHtml += '<tr>' + cells.map((c) => `<td>${inline(c)}</td>`).join('') + '</tr>';
+        i++;
+      }
+      tableHtml += '</tbody></table></div>';
+      html += tableHtml;
+      continue;
+    }
+
+    const heading = line.match(/^(#{1,4})\s+(.*)$/);
+    if (heading) {
+      closeList();
+      const level = heading[1].length;
+      const text = heading[2];
+      if (level === 2 || level === 3) {
+        const id = uniqueId(text);
+        html += `<h${level} id="${id}">${inline(text)}</h${level}>`;
+      } else {
+        html += `<h${level}>${inline(text)}</h${level}>`;
+      }
+      i++;
+      continue;
+    }
+
+    const blockquote = line.match(/^>\s?(.*)$/);
+    if (blockquote) {
+      closeList();
+      const bqLines = [blockquote[1]];
+      i++;
+      while (i < lines.length && /^>\s?/.test(lines[i])) {
+        bqLines.push(lines[i].replace(/^>\s?/, ''));
+        i++;
+      }
+      html += `<blockquote>${bqLines.map(inline).map((l) => `<p>${l}</p>`).join('')}</blockquote>`;
+      continue;
+    }
+
+    const checkItem = line.match(/^[-*]\s+\[( |x)\]\s+(.*)$/i);
+    if (checkItem) {
+      if (listType !== 'checklist') { closeList(); html += '<ul class="checklist">'; listType = 'checklist'; }
+      const done = checkItem[1].toLowerCase() === 'x';
+      html += `<li><span class="chk${done ? ' done' : ''}"></span><span>${inline(checkItem[2])}</span></li>`;
+      i++;
+      continue;
+    }
+
+    const olItem = line.match(/^\d+\.\s+(.*)$/);
+    if (olItem) {
+      if (listType !== 'ol') { closeList(); html += '<ol>'; listType = 'ol'; }
+      html += `<li>${inline(olItem[1])}</li>`;
+      i++;
+      continue;
+    }
+
+    const ulItem = line.match(/^[-*]\s+(.*)$/);
+    if (ulItem) {
+      if (listType !== 'ul') { closeList(); html += '<ul>'; listType = 'ul'; }
+      html += `<li>${inline(ulItem[1])}</li>`;
+      i++;
+      continue;
+    }
+
+    closeList();
+    if (line.trim() === '') { i++; continue; }
+
+    // Paragraph: một đoạn văn trong .mdx thường trải nhiều dòng vật lý
+    // (wrap ~80 ký tự) — gộp các dòng liên tiếp không rỗng lại thành 1 <p>
+    // thay vì coi mỗi dòng là một đoạn riêng.
+    const paraLines = [line];
+    i++;
+    while (i < lines.length && lines[i].trim() !== '' && !isBlockStart(lines[i])) {
+      paraLines.push(lines[i]);
+      i++;
+    }
+    html += `<p>${inline(paraLines.join(' '))}</p>`;
+  }
+  closeList();
+  if (inCode) html += '</code></pre>';
+  return html;
+}
+
+function isBlockStart(line) {
+  return (
+    line.trim().startsWith('```') ||
+    /^\s*---+\s*$/.test(line) ||
+    line.trim().startsWith('|') ||
+    /^(#{1,4})\s+/.test(line) ||
+    /^>\s?/.test(line) ||
+    /^[-*]\s+\[( |x)\]\s+/i.test(line) ||
+    /^\d+\.\s+/.test(line) ||
+    /^[-*]\s+/.test(line)
+  );
+}
+
+// Trích heading h2/h3 trực tiếp từ markdown gốc (song song với renderMarkdown)
+// để dựng table-of-contents — dùng cùng logic slugify/uniqueId để id khớp.
+function extractToc(md) {
+  const lines = md.split(/\r?\n/);
+  const toc = [];
+  const usedIds = new Set();
+  let inCode = false;
+  for (const line of lines) {
+    if (line.trim().startsWith('```')) { inCode = !inCode; continue; }
+    if (inCode) continue;
+    const m = line.match(/^(#{2,3})\s+(.*)$/);
+    if (!m) continue;
+    const level = m[1].length;
+    const text = m[2];
+    let base = slugify(text) || 'section', id = base, n = 2;
+    while (usedIds.has(id)) { id = `${base}-${n++}`; }
+    usedIds.add(id);
+    toc.push({ level, text, id });
+  }
+  return toc;
+}
+
+// Trả về mảng {page, index} thuộc đúng nhánh đang mở trong Reader
+// (currentModule/currentSubmodule) — index là vị trí trong track.pages gốc,
+// dùng xuyên suốt để prev/next và markViewed vẫn đúng bài.
+function currentBranchEntries() {
+  const track = DATA.tracks[currentTrack];
+  return track.pages
+    .map((page, index) => ({ page, index }))
+    .filter(({ page }) => {
+      const name = page.module || 'Chưa phân module';
+      if (name !== currentModule) return false;
+      const subName = page.submodule || '';
+      return subName === currentSubmodule;
+    });
+}
+
+function renderProgress() {
+  const entries = currentBranchEntries();
+  const total = entries.length;
+  const doneCount = entries.filter(({ page }) => getProgress(page.file) !== 'unread').length;
+  document.getElementById('progress-fill').style.width = total ? `${(doneCount / total) * 100}%` : '0%';
+  document.getElementById('progress-label').textContent = `${doneCount}/${total}`;
+}
+
+// SVG rỗng (unread) / đặc (viewed) / đặc + dấu check (quiz_done).
+function progressIconHtml(state) {
+  const check = state === 'quiz_done' ? '<path d="M4.5 8.5l2.5 2.5 4.5-5"/>' : '';
+  return `<span class="progress-icon ${state}" title="${
+    state === 'quiz_done' ? 'Đã làm xong quiz' : state === 'viewed' ? 'Đã xem' : 'Chưa xem'
+  }"><svg viewBox="0 0 15 15"><circle cx="7.5" cy="7.5" r="6"/>${check}</svg></span>`;
+}
+
+function renderSidebar() {
+  const wrap = document.getElementById('module-groups');
+  wrap.innerHTML = '';
+  renderProgress();
+
+  const entries = currentBranchEntries();
+  if (!entries.length) {
+    wrap.innerHTML = '<div class="empty-search">Chưa có bài nào trong mục này.</div>';
+    return;
+  }
+
+  const q = searchQuery.trim().toLowerCase();
+  const matchedFiles = q
+    ? new Set(entries.filter(({ page }) => (page.title || '').toLowerCase().includes(q)).map(({ page }) => page.file))
+    : null;
+
+  const list = document.createElement('ul');
+  list.className = 'page-list';
+  let anyVisible = false;
+  entries.forEach(({ page, index }) => {
+    const visible = !matchedFiles || matchedFiles.has(page.file);
+    if (visible) anyVisible = true;
+    const li = document.createElement('li');
+    if (!visible) li.classList.add('hidden');
+    if (index === currentIndex) li.classList.add('active');
+    const progressState = getProgress(page.file);
+    const status = page.status || 'draft';
+    const num = page.order || (index + 1);
+    li.innerHTML = `<span class="page-num">${escapeHtml(String(num))}</span><span class="page-title">${escapeHtml(page.title || page.file)}</span>${progressIconHtml(progressState)}<span class="status-dot ${status}" title="${status}"></span>`;
+    li.addEventListener('click', () => selectPage(index));
+    list.appendChild(li);
+  });
+  wrap.appendChild(list);
+
+  if (!anyVisible) {
+    wrap.innerHTML = `<div class="empty-search">Không tìm thấy bài khớp "${escapeHtml(searchQuery)}".</div>`;
+  }
+}
+
+function renderToc(toc) {
+  const tocEl = document.getElementById('toc');
+  if (!toc.length) { tocEl.innerHTML = ''; return; }
+  tocEl.innerHTML = `<div class="toc-label">Mục lục</div><ul>${toc.map((t) => `<li><a href="#${t.id}" class="${t.level === 3 ? 'h3' : ''}" data-id="${t.id}">${escapeHtml(t.text)}</a></li>`).join('')}</ul>`;
+  tocEl.querySelectorAll('a').forEach((a) => {
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      const target = document.getElementById(a.dataset.id);
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+  setupTocScrollSpy(toc);
+}
+
+let tocScrollHandler = null;
+function setupTocScrollSpy(toc) {
+  const main = document.getElementById('main');
+  if (tocScrollHandler) main.removeEventListener('scroll', tocScrollHandler);
+  tocScrollHandler = () => {
+    let activeId = toc[0].id;
+    for (const t of toc) {
+      const el = document.getElementById(t.id);
+      if (el && el.getBoundingClientRect().top - main.getBoundingClientRect().top < 80) activeId = t.id;
+    }
+    document.querySelectorAll('#toc a').forEach((a) => a.classList.toggle('active', a.dataset.id === activeId));
+  };
+  main.addEventListener('scroll', tocScrollHandler, { passive: true });
+  tocScrollHandler();
+}
+
+function pnLink(page, dir) {
+  if (!page) return `<span class="pn-link pn-spacer"></span>`;
+  const dirLabel = dir === 'prev'
+    ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg> Trước`
+    : `Sau <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>`;
+  return `<a class="pn-link ${dir === 'next' ? 'next' : ''}" href="#" data-nav="${dir}"><span class="pn-dir">${dirLabel}</span><span class="pn-title">${escapeHtml(page.title || page.file)}</span></a>`;
+}
+
+function selectPage(i) {
+  const track = DATA.tracks[currentTrack];
+  const page = track.pages[i];
+  if (!page) return;
+  currentIndex = i;
+  markViewed(page.file);
+
+  const content = document.getElementById('content');
+  content.classList.remove('empty-state');
+  const status = page.status || 'draft';
+
+  document.getElementById('topbar-title').textContent = page.title || page.file;
+
+  let prereqHtml = '';
+  if (page.prerequisites && page.prerequisites.length) {
+    prereqHtml = `<div class="prereq"><strong>Yêu cầu trước:</strong> ${page.prerequisites.map(escapeHtml).join(', ')}</div>`;
+  }
+
+  let toggleHtml = '';
+  if (page.quiz && page.quiz.length) {
+    toggleHtml = `
+      <div class="quiz-toggle-row">
+        <button class="quiz-btn active" id="btn-view-content">Nội dung bài</button>
+        <button class="quiz-btn" id="btn-view-quiz">Quiz (${page.quiz.length} câu)</button>
+      </div>`;
+  }
+
+  const trackLabel = currentTrack === 'exam-track' ? 'Bổ trợ thi đấu' : 'Nền tảng';
+  const breadcrumbHtml = `<div class="breadcrumb"><span class="crumb-track">${escapeHtml(trackLabel)}</span>${page.module ? `<span class="sep">/</span><span class="crumb-module">${escapeHtml(page.module)}</span>` : ''}${page.submodule ? `<span class="sep">/</span><span class="crumb-module">${escapeHtml(page.submodule)}</span>` : ''}</div>`;
+
+  // Prev/next điều hướng trong phạm vi nhánh (module/submodule) đang mở,
+  // không nhảy sang bài của nhánh khác dù track.pages liền kề về order.
+  const branch = currentBranchEntries();
+  const branchPos = branch.findIndex((e) => e.index === i);
+  const prevEntry = branchPos > 0 ? branch[branchPos - 1] : null;
+  const nextEntry = branchPos >= 0 && branchPos < branch.length - 1 ? branch[branchPos + 1] : null;
+  const pnHtml = (prevEntry || nextEntry) ? `<div class="pn-nav">${pnLink(prevEntry && prevEntry.page, 'prev')}${pnLink(nextEntry && nextEntry.page, 'next')}</div>` : '';
+
+  content.innerHTML = `
+    <div class="page-header">
+      ${breadcrumbHtml}
+      <h1>${escapeHtml(page.title || page.file)}</h1>
+      <div class="page-header-meta">
+        <span class="badge ${status}">${status}</span>
+        <span class="meta-pill">Bài ${branchPos + 1}${branch.length ? ' / ' + branch.length : ''}</span>
+      </div>
+      ${prereqHtml}
+      ${toggleHtml}
+    </div>
+    <div id="body-panel">${renderMarkdown(page.body || '')}</div>
+    <div id="quiz-panel" style="display:none;"></div>
+    ${pnHtml}
+  `;
+  document.getElementById('main').scrollTop = 0;
+
+  content.querySelectorAll('.pn-link[data-nav]').forEach((el) => {
+    el.addEventListener('click', (e) => {
+      e.preventDefault();
+      const dir = el.dataset.nav;
+      const target = dir === 'prev' ? prevEntry : nextEntry;
+      if (target) selectPage(target.index);
+    });
+  });
+
+  renderToc(extractToc(page.body || ''));
+
+  if (page.quiz && page.quiz.length) {
+    const bodyPanel = document.getElementById('body-panel');
+    const quizPanel = document.getElementById('quiz-panel');
+    document.getElementById('btn-view-content').addEventListener('click', () => {
+      document.getElementById('btn-view-content').classList.add('active');
+      document.getElementById('btn-view-quiz').classList.remove('active');
+      bodyPanel.style.display = '';
+      quizPanel.style.display = 'none';
+      document.getElementById('toc-col').style.display = '';
+    });
+    document.getElementById('btn-view-quiz').addEventListener('click', () => {
+      document.getElementById('btn-view-quiz').classList.add('active');
+      document.getElementById('btn-view-content').classList.remove('active');
+      bodyPanel.style.display = 'none';
+      quizPanel.style.display = '';
+      document.getElementById('toc-col').style.display = 'none';
+      if (!quizPanel.dataset.rendered) renderQuiz(page.quiz, quizPanel, page.file);
+    });
+  }
+
+  // Cập nhật lại danh sách sidebar để phản ánh trạng thái active/tiến độ mới,
+  // nhưng giữ nguyên trạng thái collapse/search hiện tại.
+  renderSidebar();
+  if (window.innerWidth <= 760) document.getElementById('sidebar').classList.add('collapsed');
+}
+
+function renderQuiz(questions, container, pageFile) {
+  container.dataset.rendered = '1';
+  const state = questions.map(() => ({ answered: false, selectedIdx: null }));
+
+  function renderProgressBar() {
+    const answeredCount = state.filter((s) => s.answered).length;
+    const pct = (answeredCount / questions.length) * 100;
+    return `<div class="quiz-progress-row"><div class="quiz-progress-track"><div class="quiz-progress-fill" style="width:${pct}%"></div></div><span class="quiz-progress-text">${answeredCount}/${questions.length}</span></div>`;
+  }
+
+  function renderSummary() {
+    const answeredCount = state.filter((s) => s.answered).length;
+    if (answeredCount < questions.length) return '';
+    const correctCount = state.filter((s, qi) => s.answered && questions[qi].options[s.selectedIdx] && questions[qi].options[s.selectedIdx].correct).length;
+    return `<div class="quiz-summary"><span>Hoàn thành — đúng ${correctCount}/${questions.length} câu.</span><button class="quiz-retry-btn" id="quiz-retry">Làm lại từ đầu</button></div>`;
+  }
+
+  function render() {
+    let html = renderProgressBar() + renderSummary();
+    questions.forEach((q, qi) => {
+      html += `<div class="quiz-q" data-qi="${qi}"><div class="quiz-q-prompt">Câu ${qi + 1}. ${inline(q.prompt)}</div>`;
+      q.options.forEach((opt, oi) => {
+        const s = state[qi];
+        let cls = 'quiz-opt';
+        if (s.answered) {
+          cls += ' answered';
+          if (opt.correct) cls += ' correct';
+          else if (oi === s.selectedIdx) cls += ' incorrect';
+        } else if (s.selectedIdx === oi) {
+          cls += ' selected';
+        }
+        html += `<div class="${cls}" data-qi="${qi}" data-oi="${oi}"><span class="dot"></span><span>${inline(opt.text)}</span></div>`;
+      });
+      if (state[qi].answered && q.explanation) {
+        html += `<div class="quiz-explain">${inline(q.explanation)}</div>`;
+      }
+      html += `</div>`;
+    });
+    container.innerHTML = html;
+
+    container.querySelectorAll('.quiz-opt').forEach((el) => {
+      el.addEventListener('click', () => {
+        const qi = Number(el.dataset.qi);
+        const oi = Number(el.dataset.oi);
+        if (state[qi].answered) return;
+        state[qi].selectedIdx = oi;
+        state[qi].answered = true;
+        render();
+        if (state.every((s) => s.answered)) {
+          markQuizDone(pageFile);
+          renderSidebar();
+        }
+      });
+    });
+    const retryBtn = document.getElementById('quiz-retry');
+    if (retryBtn) {
+      retryBtn.addEventListener('click', () => {
+        state.forEach((s) => { s.answered = false; s.selectedIdx = null; });
+        render();
+      });
+    }
+  }
+
+  render();
+}
+
+function applySearch(value) {
+  searchQuery = value;
+  document.querySelector('#reader .search-row').classList.toggle('has-value', !!value);
+  renderSidebar();
+}
+
+// Nhóm bài của 1 track thành module -> submodule (submodule rỗng = module
+// phẳng, coi cả module là 1 "submodule ảo" duy nhất) — dùng chung cho cả
+// renderLibrary() và tra cứu meta.
+function groupTrackByModule(track) {
+  const groups = [];
+  const groupByName = new Map();
+  track.pages.forEach((page, index) => {
+    const name = page.module || 'Chưa phân module';
+    const subName = page.submodule || '';
+    if (!groupByName.has(name)) {
+      const g = { name, subgroups: [], subByName: new Map() };
+      groupByName.set(name, g);
+      groups.push(g);
+    }
+    const g = groupByName.get(name);
+    if (!g.subByName.has(subName)) {
+      const sg = { name: subName, entries: [] };
+      g.subByName.set(subName, sg);
+      g.subgroups.push(sg);
+    }
+    g.subByName.get(subName).entries.push({ page, index });
+  });
+  return groups;
+}
+
+function cardProgress(entries) {
+  const total = entries.length;
+  let viewed = 0, quizDone = 0;
+  entries.forEach(({ page }) => {
+    const s = getProgress(page.file);
+    if (s === 'viewed') viewed++;
+    else if (s === 'quiz_done') quizDone++;
+  });
+  const done = viewed + quizDone;
+  return {
+    total, done,
+    viewedPct: total ? (viewed / total) * 100 : 0,
+    quizPct: total ? (quizDone / total) * 100 : 0,
+  };
+}
+
+function renderLibrary() {
+  const track = DATA.tracks[libraryTrack];
+  const meta = (DATA.moduleMeta && DATA.moduleMeta[libraryTrack]) || {};
+  document.getElementById('lib-track-summary').textContent = track.index ? track.index.summary || '' : '';
+  document.querySelectorAll('.lib-tab-btn').forEach((b) => b.classList.toggle('active', b.dataset.track === libraryTrack));
+
+  const wrap = document.getElementById('lib-modules');
+  wrap.innerHTML = '';
+
+  if (!track.pages.length) {
+    wrap.innerHTML = '<div class="empty-search">Chưa có bài nào trong track này.</div>';
+    return;
+  }
+
+  const groups = groupTrackByModule(track);
+
+  groups.forEach((group) => {
+    const groupMeta = meta[group.name] || {};
+    const allEntries = group.subgroups.flatMap((sg) => sg.entries);
+    const block = document.createElement('div');
+    block.className = 'lib-module-block';
+
+    const titleHtml = `<div class="lib-module-title"><span>${escapeHtml(group.name)}</span><span class="lib-module-count">${allEntries.length} bài</span></div>`;
+    const descHtml = groupMeta.description ? `<div class="lib-module-desc">${escapeHtml(groupMeta.description)}</div>` : '';
+    block.innerHTML = titleHtml + descHtml;
+
+    const grid = document.createElement('div');
+    grid.className = 'lib-card-grid';
+
+    const hasRealSubmodules = group.subgroups.length > 1 || (group.subgroups.length === 1 && group.subgroups[0].name);
+
+    if (!hasRealSubmodules) {
+      // Module phẳng — cả module là 1 card duy nhất.
+      grid.appendChild(makeLibCard(group.name, groupMeta.description || '', allEntries, () => openSubmodule(group.name, '')));
+    } else {
+      group.subgroups.forEach((sg) => {
+        const subMeta = (groupMeta.submodules && groupMeta.submodules[sg.name]) || '';
+        const cardName = sg.name || group.name;
+        grid.appendChild(makeLibCard(cardName, subMeta, sg.entries, () => openSubmodule(group.name, sg.name)));
+      });
+    }
+
+    block.appendChild(grid);
+    wrap.appendChild(block);
+  });
+}
+
+function makeLibCard(name, description, entries, onOpen) {
+  const prog = cardProgress(entries);
+  const card = document.createElement('button');
+  card.className = 'lib-card';
+  card.innerHTML = `
+    <div class="lib-card-top">
+      <span class="lib-card-name">${escapeHtml(name)}</span>
+      <span class="lib-card-count">${entries.length} bài</span>
+    </div>
+    <div class="lib-card-desc">${escapeHtml(description || '')}</div>
+    <div class="lib-card-progress">
+      <div class="progress-track"><div class="progress-fill seg-quiz" style="width:${prog.quizPct}%"></div><div class="progress-fill seg-viewed" style="width:${prog.viewedPct}%"></div></div>
+      <span class="progress-label">${prog.done}/${prog.total}</span>
+    </div>
+  `;
+  card.addEventListener('click', onOpen);
+  return card;
+}
+
+function runLibrarySearch(value) {
+  const resultsEl = document.getElementById('lib-search-results');
+  const q = value.trim().toLowerCase();
+  if (!q) { resultsEl.classList.remove('show'); resultsEl.innerHTML = ''; return; }
+  const track = DATA.tracks[libraryTrack];
+  const matches = track.pages
+    .map((page, index) => ({ page, index }))
+    .filter(({ page }) => (page.title || '').toLowerCase().includes(q))
+    .slice(0, 20);
+  if (!matches.length) {
+    resultsEl.innerHTML = `<div class="lib-search-item" style="cursor:default;">Không tìm thấy bài khớp "${escapeHtml(value)}".</div>`;
+    resultsEl.classList.add('show');
+    return;
+  }
+  resultsEl.innerHTML = matches.map(({ page, index }) => {
+    const path = [page.module, page.submodule].filter(Boolean).join(' / ');
+    return `<div class="lib-search-item" data-index="${index}"><span class="lsi-title">${escapeHtml(page.title || page.file)}</span><span class="lsi-path">${escapeHtml(path)}</span></div>`;
+  }).join('');
+  resultsEl.querySelectorAll('.lib-search-item[data-index]').forEach((el) => {
+    el.addEventListener('click', () => {
+      const idx = Number(el.dataset.index);
+      const page = track.pages[idx];
+      openSubmodule(page.module || 'Chưa phân module', page.submodule || '', idx);
+    });
+  });
+  resultsEl.classList.add('show');
+}
+
+function openSubmodule(moduleName, submoduleName, pageIndex) {
+  currentTrack = libraryTrack;
+  currentModule = moduleName;
+  currentSubmodule = submoduleName;
+  currentIndex = -1;
+  searchQuery = '';
+  document.getElementById('search-input').value = '';
+  document.querySelector('#reader .search-row').classList.remove('has-value');
+  document.getElementById('lib-search-input').value = '';
+  document.getElementById('lib-search-results').classList.remove('show');
+
+  document.getElementById('app').classList.remove('library-mode');
+  const trackLabel = currentTrack === 'exam-track' ? 'Bổ trợ thi đấu' : 'Nền tảng';
+  document.getElementById('sidebar-title').textContent = submoduleName || moduleName;
+  document.getElementById('sidebar-crumb').textContent = submoduleName ? `${trackLabel} / ${moduleName}` : trackLabel;
+
+  renderSidebar();
+
+  if (typeof pageIndex === 'number') {
+    selectPage(pageIndex);
+  } else {
+    document.getElementById('content').className = 'empty-state';
+    document.getElementById('content').innerHTML = `
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      <div>Chọn một bài ở bên trái để xem nội dung.</div>`;
+    document.getElementById('topbar-title').textContent = 'Chọn một bài để bắt đầu';
+    renderToc([]);
+  }
+}
+
+function backToLibrary() {
+  document.getElementById('app').classList.add('library-mode');
+  renderLibrary();
+}
+
+function switchLibraryTrack(track) {
+  libraryTrack = track;
+  const root = document.documentElement;
+  if (track === 'foundations-track') {
+    root.style.setProperty('--accent', 'var(--cyan)');
+    root.style.setProperty('--accent-soft', 'var(--cyan-soft)');
+  } else {
+    root.style.setProperty('--accent', 'var(--blue)');
+    root.style.setProperty('--accent-soft', 'var(--blue-soft)');
+  }
+  renderLibrary();
+}
+
+function init(data) {
+  document.getElementById('generated-at').textContent = 'Cập nhật: ' + new Date(data.generatedAt).toLocaleString('vi-VN');
+
+  document.querySelectorAll('.lib-tab-btn').forEach((btn) => {
+    btn.addEventListener('click', () => switchLibraryTrack(btn.dataset.track));
+  });
+
+  const libSearchInput = document.getElementById('lib-search-input');
+  libSearchInput.addEventListener('input', (e) => runLibrarySearch(e.target.value));
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.lib-search-row')) document.getElementById('lib-search-results').classList.remove('show');
+  });
+
+  document.getElementById('back-to-library').addEventListener('click', backToLibrary);
+
+  const searchInput = document.getElementById('search-input');
+  searchInput.addEventListener('input', (e) => applySearch(e.target.value));
+
+  document.getElementById('sidebar-toggle').addEventListener('click', () => {
+    document.getElementById('sidebar').classList.toggle('collapsed');
+  });
+
+  document.addEventListener('keydown', (e) => {
+    const tag = (e.target.tagName || '').toLowerCase();
+    const isTyping = tag === 'input' || tag === 'textarea';
+    if (e.key === '/' && !isTyping && !document.getElementById('app').classList.contains('library-mode')) {
+      e.preventDefault();
+      searchInput.focus();
+      return;
+    }
+    if (e.key === 'Escape') {
+      if (isTyping) { searchInput.blur(); applySearch(''); searchInput.value = ''; }
+      return;
+    }
+    if (isTyping) return;
+    const branch = currentBranchEntries();
+    const pos = branch.findIndex((en) => en.index === currentIndex);
+    if (e.key === 'ArrowLeft' && pos > 0) { selectPage(branch[pos - 1].index); }
+    if (e.key === 'ArrowRight' && pos >= 0 && pos < branch.length - 1) { selectPage(branch[pos + 1].index); }
+  });
+
+  switchLibraryTrack(libraryTrack);
+}
+
+if (DATA) {
+  init(DATA);
+} else {
+  document.getElementById('lib-modules').innerHTML =
+    '<div class="empty-search">Chưa có dữ liệu — chạy <code>node build-data.js</code> trong thư mục viewer/ trước.</div>';
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,166 @@
+---
+title: "Object Detection — Không chỉ Phân loại, mà còn Định vị Vật thể"
+track: foundations-track
+module: "Computer Vision"
+submodule: "Detection"
+order: 33
+status: stable
+prerequisites: ["11-convolutional-neural-network"]
+summary: "Object detection là bài toán vừa phân loại vừa định vị vật thể — bounding box, IoU, anchor box, NMS — và dòng tiến hoá cụ thể R-CNN (2014, Girshick) → Fast R-CNN → Faster R-CNN, mỗi bước giải quyết đúng một bottleneck của bước trước. Bài mở đầu sub-module Detection."
+last_touched_by_task: "Viết lại theo triết lý nội dung mới (2026-07-06): thêm dòng lịch sử ý tưởng cụ thể cho họ R-CNN — vấn đề sliding window truyền thống trước 2014, R-CNN (Girshick et al., selective search + CNN riêng biệt cho từng vùng, ~2000 vùng/ảnh), bottleneck tính toán lặp lại dẫn tới Fast R-CNN (RoI Pooling, 1 lần forward CNN cho cả ảnh), rồi bottleneck phụ thuộc selective search bên ngoài dẫn tới Faster R-CNN (Region Proposal Network, huấn luyện end-to-end) — trước đó bài chỉ nói 'two-stage vs one-stage' ở mức khái niệm chung, không kể được ai giải quyết vấn đề gì cụ thể. Gắn submodule 'Detection' — bài mở đầu sub-module. 2 nguồn: D2L.ai (R-CNN chapter, đủ chi tiết 4 bước quy trình + 3 phiên bản cải tiến) và Lil'Log (Object Detection for Dummies Part 3, trực giác vì sao mỗi bước cải tiến ra đời)."
+---
+
+Bài [CNN](11-convolutional-neural-network.mdx) giải thích vì sao cần
+convolution để **phân loại** ảnh (ảnh này chứa mèo hay chó?). Nhưng rất
+nhiều bài toán thực tế cần nhiều hơn thế: không chỉ biết ảnh có gì, mà còn
+cần biết **vật thể đó nằm ở đâu** trong ảnh, và có **bao nhiêu** vật thể.
+**Object detection** (phát hiện vật thể) là bài toán kết hợp cả hai:
+**classification** (vật thể này là lớp gì) và **localization** (định vị
+— vật thể nằm ở vị trí nào).
+
+## Bounding box: biểu diễn vị trí một vật thể
+
+Cách phổ biến nhất để biểu diễn vị trí một vật thể trong ảnh là
+**bounding box** (khung giới hạn) — một hình chữ nhật bao quanh vật thể
+đó. Có hai cách biểu diễn tương đương:
+
+- **Dạng góc (corner format):** toạ độ góc trên-trái và góc dưới-phải
+  `(x1, y1, x2, y2)`.
+- **Dạng tâm (center format):** toạ độ tâm cộng chiều rộng/chiều cao
+  `(cx, cy, w, h)`.
+
+Với mỗi vật thể trong ảnh train, dữ liệu cần có cả **nhãn lớp** (là con
+mèo hay con chó) **và** toạ độ bounding box chính xác — nhiều thông tin
+hơn hẳn so với classification thuần (chỉ cần 1 nhãn lớp cho cả ảnh).
+
+## IoU: đo mức độ "khớp" giữa hai bounding box
+
+**IoU (Intersection over Union — tỷ lệ giao trên hợp)** là thước đo trung
+tâm của object detection: cho hai bounding box bất kỳ (ví dụ box dự đoán
+và box thật/ground truth), IoU là tỷ lệ giữa **diện tích phần giao nhau**
+và **diện tích phần hợp** của hai box đó:
+
+```
+IoU = diện_tích(box1 ∩ box2) / diện_tích(box1 ∪ box2)
+```
+
+IoU luôn nằm trong khoảng `[0, 1]`: `IoU = 1` nghĩa là hai box trùng khớp
+hoàn hảo; `IoU = 0` nghĩa là hai box không hề chồng lên nhau. Trong thực
+hành, một dự đoán thường được coi là "đúng" nếu IoU giữa box dự đoán và
+box thật vượt một ngưỡng nhất định (thường dùng `IoU >= 0.5`).
+
+## Anchor box: khung tham chiếu có sẵn tại nhiều vị trí
+
+Thay vì để mô hình dự đoán tự do toạ độ bounding box từ đầu (rất khó huấn
+luyện ổn định), object detection hiện đại dùng **anchor box** (khung neo)
+— một tập hợp các bounding box **được định nghĩa trước**, có nhiều tỷ lệ
+(scale) và tỷ lệ khung hình (aspect ratio) khác nhau, đặt tại mỗi vị trí
+(mỗi pixel hoặc mỗi ô lưới) trên ảnh. Mô hình không dự đoán trực tiếp toạ
+độ box từ đầu, mà dự đoán:
+
+1. **Lớp** của vật thể mà anchor box đó có khả năng chứa (hoặc "không có
+   vật thể gì" — background).
+2. **Offset** (độ lệch) — bounding box thật khác anchor box này bao nhiêu
+   theo mỗi chiều, để "tinh chỉnh" anchor box gần đúng thành box chính xác.
+
+Trong lúc huấn luyện, mỗi anchor box được gán ghép với box thật (ground
+truth) có IoU cao nhất — anchor nào có IoU đủ cao với một vật thể thật sẽ
+học cách dự đoán đúng lớp và offset của vật thể đó; anchor không khớp với
+vật thể nào học cách dự đoán "background".
+
+## Non-Maximum Suppression (NMS): lọc bỏ dự đoán trùng lặp
+
+Vì có rất nhiều anchor box đặt dày đặc khắp ảnh, mô hình thường đưa ra
+**nhiều dự đoán chồng chéo** cho cùng một vật thể thật (nhiều anchor box
+gần nhau đều "nhìn thấy" đúng vật thể đó). **Non-Maximum Suppression**
+(NMS) là bước hậu xử lý để lọc bỏ các dự đoán dư thừa này:
+
+1. Sắp xếp mọi dự đoán theo **độ tự tin** (confidence score) giảm dần.
+2. Chọn dự đoán có độ tự tin cao nhất, giữ lại làm kết quả cuối cùng.
+3. Loại bỏ mọi dự đoán khác có **IoU với dự đoán vừa chọn vượt một ngưỡng**
+   (ví dụ `IoU > 0.5`) — vì chúng nhiều khả năng đang "chỉ" vào cùng một
+   vật thể.
+4. Lặp lại bước 2-3 với các dự đoán còn lại, cho tới khi không còn dự
+   đoán nào để xử lý.
+
+Kết quả cuối cùng là một tập hợp nhỏ các bounding box, mỗi box đại diện
+cho đúng một vật thể thực sự, thay vì hàng chục box chồng chéo lên nhau.
+
+## Dòng tiến hoá R-CNN: mỗi phiên bản giải quyết đúng 1 bottleneck của phiên bản trước
+
+Trước 2014, object detection chủ yếu dựa vào **sliding window** —
+trượt một cửa sổ có kích thước cố định qua toàn bộ ảnh ở nhiều vị trí và
+tỷ lệ, chạy một bộ phân loại thủ công (không dùng CNN) tại mỗi vị trí.
+Cách này vừa chậm (quét toàn bộ ảnh ở nhiều scale) vừa không tận dụng
+được sức mạnh của CNN vừa chứng minh hiệu quả ở bài toán classification
+(bài [CNN](11-convolutional-neural-network.mdx)).
+
+**R-CNN (Girshick và cộng sự, 2014)** là bước ngoặt đầu tiên đưa CNN vào
+object detection, với quy trình 4 bước: (1) dùng thuật toán **selective
+search** (không phải deep learning) để đề xuất khoảng 2000 vùng có khả
+năng chứa vật thể trong mỗi ảnh, (2) resize từng vùng về kích thước cố
+định rồi chạy **CNN riêng biệt** để trích đặc trưng, (3) dùng SVM để
+phân loại từng vùng, (4) huấn luyện một bộ hồi quy tuyến tính để tinh
+chỉnh bounding box. Cách tiếp cận này đạt độ chính xác cao hơn hẳn
+sliding window truyền thống — nhưng có một bottleneck rõ ràng: chạy CNN
+**độc lập** trên từng vùng trong số ~2000 vùng nghĩa là rất nhiều tính
+toán trùng lặp (nhiều vùng chồng lấn nhau nhưng vẫn phải tính lại CNN từ
+đầu cho mỗi vùng).
+
+**Fast R-CNN** giải quyết đúng bottleneck đó: thay vì chạy CNN riêng cho
+từng vùng, chạy CNN **một lần duy nhất** trên toàn bộ ảnh để lấy một bản
+đồ đặc trưng chung, rồi dùng một lớp **RoI Pooling** để trích ra đặc
+trưng có kích thước cố định cho từng vùng đề xuất **từ bản đồ chung đó**
+— loại bỏ hoàn toàn việc tính CNN lặp lại. Nhanh hơn đáng kể so với
+R-CNN, nhưng vẫn phụ thuộc vào **selective search** (thuật toán ngoài
+CNN, không học được, chạy trên CPU) để đề xuất vùng — đây là bottleneck
+tốc độ còn lại.
+
+**Faster R-CNN** giải quyết bottleneck đó: thay selective search bằng
+**Region Proposal Network (RPN)** — một mạng nơ-ron nhỏ học cách đề xuất
+vùng trực tiếp từ chính bản đồ đặc trưng CNN, không cần thuật toán ngoài
+riêng biệt nữa. Vì RPN cũng là một mạng nơ-ron, toàn bộ hệ thống (đề
+xuất vùng + phân loại + tinh chỉnh box) huấn luyện được **end-to-end**
+bằng backpropagation, nhanh hơn nhiều so với Fast R-CNN.
+
+Đây là ví dụ rõ ràng của mẫu hình đã gặp ở [AlexNet](35-alexnet.mdx):
+mỗi phiên bản không phát minh lại toàn bộ bài toán, mà nhắm chính xác
+vào **bottleneck cụ thể** của phiên bản ngay trước nó (tính toán lặp lại
+→ tính toán phụ thuộc thuật toán ngoài CNN → toàn bộ pipeline học được).
+
+## Two-stage vs one-stage
+
+Toàn bộ họ R-CNN ở trên thuộc nhóm **two-stage**: một bước đề xuất vùng
+riêng biệt (selective search hoặc RPN), sau đó mới phân loại/tinh chỉnh.
+Một hướng tiếp cận khác — **one-stage** (ví dụ họ YOLO, SSD) — dự đoán
+trực tiếp lớp và bounding box cho mọi anchor box trong **một lần** duy
+nhất qua mạng, không tách riêng bước đề xuất vùng. Về đánh đổi: two-stage
+thường chính xác hơn (có bước đề xuất vùng chuyên biệt trước khi phân
+loại), one-stage thường nhanh hơn và phù hợp ứng dụng thời gian thực,
+đôi khi đánh đổi lại độ chính xác thấp hơn.
+
+## Liên hệ lại với các bài trước
+
+- Object detection dùng lại nguyên vẹn CNN đã học (bài
+  [CNN](11-convolutional-neural-network.mdx)) làm phần trích xuất đặc
+  trưng (feature extractor) — điểm mới không nằm ở cách xử lý ảnh, mà ở
+  cách **thêm đầu ra** cho bài toán định vị (bounding box + offset) bên
+  cạnh đầu ra phân loại đã quen thuộc.
+- Việc gán anchor box với ground truth theo IoU cao nhất là một dạng bài
+  toán tối ưu tổ hợp đơn giản — không phải gradient descent, mà là một
+  quy tắc gán ghép (matching) chạy trước khi tính loss.
+- Vẫn huấn luyện bằng [backpropagation](09-backpropagation.mdx) như mọi
+  mạng nơ-ron khác — object detection chỉ thay đổi cấu trúc đầu ra và
+  cách chuẩn bị nhãn huấn luyện (anchor box + offset), không thay đổi cơ
+  chế tối ưu hoá.
+- Dòng tiến hoá R-CNN → Fast R-CNN → Faster R-CNN lặp lại đúng mẫu hình
+  đã thấy ở [AlexNet](35-alexnet.mdx): một ý tưởng đúng (dùng CNN cho
+  detection) được cải tiến từng bước bằng cách nhắm chính xác vào
+  bottleneck cụ thể của phiên bản trước, không phát minh lại từ đầu.
+
+## Nguồn tham khảo
+
+- [Dive into Deep Learning — Object Detection and Bounding Boxes](http://d2l.ai/chapter_computer-vision/bounding-box.html) — dùng cho định nghĩa bounding box (dạng góc/dạng tâm), và phân biệt object detection (classification + localization) với classification thuần.
+- [Dive into Deep Learning — Anchor Boxes](http://d2l.ai/chapter_computer-vision/anchor.html) — dùng cho khái niệm anchor box (nhiều scale/aspect ratio tại mỗi vị trí), công thức IoU (tỷ lệ giao/hợp), quy trình gán ground truth theo IoU cao nhất, và Non-Maximum Suppression để lọc dự đoán trùng lặp.
+- [Dive into Deep Learning — Region-based CNNs (R-CNNs)](https://d2l.ai/chapter_computer-vision/rcnn.html) — dùng cho quy trình 4 bước của R-CNN (Girshick et al., 2014: selective search, CNN riêng biệt, SVM, hồi quy bounding box), bottleneck tính toán lặp lại, và cách Fast R-CNN (RoI Pooling) và Faster R-CNN (Region Proposal Network) giải quyết từng bottleneck cụ thể.
+- [Lil'Log — Object Detection for Dummies Part 3: R-CNN Family](https://lilianweng.github.io/posts/2017-12-31-object-recognition-part-3/) — dùng đối chiếu trực giác vì sao sliding window truyền thống chậm và không tận dụng CNN, và cách diễn đạt rõ ràng lý do mỗi bước cải tiến (R-CNN → Fast → Faster) ra đời đúng để giải quyết bottleneck cụ thể của bước trước.

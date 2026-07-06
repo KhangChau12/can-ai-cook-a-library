@@ -1,0 +1,131 @@
+---
+title: "Reformer — LSH Attention và Reversible Layers Giải quyết Cả Compute lẫn Bộ nhớ"
+track: foundations-track
+module: "Sequence Model"
+submodule: "Transformer Architecture"
+order: 74
+status: stable
+prerequisites: ["15-transformer", "62-longformer-efficient-attention"]
+summary: "Longformer giảm độ phức tạp attention bằng cách giới hạn PHẠM VI attention (cửa sổ cục bộ + global chọn lọc). Kitaev, Kaiser, Levskaya (2020) tấn công vấn đề bằng hai kỹ thuật khác hẳn: Locality-Sensitive Hashing (LSH) attention nhóm các query/key tương tự vào cùng bucket để chỉ tính attention trong bucket đó (O(L log L) thay vì O(L^2)), và reversible residual layers giải quyết luôn cả bài toán BỘ NHỚ khi huấn luyện (không cần lưu activation mọi lớp)."
+last_touched_by_task: "Viết mới 2026-07-06: đào sâu nhánh Reformer đã nhắc sơ qua ở bài 62 (Longformer) thành 1 bài riêng — đủ chất liệu kỹ thuật cụ thể (LSH attention + reversible layers là 2 cơ chế độc lập, không trùng Longformer). Nguồn: arxiv 2001.04451 (Kitaev, Kaiser, Levskaya 2020) + lilianweng.github.io/posts/2020-04-07-the-transformer-family (đã dùng làm nguồn phụ ở bài 62, giờ đào sâu đúng phần Reformer)."
+---
+
+Bài [Longformer](62-longformer-efficient-attention.mdx) giải quyết độ
+phức tạp bậc hai của self-attention bằng cách **giới hạn phạm vi** — mỗi
+token chỉ chú ý tới một cửa sổ cục bộ, cộng thêm một số ít token global
+attention. Đó là một hướng tiếp cận: **thu hẹp số cặp cần tính** theo một
+mẫu hình cố định trước (fixed pattern). **Reformer** giải quyết cùng vấn
+đề bằng một hướng khác hẳn — thay vì cố định trước "ai chú ý tới ai",
+Reformer **học cách nhóm động** các vị trí có khả năng liên quan gần
+nhau, rồi chỉ tính attention trong từng nhóm. Đồng thời, Reformer còn giải
+quyết một vấn đề khác mà Longformer không nhắm tới trực tiếp: **bộ nhớ**
+cần thiết khi huấn luyện một Transformer rất sâu.
+
+## Vấn đề thứ nhất: vẫn là độ phức tạp bậc hai, nhưng nhìn từ góc softmax
+
+**Kitaev, Kaiser, và Levskaya (2020)**, trong bài báo "Reformer: The
+Efficient Transformer", quan sát một điểm quan trọng về bản chất của
+attention: sau khi áp dụng softmax, chỉ những giá trị **lớn nhất** trong
+ma trận điểm số attention mới thực sự đóng góp đáng kể vào kết quả cuối
+cùng — các cặp query/key có độ tương đồng thấp gần như bị "triệt tiêu"
+bởi softmax dù vẫn tốn chi phí tính toán đầy đủ `L × L` cặp. Vậy câu hỏi
+đặt ra: có cách nào **tìm trước** những cặp query/key có khả năng tương
+đồng cao, để chỉ tính attention giữa chúng, mà không cần tính toán và rồi
+loại bỏ toàn bộ `L × L` cặp?
+
+## Giải pháp 1: Locality-Sensitive Hashing (LSH) Attention
+
+Ý tưởng của Reformer: dùng kỹ thuật **locality-sensitive hashing** (băm
+nhạy cảm vị trí) — một kỹ thuật hash đặc biệt, nơi các vector **gần nhau**
+trong không gian nhiều chiều có xác suất cao được băm vào **cùng một
+giá trị hash** (khác với hash thông thường, vốn cố ý làm các input gần
+nhau cho ra hash hoàn toàn khác nhau).
+
+Cụ thể, Reformer dùng một ma trận ngẫu nhiên cố định `R`, và tính hash
+bằng công thức:
+
+```
+h(x) = argmax([x·R ; -x·R])
+```
+
+Các vector query/key có hướng tương tự nhau trong không gian nhiều chiều
+sẽ có xu hướng rơi vào cùng một "bucket" (nhóm) sau phép băm này. Quy
+trình tính attention gồm 4 bước:
+
+1. **Băm (hash)** từng query/key vào các bucket theo công thức trên.
+2. **Sắp xếp** (sort) toàn bộ query/key theo giá trị bucket.
+3. **Chia khối (chunk)** các vị trí liền kề sau khi sắp xếp thành các
+   nhóm nhỏ có kích thước cố định.
+4. **Tính attention** chỉ trong phạm vi mỗi khối (và khối liền kề, để
+   tránh bỏ sót trường hợp 2 vị trí cùng bucket logic bị chia sang 2
+   khối khác nhau do ranh giới cắt).
+
+Vì mỗi vị trí giờ chỉ cần so sánh với một số lượng nhỏ vị trí trong cùng
+bucket (thay vì toàn bộ chuỗi), độ phức tạp giảm từ `O(L²)` xuống còn
+**`O(L log L)`** — chi phí của bước sắp xếp là thành phần chính, thay vì
+chi phí tính toán toàn bộ ma trận attention.
+
+Một chi tiết kỹ thuật đáng chú ý: Reformer dùng **shared-QK attention**
+— dùng chung một phép chiếu cho cả query và key (`Q = K`) thay vì hai
+phép chiếu riêng biệt như Transformer gốc. Điều này giúp việc băm nhất
+quán hơn (vector query và key của cùng một vị trí chắc chắn rơi vào cùng
+bucket), đồng thời không làm giảm chất lượng mô hình đáng kể so với dùng
+Q và K riêng biệt.
+
+## Vấn đề thứ hai: bộ nhớ khi huấn luyện Transformer sâu
+
+Ngoài compute, Reformer nhắm tới một vấn đề khác: khi huấn luyện một
+Transformer có `N` lớp, cách làm tiêu chuẩn cần **lưu lại activation của
+mọi lớp** để dùng khi lan truyền ngược (backpropagation) — bộ nhớ tiêu
+tốn tỷ lệ thuận với `N`. Với Transformer rất sâu (nhiều chục lớp), đây là
+một giới hạn thực tế nghiêm trọng không kém gì độ phức tạp attention.
+
+## Giải pháp 2: Reversible Residual Layers
+
+Thay vì residual connection thông thường (`y = x + F(x)`, buộc phải lưu
+`x` để tính ngược lại sau này), Reformer dùng **reversible residual
+layers** — chia input/output thành 2 nhánh riêng, với công thức:
+
+```
+y1 = x1 + Attention(x2)
+y2 = x2 + FeedForward(y1)
+```
+
+Điểm mấu chốt: từ `(y1, y2)`, có thể **tính ngược lại chính xác**
+`(x1, x2)` chỉ bằng các phép biến đổi đảo ngược của công thức trên, dùng
+đúng tham số mô hình hiện có — không cần lưu trữ `(x1, x2)` từ trước.
+Nhờ vậy, khi lan truyền ngược, activation của các lớp trước được **tính
+lại (recompute)** ngay tại chỗ thay vì phải lưu sẵn trong bộ nhớ suốt quá
+trình forward — đổi **thêm một chút tính toán** (tính lại) để lấy
+**bộ nhớ giảm mạnh** (chỉ cần lưu activation một lần, không phải nhân
+lên `N` lần theo số lớp). Reformer áp dụng thêm kỹ thuật chia khối
+(chunking) cho phần feed-forward để giảm bộ nhớ hơn nữa.
+
+## Kết quả: giữ chất lượng, đổi lấy hiệu quả
+
+Kitaev và cộng sự báo cáo Reformer đạt hiệu năng **tương đương**
+Transformer tiêu chuẩn trên các bài toán thử nghiệm, nhưng **hiệu quả bộ
+nhớ vượt trội** và **nhanh hơn đáng kể** trên chuỗi dài — hai cải tiến
+(LSH attention + reversible layers) giải quyết hai vấn đề độc lập nhau
+(compute của attention, và bộ nhớ của toàn kiến trúc sâu), nên có thể áp
+dụng cùng lúc mà không xung đột.
+
+## Liên hệ lại với các bài trước
+
+- Reformer và [Longformer](62-longformer-efficient-attention.mdx) cùng
+  nhắm một mục tiêu (giảm độ phức tạp bậc hai của self-attention) nhưng
+  bằng hai triết lý khác nhau: Longformer dùng **mẫu hình cố định trước**
+  (cửa sổ cục bộ + global chọn lọc theo tác vụ), còn Reformer **học cách
+  nhóm động** qua hashing — không cần biết trước token nào quan trọng.
+- Reversible residual layers là đóng góp **độc lập** với vấn đề attention
+  — giải quyết bài toán bộ nhớ của kiến trúc sâu nói chung, một góc độ
+  hiệu quả hoá mà cả [Transformer-XL](61-transformer-xl.mdx) lẫn
+  Longformer đều không nhắm tới trực tiếp.
+- Cùng với Sparse Transformer (đã nhắc ở bài 62), Reformer là minh chứng
+  thứ hai cho thấy "giảm chi phí self-attention" là một hướng nghiên cứu
+  có nhiều lời giải kỹ thuật khác nhau, không phải một bài toán đã đóng.
+
+## Nguồn tham khảo
+
+- [arXiv — Reformer: The Efficient Transformer](https://arxiv.org/abs/2001.04451) — paper gốc của Kitaev, Kaiser, và Levskaya (2020, ICLR), dùng cho vấn đề cụ thể (compute O(L²) và bộ nhớ tỷ lệ N lớp), hai kỹ thuật LSH attention (công thức hash, quy trình bucket/sort/chunk) và reversible residual layers (công thức y1/y2, cơ chế recompute thay vì lưu trữ), và kết quả (hiệu năng tương đương Transformer, hiệu quả bộ nhớ/tốc độ vượt trội trên chuỗi dài).
+- [Lil'Log — The Transformer Family (Lilian Weng)](https://lilianweng.github.io/posts/2020-04-07-the-transformer-family/) — dùng cho giải thích trực giác cơ chế LSH (vì sao chỉ giá trị attention lớn mới đáng tính, nguyên lý shared-QK) và reversible layers (nguyên lý "tính lại thay vì lưu trữ", đánh đổi compute lấy bộ nhớ).

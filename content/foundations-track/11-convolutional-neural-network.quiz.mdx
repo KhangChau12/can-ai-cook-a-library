@@ -1,0 +1,43 @@
+---
+quiz_for: 11-convolutional-neural-network
+---
+
+## Q1
+Đưa thẳng một ảnh 1 triệu pixel vào một lớp ẩn MLP kết nối đầy đủ với 1000 đơn vị gây ra vấn đề gì?
+
+- [x] Riêng lớp đầu tiên đã cần khoảng 1 tỷ tham số — không khả thi để huấn luyện với phần cứng thông thường
+- [ ] Mô hình sẽ chạy nhanh hơn nhưng kém chính xác
+- [ ] MLP không chấp nhận input dạng ảnh dưới bất kỳ hình thức nào
+- [ ] Chỉ cần thêm 1 lớp ẩn nữa là giải quyết được vấn đề
+
+> Đây là vấn đề số lượng tham số bùng nổ — không phải vấn đề "chậm" mà là "không khả thi" với dữ liệu và phần cứng thông thường.
+
+## Q2
+Nguyên lý "translation invariance" (bất biến theo phép tịnh tiến) dẫn tới ý tưởng nào trong CNN?
+
+- [x] Dùng chung một bộ trọng số nhỏ (kernel/filter), trượt qua toàn bộ ảnh, áp dụng cùng phép tính ở mọi vị trí
+- [ ] Học một bộ tham số hoàn toàn riêng cho từng vị trí pixel
+- [ ] Bỏ qua hoàn toàn thông tin vị trí của vật thể trong ảnh
+- [ ] Chỉ áp dụng được cho ảnh có kích thước cố định 224x224
+
+> Một con vật ở góc trên ảnh nên được nhận diện dễ như khi ở góc dưới — cùng một bộ phát hiện đặc trưng nên áp dụng được ở mọi vị trí, giảm số tham số từ hàng tỷ xuống hàng triệu vì không cần học riêng cho từng vị trí.
+
+## Q3
+Nguyên lý "locality" (tính cục bộ) giúp giảm số tham số bằng cách nào?
+
+- [x] Kernel chỉ cần kích thước nhỏ (ví dụ 3x3 hoặc 5x5), không cần kết nối với toàn bộ ảnh
+- [ ] Chỉ xử lý phần trung tâm của ảnh, bỏ qua các góc
+- [ ] Giảm độ phân giải ảnh xuống còn 1 pixel
+- [ ] Chỉ áp dụng cho ảnh đen trắng, không áp dụng cho ảnh màu
+
+> Để nhận biết điều gì đang xảy ra tại một vị trí, thường không cần nhìn tới pixel ở rất xa — thông tin liên quan chủ yếu nằm ở vùng lân cận gần đó, nên kernel nhỏ vẫn đủ, giảm số tham số thêm nhiều bậc.
+
+## Q4
+CNN dùng cơ chế huấn luyện nào để cập nhật tham số (kernel)?
+
+- [x] Backpropagation và gradient descent, giống hệt MLP thông thường
+- [ ] Một thuật toán tối ưu hoá hoàn toàn riêng, không dùng gradient
+- [ ] Chỉ cần thiết lập kernel thủ công, không cần huấn luyện
+- [ ] Cross-validation thay thế cho backpropagation
+
+> Điểm khác biệt duy nhất của CNN so với MLP là cấu trúc kết nối (cục bộ + chia sẻ trọng số qua toàn ảnh) — cơ chế học (backpropagation, gradient descent) hoàn toàn giống các mạng nơ-ron khác đã học.

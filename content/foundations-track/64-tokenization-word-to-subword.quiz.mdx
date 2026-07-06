@@ -1,0 +1,43 @@
+---
+quiz_for: 64-tokenization-word-to-subword
+---
+
+## Q1
+2 vấn đề cụ thể của tokenize theo từ (word-level) là gì?
+
+- [x] Từ vựng khổng lồ (embedding matrix tốn bộ nhớ, chậm huấn luyện), và hoàn toàn bất lực trước từ chưa từng gặp (out-of-vocabulary)
+- [ ] Word-level tokenization không thể huấn luyện bằng backpropagation
+- [ ] Word-level tokenization chỉ hoạt động với tiếng Anh, không hoạt động với ngôn ngữ khác
+- [ ] Word-level tokenization yêu cầu dữ liệu phải có nhãn sẵn
+
+> Số liệu cụ thể: khoảng 3×10⁸ tổ hợp 6-gram tiếng Anh có thể có — một từ vựng lớn như vậy đòi hỏi embedding matrix khổng lồ, và vẫn không giải quyết được vấn đề từ mới/hiếm.
+
+## Q2
+Byte Pair Encoding (BPE) giải quyết vấn đề đó bằng cách nào?
+
+- [x] Tách văn bản thành các SUBWORD (mảnh từ) thay vì cả từ nguyên vẹn — ghép dần các cặp ký hiệu liền kề xuất hiện thường xuyên nhất cho tới khi đạt kích thước từ vựng mong muốn
+- [ ] Loại bỏ hoàn toàn các từ hiếm khỏi dữ liệu huấn luyện
+- [ ] Dịch mọi từ hiếm sang tiếng Anh trước khi xử lý
+- [ ] Tăng kích thước từ vựng lên vô hạn để chứa mọi từ có thể có
+
+> Thuật toán BPE bắt đầu từ ký tự đơn, lặp lại việc tìm và ghép cặp ký hiệu phổ biến nhất — tạo ra các subword có độ dài thay đổi nhưng từ vựng tổng thể vẫn cố định, nhỏ hơn nhiều so với word-level.
+
+## Q3
+Vì sao BPE giải quyết được vấn đề out-of-vocabulary (từ chưa từng gặp)?
+
+- [x] Một từ mới gần như luôn có thể phân rã thành tổ hợp các subword đã học trước đó (ví dụ "faster_" tách thành "fast" + "er_"), ngay cả khi chưa từng thấy nguyên cả từ đó
+- [ ] BPE yêu cầu phải biết trước tất cả các từ có thể xuất hiện trong tương lai
+- [ ] BPE tự động dịch từ mới sang một từ đã có trong từ vựng
+- [ ] BPE không giải quyết được vấn đề này, vẫn cần token <unk>
+
+> Đây chính là cơ chế cốt lõi — vì subword được học từ các mảnh ký tự phổ biến, hầu hết từ mới đều có thể "ghép" lại từ các mảnh đã biết, không cần token <unk> như word-level.
+
+## Q4
+Kết quả thực nghiệm cụ thể của BPE trên benchmark WMT 15 là gì?
+
+- [x] Cải thiện +1.1 điểm BLEU cho dịch Anh-Đức và +1.3 điểm BLEU cho dịch Anh-Nga, so với phương pháp dictionary backoff truyền thống
+- [ ] BPE làm giảm chất lượng dịch máy so với word-level tokenization
+- [ ] BPE chỉ cải thiện được tốc độ, không cải thiện chất lượng dịch
+- [ ] Không có kết quả thực nghiệm nào được công bố trong paper gốc
+
+> Đây là bằng chứng thực nghiệm cụ thể cho thấy giải quyết đúng vấn đề từ hiếm/chưa từng gặp mang lại cải thiện đo lường được trên bài toán dịch máy thực tế.

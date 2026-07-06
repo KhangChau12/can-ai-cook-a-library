@@ -1,0 +1,107 @@
+---
+title: "Vision Transformer (ViT) — Thách thức Giả định 'CNN là Bắt buộc cho Ảnh'"
+track: foundations-track
+module: "Computer Vision"
+submodule: "Cơ bản"
+order: 55
+status: stable
+prerequisites: ["41-efficientnet", "15-transformer"]
+summary: "Toàn bộ dòng tiến hoá CNN (LeNet→AlexNet→VGG→ResNet→MobileNet→EfficientNet) dựa trên một giả định ngầm: convolution — với các thiên kiến quy nạp (inductive bias) như tính cục bộ và bất biến dịch chuyển — là cần thiết để xử lý ảnh hiệu quả. Dosovitskiy và cộng sự (2020) thách thức giả định đó: chia ảnh thành các patch, biến mỗi patch thành 1 token, rồi áp dụng thẳng kiến trúc Transformer thuần tuý (đã học ở bài 15) — không có convolution nào. Trên tập dữ liệu nhỏ, ViT thua CNN vì thiếu thiên kiến quy nạp hữu ích; nhưng khi pretrain trên dữ liệu đủ lớn (300 triệu ảnh), ViT vượt trội ResNet."
+last_touched_by_task: "Bài mới (2026-07-06), theo yêu cầu người vận hành 'hoàn thiện các sub-module CV sâu hơn' — đây là khoảng trống lớn nhất trong sub-module 'Cơ bản': toàn bộ 6 bài trước (11, 35-38, 41) đều là kiến trúc CNN, chưa từng có kiến trúc dựa trên Transformer cho ảnh, dù track đã dạy Transformer đầy đủ ở bài 15 (module khác). ViT là bước ngoặt quan trọng nhất gần đây trong CV, thách thức chính giả định nền tảng của cả dòng tiến hoá CNN. Nguồn: arxiv 2010.11929 (paper gốc Dosovitskiy et al. 2020, xác nhận qua WebFetch abstract: vấn đề phụ thuộc CNN, ý tưởng patch sequence, kết quả vượt trội SOTA CNN với ít tài nguyên huấn luyện hơn) + D2L.ai (chapter_attention-mechanisms-and-transformers/vision-transformer.html, xác nhận qua WebFetch: cơ chế patch embedding chi tiết, kiến trúc đầy đủ, và dữ liệu thực nghiệm quan trọng — ViT thua CNN trên dữ liệu nhỏ như Fashion-MNIST nhưng vượt trội khi pretrain trên 300 triệu ảnh)."
+---
+
+Toàn bộ dòng tiến hoá đã học trong sub-module "Cơ bản" — từ
+[CNN](11-convolutional-neural-network.mdx) tới
+[EfficientNet](41-efficientnet.mdx) — đều dựa trên một giả định ngầm
+chưa từng bị thách thức: **convolution là công cụ cần thiết** để xử lý
+ảnh hiệu quả. Bài này kể cách giả định đó bị thách thức trực tiếp bởi
+chính kiến trúc [Transformer](15-transformer.mdx) đã học ở một module
+khác — vốn được thiết kế ban đầu cho văn bản, không phải ảnh.
+
+## Vấn đề: liệu thiên kiến quy nạp của CNN có thực sự cần thiết?
+
+CNN có được hiệu quả một phần nhờ hai **thiên kiến quy nạp** (inductive
+bias) được "cài cứng" vào kiến trúc: **tính cục bộ** (mỗi kernel chỉ nhìn
+một vùng nhỏ) và **bất biến dịch chuyển** (cùng một kernel áp dụng ở mọi
+vị trí ảnh — đã học ở bài [CNN](11-convolutional-neural-network.mdx)).
+Những thiên kiến này giúp CNN học hiệu quả ngay cả khi dữ liệu huấn luyện
+không quá lớn — mô hình đã được "định hướng sẵn" để tìm đúng loại pattern
+hữu ích cho ảnh.
+
+Nhưng thiên kiến quy nạp là con dao hai lưỡi: nó giúp ích khi dữ liệu ít,
+nhưng có thể trở thành **giới hạn** khi dữ liệu đủ lớn — một kiến trúc
+"tổng quát hơn, ít giả định cứng hơn" có thể tận dụng được lượng dữ liệu
+khổng lồ tốt hơn, học ra được những pattern mà thiên kiến cục bộ/dịch
+chuyển của CNN không cho phép biểu diễn tự nhiên.
+
+## Giải pháp: chia ảnh thành patch, áp dụng thẳng Transformer thuần tuý
+
+**Dosovitskiy và cộng sự (2020)**, trong bài báo "An Image is Worth 16x16
+Words: Transformers for Image Recognition at Scale", đề xuất **Vision
+Transformer (ViT)** — áp dụng kiến trúc Transformer gần như **nguyên
+vẹn** (đã học ở bài [Transformer](15-transformer.mdx)) cho ảnh, không hề
+dùng convolution.
+
+Cơ chế cụ thể — **patch embedding**:
+
+1. Chia ảnh (kích thước `h × w × c`, với `c` là số kênh màu) thành
+   `m = h*w / p²` patch vuông, mỗi patch kích thước `p × p` pixel (ví dụ
+   `p = 16`, đúng nguồn gốc tên gọi "16x16 Words" trong tên bài báo).
+2. "Làm phẳng" (flatten) mỗi patch thành một vector độ dài `c*p²`.
+3. Chiếu tuyến tính (linear projection) mỗi vector patch đã làm phẳng
+   thành một **embedding** — về bản chất toán học, bước "chia patch +
+   chiếu tuyến tính" này tương đương với một phép **convolution duy
+   nhất** có kernel size và stride đều bằng đúng kích thước patch `p`.
+
+Sau khi có chuỗi embedding cho mọi patch (coi mỗi patch như một "từ" —
+token), thêm một token đặc biệt `<cls>` (dùng để tổng hợp thông tin cho
+phân loại cuối cùng) và **positional embedding** (để giữ thông tin vị trí
+patch, vì self-attention của Transformer vốn không có khái niệm thứ tự —
+đã học ở bài 15), rồi đưa toàn bộ chuỗi qua một **Transformer encoder**
+tiêu chuẩn (dùng thiết kế pre-normalization — chuẩn hoá trước khi qua
+attention/MLP, thay vì sau). Cuối cùng, biểu diễn của token `<cls>` được
+chiếu qua một lớp phân loại để cho ra nhãn dự đoán.
+
+## Kết quả: thua CNN trên dữ liệu nhỏ, vượt trội khi đủ lớn
+
+Đây là phát hiện thực nghiệm quan trọng nhất của ViT: hiệu năng của nó
+phụ thuộc rất mạnh vào **quy mô dữ liệu pretraining**.
+
+- Trên dữ liệu **nhỏ** (ví dụ Fashion-MNIST), ViT **thua kém** CNN — vì
+  không có thiên kiến quy nạp hữu ích của convolution, ViT cần tự học
+  mọi thứ từ đầu chỉ qua dữ liệu, kém hiệu quả khi dữ liệu ít.
+- Khi pretrain trên dữ liệu **cực lớn** (khoảng 300 triệu ảnh), ViT
+  **vượt trội ResNet** — CNN đã đạt tới giới hạn tận dụng lượng dữ liệu
+  khổng lồ đó do bị ràng buộc bởi thiên kiến quy nạp cứng, trong khi ViT
+  (tổng quát hơn, ít giả định hơn) tận dụng được lượng dữ liệu đó tốt
+  hơn để tự học ra các pattern hữu ích, đạt kết quả xuất sắc trên nhiều
+  benchmark (ImageNet, CIFAR-100, VTAB) trong khi cần ít tài nguyên tính
+  toán huấn luyện hơn so với CNN SOTA cùng thời điểm.
+
+Đây là một minh chứng cụ thể, ở một modality khác (ảnh thay vì văn bản),
+cho nguyên lý đã gặp ở [Scaling Laws](25-scaling-laws.mdx): mô hình càng
+ít giả định cứng, càng cần nhiều dữ liệu để phát huy hết tiềm năng —
+nhưng khi đã đủ dữ liệu, nó có thể vượt qua các kiến trúc chuyên biệt
+hơn.
+
+## Liên hệ lại với các bài trước
+
+- ViT là ví dụ rõ ràng nhất trong track cho thấy một kiến trúc thiết kế
+  ban đầu cho một modality (Transformer cho văn bản, bài 15) có thể
+  chuyển sang modality khác (ảnh) chỉ bằng cách tìm đúng cách **biểu
+  diễn dữ liệu thành chuỗi token** — patch embedding đóng đúng vai trò
+  "tokenize ảnh" tương tự cách văn bản được tokenize thành từ/subword.
+- Phép chiếu tuyến tính patch tương đương một phép convolution — cho
+  thấy ranh giới giữa "CNN" và "Transformer thuần" không hoàn toàn tách
+  biệt như tưởng: ViT vẫn dùng một phép toán giống convolution ở bước
+  đầu vào, chỉ khác toàn bộ phần xử lý sau đó dùng self-attention thay
+  vì các lớp convolution xếp chồng.
+- Đánh đổi "cần dữ liệu lớn để phát huy hiệu năng" giống hệt nguyên lý đã
+  học ở [Scaling Laws](25-scaling-laws.mdx) — một minh chứng khác cho
+  thấy nguyên lý "quy mô dữ liệu quyết định khi nào một kiến trúc ít giả
+  định hơn thắng thế" áp dụng được cả ở modality ảnh, không chỉ văn bản.
+
+## Nguồn tham khảo
+
+- [arXiv — An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale](https://arxiv.org/abs/2010.11929) — paper gốc của Dosovitskiy và cộng sự (2020), dùng cho vấn đề cụ thể (thách thức giả định CNN là bắt buộc cho ảnh), ý tưởng cốt lõi (chuỗi patch ảnh), và kết quả (vượt trội CNN SOTA với ít tài nguyên huấn luyện hơn khi pretrain đủ lớn).
+- [Dive into Deep Learning — Transformers for Vision](http://d2l.ai/chapter_attention-mechanisms-and-transformers/vision-transformer.html) — dùng cho cơ chế patch embedding chi tiết (công thức số patch, tương đương với 1 phép convolution), kiến trúc đầy đủ (token `<cls>`, positional embedding, pre-normalization Transformer encoder), và dữ liệu thực nghiệm quan trọng (ViT thua CNN trên Fashion-MNIST nhưng vượt trội khi pretrain trên 300 triệu ảnh).

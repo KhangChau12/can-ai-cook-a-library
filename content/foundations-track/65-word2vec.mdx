@@ -1,0 +1,125 @@
+---
+title: "Word2vec — Biến Token Rời rạc Thành Vector Số Mang Nghĩa"
+track: foundations-track
+module: "Sequence Model"
+submodule: "Tokenization"
+order: 65
+status: stable
+prerequisites: ["64-tokenization-word-to-subword"]
+summary: "Bài Tokenization (64) mới giải quyết việc CẮT văn bản thành token — nhưng token vẫn chỉ là chuỗi ký tự, chưa phải con số mà mạng nơ-ron xử lý được. Cách biểu diễn số đơn giản nhất, one-hot vector, có một vấn đề chí mạng: mọi cặp từ đều có cosine similarity = 0, kể cả 'vua' và 'nữ hoàng' — one-hot hoàn toàn không mang thông tin ngữ nghĩa. Mikolov và cộng sự (2013, Google) giải quyết bằng word2vec: học vector số liên tục (dense vector) sao cho các từ xuất hiện trong ngữ cảnh tương tự có vector gần nhau, qua 2 kiến trúc self-supervised — Skip-gram (đoán ngữ cảnh từ từ trung tâm) và CBOW (đoán từ trung tâm từ ngữ cảnh)."
+last_touched_by_task: "Bài mới (2026-07-06), theo làm rõ trực tiếp của người vận hành ngay sau bài 64: 'tokenize ở đây ý tôi muốn nói đến còn là 1 đống cách đưa các token thành các vector số nữa á' — mở nhánh con 'Embedding' của sub-module Tokenization. Đây là bài đầu tiên của nhánh, lấp khoảng trống 'token → vector' mà mọi bài xử lý chuỗi trước đó trong track (RNN, Attention, Transformer, BERT) đều ngầm giả định input đã là vector sẵn. Nguồn: arxiv 1301.3781 (paper gốc Mikolov, Chen, Corrado, Dean 2013, 'Efficient Estimation of Word Representations in Vector Space', xác nhận qua WebFetch abstract: huấn luyện dưới 1 ngày trên 1.6 tỷ từ, đạt state-of-the-art trên bài toán đo độ tương tự cú pháp/ngữ nghĩa của từ, cải thiện độ chính xác đáng kể với chi phí tính toán thấp hơn nhiều so với kiến trúc neural network trước đó) + D2L.ai (chapter_natural-language-processing-pretraining/word2vec.html, xác nhận qua WebFetch: vấn đề cụ thể one-hot có cosine similarity luôn = 0 giữa mọi cặp từ, công thức softmax cụ thể cho Skip-gram P(w_o|w_c), kiến trúc CBOW đối xứng ngược lại, và chi phí tính toán softmax trên toàn bộ từ vựng)."
+---
+
+Bài [Tokenization/BPE](64-tokenization-word-to-subword.mdx) giải quyết
+việc **cắt** văn bản thành các token rời rạc. Nhưng một token — dù là cả
+từ hay một subword — vẫn chỉ là một **chuỗi ký tự**, không phải con số.
+Mọi mạng nơ-ron đã học trong track ([RNN](12-recurrent-neural-network.mdx),
+[Transformer](15-transformer.mdx)) đều chỉ nhận **vector số** làm input.
+Bài này lấp khoảng trống còn lại: làm sao biến một token thành một vector
+số — và quan trọng hơn, làm sao để vector đó **mang thông tin ngữ nghĩa**
+chứ không chỉ là một mã số vô nghĩa.
+
+## Vấn đề: one-hot vector không mang thông tin ngữ nghĩa gì cả
+
+Cách biểu diễn số đơn giản nhất cho một từ trong từ vựng kích thước `V`
+là **one-hot vector**: một vector độ dài `V`, toàn số 0 trừ đúng 1 vị trí
+(ứng với từ đó) là số 1.
+
+Vấn đề chí mạng của one-hot: **cosine similarity giữa hai one-hot vector
+bất kỳ luôn bằng 0** — bất kể hai từ đó có liên quan chặt tới đâu về mặt
+ngữ nghĩa. Vector one-hot của "vua" và "nữ hoàng" có độ tương tự y hệt
+như vector one-hot của "vua" và "cái ghế" — đều bằng 0. One-hot coi mọi
+từ là hoàn toàn độc lập, "cách đều nhau" tuyệt đối, không hề phản ánh
+thực tế rằng "vua"-"nữ hoàng" gần nghĩa hơn nhiều so với "vua"-"cái ghế".
+Ngoài ra, kích thước vector bằng đúng kích thước từ vựng — với từ vựng
+lớn (hàng trăm nghìn từ), one-hot cực kỳ tốn bộ nhớ và hầu hết là số 0
+(biểu diễn thưa — sparse).
+
+## Giải pháp: học vector dày (dense) từ ngữ cảnh xung quanh
+
+**Mikolov và cộng sự (2013)**, trong bài báo "Efficient Estimation of
+Word Representations in Vector Space" (nhóm nghiên cứu tại Google), giải
+quyết vấn đề này bằng **word2vec**: thay vì gán mỗi từ một one-hot vector
+cố định, **học** một vector số liên tục (dense vector, ví dụ 100-300
+chiều — nhỏ hơn nhiều so với kích thước từ vựng) cho mỗi từ, sao cho các
+từ xuất hiện trong **ngữ cảnh tương tự nhau** sẽ có vector **gần nhau**
+trong không gian vector.
+
+Đây là một dạng học **self-supervised** — không cần nhãn thủ công, vì
+chính văn bản (từ nào đứng cạnh từ nào) đã tự cung cấp tín hiệu huấn
+luyện. Word2vec đề xuất hai kiến trúc cụ thể để khai thác tín hiệu này:
+
+### Skip-gram: đoán ngữ cảnh từ từ trung tâm
+
+Cho một **từ trung tâm** (center word), Skip-gram huấn luyện mô hình để
+**đoán các từ ngữ cảnh** xung quanh nó (trong một cửa sổ kích thước cố
+định). Mỗi từ có **hai** vector riêng biệt: vector trung tâm `v` (khi từ
+đó là center) và vector ngữ cảnh `u` (khi từ đó đóng vai trò context).
+Xác suất một từ ngữ cảnh `w_o` xuất hiện quanh từ trung tâm `w_c` được
+tính bằng **softmax**:
+
+```
+P(w_o | w_c) = exp(u_o · v_c) / Σ_i exp(u_i · v_c)
+```
+
+(tổng ở mẫu số chạy qua **toàn bộ từ vựng**). Mục tiêu huấn luyện là tối
+đa hoá xác suất này cho các cặp (từ trung tâm, từ ngữ cảnh) thực sự xuất
+hiện cùng nhau trong dữ liệu — tương đương tối thiểu hoá hàm mất mát
+`-log P(ngữ cảnh | trung tâm)`.
+
+### CBOW (Continuous Bag of Words): đoán từ trung tâm từ ngữ cảnh
+
+CBOW làm **ngược lại** Skip-gram: cho các **từ ngữ cảnh** xung quanh, đoán
+**từ trung tâm**. Các vector ngữ cảnh được **lấy trung bình** lại thành
+một vector duy nhất, sau đó nhân với vector từ trung tâm qua softmax
+tương tự Skip-gram.
+
+Dù hai kiến trúc đối xứng nhau (Skip-gram: 1 từ → nhiều từ; CBOW: nhiều
+từ → 1 từ), cả hai đều tạo ra tác dụng phụ mong muốn: các **vector trọng
+số học được** trong quá trình huấn luyện (không phải output dự đoán) mới
+chính là "sản phẩm" ta cần — chúng trở thành **word embedding**, vector
+số dày mang thông tin ngữ nghĩa, dùng làm input cho các mô hình downstream
+khác.
+
+## Chi phí: softmax trên toàn bộ từ vựng rất tốn kém
+
+Cả hai kiến trúc đều cần tính softmax với mẫu số là tổng trên **toàn bộ
+từ vựng** — với từ vựng lớn (hàng trăm nghìn tới hàng triệu từ), việc này
+cực kỳ tốn tính toán cho mỗi bước huấn luyện. (Các kỹ thuật tăng tốc như
+negative sampling hay hierarchical softmax được đề xuất để giải quyết chi
+phí này, nhưng nằm ngoài phạm vi bài này — có thể là hướng đào sâu tiếp
+theo nếu tìm được nguồn phù hợp.)
+
+## Kết quả: hiệu quả và chính xác hơn hẳn phương pháp trước
+
+Mikolov và cộng sự công bố: mô hình word2vec huấn luyện được vector từ
+chất lượng cao trên tập dữ liệu **1.6 tỷ từ trong chưa tới 1 ngày** — một
+bước nhảy về hiệu quả tính toán so với các kiến trúc mạng nơ-ron trước đó
+cho cùng bài toán. Vector học được đạt **state-of-the-art** trên bộ kiểm
+tra đo độ tương tự cú pháp và ngữ nghĩa giữa các từ — nhóm tác giả nhấn
+mạnh: cải thiện độ chính xác đáng kể đi kèm chi phí tính toán **thấp hơn
+nhiều** so với các phương pháp trước.
+
+## Liên hệ lại với các bài trước
+
+- Đây chính là mảnh ghép còn thiếu giữa [Tokenization/BPE](64-tokenization-word-to-subword.mdx)
+  (cắt token) và mọi mô hình xử lý chuỗi đã học ([RNN](12-recurrent-neural-network.mdx),
+  [Transformer](15-transformer.mdx)) — các bài đó đều giả định input đã
+  là vector số sẵn; word2vec (hoặc GloVe, hoặc embedding học trực tiếp từ
+  đầu cùng mô hình chính) chính là bước tạo ra vector đó.
+- Vector embedding học được từ word2vec là **tĩnh** — mỗi từ có đúng một
+  vector, bất kể ngữ cảnh câu cụ thể (từ "bank" trong "river bank" và
+  "bank account" có cùng một vector). Đây chính là hạn chế mà
+  **contextual embedding** của [BERT](45-bert.mdx) và [Transformer](15-transformer.mdx)
+  (mỗi từ có vector khác nhau tuỳ câu, tính qua self-attention) giải
+  quyết sau này — word2vec là bước đệm lịch sử quan trọng trước khi
+  ngành chuyển sang embedding phụ thuộc ngữ cảnh.
+- Cùng nguyên lý "học biểu diễn không cần nhãn thủ công" (self-supervised)
+  đã gặp ở [Autoencoder](22-autoencoder.mdx) và [Pretraining LLM](24-pretraining-llm.mdx)
+  — word2vec là một trong những minh chứng sớm nhất cho thấy văn bản thô
+  (không nhãn) đã chứa đủ tín hiệu để học biểu diễn có ý nghĩa.
+
+## Nguồn tham khảo
+
+- [arXiv — Efficient Estimation of Word Representations in Vector Space](https://arxiv.org/abs/1301.3781) — paper gốc của Mikolov, Chen, Corrado và Dean (2013), dùng cho bối cảnh ra đời, kết quả thực nghiệm cụ thể (huấn luyện dưới 1 ngày trên 1.6 tỷ từ, state-of-the-art trên bài toán đo độ tương tự từ, cải thiện độ chính xác với chi phí tính toán thấp hơn).
+- [Dive into Deep Learning — Word Embedding (word2vec)](http://d2l.ai/chapter_natural-language-processing-pretraining/word2vec.html) — dùng cho vấn đề cụ thể (cosine similarity one-hot luôn bằng 0), công thức softmax chi tiết của Skip-gram, kiến trúc CBOW đối xứng ngược lại, và chi phí tính toán softmax trên toàn bộ từ vựng.

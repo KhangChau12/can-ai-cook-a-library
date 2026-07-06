@@ -1,0 +1,106 @@
+---
+title: "Fine-tuning & Instruction Tuning — Từ 'hoàn thành văn bản' sang 'làm theo hướng dẫn'"
+track: foundations-track
+module: "LLM"
+submodule: "Huấn luyện & Alignment"
+order: 26
+status: stable
+prerequisites: ["24-pretraining-llm"]
+summary: "Base model sau pretraining chỉ biết 'hoàn thành văn bản', không hiểu ý định của một câu lệnh/câu hỏi. Instruction tuning — supervised fine-tuning trên các cặp (hướng dẫn, câu trả lời mong muốn) — biến base model thành một trợ lý biết làm theo hướng dẫn."
+last_touched_by_task: "Rà lại theo triết lý nội dung mới (2026-07-06): đọc kỹ, xác nhận bài đã đạt chuẩn (ví dụ base vs instruct cụ thể, catastrophic forgetting giải thích rõ, không 'vỏ rỗng') — instruction tuning là 1 kỹ thuật đơn, không thuộc dạng 'dòng tiến hoá nhiều model'. Cập nhật (2026-07-06, Task 85): thêm liên kết sang bài 80 (LoRA) mới viết — trả lời cụ thể câu hỏi 'làm sao fine-tune hiệu quả tham số' mà bài này chỉ nói chung chung."
+---
+
+Bài [Pretraining](24-pretraining-llm.mdx) kết thúc bằng một vấn đề bỏ ngỏ:
+sau pretraining, mô hình chỉ biết **hoàn thành văn bản** hợp lý dựa trên
+ngữ cảnh — gọi là **base model**. Nếu đưa cho base model một câu hỏi trực
+tiếp (ví dụ "Thủ đô của Việt Nam là gì?"), nó có thể tiếp tục viết thêm
+câu hỏi tương tự, hoặc viết một đoạn văn không liên quan, thay vì trả lời
+đúng ý định của người hỏi — vì mục tiêu next-token prediction chỉ dạy nó
+"tiếp tục văn bản trông hợp lý", không dạy nó "hiểu và làm theo ý định của
+người dùng". **Instruction tuning** (tinh chỉnh theo hướng dẫn) là bước
+tiếp theo giải quyết đúng vấn đề này.
+
+## Base model vs Instruct model: khác biệt cụ thể
+
+Sự khác biệt dễ thấy nhất: đưa cùng một câu lệnh cho base model và cho
+phiên bản đã qua instruction tuning (thường gọi là bản "instruct" hoặc
+"chat") của cùng một mô hình. Base model có xu hướng tiếp tục viết thêm
+nội dung không liên quan trực tiếp tới ý định câu lệnh (vì nó chỉ học
+"tiếp tục văn bản hợp lý" từ dữ liệu huấn luyện gốc, nơi câu lệnh dạng này
+hiếm khi được theo sau bởi một câu trả lời trực tiếp). Bản instruct nhận
+diện đúng đây là một yêu cầu cần thực hiện, và trả về đúng nội dung được
+yêu cầu.
+
+## Cơ chế: vẫn là supervised fine-tuning, chỉ khác dữ liệu
+
+Về mặt kỹ thuật, instruction tuning **không giới thiệu kiến trúc hay hàm
+loss mới** — vẫn dùng chính kiến trúc Transformer và cross-entropy loss
+đã học ở bài Pretraining. Điểm khác biệt duy nhất nhưng quan trọng là
+**dữ liệu huấn luyện**: thay vì văn bản thô không có cấu trúc rõ ràng
+(dùng cho pretraining), instruction tuning huấn luyện tiếp trên một tập
+dữ liệu **được sắp xếp có cấu trúc**, ví dụ theo dạng:
+
+```
+### Instruction: {câu lệnh/câu hỏi cụ thể}
+### Response: {câu trả lời mong muốn}
+```
+
+Mô hình được huấn luyện tiếp (fine-tune) trên rất nhiều cặp
+(instruction, response) như vậy, trải rộng nhiều loại tác vụ khác nhau
+(trả lời câu hỏi, tóm tắt, dịch thuật, suy luận...) — qua đó học được
+**khuôn mẫu hành vi chung**: khi thấy một câu lệnh/câu hỏi, việc cần làm
+là trả lời trực tiếp đúng ý định, không phải tiếp tục viết văn bản ngẫu
+nhiên.
+
+## Vì sao nhanh hơn và cần ít dữ liệu hơn pretraining rất nhiều
+
+Vì mô hình đã "biết ngôn ngữ" từ bước pretraining (ngữ pháp, kiến thức
+nền, khả năng suy luận cơ bản), instruction tuning không cần dạy lại từ
+đầu — nó chỉ cần dạy mô hình **cách sử dụng** những gì đã biết theo đúng
+khuôn mẫu "làm theo hướng dẫn". Vì vậy, bước này cần lượng dữ liệu **nhỏ
+hơn rất nhiều** so với pretraining (có thể chỉ cần một tập dữ liệu chất
+lượng cao, được chọn lọc kỹ, thay vì hàng tỷ token thô), và tốn ít compute
+hơn nhiều — xem bài [LoRA](80-lora.mdx) để hiểu cụ thể một kỹ thuật giảm
+chi phí fine-tune hơn nữa bằng cách chỉ học một lượng tham số rất nhỏ.
+
+## Rủi ro: catastrophic forgetting
+
+Một cái giá phải trả khi fine-tune: mô hình có thể gặp **catastrophic
+forgetting** (quên thảm hoạ) — cải thiện rõ rệt ở đúng loại tác vụ được
+fine-tune, nhưng vô tình **giảm chất lượng** ở những khả năng khác không
+nằm trong dữ liệu fine-tune. Ví dụ cụ thể: fine-tune một mô hình chuyên
+sâu vào văn bản pháp lý có thể khiến nó viết sáng tạo hoặc giải thích kỹ
+thuật kém đi so với trước khi fine-tune — dù mục tiêu ban đầu chỉ là cải
+thiện ở mảng pháp lý. Đây là lý do fine-tuning cần dữ liệu được chọn lọc
+cẩn thận và nên đánh giá lại hiệu năng trên **nhiều loại tác vụ khác
+nhau** sau khi fine-tune, không chỉ tác vụ mục tiêu.
+
+## Fine-tuning không phải lựa chọn duy nhất để tuỳ biến hành vi mô hình
+
+Instruction tuning là một dạng cụ thể của fine-tuning nói chung — kỹ thuật
+này còn dùng được cho nhiều mục đích khác (dạy mô hình phong cách hội
+thoại nhiều lượt/multi-turn cho chatbot, chuyên sâu vào một lĩnh vực cụ
+thể). Nhưng fine-tuning không phải cách duy nhất, và không phải lúc nào
+cũng là lựa chọn đầu tiên nên thử — với nhiều bài toán, các kỹ thuật không
+cần huấn luyện lại tham số (prompt engineering, in-context learning, hay
+RAG — sẽ học ở các bài sau trong series) có thể đạt hiệu quả tương đương
+mà không tốn chi phí và rủi ro catastrophic forgetting của việc fine-tune.
+
+## Liên hệ lại với các bài trước
+
+- Instruction tuning dùng lại nguyên vẹn kiến trúc Transformer decoder và
+  cross-entropy loss đã học ở bài [Pretraining](24-pretraining-llm.mdx) —
+  không có gì mới về mặt toán học, chỉ khác cấu trúc dữ liệu huấn luyện.
+- Đây là một ví dụ cụ thể của **transfer learning** theo tinh thần đã gặp
+  ở Ensemble Methods và Autoencoder: dùng lại kiến thức đã học từ một bước
+  huấn luyện tốn kém (pretraining) để giải quyết nhanh, rẻ hơn nhiều một
+  mục tiêu cụ thể hơn (làm theo hướng dẫn) — không cần học lại từ đầu.
+- Catastrophic forgetting là một biến thể cụ thể của đánh đổi bias-
+  variance đã gặp xuyên suốt giáo trình: fine-tune quá mạnh vào một loại
+  dữ liệu hẹp (giống mô hình quá phức tạp khớp sát vào tập train hẹp) có
+  thể làm giảm khả năng tổng quát hoá sang các loại tác vụ khác.
+
+## Nguồn tham khảo
+
+- [A Gentle Introduction to Language Model Fine-tuning (MachineLearningMastery)](https://machinelearningmastery.com/a-gentle-introduction-to-language-model-fine-tuning/) — dùng cho khác biệt cụ thể giữa base model và instruct model, định dạng dữ liệu instruction-response, và lý do fine-tuning nhanh/cần ít dữ liệu hơn pretraining vì mô hình đã "biết ngôn ngữ" từ trước.
+- [10 Common Misconceptions About Large Language Models (MachineLearningMastery)](https://machinelearningmastery.com/10-common-misconceptions-about-large-language-models/) — dùng cho rủi ro catastrophic forgetting khi fine-tune, và khuyến nghị cân nhắc prompt engineering/in-context learning/RAG trước khi fine-tune.

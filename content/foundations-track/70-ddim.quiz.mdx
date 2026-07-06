@@ -1,0 +1,43 @@
+---
+quiz_for: 70-ddim
+---
+
+## Q1
+Vấn đề cụ thể mà DDIM giải quyết ở DDPM là gì?
+
+- [x] DDPM phải mô phỏng một chuỗi Markov qua hàng nghìn bước khử nhiễu TUẦN TỰ để sinh một ảnh — cực kỳ chậm so với các phương pháp sinh ảnh khác như GAN (chỉ cần 1 lần forward)
+- [ ] DDPM không thể sinh ảnh có độ phân giải cao hơn 64x64
+- [ ] DDPM không thể huấn luyện bằng gradient descent
+- [ ] DDPM chỉ hoạt động với ảnh đen trắng, không hoạt động với ảnh màu
+
+> Mỗi bước khử nhiễu của DDPM chỉ được huấn luyện để khử đúng một lượng nhiễu nhỏ tương ứng với vị trí cụ thể của nó trong chuỗi — không thể bỏ qua bước, nên phải chạy tuần tự qua toàn bộ T bước.
+
+## Q2
+DDIM giải quyết vấn đề tốc độ bằng cách nào?
+
+- [x] Xây dựng quá trình reverse KHÔNG-Markov (non-Markovian), chia sẻ đúng training objective với DDPM nhưng cho phép bỏ qua bước — sinh ảnh sau mỗi ⌈T/S⌉ bước thay vì từng bước một
+- [ ] Huấn luyện lại toàn bộ mô hình từ đầu với kiến trúc CNN nhỏ hơn
+- [ ] Giảm độ phân giải ảnh đầu ra xuống một nửa
+- [ ] Bỏ hoàn toàn quá trình khử nhiễu, sinh ảnh trực tiếp từ nhiễu ngẫu nhiên
+
+> Điểm mấu chốt là DDIM dùng được TRỰC TIẾP với một mô hình DDPM đã huấn luyện xong — không cần huấn luyện lại — vì quá trình mới vẫn chia sẻ đúng mục tiêu huấn luyện gốc.
+
+## Q3
+Tham số η (eta) trong DDIM có vai trò gì?
+
+- [x] Điều khiển mức độ ngẫu nhiên của quá trình sinh qua công thức σ_t² = η·β̃_t — η=0 cho quá trình sinh HOÀN TOÀN TẤT ĐỊNH, η=1 khôi phục đúng DDPM gốc (ngẫu nhiên)
+- [ ] Điều khiển số lượng lớp trong mạng nơ-ron
+- [ ] Điều khiển kích thước batch khi huấn luyện
+- [ ] Điều khiển learning rate của optimizer
+
+> η=0 loại bỏ hoàn toàn phần nhiễu ngẫu nhiên thêm vào ở mỗi bước khử nhiễu — đây chính là điều tạo ra tính "tất định" đặc trưng của DDIM.
+
+## Q4
+Vì sao tính tất định (deterministic, η=0) của DDIM mở ra khả năng nội suy (interpolation) có ý nghĩa ngữ nghĩa mà DDPM không có?
+
+- [x] Vì quá trình sinh không còn phụ thuộc vào nhiễu ngẫu nhiên ở mỗi bước, nên 2 điểm gần nhau trong latent space luôn cho ra ảnh có đặc điểm cấp cao tương tự nhau một cách nhất quán (tính chất "consistency")
+- [ ] Vì DDIM sinh ảnh có độ phân giải thấp hơn nên dễ nội suy hơn
+- [ ] Vì DDIM không dùng mạng nơ-ron nào cả
+- [ ] DDPM cũng có khả năng nội suy y hệt DDIM, không có gì khác biệt
+
+> DDPM ngẫu nhiên ở mỗi bước nên cùng một điểm latent có thể cho ra kết quả khác nhau mỗi lần sinh — DDIM tất định đảm bảo tính nhất quán cần thiết để nội suy có ý nghĩa.

@@ -1,0 +1,138 @@
+---
+title: "Logistic Regression — Phân loại nhị phân"
+track: foundations-track
+module: "Nền tảng Toán & ML cổ điển"
+order: 3
+status: stable
+prerequisites: ["02-linear-regression"]
+summary: "Từ dự đoán số thực sang dự đoán xác suất thuộc một lớp: hàm sigmoid, cross-entropy loss, và ngưỡng quyết định (threshold)."
+last_touched_by_task: "Rà lại theo triết lý nội dung mới (2026-07-06): đọc kỹ, xác nhận bài đã đạt chuẩn (ví dụ số cụ thể cho sigmoid, không 'vỏ rỗng') — logistic regression không thuộc dạng 'dòng tiến hoá nhiều model' nên không bắt buộc thêm lịch sử/2 nguồn theo mục 2.1. Đã thử tra D2L.ai tìm lịch sử (Fechner 1860/probit, Gibbs 1902/softmax được nhắc nhưng không liên quan trực tiếp) — không tìm được gì đáng thêm, giữ nguyên nội dung, chỉ nâng status."
+---
+
+Bài [Linear Regression](02-linear-regression.mdx) giải quyết bài toán dự
+đoán một **số thực** (giá nhà, điểm số...). Nhưng rất nhiều bài toán ML —
+kể cả phần lớn scoring metric trên The Noders Platform (`f1_score`,
+`accuracy`, `precision`, `recall`) — thực chất là bài toán **classification**:
+dự đoán một **nhãn rời rạc** (spam/không-spam, có bệnh/không bệnh). Logistic
+regression là mô hình classification đơn giản nhất, và quan trọng hơn, nó
+cho thấy rõ cách "vá" linear regression để nó dự đoán được nhãn thay vì số.
+
+## Vì sao không dùng thẳng linear regression cho classification
+
+Thử tưởng tượng dùng `ŷ = w^T x + b` để dự đoán "có bệnh" (`y=1`) hay
+"không bệnh" (`y=0`). Có hai vấn đề ngay lập tức:
+
+- `ŷ` là một số thực bất kỳ — có thể ra `-3.7` hoặc `12.4`, không nằm gọn
+  trong khoảng `[0, 1]` để hiểu như một xác suất.
+- Squared error loss (dùng ở linear regression) không phạt đúng cách cho
+  bài toán phân loại — nó coi việc dự đoán `0.9` khi đúng là `1` (khá tốt)
+  và dự đoán `-2` khi đúng là `1` (rất tệ) theo một thang đo không phù hợp
+  với bản chất "đúng lớp hay sai lớp" của bài toán.
+
+Logistic regression giải quyết cả hai bằng cách thêm một bước biến đổi và
+đổi hẳn hàm loss.
+
+## Hàm sigmoid: nén số thực về khoảng (0, 1)
+
+Vẫn giữ nguyên phần tuyến tính `z = w^T x + b` (gọi là **logit**), nhưng
+đưa qua hàm **sigmoid** trước khi coi là kết quả:
+
+```
+sigmoid(z) = 1 / (1 + exp(-z))
+```
+
+Hàm này có tính chất quan trọng: bất kể `z` là số nào (âm vô cùng tới dương
+vô cùng), `sigmoid(z)` luôn nằm trong khoảng `(0, 1)`. Vài giá trị cụ thể
+để thấy rõ tốc độ "nén": `sigmoid(0) = 0.5` (đúng ở giữa), `sigmoid(2) ≈
+0.88`, `sigmoid(5) ≈ 0.993` (đã rất gần 1), và theo chiều ngược lại
+`sigmoid(-2) ≈ 0.12`, `sigmoid(-5) ≈ 0.007` (đã rất gần 0). Chỉ cần `z`
+rời khỏi 0 một khoảng vừa phải (2-5 đơn vị) là sigmoid đã tiến sát biên —
+đây là lý do logit `z` thường được diễn giải như "mức độ tự tin" của mô
+hình: `z` càng lớn dương, mô hình càng tự tin nhãn là 1; càng lớn âm, càng
+tự tin nhãn là 0. Nhờ tính chất luôn nằm trong `(0,1)` này, đầu ra của mô
+hình `ŷ = sigmoid(w^T x + b)` có thể diễn giải trực tiếp như **xác suất**
+mô hình gán cho nhãn `y = 1`.
+
+Với bài toán nhiều lớp hơn 2 (ví dụ phân loại 5 loại ảnh), phiên bản tổng
+quát của sigmoid gọi là **softmax** — chuẩn hoá một vector số thực bất kỳ
+thành một phân phối xác suất (mọi giá trị dương, tổng bằng 1):
+
+```
+softmax(o)_i = exp(o_i) / sum( exp(o_j) )   -- tổng chạy qua mọi lớp j
+```
+
+Sigmoid thực chất là trường hợp đặc biệt của softmax khi chỉ có 2 lớp.
+Trong bài này, tập trung vào binary classification (2 lớp) vì đây là dạng
+phổ biến nhất khi mới học và khớp trực tiếp với các metric platform hay
+dùng.
+
+## Ngưỡng quyết định (decision threshold)
+
+Mô hình cho ra xác suất, nhưng nộp bài lên platform cần một **nhãn cụ thể**
+(0 hoặc 1) trong cột `prediction`. Cần một ngưỡng để chuyển xác suất thành
+nhãn — phổ biến nhất là ngưỡng `0.5`:
+
+```
+nhãn dự đoán = 1  nếu sigmoid(z) >= 0.5
+nhãn dự đoán = 0  nếu sigmoid(z) < 0.5
+```
+
+`0.5` không phải là luật bắt buộc — nó chỉ là lựa chọn mặc định hợp lý khi
+không có lý do gì để thiên vị một lớp. Trong thực tế thi đấu, nếu biết
+trước dữ liệu bị mất cân bằng (ví dụ 95% ví dụ thuộc lớp 0), đôi khi cần
+cân nhắc ngưỡng khác — chi tiết này sẽ quay lại ở bài về các metric
+`precision`/`recall`, vì hai metric đó phản ứng rất khác nhau với việc dời
+ngưỡng.
+
+## Hàm loss: cross-entropy thay vì squared error
+
+Vì đầu ra giờ là xác suất, hàm loss phù hợp hơn là **cross-entropy loss**
+(hay còn gọi log loss), không phải squared error:
+
+```
+l(y, ŷ) = -( y * log(ŷ) + (1-y) * log(1-ŷ) )
+```
+
+Trực giác: nếu nhãn thật `y = 1` mà mô hình dự đoán `ŷ` gần 1 → `log(ŷ)`
+gần 0 → loss nhỏ (tốt). Nếu mô hình dự đoán `ŷ` gần 0 trong khi nhãn thật
+là 1 → `log(ŷ)` tiến tới âm vô cùng → loss cực lớn (phạt rất nặng). Đây là
+điểm khác biệt quan trọng so với squared error: cross-entropy phạt cực kỳ
+nặng khi mô hình "tự tin sai" (dự đoán gần 0 hoặc gần 1 nhưng sai), không
+chỉ phạt theo khoảng cách số học đơn thuần.
+
+Cũng giống linear regression, việc học tham số `w, b` là tối thiểu hoá
+trung bình cross-entropy loss trên toàn bộ dữ liệu, thường bằng gradient
+descent (logistic regression không có nghiệm đóng dạng normal equation như
+linear regression, vì hàm loss không còn là bậc hai đơn giản).
+
+## Liên hệ lại với các bài trước
+
+- Từ bài [Xác suất & thống kê](01-xac-suat-thong-ke-co-ban.mdx): đầu ra
+  `ŷ = sigmoid(z)` chính là một xác suất theo đúng nghĩa `P(y=1 | x)` —
+  xác suất có điều kiện, biết trước feature `x`. Cross-entropy loss thực
+  chất bắt nguồn từ nguyên lý **maximum likelihood** — tìm tham số làm cho
+  xác suất mô hình gán cho nhãn thật (quan sát được trong dữ liệu) là lớn
+  nhất.
+- Từ bài [Linear Regression](02-linear-regression.mdx): logistic regression
+  vẫn giữ nguyên phần tuyến tính `w^T x + b`, chỉ thêm một hàm biến đổi
+  (sigmoid) và đổi hàm loss. Đây là mô hình cho thấy rõ nhất cách một ý
+  tưởng cũ (tổ hợp tuyến tính của feature) được tái sử dụng cho một bài
+  toán khác hẳn (phân loại thay vì hồi quy) — mẫu hình này sẽ lặp lại khi
+  học tới neural network sau này.
+
+## Sai lầm thường gặp
+
+- **Nhầm "logistic regression" là hồi quy (regression)** dù tên gọi có chữ
+  "regression" — bản chất nó là mô hình **classification**. Tên gọi mang
+  tính lịch sử, không phản ánh đúng bài toán nó giải quyết.
+- **Chỉ nhìn `accuracy` mà bỏ qua mất cân bằng dữ liệu.** Nếu 95% dữ liệu
+  thuộc lớp 0, một mô hình luôn đoán 0 đạt `accuracy = 95%` mà không học
+  được gì — đây là lý do các metric như `precision`, `recall`, `f1_score`
+  tồn tại, sẽ giải thích kỹ ở bài exam-track riêng về scoring metric.
+- **Quên rằng ngưỡng 0.5 không phải chân lý tuyệt đối** — với bài toán mất
+  cân bằng nặng, ngưỡng mặc định có thể khiến mô hình gần như không bao
+  giờ dự đoán lớp thiểu số.
+
+## Nguồn tham khảo
+
+- [Dive into Deep Learning — Softmax Regression](http://d2l.ai/chapter_linear-classification/softmax-regression.html) — dùng làm nguồn chính cho công thức hàm softmax (tổng quát của sigmoid), cross-entropy loss, và sự khác biệt về bản chất giữa tối ưu hoá classification (maximum likelihood) so với squared error của regression.

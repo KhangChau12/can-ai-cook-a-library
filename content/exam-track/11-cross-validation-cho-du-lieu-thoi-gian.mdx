@@ -1,0 +1,108 @@
+---
+title: "Cross-Validation cho Dữ liệu Có Tính Thời gian — Walk-Forward Validation"
+track: exam-track
+module: "Kỹ thuật thi đấu nâng cao"
+order: 11
+status: stable
+prerequisites: ["03-baseline-nang-cap-mo-hinh-va-chien-luoc-nop-bai"]
+summary: "Bài Baseline đã dạy dùng k-fold cross-validation làm chuẩn so sánh — nhưng k-fold thông thường (chia ngẫu nhiên) phá vỡ cấu trúc thời gian nếu dữ liệu competition có tính chất chuỗi thời gian (dự đoán doanh số, giá cổ phiếu, lưu lượng...). Walk-forward validation giải quyết bằng cách luôn train trên QUÁ KHỨ, test trên TƯƠNG LAI — đúng với cách model sẽ thực sự được dùng."
+last_touched_by_task: "Viết mới 2026-07-06: lấp khoảng trống — bài 1 đã dạy data leakage (train-test contamination, target leakage) nhưng chưa nhắc temporal leakage riêng cho dữ liệu có tính thời gian. Nguồn: machinelearningmastery.com/5-ways-to-use-cross-validation-to-improve-time-series-models (walk-forward, expanding vs sliding window) + machinelearningmastery.com/data-leakage-machine-learning (đã dùng ở bài 1, xác nhận có nhắc temporal leakage cụ thể)."
+---
+
+Bài [Baseline & Nâng cấp Mô hình](03-baseline-nang-cap-mo-hinh-va-chien-luoc-nop-bai.mdx)
+dạy nguyên tắc bắt buộc: dùng k-fold cross-validation, không phải một lần
+tách train/validation đơn lẻ, để so sánh mọi cải tiến. Nhưng cách chia
+fold **ngẫu nhiên** tiêu chuẩn của k-fold ẩn chứa một giả định ngầm — thứ
+tự các dòng dữ liệu **không quan trọng**. Với dữ liệu có tính chất
+**chuỗi thời gian** (time series) — dự đoán doanh số theo ngày, giá cổ
+phiếu, lưu lượng truy cập — giả định đó **sai**, và k-fold ngẫu nhiên có
+thể cho điểm cross-validation cao giả tạo.
+
+## Vấn đề: k-fold ngẫu nhiên phá vỡ cấu trúc thời gian, gây "nhìn thấy tương lai"
+
+Với dữ liệu chuỗi thời gian, các quan sát gần nhau về mặt thời gian
+thường có liên hệ chặt với nhau (xu hướng, tính mùa vụ). Nếu chia fold
+ngẫu nhiên như k-fold thông thường, một fold "test" hoàn toàn có thể chứa
+các mốc thời gian nằm **trước** một số mốc trong fold "train" — nghĩa là
+model được huấn luyện với dữ liệu ở **tương lai** so với thời điểm nó cần
+dự đoán. Đây gọi là **look-ahead bias** (thiên lệch nhìn thấy trước): mô
+hình vô tình "biết trước" một phần thông tin mà trong thực tế triển khai
+nó không thể có tại thời điểm dự đoán thật.
+
+Hệ quả cụ thể: điểm cross-validation trông rất tốt (vì model được "gợi ý"
+thông tin tương lai), nhưng khi áp dụng thật — luôn phải dự đoán tương lai
+từ quá khứ, không bao giờ ngược lại — hiệu năng thực tế kém hơn hẳn con số
+cross-validation đã báo trước. Đây là một dạng cụ thể của **temporal
+leakage**, cùng họ với train-test contamination và target leakage đã học
+ở bài [Leaderboard, Metric & Lỗi nộp bài](01-leaderboard-metric-va-loi-nop-bai.mdx),
+nhưng nguyên nhân gốc là **thứ tự thời gian bị xáo trộn** thay vì tính
+tham số sai tập dữ liệu.
+
+## Giải pháp: walk-forward validation — luôn train quá khứ, test tương lai
+
+Nguyên tắc cốt lõi: **tôn trọng đúng thứ tự thời gian** trong mọi lần chia
+fold — train luôn chỉ dùng dữ liệu xảy ra **trước** thời điểm test, không
+bao giờ ngược lại. Cách làm cụ thể (walk-forward validation, còn gọi là
+forward chaining):
+
+1. Chọn một điểm cắt (cut point) trong chuỗi thời gian.
+2. Train model trên toàn bộ dữ liệu **trước** điểm cắt đó.
+3. Test (đánh giá) model trên một đoạn dữ liệu **ngay sau** điểm cắt.
+4. Dịch điểm cắt về sau một bước, **thêm** đoạn dữ liệu vừa test vào tập
+   train (vì giờ đây nó đã "thuộc về quá khứ" so với điểm cắt mới), huấn
+   luyện lại, rồi test trên đoạn tiếp theo.
+5. Lặp lại quá trình này nhiều lần, dịch dần điểm cắt qua toàn bộ chuỗi
+   thời gian có sẵn.
+
+Kết quả là nhiều "fold" giống k-fold thông thường về số lượng, nhưng mỗi
+fold đều đảm bảo đúng chiều nhân quả (causality): train luôn ở quá khứ so
+với test tương ứng của nó.
+
+## Hai biến thể: expanding window và sliding window
+
+- **Expanding window (cửa sổ mở rộng):** tập train **giữ lại toàn bộ**
+  dữ liệu quá khứ và **lớn dần** qua mỗi lần lặp (như mô tả ở quy trình
+  trên) — phù hợp khi các pattern dài hạn trong toàn bộ lịch sử vẫn còn
+  giá trị dự đoán.
+- **Sliding window (cửa sổ trượt):** tập train giữ **kích thước cố định**,
+  loại bỏ dần các quan sát cũ nhất khi thêm quan sát mới — phù hợp khi
+  hành vi gần đây quan trọng hơn nhiều so với lịch sử xa, hoặc khi dữ
+  liệu quá lớn để giữ toàn bộ.
+
+Không có lựa chọn nào "luôn tốt hơn" — đúng nguyên tắc thực dụng đã lặp
+lại nhiều lần trong track: thử cả hai, so sánh bằng chính kết quả walk-forward
+validation, chọn cách nào cho điểm ổn định và gần với thực tế triển khai
+hơn.
+
+## Một chi tiết dễ bỏ sót: feature engineering cũng phải "chảy" theo đúng chiều thời gian
+
+Nguy cơ leakage không chỉ nằm ở cách chia fold — nó có thể "lẻn vào" qua
+chính bước tạo feature. Ví dụ: nếu bạn tính "giá trung bình 30 ngày gần
+nhất" cho MỌI dòng dữ liệu **trước khi** chia train/test, feature đó ở
+những dòng gần điểm cắt có thể đã dùng dữ liệu nằm **sau** điểm cắt (nếu
+cửa sổ 30 ngày vượt qua ranh giới train/test). Nguyên tắc chung: mọi bước
+tính toán (feature dạng lag, rolling mean, chuẩn hoá...) phải được tính
+**tăng dần theo đúng trình tự thời gian** — tại mỗi điểm, chỉ dùng dữ liệu
+đã biết tính tới đúng thời điểm đó, không "nhìn" ngược ra ngoài phạm vi
+cho phép.
+
+## Áp dụng vào chiến lược thi đấu
+
+- Nếu dataset competition có cột thời gian (ngày/timestamp) và bài toán
+  về bản chất là dự đoán một giá trị tương lai từ lịch sử, luôn dùng
+  walk-forward validation thay vì k-fold ngẫu nhiên mặc định — bất kể
+  scoring metric của competition là gì (mae/rmse/f1_score đều áp dụng
+  được nguyên tắc này).
+- Nếu điểm cross-validation (dù đã dùng walk-forward) vẫn cao bất thường
+  so với trực giác về độ khó bài toán, kiểm tra lại toàn bộ pipeline
+  feature engineering xem có bước nào vô tình "nhìn trước" hay không —
+  đây là nguyên nhân phổ biến khiến model time series "trông tốt hơn thực
+  tế" đã nhắc ở phần trên.
+- Quy tắc chung đã học ở bài 1 vẫn áp dụng: một khi nghi ngờ leakage, ưu
+  tiên tin vào validation set tự tách (ở đây là walk-forward) hơn là điểm
+  public leaderboard.
+
+## Nguồn tham khảo
+
+- [5 Ways to Use Cross-Validation to Improve Time Series Models (MachineLearningMastery)](https://machinelearningmastery.com/5-ways-to-use-cross-validation-to-improve-time-series-models/) — dùng cho vấn đề cụ thể (random split phá vỡ cấu trúc thời gian, vi phạm tính nhân quả), quy trình walk-forward validation, và phân biệt expanding window (giữ toàn bộ quá khứ) vs sliding window (kích thước cố định, bỏ dữ liệu cũ).
+- [Data Leakage in Machine Learning (MachineLearningMastery)](https://machinelearningmastery.com/data-leakage-machine-learning/) — dùng cho khái niệm temporal leakage cụ thể (leakage "lẻn vào" qua feature engineering/rolling window vượt ranh giới train-test), đã dùng làm nguồn cho data leakage tổng quát ở bài 1, giờ đào sâu đúng khía cạnh thời gian.

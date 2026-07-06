@@ -1,0 +1,107 @@
+---
+title: "k-Nearest Neighbors (k-NN)"
+track: foundations-track
+module: "Nền tảng Toán & ML cổ điển"
+order: 5
+status: stable
+prerequisites: ["04-decision-tree"]
+summary: "Mô hình 'lazy learning' không học tham số nào cả: dự đoán bằng cách nhìn k điểm dữ liệu gần nhất, và vì sao việc chuẩn hoá feature lại quan trọng sống còn với nó."
+last_touched_by_task: "Rà lại theo triết lý nội dung mới (2026-07-06): đọc kỹ, xác nhận bài đã đạt chuẩn (ví dụ căn nhà k=3 cụ thể, curse of dimensionality giải thích rõ, không 'vỏ rỗng') — k-NN là 1 thuật toán đơn, không thuộc dạng 'dòng tiến hoá nhiều model' nên không bắt buộc thêm lịch sử theo mục 2.1. Giữ nguyên nội dung, chỉ nâng status."
+---
+
+Ba mô hình đã học — [Linear Regression](02-linear-regression.mdx),
+[Logistic Regression](03-logistic-regression.mdx),
+[Decision Tree](04-decision-tree.mdx) — đều có chung một bước: **huấn
+luyện** (training), tức là tìm ra một bộ tham số cố định (`w, b` hoặc cấu
+trúc cây) từ dữ liệu train, rồi dùng tham số đó để dự đoán trên dữ liệu
+mới. k-NN (k-Nearest Neighbors) phá vỡ hoàn toàn khuôn mẫu này: nó không
+học tham số nào cả.
+
+## Ý tưởng: dự đoán bằng cách nhìn hàng xóm gần nhất
+
+Nguyên lý của k-NN cực kỳ đơn giản: để dự đoán một điểm dữ liệu mới, tìm
+**k điểm dữ liệu training gần nó nhất** (theo một khoảng cách nào đó,
+thường là khoảng cách Euclid — khoảng cách đường thẳng thông thường trong
+không gian nhiều chiều), rồi:
+
+- **Classification:** dự đoán là lớp **chiếm đa số** trong k điểm hàng
+  xóm đó (biểu quyết đa số).
+- **Regression:** dự đoán là **giá trị trung bình** của target trong k
+  điểm hàng xóm đó.
+
+Ví dụ với `k = 3`: để dự đoán một căn nhà mới giá bao nhiêu, tìm 3 căn nhà
+trong dữ liệu train có đặc điểm (diện tích, số năm tuổi...) gần giống nhất,
+rồi lấy trung bình giá của 3 căn đó làm dự đoán.
+
+Không có `w^T x + b`, không có hàm loss cần tối thiểu hoá, không có bước
+gradient descent nào. Tham số duy nhất cần chọn là `k` — số lượng hàng
+xóm sẽ nhìn vào.
+
+## "Lazy learning" — không có giai đoạn huấn luyện thật sự
+
+Đây là điểm khác biệt cốt lõi nhất so với mọi mô hình đã học trước đó: bước
+"huấn luyện" của k-NN chỉ đơn giản là **lưu lại toàn bộ dữ liệu train**
+(có thể tổ chức lại dưới cấu trúc dữ liệu giúp tìm kiếm nhanh hơn, nhưng
+bản chất vẫn là lưu nguyên dữ liệu, không nén thành tham số). Vì vậy, k-NN
+được xếp vào nhóm **"lazy learning"** (học lười) hoặc **non-parametric**
+(phi tham số) — đối lập với linear/logistic regression, nơi toàn bộ công
+sức tính toán dồn vào lúc train để rút ra một bộ `w, b` cố định, và lúc dự
+đoán chỉ cần một phép tính đơn giản.
+
+Hệ quả trực tiếp: k-NN gần như không tốn thời gian "huấn luyện", nhưng mỗi
+lần dự đoán lại tốn chi phí tính toán đáng kể (phải so khoảng cách với
+nhiều/tất cả điểm dữ liệu train) — ngược hoàn toàn với linear regression,
+nơi huấn luyện tốn công nhưng dự đoán gần như tức thời.
+
+## Ảnh hưởng của việc chọn `k`
+
+`k` nhỏ (ví dụ `k = 1`, chỉ nhìn đúng 1 hàng xóm gần nhất) khiến mô hình
+rất nhạy với nhiễu — một điểm dữ liệu train bất thường (outlier) có thể
+chi phối hoàn toàn dự đoán của mọi điểm gần nó, tạo ra ranh giới quyết
+định gồ ghề, không đều. `k` lớn làm mượt ranh giới quyết định hơn, ổn định
+hơn trước nhiễu, nhưng nếu quá lớn sẽ "trung bình hoá" quá mức, bỏ sót các
+pattern cục bộ thật sự tồn tại trong dữ liệu.
+
+Đây chính là đánh đổi bias-variance đã gặp ở bài
+[Decision Tree](04-decision-tree.mdx) (qua tham số `max_depth`), chỉ khác
+tham số điều khiển: `k` nhỏ tương ứng với độ phức tạp cao (dễ overfit),
+`k` lớn tương ứng với mô hình đơn giản hơn (dễ underfit nếu quá lớn).
+
+## Vì sao chuẩn hoá feature quan trọng sống còn với k-NN
+
+Vì k-NN dựa hoàn toàn vào **khoảng cách** giữa các điểm dữ liệu, nó cực kỳ
+nhạy với thang đo của từng feature. Nếu một feature có giá trị dao động
+trong khoảng hàng nghìn (ví dụ giá nhà tính bằng nghìn USD) trong khi
+feature khác dao động trong khoảng 0-10 (ví dụ số phòng ngủ), khoảng cách
+Euclid sẽ gần như hoàn toàn bị chi phối bởi feature có giá trị lớn hơn —
+feature còn lại gần như bị "lu mờ" dù có thể quan trọng không kém.
+
+Đây là lý do bắt buộc phải **chuẩn hoá (normalize/standardize)** mọi
+feature về cùng thang đo trước khi dùng k-NN — khác với decision tree,
+vốn không bị ảnh hưởng bởi thang đo feature (vì nó chỉ so sánh `x_j <= t`
+trên từng feature riêng lẻ, không cộng dồn khoảng cách đa chiều).
+
+## "Lời nguyền của không gian nhiều chiều" (curse of dimensionality)
+
+k-NN hoạt động kém hiệu quả khi số lượng feature quá lớn. Trực giác: trong
+không gian nhiều chiều, khái niệm "gần nhau" dần mất ý nghĩa — khoảng cách
+giữa điểm gần nhất và xa nhất trở nên gần như bằng nhau khi số chiều tăng
+lên, khiến việc chọn "hàng xóm gần nhất" không còn nhiều thông tin hữu ích
+như trong không gian ít chiều. Đây là lý do k-NN phù hợp nhất với dữ liệu
+có số lượng feature vừa phải, và thường kém hiệu quả hơn các mô hình khác
+khi feature space quá lớn (hàng trăm/hàng nghìn chiều).
+
+## Liên hệ lại với các bài trước
+
+- k-NN là mô hình đầu tiên học tới không có bước "học tham số" nào —
+  đối lập triệt để với linear/logistic regression (tối thiểu hoá loss để
+  tìm `w, b`) và decision tree (tìm cấu trúc rẽ nhánh tối ưu). Đây là minh
+  hoạ rõ ràng rằng "học máy" không nhất thiết đồng nghĩa với "tối ưu hoá
+  một hàm loss" — đôi khi chỉ là một quy tắc tra cứu thông minh trên chính
+  dữ liệu đã có.
+- Việc chọn `k` lặp lại đúng mẫu hình bias-variance đã thấy ở `max_depth`
+  của decision tree — hai tham số khác nhau, cùng một nguyên lý đánh đổi.
+
+## Nguồn tham khảo
+
+- [scikit-learn — Nearest Neighbors](https://scikit-learn.org/stable/modules/neighbors.html) — dùng làm nguồn chính cho nguyên lý biểu quyết đa số/trung bình theo k hàng xóm gần nhất, khái niệm "non-generalizing"/lazy learning (không có giai đoạn huấn luyện thực sự), ảnh hưởng của việc chọn k, và lời nguyền không gian nhiều chiều (curse of dimensionality) khi feature space quá lớn.

@@ -1,0 +1,91 @@
+---
+title: "SentencePiece — Tokenize Trực tiếp Từ Văn bản Thô, Không Cần Tách Từ Trước"
+track: foundations-track
+module: "Sequence Model"
+submodule: "Tokenization"
+order: 72
+status: stable
+prerequisites: ["67-wordpiece"]
+summary: "BPE và WordPiece (đã học) đều có một giả định ẩn: văn bản input đã được TÁCH TỪ SẴN (dựa trên khoảng trắng) trước khi thuật toán subword chạy — giả định này đúng với tiếng Anh nhưng THẤT BẠI với các ngôn ngữ không có khoảng trắng phân tách từ rõ ràng (tiếng Nhật, Trung, Thái...). Kudo và Richardson (2018, Google) giải quyết bằng SentencePiece: coi văn bản là một chuỗi Unicode thô, xử lý khoảng trắng như MỘT KÝ HIỆU BÌNH THƯỜNG (không phải ranh giới đặc biệt) — cho phép huấn luyện mô hình subword trực tiếp từ câu thô, hoàn toàn độc lập ngôn ngữ. Kèm theo là thuật toán Unigram Language Model — khác hẳn cách tiếp cận 'ghép dần từ ký tự nhỏ' của BPE/WordPiece, Unigram bắt đầu từ TỪ VỰNG LỚN rồi loại dần các đơn vị đóng góp ít nhất vào khả năng (likelihood) của dữ liệu."
+last_touched_by_task: "Bài mới (2026-07-06), hoàn thiện nhánh Segmentation của sub-module Tokenization với thuật toán thứ 3 (sau BPE và WordPiece) — đã được ghi nhận là hướng tiếp theo từ Task 62. Nguồn: arxiv 1808.06226 (paper gốc Kudo, Richardson 2018, 'SentencePiece: A simple and language independent subword tokenizer and detokenizer for Neural Text Processing', xác nhận qua WebFetch abstract: vấn đề cụ thể BPE/WordPiece cần input đã tách từ sẵn — phụ thuộc ngôn ngữ; giải pháp huấn luyện trực tiếp từ câu thô, hệ thống end-to-end độc lập ngôn ngữ; thực nghiệm dịch máy Anh-Nhật cho độ chính xác tương đương) + machinelearningmastery.com/tokenizers-in-language-models/ (xác nhận qua WebFetch: cơ chế xử lý khoảng trắng như ký hiệu bình thường (ví dụ token T5 dùng dấu gạch dưới '_' đánh dấu ranh giới từ), thuật toán Unigram Language Model (tiếp cận top-down, loại dần đơn vị dựa trên log-likelihood score, khác hẳn cách ghép dần bottom-up của BPE/WordPiece), xác nhận T5 và XLNet dùng SentencePiece — kết nối trực tiếp với bài 54 T5 đã học)."
+---
+
+Bài [BPE](64-tokenization-word-to-subword.mdx) và
+[WordPiece](67-wordpiece.mdx) đã học hai thuật toán subword khác nhau ở
+**tiêu chí ghép cặp**. Nhưng cả hai có chung một **giả định ẩn** mà bài
+này chỉ ra và giải quyết.
+
+## Vấn đề: BPE/WordPiece giả định văn bản đã được tách từ sẵn
+
+Cả BPE lẫn WordPiece đều bắt đầu từ bước **tiền xử lý**: tách văn bản
+thành các **từ** riêng lẻ (dựa trên khoảng trắng), rồi mới áp dụng thuật
+toán ghép subword **bên trong** từng từ đó. Giả định này **đúng** với
+tiếng Anh và nhiều ngôn ngữ dùng khoảng trắng phân tách từ rõ ràng — nhưng
+**thất bại hoàn toàn** với các ngôn ngữ **không có khoảng trắng phân tách
+từ** (tiếng Nhật, tiếng Trung, tiếng Thái...) — với những ngôn ngữ này,
+"tách từ trước" tự nó đã là một bài toán khó, cần công cụ riêng theo từng
+ngôn ngữ cụ thể, phá vỡ mục tiêu có một quy trình tokenize **chung, độc
+lập ngôn ngữ**.
+
+## Giải pháp: coi khoảng trắng là một ký hiệu bình thường, xử lý trực tiếp từ Unicode thô
+
+**Kudo và Richardson (2018)** giải quyết vấn đề này bằng **SentencePiece**:
+thay vì coi khoảng trắng là một **ranh giới đặc biệt** phải xử lý trước
+khi tokenize, SentencePiece coi văn bản input là một **chuỗi ký tự
+Unicode thô** — và khoảng trắng chỉ là **một ký hiệu như mọi ký hiệu
+khác** (thường được biểu diễn bằng một ký tự đặc biệt, ví dụ dấu gạch
+dưới `▁`, đánh dấu vị trí từng có khoảng trắng trong văn bản gốc).
+
+Nhờ cách tiếp cận này, SentencePiece có thể **huấn luyện mô hình subword
+trực tiếp từ câu thô** — không cần bước tách từ theo ngôn ngữ cụ thể nào
+trước đó. Kết quả là một hệ thống tokenize **hoàn toàn end-to-end và độc
+lập ngôn ngữ** — cùng một thuật toán, cùng một pipeline, áp dụng được cho
+tiếng Anh, tiếng Nhật, hay bất kỳ ngôn ngữ nào khác mà không cần công cụ
+tách từ riêng theo ngôn ngữ.
+
+## Thuật toán Unigram Language Model: tiếp cận ngược lại BPE/WordPiece
+
+SentencePiece thường đi kèm với một thuật toán chọn subword khác hẳn BPE
+và WordPiece — gọi là **Unigram Language Model**. Trong khi BPE/WordPiece
+đều là thuật toán **bottom-up** (bắt đầu từ ký tự đơn, **ghép dần** lên
+thành từ vựng lớn hơn), Unigram đi theo hướng **ngược lại** — **top-down**:
+
+1. **Khởi tạo** với một từ vựng **lớn** (nhiều đơn vị subword ứng viên).
+2. Ở mỗi bước, **loại bỏ dần** các đơn vị subword đóng góp **ít nhất**
+   vào khả năng (log-likelihood) của toàn bộ dữ liệu huấn luyện — dựa
+   trên một mô hình xác suất thống kê, không phải quy tắc ghép cặp cứng.
+3. Lặp lại cho tới khi đạt **kích thước từ vựng mong muốn**.
+
+Đây là điểm khác biệt kỹ thuật quan trọng: Unigram là một mô hình
+**thống kê** (statistical), không phải một quy tắc rule-based đơn thuần
+— nó có thể đưa ra **nhiều cách phân đoạn subword khác nhau kèm xác
+suất**, thay vì chỉ một cách phân đoạn cố định duy nhất như BPE/WordPiece.
+
+## Kết quả và ứng dụng thực tế
+
+Kudo và Richardson xác nhận qua thực nghiệm dịch máy Anh-Nhật: SentencePiece
+huấn luyện trực tiếp từ câu thô đạt độ chính xác **tương đương** với các
+phương pháp cần bước tách từ trước — chứng minh cụ thể rằng bước tiền xử
+lý tách từ theo ngôn ngữ **không phải điều bắt buộc** để đạt chất lượng
+tốt. Trong thực tế, SentencePiece được dùng làm tokenizer cho nhiều mô
+hình hiện đại — bao gồm cả **T5** (đã học ở bài 54) và **XLNet**.
+
+## Liên hệ lại với các bài trước
+
+- Hoàn thiện dòng tiến hoá 3 thuật toán segmentation: BPE (tần suất thô,
+  bottom-up) → WordPiece (likelihood, bottom-up nhưng khác tiêu chí) →
+  SentencePiece/Unigram (likelihood, nhưng **top-down** và **độc lập
+  ngôn ngữ** ngay từ khâu xử lý input thô).
+- [T5](54-t5.mdx) — đã học ở module Sequence Model, sub-module Transformer
+  Architecture — dùng chính SentencePiece làm tokenizer, một kết nối trực
+  tiếp giữa 2 sub-module của cùng module Sequence Model.
+- Vấn đề "ngôn ngữ không có khoảng trắng phân tách từ" từng được nhắc
+  thoáng qua ở bài [WordPiece](67-wordpiece.mdx) (nguồn gốc từ bài toán
+  phân đoạn tiếng Nhật/Hàn) — SentencePiece giải quyết triệt để hơn bằng
+  cách bỏ hẳn giả định "đã tách từ", thay vì chỉ cải thiện tiêu chí ghép
+  bên trong giả định đó.
+
+## Nguồn tham khảo
+
+- [arXiv — SentencePiece: A simple and language independent subword tokenizer and detokenizer for Neural Text Processing](https://arxiv.org/abs/1808.06226) — paper gốc của Kudo và Richardson (2018), dùng cho vấn đề cụ thể (BPE/WordPiece cần input đã tách từ sẵn, phụ thuộc ngôn ngữ), giải pháp (huấn luyện trực tiếp từ câu thô, hệ thống end-to-end độc lập ngôn ngữ), và kết quả thực nghiệm (độ chính xác tương đương trên dịch máy Anh-Nhật).
+- [Machine Learning Mastery — Tokenizers in Language Models](https://machinelearningmastery.com/tokenizers-in-language-models/) — dùng cho cơ chế xử lý khoảng trắng như ký hiệu bình thường, thuật toán Unigram Language Model chi tiết (top-down, loại dần đơn vị dựa trên log-likelihood), và xác nhận T5/XLNet dùng SentencePiece.

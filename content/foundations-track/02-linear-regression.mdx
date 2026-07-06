@@ -1,0 +1,150 @@
+---
+title: "Linear Regression — Hồi quy tuyến tính"
+track: foundations-track
+module: "Nền tảng Toán & ML cổ điển"
+order: 2
+status: stable
+prerequisites: ["01-xac-suat-thong-ke-co-ban"]
+summary: "Mô hình ML cổ điển đơn giản nhất: dự đoán một giá trị số bằng tổ hợp tuyến tính của feature, học tham số qua tối thiểu hoá hàm loss."
+last_touched_by_task: "Rà lại theo triết lý nội dung mới (2026-07-06): đọc kỹ, xác nhận bài đã đạt chuẩn (ví dụ số squared error cụ thể, trực giác hình học gradient descent, sai lầm thường gặp, không 'vỏ rỗng') — đây là bài ML đầu tiên của giáo trình, không có tiền thân cạnh tranh trực tiếp nên không thuộc dạng 'dòng tiến hoá nhiều model' theo mục 2.1. Giữ nguyên nội dung, chỉ nâng status."
+---
+
+Linear regression thường là mô hình học máy đầu tiên ai cũng học, không phải
+vì nó mạnh nhất, mà vì nó là ví dụ rõ ràng nhất để thấy trọn vẹn một chu
+trình ML: **định nghĩa mô hình → định nghĩa "sai bao nhiêu" → tìm tham số
+làm cho "sai" đó nhỏ nhất**. Mọi mô hình phức tạp hơn sau này (logistic
+regression, neural network) đều lặp lại đúng chu trình này, chỉ khác ở phần
+mô hình và hàm loss.
+
+## Bài toán: dự đoán một số thực
+
+Giả sử bạn có dữ liệu về nhà: diện tích và số năm tuổi của căn nhà, muốn dự
+đoán giá bán. Đây là bài toán **regression** — target (`y`, giá nhà) là một
+số thực liên tục, khác với classification (target là một nhãn rời rạc).
+
+Linear regression giả định mối quan hệ giữa feature và target là **tuyến
+tính** — target là tổng có trọng số của các feature, cộng thêm một hằng số:
+
+```
+ŷ = w1*x1 + w2*x2 + ... + wd*xd + b
+```
+
+Trong đó:
+- `x1, ..., xd` là các feature (ví dụ: diện tích, số năm tuổi).
+- `w1, ..., wd` là **trọng số (weight)** — mức độ ảnh hưởng của từng feature.
+- `b` là **bias** (hay intercept) — giá trị dự đoán khi mọi feature bằng 0.
+- `ŷ` (đọc "y-hat") là giá trị mô hình **dự đoán**, để phân biệt với `y` là
+  giá trị **thật** trong dữ liệu.
+
+Viết gọn dưới dạng vector: `ŷ = w^T x + b`, với `w` và `x` là vector cột
+chứa toàn bộ trọng số và feature. Khi có `n` điểm dữ liệu cùng lúc, xếp
+chúng thành ma trận `X` (mỗi hàng một điểm dữ liệu), công thức trở thành
+`ŷ = Xw + b` — đây là lý do các thư viện ML luôn làm việc với ma trận thay
+vì lặp qua từng điểm dữ liệu một (nhanh hơn nhiều nhờ vectorization).
+
+## Hàm loss: đo "sai bao nhiêu"
+
+Có vô số bộ `(w, b)` có thể chọn — cần một cách để so sánh bộ nào "tốt hơn".
+Đó là vai trò của **hàm loss (loss function)**: một con số càng nhỏ càng
+tốt, đo khoảng cách giữa dự đoán `ŷ` và giá trị thật `y`.
+
+Linear regression dùng **squared error** (bình phương sai số) cho từng điểm
+dữ liệu thứ `i`:
+
+```
+l(i) = (1/2) * (ŷ(i) - y(i))^2
+```
+
+Bình phương lên có hai lý do: (1) loại bỏ dấu âm/dương (dự đoán cao hơn hay
+thấp hơn thực tế đều bị phạt như nhau), (2) phạt nặng hơn với sai số lớn —
+sai gấp đôi thì bị phạt gấp bốn, khiến mô hình đặc biệt tránh những dự đoán
+sai lệch nhiều. Hệ số `1/2` chỉ là quy ước cho gọn đạo hàm sau này, không
+ảnh hưởng tới nghiệm tối ưu.
+
+Ví dụ cụ thể: nhà thật giá `y = 2000` (triệu đồng), mô hình dự đoán
+`ŷ = 2300` — sai số `300`. Loss của điểm này:
+`l = (1/2) * 300^2 = 45000`. Nếu một dự đoán khác sai gấp đôi (sai số
+`600`), loss là `(1/2) * 600^2 = 180000` — gấp **4 lần**, không phải gấp
+đôi, đúng như tính chất "phạt nặng hơn với sai số lớn" vừa nói.
+
+Loss tổng của cả tập dữ liệu là **trung bình** loss của từng điểm:
+
+```
+L(w, b) = (1/n) * sum( l(i) )   -- với i chạy từ 1 đến n
+```
+
+Bài toán học mô hình giờ trở thành bài toán tối ưu thuần tuý: tìm `w, b`
+sao cho `L(w, b)` nhỏ nhất.
+
+## Hai cách tìm nghiệm
+
+**Cách 1 — Nghiệm đóng (normal equation).** Vì squared error là hàm bậc
+hai (parabol) theo `w`, nó có đúng một điểm cực tiểu, và với linear
+regression, điểm đó tính được trực tiếp bằng công thức:
+
+```
+w* = (X^T X)^(-1) X^T y
+```
+
+Đây là nghiệm "chính xác" — không cần lặp, không cần chọn learning rate.
+Nhưng nó đòi hỏi nghịch đảo ma trận `X^T X`, chi phí tính toán tăng nhanh
+theo số chiều dữ liệu, và không tổng quát hoá được sang các mô hình phức
+tạp hơn (neural network không có nghiệm đóng dạng này).
+
+**Cách 2 — Gradient descent.** Thay vì giải trực tiếp, xuất phát từ một bộ
+`w, b` bất kỳ (thường khởi tạo ngẫu nhiên), rồi lặp đi lặp lại:
+
+- Tính gradient (đạo hàm) của `L` theo `w` và `b` — hướng mà loss tăng
+  nhanh nhất. Trực giác hình học: hình dung `L(w, b)` là một mặt địa hình
+  (thung lũng), với `w, b` là toạ độ vị trí đang đứng và độ cao là giá trị
+  loss. Gradient tại một điểm chính là hướng dốc lên nhanh nhất tại đúng
+  điểm đó — giống như nếu thả một quả bóng ở vị trí đó, nó sẽ lăn theo
+  hướng **ngược lại** gradient (xuống dốc nhanh nhất).
+- Cập nhật tham số theo hướng **ngược lại** gradient (để loss giảm, giống
+  quả bóng lăn xuống đáy thung lũng), với một bước nhảy gọi là
+  **learning rate** (`η`, đọc "eta") — quyết định mỗi bước "lăn" đi bao xa
+  trước khi tính lại hướng dốc mới:
+
+```
+w := w - η * (dL/dw)
+b := b - η * (dL/db)
+```
+
+Lặp lại quá trình này (thường trên từng **minibatch** — một tập con nhỏ dữ
+liệu thay vì toàn bộ, để mỗi bước cập nhật rẻ hơn) cho tới khi loss không
+giảm thêm đáng kể. Đây là phương pháp thực dùng phổ biến hơn nhiều trong
+thực tế, vì nó tổng quát hoá được cho mọi mô hình có thể tính đạo hàm —
+kể cả neural network hàng triệu tham số, nơi nghiệm đóng không tồn tại.
+
+## Liên hệ lại với bài trước
+
+Bài [Xác suất & thống kê cơ bản](01-xac-suat-thong-ke-co-ban.mdx) đã nói:
+ước lượng tham số mô hình chính là một bài toán thống kê. Ở đây thấy rõ
+điều đó — `w*` từ normal equation thực chất là một ước lượng thống kê của
+mối quan hệ tuyến tính "thật" giữa `x` và `y`, dựa trên `n` điểm dữ liệu
+quan sát được. Nếu dữ liệu có nhiễu (aleatoric uncertainty — ví dụ giá nhà
+còn phụ thuộc yếu tố không đo được như vị trí đẹp/xấu), không có `w` nào
+khớp hoàn hảo 100% — loss tối thiểu đạt được vẫn lớn hơn 0. Và giống như
+mọi ước lượng thống kê khác, `w*` ước lượng được từ ít dữ liệu sẽ kém ổn
+định hơn (epistemic uncertainty cao hơn) so với ước lượng từ nhiều dữ liệu.
+
+## Sai lầm thường gặp khi mới học
+
+- **Nhầm learning rate quá lớn** khiến loss dao động không hội tụ, thay vì
+  giảm dần — một dấu hiệu để giảm `η` khi thấy loss "nhảy lung tung" giữa
+  các bước cập nhật.
+- **Quên rằng linear regression giả định quan hệ tuyến tính.** Nếu quan hệ
+  thật giữa feature và target là phi tuyến (ví dụ dạng cong rõ rệt), mô
+  hình tuyến tính sẽ luôn có sai số hệ thống dù tối ưu bao nhiêu đi nữa —
+  đây là lúc cần feature engineering (thêm feature bậc hai, log, v.v.) hoặc
+  chuyển sang mô hình phi tuyến.
+- **Không chuẩn hoá (scaling) feature có thang đo khác nhau** (ví dụ diện
+  tích tính bằng m² và số năm tuổi) khiến gradient descent hội tụ chậm hoặc
+  không ổn định. Có nhiều cách chuẩn hoá cụ thể (standardization,
+  normalization...) — chi tiết phân biệt sẽ nói kỹ ở bài về xử lý dữ liệu,
+  ở đây chỉ cần nhớ: bắt buộc đưa feature về thang đo tương đồng trước khi
+  train.
+
+## Nguồn tham khảo
+
+- [Dive into Deep Learning — Linear Regression](http://d2l.ai/chapter_linear-regression/linear-regression.html) — dùng làm nguồn chính cho công thức mô hình tuyến tính (`ŷ = w^T x + b`), hàm squared error loss, dạng vector hoá bằng ma trận `X`, nghiệm đóng normal equation `(X^T X)^-1 X^T y`, và mô tả gradient descent theo minibatch với learning rate.

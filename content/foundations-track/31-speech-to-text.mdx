@@ -1,0 +1,91 @@
+---
+title: "Speech-to-Text — Từ Spectrogram sang Chuỗi Văn bản"
+track: foundations-track
+module: "Audio"
+order: 31
+status: stable
+prerequisites: ["30-bieu-dien-am-thanh", "15-transformer"]
+summary: "Speech-to-text là bài toán sequence-to-sequence với một khó khăn riêng: độ dài input (số frame audio) và độ dài output (số token text) không khớp nhau và không có quan hệ cố định. CTC và kiến trúc encoder-decoder (như Whisper) là hai cách giải quyết vấn đề căn chỉnh này, dùng lại trực tiếp RNN/Transformer đã học."
+last_touched_by_task: "Rà lại theo triết lý nội dung mới (2026-07-06): đọc kỹ, xác nhận bài đã đạt chuẩn (dòng CTC vs encoder-decoder rõ ràng, không 'vỏ rỗng'). Đã thử tra lịch sử CTC (Graves et al., 2006) nhưng paper gốc là ICML 2006 conference paper, không có trên arxiv, chỉ có PDF ở domain ngoài whitelist (cs.toronto.edu) — không xác nhận được qua nguồn đọc được, giữ nguyên nội dung, chỉ nâng status."
+---
+
+Bài [Biểu diễn Âm thanh](30-bieu-dien-am-thanh.mdx) giải quyết câu hỏi
+"đưa âm thanh vào mô hình bằng cách nào" (spectrogram/mel-spectrogram).
+**Speech-to-text** (nhận dạng giọng nói, hay ASR — Automatic Speech
+Recognition) là bài toán dùng biểu diễn đó làm input, sinh ra **văn bản**
+tương ứng làm output — nhưng có một khó khăn riêng không gặp ở các bài
+toán sequence-to-sequence đã học trước đó.
+
+## Vấn đề riêng: độ dài input và output không khớp, không cố định
+
+Với dịch máy (một ứng dụng kinh điển của Transformer, bài
+[Transformer](15-transformer.mdx)), một câu 5 từ tiếng Việt có thể dịch
+thành 5, 6, hay 7 từ tiếng Anh — độ dài đầu ra thay đổi, nhưng cả input
+và output đều là chuỗi **từ/token rời rạc**, tốc độ tương đối gần nhau.
+
+Với speech-to-text, input là một chuỗi **frame audio** rất dài (mỗi giây
+âm thanh có thể chia thành hàng trăm frame từ spectrogram), trong khi
+output chỉ là một câu văn bản ngắn — chênh lệch độ dài giữa input và
+output rất lớn và **không cố định** (người nói nhanh hay chậm tạo ra số
+frame khác nhau cho cùng một câu nói). Mô hình cần học cách "căn chỉnh"
+(align) — biết frame audio nào tương ứng với từ nào trong output — mà
+không có thông tin căn chỉnh đó được cung cấp sẵn trong dữ liệu train
+(chỉ có cặp audio + văn bản, không có nhãn "từ này ứng với đúng frame
+nào").
+
+## Cách tiếp cận 1: CTC (Connectionist Temporal Classification)
+
+**CTC** là một hàm loss được thiết kế riêng để giải quyết đúng vấn đề căn
+chỉnh này, mà không cần biết trước sự tương ứng frame-từ. Ý tưởng cốt
+lõi: cho mô hình (thường là RNN, bài [RNN](12-recurrent-neural-network.mdx))
+dự đoán một nhãn (ký tự hoặc "khoảng trống"/blank) tại **mỗi frame** input
+— tạo ra một chuỗi output có **cùng độ dài** với input. Sau đó, CTC định
+nghĩa một quy tắc "rút gọn" chuỗi thô đó thành văn bản cuối cùng: xoá các
+ký tự lặp liên tiếp và xoá nhãn "blank" — nhiều chuỗi thô khác nhau (khác
+nhau ở việc lặp bao nhiêu lần mỗi ký tự, hay xen bao nhiêu blank ở đâu) có
+thể rút gọn về cùng một câu văn bản.
+
+Nhờ cách đặt vấn đề này, CTC loss có thể tính tổng xác suất trên **mọi**
+cách căn chỉnh có thể dẫn tới đúng văn bản mục tiêu — mô hình tự học ra
+cách căn chỉnh hợp lý nhất qua quá trình huấn luyện, mà không cần dữ liệu
+căn chỉnh thủ công.
+
+## Cách tiếp cận 2: Encoder-Decoder (kiểu Whisper)
+
+Cách tiếp cận thứ hai, phổ biến ở các hệ thống hiện đại (như Whisper của
+OpenAI): dùng kiến trúc **encoder-decoder** dựa trên Transformer đã học,
+tương tự cách Transformer được dùng cho dịch máy:
+
+- **Encoder** nhận vào spectrogram/mel-spectrogram, mã hoá thành một biểu
+  diễn ẩn.
+- **Decoder** (autoregressive, giống decoder của LLM đã học ở bài
+  [Pretraining](24-pretraining-llm.mdx)) sinh ra từng token văn bản một,
+  mỗi token dựa vào biểu diễn từ encoder và các token đã sinh trước đó,
+  dùng cơ chế **cross-attention** để "nhìn" vào đúng phần audio liên quan
+  nhất tại mỗi bước sinh token.
+
+Khác với CTC (một hàm loss chuyên biệt gắn với kiến trúc RNN đơn giản),
+cách tiếp cận encoder-decoder tận dụng trực tiếp sức mạnh của
+self-attention/cross-attention đã học ở Transformer — decoder có thể
+"tra cứu" toàn bộ audio đã mã hoá tại mỗi bước sinh từ, không bị giới hạn
+bởi cấu trúc tuần tự chặt như RNN.
+
+## Liên hệ lại với các bài trước
+
+- Speech-to-text là ví dụ cụ thể thứ hai (sau dịch máy đã nhắc ở bài
+  Transformer) cho bài toán sequence-to-sequence — nhưng với một thách
+  thức riêng (chênh lệch độ dài input/output cực lớn) đòi hỏi công cụ
+  chuyên biệt (CTC) hoặc kiến trúc đủ mạnh để tự học căn chỉnh
+  (cross-attention của Transformer).
+- Kiến trúc encoder-decoder kiểu Whisper tái sử dụng gần như nguyên vẹn
+  Transformer đã học, chỉ khác **input của encoder** (spectrogram thay vì
+  token văn bản) — decoder vẫn sinh token văn bản theo đúng cơ chế
+  autoregressive/next-token prediction đã học ở series LLM.
+- CTC dùng RNN đã học ở bài [RNN](12-recurrent-neural-network.mdx) làm
+  kiến trúc nền — một minh hoạ khác cho việc chọn kiến trúc phù hợp với
+  bản chất bài toán (dữ liệu tuần tự dài, cần dự đoán tại mỗi bước thời
+  gian) trước khi tính tới các kỹ thuật phức tạp hơn.
+
+## Nguồn tham khảo
+
+- [Multimodal Browser AI with Transformers.js for Images and Speech (MachineLearningMastery)](https://machinelearningmastery.com/multimodal-browser-ai-with-transformers-js-for-images-and-speech/) — dùng cho việc xác nhận Whisper dùng kiến trúc Transformer để chuyển đổi audio thành văn bản trong ứng dụng thực tế.

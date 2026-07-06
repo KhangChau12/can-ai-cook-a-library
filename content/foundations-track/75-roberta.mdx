@@ -1,0 +1,87 @@
+---
+title: "RoBERTa — BERT Bị Huấn luyện Chưa Tới, Không Phải Kiến trúc Sai"
+track: foundations-track
+module: "Sequence Model"
+submodule: "Transformer Architecture"
+order: 75
+status: stable
+prerequisites: ["45-bert"]
+summary: "Liu và cộng sự (2019) đặt câu hỏi ngược lại với hướng cải tiến kiến trúc: có phải BERT đã được huấn luyện ĐÚNG CÁCH và ĐỦ LÂU chưa? Câu trả lời: chưa — RoBERTa giữ nguyên kiến trúc Transformer encoder của BERT, chỉ thay đổi quy trình huấn luyện (bỏ Next Sentence Prediction, dynamic masking thay vì static, batch size lớn hơn, 10 lần dữ liệu, train lâu hơn nhiều) và vượt qua mọi model công bố sau BERT tại thời điểm đó."
+last_touched_by_task: "Viết mới 2026-07-06: đóng khoảng trống 'RoBERTa' đã ghi ở _index.mdx từ lâu (từng đánh giá 'nguồn mờ nhạt'). Thử lại: WebFetch arxiv 1907.11692 chỉ trả về abstract (không có số liệu chi tiết trong nội dung đầy đủ, giống hạn chế đã gặp ở bài 67 WordPiece), và không tìm được nguồn giải thích trực giác (D2L.ai/Lil'Log) nào viết riêng về RoBERTa qua WebSearch giới hạn whitelist — theo đúng tiền lệ bài 67, viết bài ngắn hơn thường lệ với 1 nguồn chính (arxiv abstract + chi tiết kỹ thuật xác nhận qua WebSearch), không ép đủ 2 nguồn."
+---
+
+Bài [BERT](45-bert.mdx) giới thiệu 2 mục tiêu pretraining: **Masked
+Language Modeling (MLM)** và **Next Sentence Prediction (NSP)**. Sau khi
+BERT trở thành kiến trúc nền tảng phổ biến, một câu hỏi tự nhiên xuất
+hiện: liệu quy trình huấn luyện gốc của BERT đã tối ưu chưa, hay còn
+nhiều dư địa cải thiện chỉ bằng cách **huấn luyện đúng cách hơn**, không
+cần đổi kiến trúc?
+
+## Câu hỏi khác hẳn hướng đi trước: không phải kiến trúc, mà là cách huấn luyện
+
+**Liu và cộng sự (2019)**, trong bài báo "RoBERTa: A Robustly Optimized
+BERT Pretraining Approach", tiến hành một nghiên cứu tái lập (replication
+study) nghiêm ngặt: đo lường cẩn thận ảnh hưởng của từng lựa chọn
+hyperparameter và kích thước dữ liệu huấn luyện lên kết quả cuối cùng.
+Kết luận chính: **BERT gốc bị huấn luyện chưa tới** (undertrained) — chỉ
+cần huấn luyện đúng cách và đủ lâu hơn, kiến trúc BERT nguyên bản (không
+đổi gì về mặt cấu trúc mạng) đã có thể sánh ngang hoặc vượt qua mọi mô
+hình công bố sau nó tại thời điểm đó.
+
+Đây là điểm khác biệt quan trọng so với các bài đã học trong sub-module
+này: ALBERT (69) cải thiện BERT bằng cách **đổi kiến trúc** (chia sẻ tham
+số, factorized embedding); RoBERTa cải thiện BERT mà **không đổi kiến
+trúc** — toàn bộ khác biệt nằm ở quy trình huấn luyện.
+
+## Bốn thay đổi cụ thể trong quy trình huấn luyện
+
+- **Bỏ Next Sentence Prediction:** thực nghiệm của Liu và cộng sự cho
+  thấy bỏ hẳn mục tiêu NSP (mà BERT coi là cần thiết để học quan hệ giữa
+  các câu) **không làm giảm** hiệu năng — thậm chí một số cấu hình còn
+  cải thiện nhẹ. NSP hoá ra là một ràng buộc không cần thiết, không phải
+  yếu tố cốt lõi của thành công BERT.
+- **Dynamic masking thay vì static masking:** BERT gốc che (mask) token
+  một lần duy nhất khi tiền xử lý dữ liệu, rồi dùng đúng mẫu che đó qua
+  mọi epoch huấn luyện. RoBERTa tạo mẫu che **mới mỗi lần** một chuỗi
+  được đưa vào mô hình — mô hình thấy nhiều mẫu che khác nhau hơn cho
+  cùng một câu qua các epoch, tránh học "thuộc lòng" một mẫu che cố định.
+- **Batch size lớn hơn, huấn luyện lâu hơn:** RoBERTa dùng batch size lớn
+  hơn đáng kể so với BERT gốc, kết hợp huấn luyện qua nhiều bước hơn.
+- **Nhiều dữ liệu hơn nhiều:** RoBERTa huấn luyện trên khoảng **160GB**
+  văn bản — hơn **10 lần** lượng dữ liệu BERT gốc từng dùng.
+
+## Kết quả: vượt qua các model ra đời sau, dù không đổi kiến trúc
+
+Với các thay đổi thuần về quy trình huấn luyện (không đổi kiến trúc
+Transformer encoder gốc), RoBERTa đạt kết quả hiện đại nhất trên **GLUE**,
+**RACE**, và **SQuAD** — vượt qua nhiều mô hình đã công bố **sau** BERT
+và từng được cho là cải tiến kiến trúc đáng kể hơn.
+
+## Bài học rút ra: đừng vội kết luận kiến trúc chưa đủ tốt
+
+RoBERTa dạy một bài học tương tự tinh thần đã gặp ở nghiên cứu "LSTM: A
+Search Space Odyssey" (nhắc tới ở bài [LSTM & GRU](13-lstm-gru.mdx)):
+trước khi kết luận một kiến trúc cần "sửa" hay "thay thế", cần kiểm tra
+xem quy trình huấn luyện hiện tại đã thực sự khai thác hết tiềm năng của
+kiến trúc đó chưa. Rất nhiều "cải tiến" trong thực nghiệm ML hoá ra chỉ là
+huấn luyện đúng cách hơn — không phải một ý tưởng kiến trúc mới nào.
+
+## Liên hệ lại với các bài trước
+
+- RoBERTa không thay đổi kiến trúc Transformer encoder của
+  [BERT](45-bert.mdx) — điểm khác biệt hoàn toàn nằm ở mục tiêu
+  pretraining (bỏ NSP) và siêu tham số huấn luyện (masking, batch size,
+  lượng dữ liệu). Đây là ví dụ rõ ràng cho thấy "cải tiến một model" không
+  nhất thiết phải là một ý tưởng kiến trúc mới.
+- Ngược lại với [ALBERT](69-albert.mdx) — cũng cải tiến BERT nhưng theo
+  hướng đối lập: ALBERT đổi kiến trúc để **giảm** tham số (đánh đổi lấy
+  hiệu quả bộ nhớ/tốc độ), còn RoBERTa giữ nguyên kiến trúc và **tăng**
+  tài nguyên huấn luyện (đánh đổi lấy hiệu năng cao hơn) — hai triết lý
+  cải tiến trái ngược nhau xuất phát từ cùng một điểm chung (BERT).
+- Việc bỏ NSP mà không giảm hiệu năng gợi ý rằng bản thân Masked Language
+  Modeling (đã học ở bài 45) mới là thành phần cốt lõi tạo nên sức mạnh
+  của BERT, không phải NSP.
+
+## Nguồn tham khảo
+
+- [arXiv — RoBERTa: A Robustly Optimized BERT Pretraining Approach](https://arxiv.org/abs/1907.11692) — paper gốc của Liu và cộng sự (2019), dùng cho kết luận cốt lõi (BERT bị huấn luyện chưa tới), 4 thay đổi cụ thể trong quy trình huấn luyện (bỏ NSP, dynamic masking, batch size lớn hơn, 160GB dữ liệu — hơn 10 lần BERT gốc), và kết quả SOTA trên GLUE/RACE/SQuAD vượt qua các model công bố sau BERT.

@@ -1,0 +1,109 @@
+---
+title: "Baseline, Nâng cấp Mô hình & Chiến lược Nộp bài"
+track: exam-track
+module: "Hướng dẫn dùng nền tảng"
+order: 3
+status: stable
+prerequisites: ["02-quy-trinh-thi-dau-tu-du-lieu-den-nop-bai", "foundations-track/02-linear-regression", "foundations-track/20-ensemble-methods"]
+summary: "Vì sao luôn bắt đầu bằng một baseline đơn giản, bước nâng cấp tự nhiên tiếp theo (gradient boosting cho dữ liệu bảng), và cách phân bổ giới hạn nộp bài như một tài nguyên hữu hạn suốt vòng đời competition."
+last_touched_by_task: "Rà lại dưới góc nhìn triết lý mới (2026-07-06): đọc kỹ, xác nhận bài đã đạt chuẩn đúng tiêu chí exam-track (mục 2.1 sườn A) — 3 lý do nộp baseline trước rõ ràng, số liệu thực nghiệm cụ thể đã có (17/29 giải pháp Kaggle 2015 dùng XGBoost, toàn bộ top-10 KDDCup 2015), nguyên tắc phân bổ submission như tài nguyên hữu hạn bám đúng schema platform (daily_submission_limit, total_submission_limit tính chung 2 giai đoạn). Không 'vỏ rỗng', không cần viết lại. Giữ nguyên nội dung, chỉ nâng status."
+---
+
+Đây là bài cuối cùng trong nhóm quy trình cơ bản, đi từ **có baseline** tới
+**biết khi nào nên dừng lại và nộp bài** — trước khi track chuyển hẳn sang
+các kỹ thuật nâng cao thực chiến (transfer learning, ensembling,
+hyperparameter tuning...) ở các bài tiếp theo.
+
+## Luôn nộp baseline trước, đừng tối ưu mô hình phức tạp ngay
+
+Một sai lầm phổ biến: dành cả buổi đầu tiên nghiên cứu mô hình phức tạp
+nhất có thể, rồi mới nộp submission đầu tiên. Cách hiệu quả hơn: nộp một
+**baseline** — mô hình rất đơn giản, có thể trivial tới mức luôn dự đoán
+giá trị trung bình (regression) hoặc lớp đa số (classification) — ngay
+trong giờ đầu tiên.
+
+Ba lý do nên làm baseline trước:
+
+- **Xác nhận toàn bộ pipeline hoạt động đúng** — từ đọc dữ liệu tới xuất
+  CSV đúng format — trước khi đầu tư hàng giờ vào mô hình phức tạp rồi mới
+  phát hiện submission `invalid` vì lý do chẳng liên quan gì tới mô hình.
+- **Có điểm số tham chiếu để đo tiến bộ thật.** Không có baseline, một con
+  số như `f1_score = 0.72` không có ý nghĩa gì — không biết nó tốt hay tệ.
+- **Tiết kiệm thời gian nếu bài toán khó hơn dự kiến** — nếu baseline đã
+  gần với top bảng, dồn thời gian vào feature engineering thay vì đổi mô
+  hình phức tạp hơn.
+
+Với bài toán regression (metric `mae`/`rmse`), dùng
+[Linear Regression](../foundations-track/02-linear-regression.mdx). Với
+classification (`f1_score`/`accuracy`/`precision`/`recall`), dùng
+[Logistic Regression](../foundations-track/03-logistic-regression.mdx)
+hoặc một [Decision Tree](../foundations-track/04-decision-tree.mdx) nông.
+
+**Nguyên tắc bắt buộc khi so sánh mọi cải tiến sau này:** dùng
+**cross-validation** (tách dữ liệu train thành nhiều fold, lấy trung bình
+điểm qua các fold), không phải một lần tách train/validation đơn lẻ —
+đánh giá đơn lẻ cho ước lượng không ổn định, dễ dẫn tới kết luận sai về
+việc mô hình nào thực sự tốt hơn.
+
+## Nâng cấp tự nhiên tiếp theo cho dữ liệu bảng: Gradient Boosting
+
+Sau baseline, câu hỏi tự nhiên tiếp theo: cải tiến cụ thể nào nên thử
+trước tiên? Với hầu hết bài toán dữ liệu dạng bảng (tabular) — loại phổ
+biến nhất trên các competition — câu trả lời thường là **gradient
+boosting** (XGBoost, LightGBM, CatBoost).
+
+Nhớ lại [Ensemble Methods](../foundations-track/20-ensemble-methods.mdx):
+**boosting** huấn luyện nhiều cây quyết định tuần tự, mỗi cây sửa lỗi còn
+sót từ các cây trước. Ba thư viện trên triển khai thuật toán này ở mức tối
+ưu hoá cao. Theo thống kê từ blog Kaggle năm 2015, trong 29 giải pháp
+chiến thắng được công bố, có 17 giải pháp dùng XGBoost, và XGBoost được
+dùng bởi toàn bộ đội lọt top-10 tại KDDCup 2015 — một minh chứng cụ thể
+cho vị thế mặc định của gradient boosting trên dữ liệu bảng.
+
+Chỉ dùng khi dữ liệu là dạng bảng (cột số/category) — dữ liệu ảnh/văn bản
+thô hợp với CNN/Transformer hơn (xem các bài kỹ thuật deep learning tiếp
+theo). Hai tham số ảnh hưởng lớn nhất, nên thử trước khi tinh chỉnh sâu
+hơn: **số lượng cây** (`n_estimators`) và **learning rate** (learning rate
+nhỏ hơn thường cần nhiều cây hơn nhưng ổn định hơn). Luôn so sánh bằng
+cross-validation với baseline trước khi quyết định giữ lại — gradient
+boosting thường thắng baseline đơn giản, nhưng không có gì đảm bảo tuyệt
+đối cho từng bài toán cụ thể.
+
+## Coi giới hạn nộp bài là tài nguyên hữu hạn, không phải rào cản kỹ thuật
+
+Mỗi competition giới hạn `daily_submission_limit` (mặc định 5 lần/ngày) và
+`total_submission_limit` (mặc định 50 lần suốt competition). Nếu không có
+giới hạn này, cách "hiệu quả" nhất về điểm số ngắn hạn là thử hàng trăm
+biến thể nhỏ và nộp thẳng lên public leaderboard để xem cái nào cao hơn —
+biến leaderboard công khai thành công cụ validation chính, dẫn thẳng tới
+overfit vào public test set (đã nói ở bài 1). Giới hạn nộp bài buộc bạn
+quay về đúng quy trình: **validate cục bộ bằng cross-validation trước, chỉ
+nộp lên platform khi đã đủ tin tưởng vào cải tiến đó.**
+
+Một chi tiết quan trọng: submission `invalid` **không** bị trừ vào giới
+hạn nộp trong ngày — nhưng vẫn tốn thời gian chờ xử lý, nên kiểm tra file
+CSV cục bộ trước khi nộp vẫn là bước nên làm.
+
+Vài nguyên tắc phân bổ thực dụng:
+
+- Mỗi lần định nộp, tự hỏi: "Tôi đã kiểm chứng cải tiến này bằng
+  cross-validation cục bộ chưa, hay đang dùng public leaderboard để tìm
+  câu trả lời mà lẽ ra cross-validation đã trả lời được?"
+- Gộp nhiều thay đổi nhỏ, ít rủi ro thành 1 lần nộp nếu cross-validation
+  cho thấy cả nhóm đều có lợi — thay vì nộp riêng từng thay đổi để "xem
+  cái nào giúp nhiều nhất" trên public leaderboard.
+- Với competition 4-phase, `total_submission_limit` tính chung cho cả 2
+  giai đoạn, không reset riêng — chủ động giữ lại một phần cho private
+  test thay vì tiêu gần hết lúc còn ở public test, vì đây là giai đoạn
+  thực sự quyết định hạng cuối cùng (tab Final).
+
+Với nền tảng đủ dùng này — baseline, gradient boosting, và cách phân bổ
+lượt nộp — bài tiếp theo bắt đầu đi vào các kỹ thuật thi đấu thật sự nâng
+cao điểm số: transfer learning, ensembling nhiều model, và tinh chỉnh
+hyperparameter có hệ thống.
+
+## Nguồn tham khảo
+
+- [Model Selection Tips From Competitive Machine Learning (MachineLearningMastery)](https://machinelearningmastery.com/model-selection-tips-from-competitive-machine-learning/) — dùng cho khuyến nghị ưu tiên cross-validation hơn một lần tách validation đơn lẻ, và gợi ý chọn đa dạng nhóm phương pháp mô hình.
+- [Gradient Boosting with Scikit-Learn, XGBoost, LightGBM, and CatBoost (MachineLearningMastery)](https://machinelearningmastery.com/gradient-boosting-with-scikit-learn-xgboost-lightgbm-and-catboost/) — dùng cho khuyến nghị tinh chỉnh `n_estimators`/learning rate trước, và thống kê 17/29 giải pháp chiến thắng Kaggle 2015 dùng XGBoost.
+- [restriction on number of submissions per day (Kaggle forum)](https://www.kaggle.com/general/3277) — dùng cho lập luận cốt lõi: giới hạn nộp bài khuyến khích validate cục bộ bằng cross-validation trước khi nộp.

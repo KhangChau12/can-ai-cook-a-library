@@ -1,0 +1,43 @@
+---
+quiz_for: 30-bieu-dien-am-thanh
+---
+
+## Q1
+"Waveform" biểu diễn âm thanh theo cách nào?
+
+- [x] Lấy mẫu (sample) biên độ tín hiệu âm thanh tại các thời điểm cách đều nhau, tạo thành một chuỗi số thực theo THỜI GIAN
+- [ ] Biểu diễn tín hiệu theo tần số dưới dạng ảnh 2D
+- [ ] Chỉ lưu lại văn bản mô tả nội dung âm thanh
+- [ ] Nén âm thanh thành đúng 1 số duy nhất
+
+> Waveform là biểu diễn "thô" nhất — số lượng mẫu lấy trong 1 giây gọi là sample rate (ví dụ 16kHz = 16.000 mẫu/giây), không mất thông tin gì so với tín hiệu gốc.
+
+## Q2
+Spectrogram khác waveform ở điểm nào?
+
+- [x] Spectrogram biểu diễn tín hiệu theo TẦN SỐ (dùng biến đổi Fourier), tạo ra một ảnh 2D (trục thời gian và trục tần số); waveform biểu diễn theo thời gian
+- [ ] Spectrogram không chứa thông tin gì về âm thanh gốc
+- [ ] Waveform là ảnh 2D, spectrogram là chuỗi số 1 chiều
+- [ ] Cả hai hoàn toàn giống nhau, chỉ khác tên gọi
+
+> Vì spectrogram là ảnh 2D, nó có thể được xử lý bằng chính các kiến trúc đã học cho ảnh (đặc biệt CNN) — cấu trúc không gian cục bộ của spectrogram tương tự ảnh thật.
+
+## Q3
+Mel-spectrogram khác spectrogram thông thường ở điểm nào?
+
+- [x] Mel-spectrogram biến đổi thêm trục tần số theo THANG MEL — khớp với cách tai người cảm nhận cao độ (nhạy hơn ở tần số thấp, kém nhạy hơn ở tần số cao)
+- [ ] Mel-spectrogram không chứa thông tin về tần số
+- [ ] Mel-spectrogram chỉ dùng được cho âm nhạc, không dùng được cho giọng nói
+- [ ] Mel-spectrogram là biểu diễn theo thời gian, không phải tần số
+
+> Thang mel nén phần tần số cao lại và giữ độ phân giải cao ở tần số thấp — đây là lý do mel-spectrogram là biểu diễn phổ biến nhất cho deep learning xử lý âm thanh, đặc biệt nhận dạng giọng nói.
+
+## Q4
+Trước khi đưa vào mô hình speech recognition, waveform thường cần qua bước tiền xử lý nào?
+
+- [x] Resample về sample rate cố định (ví dụ 16kHz theo yêu cầu mô hình) và gộp về mono (1 kênh) nếu file gốc có nhiều kênh
+- [ ] Chuyển đổi thành văn bản trước khi đưa vào mô hình
+- [ ] Xoá bỏ hoàn toàn thông tin về tần số
+- [ ] Không cần bước tiền xử lý nào, đưa thẳng file gốc vào mô hình
+
+> Nhiều mô hình speech recognition (như Whisper) yêu cầu sample rate cố định — bước resample và gộp mono là tiền xử lý thực tế phổ biến, vì thông tin lời nói không phụ thuộc vào việc âm thanh đến từ kênh trái hay phải.

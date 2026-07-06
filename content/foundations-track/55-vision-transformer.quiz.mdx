@@ -1,0 +1,43 @@
+---
+quiz_for: 55-vision-transformer
+---
+
+## Q1
+Giả định nào mà toàn bộ dòng tiến hoá CNN (từ LeNet tới EfficientNet) dựa vào, và ViT thách thức giả định đó như thế nào?
+
+- [x] Giả định "convolution với thiên kiến quy nạp (tính cục bộ, bất biến dịch chuyển) là cần thiết cho ảnh" — ViT áp dụng thẳng Transformer thuần tuý, không dùng convolution nào (ngoại trừ 1 phép tương đương ở bước patch embedding)
+- [ ] Giả định "ảnh phải luôn có 3 kênh màu RGB" — ViT chứng minh có thể xử lý ảnh đen trắng
+- [ ] Giả định "mạng nơ-ron cần ít nhất 10 lớp" — ViT chứng minh 1 lớp là đủ
+- [ ] Giả định "ảnh phải được resize về đúng 224x224 pixel" — ViT bỏ qua bước resize hoàn toàn
+
+> ViT là bước ngoặt quan trọng vì nó thách thức chính giả định nền tảng của toàn bộ CNN family đã học trước đó trong track.
+
+## Q2
+Cơ chế "patch embedding" của ViT hoạt động như thế nào?
+
+- [x] Chia ảnh thành các patch vuông cố định (ví dụ 16x16 pixel), làm phẳng mỗi patch thành vector, rồi chiếu tuyến tính thành embedding — coi mỗi patch như 1 token, giống cách văn bản được tokenize thành từ
+- [ ] Áp dụng nhiều lớp convolution liên tiếp để trích xuất đặc trưng trước khi đưa vào Transformer
+- [ ] Chia ảnh thành các pixel riêng lẻ, mỗi pixel là 1 token
+- [ ] Dùng một mạng RNN để xử lý ảnh theo từng hàng pixel một
+
+> Phép "chia patch + chiếu tuyến tính" này về mặt toán học tương đương với đúng 1 phép convolution có kernel size và stride bằng kích thước patch.
+
+## Q3
+Kết quả thực nghiệm quan trọng nhất về ViT liên quan tới điều gì?
+
+- [x] Hiệu năng phụ thuộc mạnh vào quy mô dữ liệu pretraining — ViT thua CNN trên dữ liệu nhỏ (như Fashion-MNIST) nhưng vượt trội ResNet khi pretrain trên dữ liệu cực lớn (khoảng 300 triệu ảnh)
+- [ ] ViT luôn vượt trội CNN trong mọi trường hợp, không có ngoại lệ
+- [ ] ViT chỉ hoạt động được với ảnh có kích thước nhỏ hơn 32x32 pixel
+- [ ] ViT không thể huấn luyện bằng backpropagation
+
+> Đây là phát hiện quan trọng nhất — thiên kiến quy nạp của CNN giúp ích khi dữ liệu ít, nhưng trở thành giới hạn khi dữ liệu đủ lớn, nơi kiến trúc tổng quát hơn (ViT) có thể tận dụng tốt hơn.
+
+## Q4
+ViT minh hoạ cho nguyên lý nào đã học ở bài Scaling Laws?
+
+- [x] Mô hình càng ít giả định cứng (thiên kiến quy nạp), càng cần nhiều dữ liệu để phát huy hết tiềm năng — nhưng khi đủ dữ liệu, có thể vượt qua các kiến trúc chuyên biệt hơn
+- [ ] Mô hình càng nhỏ thì càng chính xác, bất kể lượng dữ liệu
+- [ ] Scaling Laws chỉ áp dụng cho văn bản, không áp dụng được cho ảnh
+- [ ] Tăng số tham số luôn làm giảm hiệu năng mô hình
+
+> Đây là minh chứng cụ thể cho nguyên lý Scaling Laws ở một modality khác (ảnh thay vì văn bản) — quy mô dữ liệu quyết định khi nào kiến trúc ít giả định hơn (ViT) thắng thế so với kiến trúc có thiên kiến quy nạp mạnh (CNN).

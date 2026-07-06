@@ -1,0 +1,43 @@
+---
+quiz_for: 50-umap
+---
+
+## Q1
+3 hạn chế cụ thể của t-SNE mà UMAP giải quyết là gì?
+
+- [x] Tốn chi phí tính toán lớn, không giữ được cấu trúc toàn cục đáng tin cậy, và giới hạn số chiều nhúng (Barnes-Hut chỉ 2-3 chiều)
+- [ ] t-SNE không thể chạy trên dữ liệu có nhãn
+- [ ] t-SNE chỉ hoạt động với dữ liệu dạng ảnh
+- [ ] t-SNE không có tham số nào cần điều chỉnh
+
+> Đây chính xác là 3 đánh đổi đã nêu ở bài t-SNE — UMAP được thiết kế để giải quyết đúng cả 3 vấn đề này.
+
+## Q2
+UMAP được xây dựng trên nền tảng lý thuyết nào?
+
+- [x] Hình học Riemann (Riemannian geometry) và tô pô đại số (algebraic topology)
+- [ ] Lý thuyết xác suất Bayes thuần tuý
+- [ ] Lý thuyết đồ thị (graph theory) đơn thuần, không liên quan tới hình học
+- [ ] Không có nền tảng lý thuyết nào, chỉ là một heuristic thực nghiệm
+
+> Nền tảng lý thuyết chặt chẽ này (khác hẳn cách tiếp cận xác suất Gaussian/Student-t của t-SNE) cho phép UMAP hoạt động như một kỹ thuật giảm chiều tổng quát, không chỉ giới hạn ở trực quan hoá.
+
+## Q3
+Vì sao UMAP có thể dùng cho tiền xử lý dữ liệu (làm input cho mô hình khác) mà t-SNE thường không thực tế cho mục đích này?
+
+- [x] UMAP không có giới hạn tính toán về số chiều nhúng, có thể giảm chiều xuống bất kỳ số chiều nào (ví dụ 20-50 chiều), trong khi t-SNE (qua Barnes-Hut) bị giới hạn chỉ 2-3 chiều
+- [ ] UMAP chạy chậm hơn t-SNE nên phù hợp hơn cho xử lý batch lớn
+- [ ] t-SNE không thể chạy trên GPU còn UMAP thì có thể
+- [ ] UMAP yêu cầu dữ liệu phải có nhãn, phù hợp hơn cho supervised learning
+
+> Số chiều nhúng thấp (2-3) chỉ đủ cho mục đích trực quan hoá trên biểu đồ, không đủ để giữ đủ thông tin làm input hữu ích cho mô hình downstream — đây là lý do UMAP mở rộng được phạm vi ứng dụng.
+
+## Q4
+Quan hệ giữa t-SNE và UMAP giống với mẫu hình nào đã lặp lại trong track?
+
+- [x] Model/kỹ thuật sau ra đời để giải quyết đúng hạn chế cụ thể của model/kỹ thuật trước — giống quan hệ AlexNet→VGG→ResNet hay GAN→DCGAN, chỉ khác đây là quan hệ giữa 2 thuật toán giảm chiều phi tuyến thay vì kiến trúc mạng nơ-ron
+- [ ] t-SNE và UMAP không có quan hệ gì với nhau, ra đời độc lập
+- [ ] UMAP là phiên bản cũ hơn, đã bị t-SNE thay thế hoàn toàn
+- [ ] UMAP chỉ là tên gọi khác của chính xác thuật toán t-SNE
+
+> Đây là ví dụ tiếp theo của mẫu hình "dòng tiến hoá" đã lặp lại xuyên suốt track — mỗi bước giải quyết đúng hạn chế cụ thể đã xác định rõ của bước trước.

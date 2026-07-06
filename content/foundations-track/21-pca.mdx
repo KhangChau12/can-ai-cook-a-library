@@ -1,0 +1,119 @@
+---
+title: "PCA (Principal Component Analysis) — Giảm chiều dữ liệu bằng Đại số tuyến tính"
+track: foundations-track
+module: "Dimensionality Reduction"
+order: 21
+status: stable
+prerequisites: ["01-xac-suat-thong-ke-co-ban", "07-k-means-clustering"]
+summary: "Một cách giảm chiều dữ liệu hoàn toàn khác Autoencoder: thay vì mạng nơ-ron học phi tuyến, PCA dùng đại số tuyến tính thuần tuý — tìm các hướng phương sai lớn nhất (eigenvectors của ma trận hiệp phương sai) để chiếu dữ liệu xuống không gian chiều thấp hơn."
+last_touched_by_task: "Rà lại theo triết lý nội dung mới (2026-07-06, task 10): đọc kỹ, xác nhận bài đã đạt chuẩn (so sánh sâu với Autoencoder, công thức đúng, không 'vỏ rỗng') — PCA là khái niệm toán/thống kê đơn lẻ, không có tiền thân cạnh tranh trực tiếp nên không thuộc dạng 'dòng tiến hoá nhiều model' theo mục 2.1. Đã thử tra scikit-learn tìm lịch sử (Pearson 1901/Hotelling 1933) — xác nhận không có qua WebFetch, giữ nguyên nội dung, chỉ nâng status."
+---
+
+Bài [Ensemble Methods](20-ensemble-methods.mdx) là mô hình supervised cuối
+cùng trong track — từ đây, chúng ta quay lại nhánh **unsupervised
+learning** đã mở ra ở bài [K-means Clustering](07-k-means-clustering.mdx)
+và sẽ tiếp tục ở bài [Autoencoder](22-autoencoder.mdx): tìm cấu trúc trong
+dữ liệu không có nhãn. **PCA (Principal Component Analysis)** giải quyết
+bài toán **giảm chiều dữ liệu** (dimensionality reduction) — cùng mục
+tiêu với autoencoder, nhưng bằng một công cụ hoàn toàn khác: **đại số
+tuyến tính** thuần tuý, không cần mạng nơ-ron hay gradient descent.
+
+## Bài toán: tìm ít chiều nhất mà vẫn giữ được nhiều thông tin nhất
+
+Dữ liệu nhiều chiều (nhiều feature) thường có các chiều **tương quan** lẫn
+nhau — ví dụ "diện tích nhà" và "số phòng ngủ" thường tăng cùng nhau. Khi
+đó, dữ liệu không thực sự "cần" toàn bộ số chiều ban đầu để mô tả — phần
+lớn thông tin có thể được nắm bắt bằng một số ít **hướng** (combination
+tuyến tính của các feature gốc) mà dữ liệu biến thiên nhiều nhất theo đó.
+
+PCA đi tìm chính xác các hướng đó: hướng đầu tiên là hướng mà dữ liệu có
+**phương sai lớn nhất** (dữ liệu "trải rộng" nhiều nhất theo hướng này);
+hướng thứ hai là hướng có phương sai lớn nhất tiếp theo, với điều kiện
+**vuông góc** (trực giao) với hướng thứ nhất; và cứ thế tiếp tục.
+
+## Công cụ toán học: eigenvectors của ma trận hiệp phương sai
+
+Bài [Xác suất & thống kê cơ bản](01-xac-suat-thong-ke-co-ban.mdx) đã giới
+thiệu **ma trận hiệp phương sai (covariance matrix)** — ma trận mô tả mức
+độ các chiều dữ liệu biến thiên cùng nhau. PCA dùng chính ma trận này:
+
+- Tính ma trận hiệp phương sai của dữ liệu (sau khi đã trừ đi giá trị
+  trung bình mỗi chiều — "căn giữa" dữ liệu về gốc toạ độ).
+- Tìm các **eigenvector** (vector riêng) và **eigenvalue** (giá trị riêng)
+  tương ứng của ma trận đó.
+- Mỗi eigenvector chỉ ra một **hướng** trong không gian dữ liệu; eigenvalue
+  tương ứng cho biết **lượng phương sai** dữ liệu có theo hướng đó — eigen-
+  value càng lớn, hướng đó càng "quan trọng" (dữ liệu biến thiên nhiều theo
+  hướng này).
+- Sắp xếp các eigenvector theo eigenvalue giảm dần: eigenvector có
+  eigenvalue lớn nhất chính là **principal component** đầu tiên — đúng là
+  hướng phương sai lớn nhất đã mô tả ở trên. Về mặt toán học, đây không
+  phải sự trùng hợp: giải bài toán tối ưu "tìm hướng phương sai lớn nhất"
+  cho ra chính xác nghiệm là eigenvector ứng với eigenvalue lớn nhất của
+  ma trận hiệp phương sai.
+
+## Giảm chiều: giữ lại k principal component đầu tiên
+
+Sau khi có toàn bộ các principal component (số lượng bằng đúng số chiều
+gốc, không giảm chiều gì cả nếu giữ hết), bước giảm chiều thực sự là: chỉ
+giữ lại **k principal component đầu tiên** (k nhỏ hơn số chiều gốc nhiều),
+rồi chiếu dữ liệu gốc lên k hướng đó. Vì các principal component đầu luôn
+là những hướng phương sai lớn nhất, phần thông tin bị "bỏ qua" khi chỉ giữ
+k chiều là phần phương sai nhỏ nhất còn lại — thường là phần ít quan trọng
+nhất, gần với nhiễu hơn là tín hiệu thật.
+
+Tỷ lệ phương sai giữ lại được có thể tính trực tiếp: tổng eigenvalue của
+k component đã giữ, chia cho tổng toàn bộ eigenvalue — cho biết chính xác
+"giữ k chiều này thì còn giữ được bao nhiêu phần trăm thông tin (phương
+sai) của dữ liệu gốc".
+
+## So sánh trực tiếp với Autoencoder: tuyến tính vs phi tuyến
+
+Autoencoder (bài tiếp theo) giải đúng bài toán này — nén dữ liệu vào một
+biểu diễn chiều thấp rồi khôi phục lại — nhưng bằng một mạng nơ-ron huấn
+luyện qua backpropagation. PCA và Autoencoder là hai lời giải cho cùng
+một tinh thần bài toán, khác nhau ở một điểm cốt lõi:
+
+- **PCA:** phép chiếu hoàn toàn **tuyến tính** — bước biến đổi từ dữ liệu
+  gốc sang biểu diễn chiều thấp chỉ là một phép nhân ma trận. Có nghiệm
+  đóng (closed-form), tính toán trực tiếp qua eigenvector, không cần huấn
+  luyện lặp.
+- **Autoencoder:** encoder/decoder là mạng nơ-ron với activation phi
+  tuyến (xem bài [Perceptron & MLP](08-perceptron-va-mang-no-ron.mdx)) —
+  có thể học được các cấu trúc **phi tuyến** phức tạp hơn nhiều so với một
+  phép chiếu tuyến tính, nhưng cần huấn luyện lặp qua nhiều epoch, không
+  có nghiệm đóng.
+
+Trên thực tế, nếu dùng autoencoder với encoder/decoder chỉ là các lớp
+tuyến tính thuần (không có activation phi tuyến) và huấn luyện bằng
+reconstruction loss, kết quả học được sẽ hội tụ về đúng cùng không gian
+mà PCA tìm ra — PCA có thể xem như **trường hợp đặc biệt, tuyến tính** của
+bài toán mà autoencoder tổng quát hoá.
+
+## Khi nào dùng PCA thay vì Autoencoder
+
+PCA phù hợp khi quan hệ giữa các feature chủ yếu là tuyến tính, dữ liệu
+không quá lớn (tính eigenvector tốn kém hơn khi số chiều rất lớn), và cần
+một nghiệm nhanh, không cần huấn luyện, dễ diễn giải (mỗi principal
+component là một tổ hợp tuyến tính cụ thể của feature gốc). Autoencoder
+phù hợp hơn khi cấu trúc dữ liệu thực sự phi tuyến (ví dụ ảnh, nơi quan hệ
+giữa các pixel phức tạp hơn nhiều so với tổ hợp tuyến tính đơn giản).
+
+## Liên hệ lại với các bài trước
+
+- PCA dùng trực tiếp ma trận hiệp phương sai đã giới thiệu ở bài
+  [Xác suất & thống kê cơ bản](01-xac-suat-thong-ke-co-ban.mdx) — đây là
+  lần đầu tiên khái niệm đó được khai triển thành một ứng dụng cụ thể,
+  sau khi chỉ được định nghĩa từ đầu track.
+- Cùng với [K-means](07-k-means-clustering.mdx) và
+  [Autoencoder](22-autoencoder.mdx), PCA là mô hình unsupervised thứ ba
+  trong track — nhưng khác cả hai: K-means tìm **nhóm rời rạc**,
+  Autoencoder tìm biểu diễn chiều thấp **phi tuyến**, còn PCA tìm biểu
+  diễn chiều thấp **tuyến tính**.
+- Vấn đề curse of dimensionality đã nhắc ở bài [k-NN](05-k-nearest-neighbors.mdx)
+  chính là một trong những lý do thực tế cần giảm chiều dữ liệu trước khi
+  áp dụng các mô hình nhạy với số chiều như k-NN.
+
+## Nguồn tham khảo
+
+- [scikit-learn — Decomposing signals in components](https://scikit-learn.org/stable/modules/decomposition.html) — dùng làm nguồn chính cho định nghĩa PCA (tìm các thành phần trực giao giải thích phương sai lớn nhất) và cách dùng thực tế để giảm chiều dữ liệu.

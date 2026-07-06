@@ -1,0 +1,111 @@
+---
+title: "Markov Decision Process (MDP) — Hình thức hoá bài toán RL"
+track: foundations-track
+module: "Reinforcement Learning"
+order: 17
+status: stable
+prerequisites: ["16-reinforcement-learning-framework"]
+summary: "Công thức hoá framework agent/environment/reward bằng toán học: bộ 5 thành phần (S, A, T, γ, R), value function đo 'tốt' của một state theo một policy, và discount factor cân bằng reward hiện tại với tương lai."
+last_touched_by_task: "Rà lại theo triết lý nội dung mới (2026-07-06, task 13): đọc kỹ, xác nhận bài đã đạt chuẩn (ví dụ số cụ thể cho discount factor, định nghĩa chính xác, không 'vỏ rỗng') — đây là bài hình thức hoá toán học/formalism nền tảng, không thuộc dạng 'dòng tiến hoá nhiều model' theo mục 2.1. Giữ nguyên nội dung, chỉ nâng status."
+---
+
+Bài [Reinforcement Learning — Framework](16-reinforcement-learning-framework.mdx)
+giới thiệu các khái niệm agent, environment, state, action, reward ở mức
+trực giác. **Markov Decision Process** (MDP) là cách hình thức hoá chính
+xác các khái niệm đó bằng toán học — nền tảng để các thuật toán RL cụ thể
+(Q-learning, policy gradient) có thể định nghĩa rõ ràng "học" nghĩa là gì.
+
+## MDP là một bộ 5 thành phần
+
+Một MDP được định nghĩa đầy đủ bởi bộ `(S, A, T, γ, R)`:
+
+- **`S`** — tập hợp mọi state có thể có.
+- **`A`** — tập hợp mọi action agent có thể thực hiện.
+- **`T(s, a, s')`** — **xác suất chuyển trạng thái**: xác suất chuyển từ
+  state `s` sang state `s'` khi thực hiện action `a`. Đây là phần quan
+  trọng phản ánh tính **ngẫu nhiên** của environment — cùng một action tại
+  cùng một state không nhất thiết luôn dẫn tới cùng một state kế tiếp (ví
+  dụ robot cố di chuyển thẳng nhưng có xác suất trượt bánh).
+- **`R(s, a)`** — hàm reward, cho biết phần thưởng nhận được khi thực hiện
+  action `a` tại state `s`.
+- **`γ`** (gamma, đọc "discount factor") — một số trong khoảng `[0, 1)`,
+  quyết định mức độ agent coi trọng reward tương lai so với reward ngay
+  bây giờ.
+
+## Vì sao gọi là "Markov"
+
+Tên gọi "Markov" xuất phát từ **tính chất Markov**: xác suất chuyển sang
+state tiếp theo chỉ phụ thuộc vào state **hiện tại** và action vừa thực
+hiện — không phụ thuộc vào toàn bộ lịch sử các state trước đó. Đây là một
+giả định đơn giản hoá quan trọng: state hiện tại được coi là đã "tóm tắt"
+đủ mọi thông tin cần thiết từ quá khứ để dự đoán tương lai, không cần nhớ
+lại toàn bộ chuỗi sự kiện đã xảy ra trước đó.
+
+## Discount factor: vì sao reward tương lai "đáng giá" ít hơn
+
+Mục tiêu của agent là tối đa hoá **tổng reward tích luỹ**, nhưng cộng dồn
+reward trực tiếp qua vô hạn bước thời gian sẽ không hội tụ (tổng có thể
+tiến ra vô cùng). `γ` giải quyết vấn đề này bằng cách "chiết khấu" reward
+theo thời gian:
+
+```
+Tổng reward chiết khấu = R_0 + γ*R_1 + γ^2*R_2 + γ^3*R_3 + ...
+```
+
+Ví dụ số cụ thể: agent nhận reward `R_0=1, R_1=1, R_2=1, R_3=1` liên tiếp
+4 bước (mỗi bước đều được 1 điểm). Với `γ=0.1` (gần 0), tổng chiết khấu là
+`1 + 0.1*1 + 0.01*1 + 0.001*1 = 1.111` — gần như chỉ tính `R_0`, các bước
+sau gần như không đáng kể. Với `γ=0.9` (gần 1), tổng chiết khấu là
+`1 + 0.9 + 0.81 + 0.729 = 3.439` — reward ở bước 3 (`0.729`) vẫn đóng góp
+đáng kể vào tổng, gần bằng `R_0`. Với `γ` gần 0, agent gần như chỉ quan
+tâm reward ngay lập tức (nhìn gần). Với `γ` gần 1, agent coi trọng gần
+như ngang nhau cả reward xa trong tương lai. Lựa chọn `γ` phản ánh trực
+tiếp mức độ "nhìn xa" mà ta muốn agent có — giống việc một người chọn
+giữa lợi ích trước mắt và lợi
+ích dài hạn.
+
+## Value function: đo "state này tốt tới đâu" theo một policy
+
+Với một policy `π` cố định (nhắc lại: policy là chiến lược ánh xạ từ state
+sang action), **value function** `V^π(s)` đo tổng reward chiết khấu kỳ
+vọng nếu agent bắt đầu tại state `s` và luôn hành động theo `π` từ đó trở
+đi:
+
+```
+V^π(s) = tổng kỳ vọng của R_0 + γ*R_1 + γ^2*R_2 + ...
+         (khi luôn hành động theo policy π, bắt đầu từ state s)
+```
+
+Value function trả lời đúng câu hỏi: "Nếu tôi đang ở state này và sẽ luôn
+hành động theo chiến lược này, tôi kỳ vọng nhận được bao nhiêu reward tổng
+cộng (đã chiết khấu) từ giờ tới cuối?"
+
+Một đại lượng liên quan, gọi là **action-value function** (hay Q-function)
+`Q^π(s, a)`, đo điều tương tự nhưng cụ thể hơn: kỳ vọng reward nếu tại
+state `s`, thực hiện action `a` **ngay lúc này** (dù `a` có thể không phải
+action mà policy `π` sẽ chọn), sau đó mới quay lại tuân theo `π`. Đại
+lượng `Q` này sẽ là trung tâm của thuật toán Q-learning ở bài tiếp theo.
+
+## Mục tiêu cuối cùng: tìm policy tối ưu
+
+Với framework này, "học" trong RL có thể phát biểu chính xác: tìm ra
+**policy tối ưu** `π*` — policy có value function lớn nhất tại mọi state,
+so với mọi policy khác có thể có. Các thuật toán RL cụ thể khác nhau ở
+**cách** tìm ra `π*` này — Q-learning tìm gián tiếp qua ước lượng
+Q-function, policy gradient tìm trực tiếp bằng cách điều chỉnh tham số
+của policy — nhưng đều chung một mục tiêu toán học đã định nghĩa ở đây.
+
+## Liên hệ lại với các bài trước
+
+- MDP là bước hình thức hoá toán học cho framework đã giới thiệu ở bài
+  [RL Framework](16-reinforcement-learning-framework.mdx) — mọi từ vựng
+  (state, action, reward, policy) giờ có định nghĩa chính xác thay vì chỉ
+  trực giác.
+- Discount factor `γ` đóng vai trò tương tự khái niệm "trọng số" đã gặp ở
+  nhiều nơi trong giáo trình (ví dụ trọng số `w` trong linear regression)
+  — một tham số điều khiển mức độ ảnh hưởng, ở đây là mức độ ảnh hưởng của
+  reward theo khoảng cách thời gian.
+
+## Nguồn tham khảo
+
+- [CS229 Lecture Notes — Part XIII: Reinforcement Learning and Control (Andrew Ng)](https://cs229.stanford.edu/notes2020fall/notes2020fall/cs229-notes12.pdf) — dùng làm nguồn chính cho định nghĩa MDP dạng bộ 5 thành phần `(S, A, T, γ, R)`, công thức value function `V^π(s)` dạng đệ quy, và định nghĩa action-value function `Q^π(s, a)`.

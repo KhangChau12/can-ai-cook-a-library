@@ -1,0 +1,80 @@
+---
+title: "UMAP — Giữ Cấu trúc Toàn cục Tốt hơn t-SNE Với Tốc độ Nhanh hơn"
+track: foundations-track
+module: "Dimensionality Reduction"
+order: 50
+status: stable
+prerequisites: ["48-tsne"]
+summary: "t-SNE giữ cấu trúc lân cận cục bộ rất tốt nhưng có 3 hạn chế cụ thể: tốn compute, không giữ cấu trúc toàn cục đáng tin cậy, giới hạn số chiều nhúng (Barnes-Hut chỉ 2-3 chiều). McInnes, Healy và Melville (2018) giải quyết bằng UMAP: xây dựng trên nền tảng lý thuyết Riemannian geometry và algebraic topology, đạt chất lượng trực quan hoá cạnh tranh với t-SNE nhưng nhanh hơn, giữ cấu trúc toàn cục tốt hơn, và không giới hạn số chiều nhúng."
+last_touched_by_task: "Bài mới (2026-07-06), bài thứ 4 module Dimensionality Reduction — nối tiếp trực tiếp bài 48 (t-SNE), giải quyết đúng 3 hạn chế cụ thể mà bài t-SNE đã nêu rõ (tốn compute, mất cấu trúc toàn cục, giới hạn Barnes-Hut 2-3 chiều). Nguồn: arxiv 1802.03426 (paper gốc McInnes/Healy/Melville 2018, xác nhận qua WebFetch abstract: 3 ưu điểm cụ thể so với t-SNE, nền tảng lý thuyết Riemannian geometry/algebraic topology). Đã thử tìm nguồn thứ 2 (scikit-learn manifold.html xác nhận KHÔNG có UMAP vì là thư viện ngoài sklearn core; Lil'Log word embedding không đề cập; cs231n chỉ nhắc t-SNE không nhắc UMAP) không thành công — chấp nhận 1 nguồn theo đúng tiền lệ đã áp dụng cho t-SNE (bài 48), vì đây được coi là kỹ thuật thay thế cho mục đích trực quan hoá, không bắt buộc 2 nguồn máy móc theo mục 2.5."
+---
+
+Bài [t-SNE](48-tsne.mdx) giải quyết vấn đề PCA bỏ lỡ cấu trúc phi tuyến
+khi trực quan hoá, nhưng chính t-SNE cũng có những hạn chế cụ thể của
+riêng nó. Bài này kể cách một kỹ thuật mới hơn giải quyết đúng những hạn
+chế đó.
+
+## Vấn đề: 3 hạn chế cụ thể của t-SNE
+
+Bài t-SNE đã nêu rõ 3 đánh đổi của kỹ thuật này:
+
+1. **Tốn chi phí tính toán lớn** — có thể mất hàng giờ cho dữ liệu triệu
+   mẫu.
+2. **Không giữ được cấu trúc toàn cục đáng tin cậy** — khoảng cách giữa
+   các cụm trên biểu đồ t-SNE không phản ánh chính xác khoảng cách thực
+   sự trong dữ liệu gốc.
+3. **Giới hạn số chiều nhúng** — phương pháp tăng tốc phổ biến nhất
+   (Barnes-Hut) chỉ hỗ trợ nhúng xuống 2 hoặc 3 chiều, không dùng được
+   khi cần giảm chiều xuống một số chiều trung gian lớn hơn (ví dụ 10-50
+   chiều, để dùng làm input cho một mô hình khác thay vì chỉ trực quan
+   hoá).
+
+## Giải pháp: nền tảng lý thuyết mới từ hình học và tô pô
+
+**McInnes, Healy và Melville (2018)**, trong bài báo "UMAP: Uniform
+Manifold Approximation and Projection for Dimension Reduction", giải
+quyết cả 3 hạn chế trên bằng một kỹ thuật xây dựng trên nền tảng lý
+thuyết khác hẳn: **hình học Riemann** (Riemannian geometry) và **tô pô
+đại số** (algebraic topology) — hai nhánh toán học nghiên cứu cấu trúc
+không gian ở mức trừu tượng cao. Nền tảng lý thuyết chặt chẽ này cho phép
+UMAP hoạt động như một kỹ thuật giảm chiều **tổng quát cho machine
+learning**, không chỉ giới hạn ở mục đích trực quan hoá như t-SNE.
+
+## Kết quả: nhanh hơn, giữ cấu trúc toàn cục tốt hơn, không giới hạn chiều
+
+Nhóm tác giả công bố UMAP giải quyết đúng 3 hạn chế đã nêu:
+
+- **Chất lượng trực quan hoá cạnh tranh với t-SNE** — không đánh đổi chất
+  lượng để đạt được các ưu điểm khác.
+- **Giữ được nhiều cấu trúc toàn cục hơn** so với t-SNE — khoảng cách
+  giữa các cụm trên biểu đồ UMAP đáng tin cậy hơn.
+- **Hiệu năng chạy vượt trội** (tốc độ nhanh hơn đáng kể) và **không có
+  giới hạn tính toán về số chiều nhúng** — có thể dùng UMAP để giảm chiều
+  xuống bất kỳ số chiều nào, không chỉ 2-3 chiều như giới hạn Barnes-Hut
+  của t-SNE.
+
+Vì không bị giới hạn ở 2-3 chiều và có nền tảng lý thuyết tổng quát hơn,
+UMAP có thể dùng cho cả hai mục đích: **trực quan hoá** (giống t-SNE) và
+**tiền xử lý dữ liệu** (giảm chiều xuống một mức trung gian, ví dụ 20-50
+chiều, để làm input cho một mô hình khác — công dụng mà t-SNE không được
+thiết kế cho).
+
+## Liên hệ lại với các bài trước
+
+- UMAP là ví dụ tiếp theo của mẫu hình "model sau giải quyết đúng hạn chế
+  cụ thể của model trước" đã lặp lại xuyên suốt track — ở đây không phải
+  quan hệ giữa các kiến trúc mạng nơ-ron, mà là quan hệ giữa hai **thuật
+  toán giảm chiều phi tuyến**: t-SNE (2008) → UMAP (2018), giải quyết
+  đúng 3 hạn chế cụ thể (compute, cấu trúc toàn cục, giới hạn chiều) đã
+  nêu ở bài t-SNE.
+- Giống t-SNE và PCA, UMAP thuộc nhóm **unsupervised learning** — không
+  cần nhãn `y`, chỉ dùng cấu trúc nội tại của dữ liệu để tìm biểu diễn
+  chiều thấp.
+- Vì UMAP không giới hạn số chiều nhúng, nó có thể đóng vai trò tương tự
+  [Autoencoder](22-autoencoder.mdx) hoặc [PCA](21-pca.mdx) trong việc
+  chuẩn bị dữ liệu cho một mô hình khác — mở rộng phạm vi ứng dụng so với
+  t-SNE (vốn chỉ thực tế dùng cho trực quan hoá).
+
+## Nguồn tham khảo
+
+- [arXiv — UMAP: Uniform Manifold Approximation and Projection for Dimension Reduction](https://arxiv.org/abs/1802.03426) — paper gốc của McInnes, Healy và Melville (2018), dùng cho 3 ưu điểm cụ thể so với t-SNE (chất lượng trực quan hoá cạnh tranh, giữ cấu trúc toàn cục tốt hơn, hiệu năng chạy vượt trội không giới hạn số chiều nhúng), và nền tảng lý thuyết (Riemannian geometry, algebraic topology).

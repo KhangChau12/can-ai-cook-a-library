@@ -1,0 +1,53 @@
+---
+quiz_for: 19-policy-gradient
+---
+
+## Q1
+Policy gradient khác Q-learning ở cách tiếp cận cốt lõi nào?
+
+- [x] Tối ưu hoá TRỰC TIẾP tham số của policy để tối đa hoá reward kỳ vọng, bỏ qua bước trung gian học Q-function
+- [ ] Không cần policy, chỉ cần Q-function
+- [ ] Không dùng gradient dưới bất kỳ hình thức nào
+- [ ] Chỉ hoạt động với action rời rạc, không hoạt động với action liên tục
+
+> Q-learning học Q-function trước rồi suy ra policy gián tiếp (chọn action có Q cao nhất); policy gradient bỏ qua bước đó, tối ưu trực tiếp tham số θ của π_θ.
+
+## Q2
+Trong công thức REINFORCE `θ := θ + α*G*∇_θ log(π_θ(a|s))`, nếu `G` (tổng reward chiết khấu) lớn thì điều gì xảy ra?
+
+- [x] Cập nhật đẩy mạnh theo hướng TĂNG xác suất chọn lại action đó trong tương lai
+- [ ] Cập nhật đẩy theo hướng giảm xác suất chọn action đó
+- [ ] Không có gì thay đổi, G chỉ ảnh hưởng tới learning rate
+- [ ] Tham số θ được reset về giá trị ban đầu
+
+> `G` lớn nghĩa là hành động đó dẫn tới kết quả tốt — cập nhật "củng cố" (tăng xác suất chọn lại) hành động đó; `G` nhỏ/âm thì "làm nản" (giảm xác suất) — đúng nghĩa đen của "reinforcement".
+
+## Q3
+REINFORCE có tính chất gì về mặt lý thuyết, và đánh đổi đi kèm là gì?
+
+- [x] Là ước lượng KHÔNG THIÊN VỊ (unbiased) của gradient thật, nhưng có PHƯƠNG SAI CAO khiến quá trình học không ổn định
+- [ ] Luôn hội tụ nhanh hơn Q-learning trong mọi trường hợp
+- [ ] Không cần nhiều episode để học, chỉ cần 1 lần thử
+- [ ] Không có đánh đổi nào, REINFORCE luôn tốt hơn các phương pháp khác
+
+> Về trung bình, hướng cập nhật của REINFORCE là đúng (unbiased), nhưng giá trị G ở các episode khác nhau có thể dao động rất lớn (một ván may mắn cho G cao dù hành động không tối ưu) — khiến cần nhiều episode để hội tụ.
+
+## Q4
+Vì sao policy gradient tự nhiên xử lý được action LIÊN TỤC, trong khi Q-learning gặp khó khăn với trường hợp này?
+
+- [x] Q-learning cần tính max_{a'}Q(s',a') qua mọi action khả thi — khó tính với action liên tục (vô hạn giá trị); policy gradient không cần bước tính max đó
+- [ ] Policy gradient không dùng mạng nơ-ron nên nhanh hơn
+- [ ] Q-learning chỉ hoạt động với đúng 2 action
+- [ ] Action liên tục không tồn tại trong thực tế
+
+> Q-learning phù hợp khi không gian action nhỏ và rời rạc (dễ tính max qua hữu hạn lựa chọn); policy gradient học trực tiếp π_θ(a|s), không cần liệt kê/tính max qua vô hạn action liên tục.
+
+## Q5
+Actor-Critic giảm phương sai so với REINFORCE (kể cả có baseline) bằng cách nào?
+
+- [x] Học thêm một critic ước lượng giá trị qua temporal difference learning (không cần đợi hết episode), thay vì dùng toàn bộ Monte Carlo return G
+- [ ] Loại bỏ hoàn toàn khái niệm reward
+- [ ] Chỉ hoạt động khi action là rời rạc
+- [ ] Actor-Critic không dùng gradient, chỉ dùng luật cố định
+
+> REINFORCE (kể cả có baseline) vẫn phải chờ hết episode mới tính được G chính xác (Monte Carlo) — nguồn phương sai lớn. Actor-Critic học thêm critic ước lượng giá trị ngay lập tức qua TD learning, giảm phương sai đáng kể nhưng đổi lại có thể thiên vị nếu critic chưa học chính xác.

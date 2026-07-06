@@ -1,0 +1,43 @@
+---
+quiz_for: 71-double-dueling-dqn
+---
+
+## Q1
+Vấn đề cụ thể mà Double DQN giải quyết là gì?
+
+- [x] DQN gốc dùng ĐÚNG MỘT mạng vừa chọn action tốt nhất (argmax) vừa ước lượng giá trị của chính action đó — khiến sai số ước lượng bị khuếch đại theo hướng dương, gây overestimation hệ thống
+- [ ] DQN gốc không thể chạy trên GPU
+- [ ] DQN gốc không có experience replay
+- [ ] DQN gốc chỉ hoạt động với game có 2 hành động, không nhiều hơn
+
+> Dùng cùng một nguồn thông tin (một mạng) cho cả việc chọn và đánh giá action khiến giá trị lớn được chọn có xu hướng chỉ là do nhiễu ước lượng cao hơn thực tế, không phải action đó thực sự tốt hơn.
+
+## Q2
+Double DQN sửa vấn đề overestimation bằng cách nào?
+
+- [x] Tách riêng 2 vai trò "chọn action" và "ước lượng giá trị action" ra 2 mạng khác nhau — một mạng chọn action, một mạng (target network) đánh giá giá trị của đúng action đã chọn
+- [ ] Tăng gấp đôi kích thước replay buffer
+- [ ] Bỏ hẳn phép toán max trong công thức cập nhật Q-value
+- [ ] Huấn luyện 2 agent hoàn toàn độc lập rồi lấy trung bình hành động
+
+> Đây là ý tưởng Double Q-learning (vốn có từ trước cho bảng tra cứu) áp dụng vào DQN dùng mạng nơ-ron sâu — tách 2 vai trò để tránh khuếch đại sai số theo 1 chiều.
+
+## Q3
+Vấn đề cụ thể mà Dueling DQN giải quyết (khác với Double DQN) là gì?
+
+- [x] DQN gốc học Q-value cho từng cặp (trạng thái, action) độc lập, không tận dụng được việc nhiều trạng thái có các action với giá trị GẦN GIỐNG NHAU — generalize kém qua các action
+- [ ] DQN gốc bị overestimation giá trị action (đây là vấn đề của Double DQN, không phải Dueling DQN)
+- [ ] DQN gốc không thể học được policy nào cả
+- [ ] DQN gốc yêu cầu dữ liệu phải có nhãn thủ công
+
+> Đây là vấn đề hoàn toàn khác overestimation — một vấn đề về CẤU TRÚC MẠNG không tận dụng được sự tương đồng giữa các action tại cùng 1 trạng thái, không phải về thiên lệch thống kê.
+
+## Q4
+Dueling DQN thay đổi kiến trúc mạng như thế nào, và Double DQN + Dueling DQN có kết hợp được với nhau không?
+
+- [x] Tách phần cuối mạng thành 2 nhánh — Value V(s) (trạng thái tốt tới đâu) và Advantage A(s,a) (action này hơn/kém action khác bao nhiêu) — rồi kết hợp lại; có, 2 kỹ thuật độc lập nên kết hợp được (Dueling Double DQN)
+- [ ] Dueling DQN thay thế hoàn toàn mạng nơ-ron bằng cây quyết định; không kết hợp được với Double DQN
+- [ ] Dueling DQN chỉ dùng 1 nhánh duy nhất, đơn giản hơn DQN gốc; không kết hợp được với Double DQN
+- [ ] Dueling DQN và Double DQN là 2 tên gọi khác nhau của cùng 1 kỹ thuật
+
+> Double DQN sửa cách ƯỚC LƯỢNG giá trị (thuật toán), Dueling DQN sửa CẤU TRÚC MẠNG — vì giải quyết 2 vấn đề độc lập khác nhau, chúng kết hợp được với nhau mà không xung đột.

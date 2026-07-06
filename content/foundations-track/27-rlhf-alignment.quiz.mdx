@@ -1,0 +1,53 @@
+---
+quiz_for: 27-rlhf-alignment
+---
+
+## Q1
+Vì sao instruction tuning (supervised) không tự nhiên xử lý được việc phân biệt câu trả lời "tốt" và "tốt hơn"?
+
+- [x] Vì với nhiều câu hỏi mở, không có một "đáp án đúng tuyệt đối" duy nhất để làm nhãn — chỉ có thể SO SÁNH 2 câu trả lời, khó viết ra công thức toán học chính xác cho "tốt"
+- [ ] Vì instruction tuning không dùng cross-entropy loss
+- [ ] Vì instruction tuning chỉ hoạt động với câu hỏi có 1 từ
+- [ ] Vì instruction tuning không cần dữ liệu huấn luyện
+
+> Đây chính xác là tình huống RL được thiết kế để xử lý: học tối ưu một đại lượng (reward) khi không cần biết công thức chính xác của nó, chỉ cần có tín hiệu phản hồi (ở đây là xếp hạng của con người).
+
+## Q2
+Trong RLHF, "reward model" được huấn luyện từ dữ liệu gì?
+
+- [x] Xếp hạng của con người khi so sánh nhiều câu trả lời khác nhau cho cùng một câu hỏi
+- [ ] Nhãn đúng/sai có sẵn cho từng câu hỏi
+- [ ] Điểm số f1_score của mô hình trên tập test
+- [ ] Số lượng tham số của mô hình
+
+> Con người xếp hạng các câu trả lời (câu nào tốt hơn câu nào) — từ đó huấn luyện một reward model học cách chấm điểm khớp với xu hướng đánh giá của con người, biến "sở thích con người" thành một hàm reward cụ thể.
+
+## Q3
+Sau khi có reward model, RLHF dùng nó thế nào để tinh chỉnh LLM?
+
+- [x] Coi LLM là policy, dùng thuật toán RL (như policy gradient) để tinh chỉnh tham số sao cho LLM tạo ra câu trả lời được reward model chấm điểm cao hơn
+- [ ] Xoá reward model đi và huấn luyện lại LLM từ đầu
+- [ ] Chỉ dùng reward model để lọc dữ liệu train, không dùng RL
+- [ ] Reward model thay thế hoàn toàn LLM, không cần LLM nữa
+
+> LLM đóng vai trò policy π — mỗi câu hỏi là state, câu trả lời là action — dùng RL để tối ưu policy sao cho reward (từ reward model) được tối đa hoá, đúng framework RL đã học ở bài 16-19.
+
+## Q4
+DPO (Direct Preference Optimization) đơn giản hoá RLHF truyền thống bằng cách nào?
+
+- [x] Bỏ hẳn bước huấn luyện reward model riêng và bước RL — tối ưu trực tiếp trên dữ liệu preference bằng một hàm loss dạng supervised learning
+- [ ] Tăng số lượng mô hình cần duy trì lên gấp đôi
+- [ ] Chỉ hoạt động khi có ít nhất 10 reward model khác nhau
+- [ ] Yêu cầu nhiều compute hơn RLHF truyền thống
+
+> RLHF truyền thống cần duy trì nhiều mô hình (policy, reference, reward, value) — DPO chỉ cần dữ liệu preference (câu trả lời được chọn vs bị loại) và tối ưu bằng supervised learning thông thường, đạt hiệu năng tương đương/tốt hơn với ít compute hơn, ổn định hơn.
+
+## Q5
+Kết quả InstructGPT (mô hình 1.3B đã RLHF vượt qua GPT-3 175B base trên đánh giá con người) cho thấy điều gì?
+
+- [x] Alignment (qua RLHF) là một trục cải thiện độc lập với quy mô tham số — không thể thay thế bằng việc chỉ tăng kích thước mô hình
+- [ ] Mô hình càng nhỏ càng luôn tốt hơn mô hình lớn trong mọi trường hợp
+- [ ] RLHF chỉ hoạt động với mô hình dưới 2 tỷ tham số
+- [ ] GPT-3 175B base không có khả năng trả lời câu hỏi
+
+> Một mô hình nhỏ hơn 100 lần nhưng đã align (RLHF) được ưa thích hơn mô hình lớn chưa align — đối lập thú vị với Scaling Laws (to hơn thường tốt hơn): alignment cải thiện một trục khác, không thể thay thế bằng việc tăng quy mô thuần tuý.

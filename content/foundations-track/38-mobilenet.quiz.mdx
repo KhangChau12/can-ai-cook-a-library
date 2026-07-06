@@ -1,0 +1,43 @@
+---
+quiz_for: 38-mobilenet
+---
+
+## Q1
+MobileNet ra đời để giải quyết vấn đề gì mà ResNet/VGG không giải quyết?
+
+- [x] ResNet/VGG đạt độ chính xác cao nhưng quá nặng (nhiều tham số/tính toán) để chạy trên điện thoại/thiết bị nhúng có tài nguyên hạn chế
+- [ ] ResNet/VGG không thể phân loại được ảnh màu
+- [ ] ResNet/VGG không dùng được nguyên lý convolution
+- [ ] ResNet/VGG chỉ hoạt động với ảnh có kích thước cố định 224x224
+
+> Toàn bộ dòng AlexNet→VGG→ResNet đánh đổi thêm tham số/tính toán để lấy độ chính xác cao hơn — hợp lý cho máy chủ có GPU mạnh nhưng không phù hợp khi cần chạy trên thiết bị có bộ nhớ/năng lượng/tốc độ xử lý hạn chế nghiêm ngặt.
+
+## Q2
+Depthwise separable convolution tách phép tích chập chuẩn thành 2 bước nào?
+
+- [x] Depthwise convolution (lọc không gian riêng cho từng kênh) rồi pointwise convolution (1×1, trộn thông tin giữa các kênh)
+- [ ] Chia ảnh thành 2 nửa, xử lý riêng biệt rồi ghép lại
+- [ ] Tăng gấp đôi số lớp tích chập để bù lại độ chính xác
+- [ ] Bỏ hoàn toàn bước trộn kênh, chỉ giữ lọc không gian
+
+> Phép tích chập chuẩn làm cả lọc không gian và trộn kênh cùng lúc trong 1 bước, tốn nhiều tham số/tính toán hơn. MobileNet tách thành 2 bước riêng: depthwise (lọc không gian mỗi kênh độc lập) rồi pointwise 1×1 (trộn kênh) — giảm đáng kể chi phí tính toán.
+
+## Q3
+Hai siêu tham số toàn cục mà Howard và cộng sự giới thiệu dùng để làm gì?
+
+- [x] Cho phép người dùng tự điều chỉnh điểm cân bằng giữa độ trễ (latency) và độ chính xác tuỳ theo giới hạn phần cứng cụ thể
+- [ ] Để tăng số lớp tích chập lên gấp đôi
+- [ ] Để chuyển đổi bài toán classification sang regression
+- [ ] Không có tác dụng thực tế, chỉ là tham số thử nghiệm
+
+> Nhờ 2 siêu tham số này, MobileNet là một họ mô hình có thể "co giãn" — chọn mô hình nhỏ/nhanh hơn cho thiết bị yếu, hoặc lớn/chính xác hơn cho thiết bị mạnh — thay vì chỉ có một kiến trúc cố định.
+
+## Q4
+MobileNet có thay đổi nguyên lý convolution (translation invariance, locality) đã học ở bài CNN không?
+
+- [x] Không — MobileNet chỉ tổ chức lại CÁCH TÍNH phép tích chập để hiệu quả hơn, không thay đổi nguyên lý nền tảng
+- [ ] Có, MobileNet bỏ hoàn toàn nguyên lý translation invariance
+- [ ] Có, MobileNet thay convolution bằng attention hoàn toàn
+- [ ] MobileNet không dùng bất kỳ phép tích chập nào
+
+> Depthwise separable convolution vẫn dựa trên nguyên lý convolution cốt lõi (chia sẻ trọng số, tính cục bộ) — chỉ tách phép tính thành 2 bước hiệu quả hơn về mặt tính toán, không thay đổi bản chất nguyên lý.

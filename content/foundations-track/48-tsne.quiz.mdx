@@ -1,0 +1,43 @@
+---
+quiz_for: 48-tsne
+---
+
+## Q1
+Vấn đề cụ thể mà t-SNE giải quyết so với PCA khi dùng để trực quan hoá là gì?
+
+- [x] PCA chỉ chiếu dữ liệu theo phép biến đổi tuyến tính, có thể khiến các cụm dữ liệu có cấu trúc phi tuyến bị chồng lấn trên biểu đồ dù thực chất tách biệt rõ trong không gian gốc
+- [ ] PCA không thể chạy trên dữ liệu có hơn 2 chiều
+- [ ] PCA chỉ hoạt động với dữ liệu dạng ảnh, không hoạt động với dữ liệu số thông thường
+- [ ] PCA yêu cầu dữ liệu phải có nhãn, còn t-SNE thì không
+
+> Ví dụ cụ thể: chiếu PCA xuống 2D cho các vùng nhãn chữ số viết tay chồng lấn đáng kể, trong khi t-SNE cho thấy các cụm tách biệt rõ ràng hơn nhiều — vì t-SNE tối ưu cho cấu trúc lân cận cục bộ, không chỉ phương sai toàn cục tuyến tính.
+
+## Q2
+Cơ chế cốt lõi của t-SNE hoạt động như thế nào?
+
+- [x] Chuyển độ gần nhau giữa các điểm thành phân phối xác suất Gaussian ở không gian gốc và Student's t ở không gian nhúng, rồi tối ưu hoá vị trí điểm chiều thấp để tối thiểu hoá KL divergence giữa 2 phân phối
+- [ ] Tính eigenvector của ma trận hiệp phương sai, giống hệt PCA
+- [ ] Huấn luyện một mạng nơ-ron encoder-decoder để nén và khôi phục dữ liệu
+- [ ] Chia dữ liệu thành k cụm bằng thuật toán tương tự K-means
+
+> Đây chính là điểm khác biệt cốt lõi với PCA — t-SNE không có nghiệm đóng, phải tối ưu hoá lặp qua gradient descent để giữ đúng cấu trúc lân cận cục bộ giữa 2 phân phối xác suất.
+
+## Q3
+t-SNE đánh đổi những gì so với PCA để đạt được khả năng giữ cấu trúc cục bộ tốt hơn?
+
+- [x] Tốn chi phí tính toán nhiều hơn hẳn (có thể hàng giờ cho dữ liệu triệu mẫu), không giữ được cấu trúc toàn cục đáng tin cậy, và có tính ngẫu nhiên giữa các lần chạy
+- [ ] t-SNE không có đánh đổi nào, luôn tốt hơn PCA trong mọi trường hợp
+- [ ] t-SNE chỉ hoạt động được với dữ liệu có nhãn, mất đi tính chất unsupervised
+- [ ] t-SNE làm tăng số chiều dữ liệu thay vì giảm
+
+> Không có công cụ miễn phí hoàn toàn — t-SNE ưu tiên cấu trúc cục bộ bằng cách đánh đổi chi phí tính toán, độ tin cậy của khoảng cách giữa các cụm trên biểu đồ, và tính lặp lại giữa các lần chạy.
+
+## Q4
+Nếu t-SNE không tách rõ các nhóm nhãn trên biểu đồ 2D, điều đó có nghĩa là gì?
+
+- [x] Không nhất thiết nghĩa là một mô hình supervised không thể phân loại đúng — 2 chiều có thể không đủ để biểu diễn chính xác cấu trúc nội tại phức tạp của dữ liệu
+- [ ] Chắc chắn nghĩa là dữ liệu hoàn toàn không có cấu trúc gì, không mô hình nào phân loại được
+- [ ] Nghĩa là phải tăng số lượng feature gốc trước khi tiếp tục
+- [ ] Nghĩa là cần chuyển sang dùng Autoencoder thay vì bất kỳ mô hình nào khác
+
+> Đây là lưu ý thực tế quan trọng: chất lượng trực quan hoá của t-SNE ở 2D không trực tiếp phản ánh khả năng phân loại của mô hình supervised, vốn làm việc trực tiếp trên không gian nhiều chiều gốc.

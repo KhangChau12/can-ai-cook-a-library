@@ -1,0 +1,68 @@
+{
+  "exam-track": {
+    "Hướng dẫn dùng nền tảng": {
+      "description": "Làm quen với hệ thống: quy trình nộp bài, đọc hiểu metric và thiết lập baseline chuẩn.",
+      "submodules": {}
+    },
+    "Kỹ thuật thi đấu nâng cao": {
+      "description": "Tối ưu hóa điểm số với transfer learning, tinh chỉnh siêu tham số, ensemble và xử lý dữ liệu dạng bảng.",
+      "submodules": {}
+    }
+  },
+  "foundations-track": {
+    "Nền tảng Toán & ML cổ điển": {
+      "description": "Toán bổ trợ và các thuật toán học máy cơ bản: Regression, Decision Tree, SVM, k-NN, Naive Bayes.",
+      "submodules": {}
+    },
+    "Deep Learning Nền tảng": {
+      "description": "Kiến thức cốt lõi về mạng nơ-ron nhân tạo: Perceptron, Backpropagation và kỹ thuật Regularization.",
+      "submodules": {}
+    },
+    "Computer Vision": {
+      "description": "Xử lý ảnh nâng cao qua các bài toán Classification, Object Detection và Image Segmentation.",
+      "submodules": {
+        "Cơ bản": "Quá trình tiến hóa của các kiến trúc phân loại ảnh từ CNN đến Vision Transformers (ViT, Swin).",
+        "Detection": "Nhận diện vật thể: hai nhánh Two-stage (R-CNN), One-stage (YOLO, SSD) và Anchor-free.",
+        "Segmentation": "Phân vùng ảnh cấp độ pixel: kiến trúc U-Net, Mask R-CNN, DeepLab và SegFormer."
+      }
+    },
+    "Sequence Model": {
+      "description": "Xử lý dữ liệu dạng chuỗi và NLP: tiến trình từ RNN/LSTM đến Transformer, BERT, T5 và các biến thể ngữ cảnh dài.",
+      "submodules": {
+        "RNN Family": "Kiến trúc hồi quy cổ điển: RNN, LSTM/GRU và kỹ thuật Bidirectional dùng chung cho mọi cell.",
+        "Transformer Architecture": "Họ kiến trúc dựa trên Attention: Transformer, BERT, T5 và các biến thể xử lý văn bản dài (Transformer-XL, Longformer).",
+        "Tokenization": "Tiền xử lý văn bản: cắt token bằng subword (BPE) và biến token thành vector số (word2vec)."
+      }
+    },
+    "Reinforcement Learning": {
+      "description": "Học tăng cường: Cơ chế Agent-Environment, Markov Decision Process và thuật toán RL kinh điển.",
+      "submodules": {
+        "Value-based": "Thuật toán dựa trên giá trị: Q-learning và kiến trúc Deep Q-Network (DQN).",
+        "Policy-based": "Thuật toán dựa trên chiến sách: Policy Gradient, Actor-Critic và PPO."
+      }
+    },
+    "Dimensionality Reduction": {
+      "description": "Giảm chiều dữ liệu và trực quan hóa: các phương pháp PCA, Autoencoder, t-SNE và UMAP.",
+      "submodules": {}
+    },
+    "Generative Models": {
+      "description": "Mô hình sinh dữ liệu hình ảnh: các kiến trúc sinh đối kháng GAN/DCGAN và Diffusion Models.",
+      "submodules": {}
+    },
+    "LLM": {
+      "description": "Mô hình ngôn ngữ lớn: huấn luyện, alignment và các phương pháp tối ưu hóa lúc chạy (RAG, Agent).",
+      "submodules": {
+        "Huấn luyện & Alignment": "Lộ trình cập nhật tham số: Pretraining, Scaling Laws, Fine-tuning và Alignment (RLHF).",
+        "Ứng dụng & Inference-time": "Khai thác mô hình không cập nhật tham số: Prompting, RAG và Agent."
+      }
+    },
+    "Audio": {
+      "description": "Xử lý âm thanh số: cách biểu diễn âm thanh, Speech-to-Text và Text-to-Speech.",
+      "submodules": {}
+    },
+    "Recommendation Systems": {
+      "description": "Hệ thống gợi ý: Collaborative Filtering, Neural CF, DeepFM và tối ưu Bayesian Personalized Ranking.",
+      "submodules": {}
+    }
+  }
+}

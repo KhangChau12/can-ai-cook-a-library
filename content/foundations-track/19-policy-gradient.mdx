@@ -1,0 +1,129 @@
+---
+title: "Policy Gradient — Học trực tiếp Policy thay vì Q-function"
+track: foundations-track
+module: "Reinforcement Learning"
+submodule: "Policy-based"
+order: 19
+status: stable
+prerequisites: ["18-q-learning"]
+summary: "REINFORCE không thiên vị nhưng phương sai cao — bài này cụ thể hoá 2 bước cải tiến giảm phương sai: baseline (trừ một ước lượng tham chiếu khỏi return, không đổi kỳ vọng nhưng giảm phương sai) và Actor-Critic (thay hẳn Monte Carlo return bằng một critic học qua temporal difference), thay vì chỉ nói mập mờ 'các thuật toán nâng cao hơn nằm ngoài phạm vi bài này'."
+last_touched_by_task: "Viết lại theo triết lý nội dung mới (2026-07-06): cụ thể hoá 'các thuật toán nâng cao hơn' mà bài cũ chỉ nhắc mập mờ — giờ nói rõ 2 bước cụ thể: baseline (xác nhận qua WebFetch trực tiếp abstract arxiv 1803.07246: policy gradient methods có phương sai cao, baseline giúp giảm phương sai không đổi kỳ vọng) và Actor-Critic (xác nhận qua WebFetch abstract arxiv 2005.01350: critic học qua temporal difference thay cho Monte Carlo return, giảm phương sai). Không khẳng định tên tác giả REINFORCE gốc (Williams) vì nguồn cs229 cũ là PDF không đọc được qua WebFetch — tránh khẳng định thiếu xác nhận trực tiếp, dù tên thuật toán REINFORCE giữ nguyên từ bài cũ."
+---
+
+Bài [Q-learning](18-q-learning.mdx) học một Q-function trước, rồi suy ra
+policy gián tiếp: tại mỗi state, chọn action có `Q` cao nhất. **Policy
+gradient** đi theo hướng hoàn toàn khác: bỏ qua bước trung gian Q-function,
+tối ưu hoá **trực tiếp** tham số của policy để tối đa hoá reward kỳ vọng.
+
+## Policy có tham số: π_θ
+
+Thay vì một bảng Q-value, policy gradient biểu diễn policy bằng một hàm
+có tham số `θ` (theta) — thường là một mạng nơ-ron: `π_θ(a | s)` là xác
+suất chọn action `a` tại state `s`, theo tham số hiện tại `θ`. Đây chính
+là nơi kiến thức về mạng nơ-ron và
+[backpropagation](09-backpropagation.mdx) quay lại: `θ` chính là trọng số
+của mạng, và mục tiêu là tìm `θ` tối ưu — về hình thức giống hệt việc tìm
+`w, b` tối ưu ở linear/logistic regression, chỉ khác **hàm mục tiêu** cần
+tối ưu.
+
+## Hàm mục tiêu: tối đa hoá reward kỳ vọng, không phải tối thiểu hoá loss
+
+Ở mọi mô hình supervised đã học, mục tiêu luôn là **tối thiểu hoá** một
+hàm loss so với nhãn có sẵn. Policy gradient lật ngược lại: mục tiêu là
+**tối đa hoá** reward kỳ vọng khi hành động theo `π_θ`. Vì không có nhãn
+đúng để so sánh, gradient ở đây không đến từ so sánh dự đoán với nhãn, mà
+đến từ chính **trải nghiệm thực tế** — chạy thử policy hiện tại, quan sát
+reward tích luỹ được (ký hiệu `G`, tổng reward chiết khấu của một episode).
+
+## Công thức cập nhật: REINFORCE
+
+Thuật toán policy gradient cơ bản nhất, gọi là **REINFORCE**, cập nhật
+tham số theo:
+
+```
+θ := θ + α * G * ∇_θ log(π_θ(a | s))
+```
+
+Trực giác của công thức này: `∇_θ log(π_θ(a|s))` là hướng trong không
+gian tham số làm **tăng xác suất** chọn lại action `a` tại state `s`
+trong tương lai. Nhân với `G` (tổng reward chiết khấu nhận được sau khi
+thực hiện action đó): nếu `G` lớn (hành động đó dẫn tới kết quả tốt), cập
+nhật đẩy mạnh theo hướng tăng xác suất chọn lại action đó; nếu `G` nhỏ
+hoặc âm, cập nhật đẩy theo hướng ngược lại — giảm xác suất chọn lại hành
+động đã dẫn tới kết quả tệ.
+
+Nói ngắn gọn: **hành động dẫn tới reward cao được "củng cố" (tăng xác
+suất chọn lại), hành động dẫn tới reward thấp bị "làm nản" (giảm xác suất
+chọn lại)** — một dạng học tăng cường đúng nghĩa đen của tên gọi
+"reinforcement learning".
+
+## Đánh đổi: không thiên vị nhưng phương sai cao
+
+REINFORCE có một tính chất tốt về mặt lý thuyết: nó là ước lượng **không
+thiên vị** (unbiased) của gradient thật — về trung bình, hướng cập nhật
+là đúng. Nhưng đổi lại, ước lượng này có **phương sai cao**: giá trị `G`
+quan sát được ở các episode khác nhau có thể dao động rất lớn (một ván
+chơi may mắn có thể cho `G` cao dù các hành động không thực sự tối ưu),
+khiến quá trình học không ổn định, cần nhiều episode để hội tụ.
+
+## Hai bước cải tiến cụ thể để giảm phương sai
+
+**Bước 1 — trừ đi một baseline.** Thay vì nhân trực tiếp với `G`, trừ đi
+một giá trị tham chiếu `b` (baseline — thường là một ước lượng giá trị
+trung bình kỳ vọng tại state đó) trước khi nhân:
+
+```
+θ := θ + α * (G - b) * ∇_θ log(π_θ(a | s))
+```
+
+Về mặt kỳ vọng, trừ `b` **không làm thay đổi** hướng cập nhật đúng (baseline
+không phụ thuộc action nên không làm thiên vị gradient) — nhưng làm giảm
+đáng kể phương sai của ước lượng, vì `(G - b)` dao động ít hơn `G` một
+mình khi `b` xấp xỉ đúng giá trị kỳ vọng của state đó.
+
+**Bước 2 — Actor-Critic: thay hẳn Monte Carlo return bằng một critic học
+được.** REINFORCE (kể cả có baseline) vẫn phải chờ hết một episode mới
+tính được `G` chính xác (Monte Carlo) — đây vẫn là nguồn phương sai lớn.
+**Actor-Critic** đi xa hơn: học thêm một mạng thứ hai gọi là **critic**,
+dùng temporal difference learning (giống cơ chế TD error đã gặp ở
+[Q-learning](18-q-learning.mdx)) để ước lượng giá trị kỳ vọng ngay lập
+tức, không cần đợi hết episode. Mạng chính (**actor**, chính là `π_θ`)
+dùng ước lượng từ critic để cập nhật, thay vì dùng `G` quan sát trực tiếp
+— đánh đổi: giảm phương sai đáng kể (không phải chờ hết episode, không bị
+dao động theo may rủi của một lần chơi cụ thể), nhưng đổi lại ước lượng
+từ critic có thể **thiên vị** (biased) nếu bản thân critic học chưa chính
+xác — một đánh đổi bias-variance khác, ở một tầng khác so với các đánh
+đổi bias-variance đã gặp trước đây trong giáo trình (`max_depth`, `k`,
+bagging/boosting).
+
+## So sánh nhanh với Q-learning
+
+- **Q-learning:** học gián tiếp qua Q-function, có thể học từ dữ liệu cũ
+  (off-policy — dùng lại trải nghiệm từ policy khác), phù hợp khi không
+  gian action nhỏ và rời rạc (dễ tính `max_{a'}`).
+- **Policy gradient:** học trực tiếp tham số policy, tự nhiên xử lý được
+  action liên tục (không cần tính `max` qua vô hạn action), nhưng thường
+  cần nhiều dữ liệu hơn (on-policy — chỉ dùng trải nghiệm từ chính policy
+  hiện tại) do phương sai cao.
+
+Không có phương pháp nào "luôn tốt hơn" — lựa chọn phụ thuộc vào đặc điểm
+bài toán cụ thể, giống mẫu hình đánh đổi kiến trúc đã gặp nhiều lần trong
+giáo trình.
+
+## Liên hệ lại với các bài trước
+
+- Policy gradient là ví dụ rõ ràng nhất cho thấy gradient ascent/descent
+  (đã học từ bài [Linear Regression](02-linear-regression.mdx)) là một
+  công cụ tối ưu hoá tổng quát — áp dụng được cho bất kỳ hàm mục tiêu khả
+  vi nào, không chỉ giới hạn ở việc tối thiểu hoá loss so với nhãn có sẵn.
+- Việc dùng mạng nơ-ron để biểu diễn `π_θ` nghĩa là toàn bộ kiến thức về
+  MLP, CNN (nếu input là hình ảnh), hay RNN/Transformer (nếu input là
+  chuỗi) đều có thể tái sử dụng trực tiếp làm "phần thân" của policy —
+  RL không thay thế các kiến trúc đã học, mà xây dựng thêm một lớp mục
+  tiêu tối ưu hoá mới lên trên chúng.
+
+## Nguồn tham khảo
+
+- [CS229 Lecture Notes — Part XV: Policy Gradient (REINFORCE) (Tengyu Ma)](https://cs229.stanford.edu/notes2020fall/notes2020fall/cs229-notes14.pdf) — dùng cho công thức cập nhật REINFORCE (`θ := θ + α*G*∇_θ log π_θ(a|s)`), trực giác về việc tăng xác suất action dẫn tới reward cao, và đánh đổi giữa tính không thiên vị và phương sai cao của ước lượng gradient.
+- [arXiv — Variance Reduction for Policy Gradient with Action-Dependent Factorized Baselines](https://arxiv.org/abs/1803.07246) — dùng cho xác nhận vấn đề phương sai cao của policy gradient methods, và cơ chế baseline giảm phương sai không làm thiên vị gradient.
+- [arXiv — A Finite Time Analysis of Two Time-Scale Actor Critic Methods](https://arxiv.org/abs/2005.01350) — dùng cho định nghĩa cụ thể Actor-Critic (critic ước lượng giá trị qua temporal difference learning, actor dùng ước lượng đó để cập nhật policy) và so sánh với việc dùng toàn bộ Monte Carlo return của REINFORCE thuần.
