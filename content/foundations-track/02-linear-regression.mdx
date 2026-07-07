@@ -6,7 +6,7 @@ order: 2
 status: stable
 prerequisites: ["01-xac-suat-thong-ke-co-ban"]
 summary: "Mô hình ML cổ điển đơn giản nhất: dự đoán một giá trị số bằng tổ hợp tuyến tính của feature, học tham số qua tối thiểu hoá hàm loss."
-last_touched_by_task: "Rà lại theo triết lý nội dung mới (2026-07-06): đọc kỹ, xác nhận bài đã đạt chuẩn (ví dụ số squared error cụ thể, trực giác hình học gradient descent, sai lầm thường gặp, không 'vỏ rỗng') — đây là bài ML đầu tiên của giáo trình, không có tiền thân cạnh tranh trực tiếp nên không thuộc dạng 'dòng tiến hoá nhiều model' theo mục 2.1. Giữ nguyên nội dung, chỉ nâng status."
+last_touched_by_task: "Tự đề xuất cải thiện (Task 91, 2026-07-07): phần normal equation trước đây thiếu cảnh báo multicollinearity — thêm cạm bẫy khi feature tương quan tuyến tính mạnh (X^T X gần suy biến, w* không ổn định), liên hệ ma trận hiệp phương sai bài 01 (covariance gần ±1) và regularization bài 10."
 ---
 
 Linear regression thường là mô hình học máy đầu tiên ai cũng học, không phải
@@ -90,6 +90,17 @@ w* = (X^T X)^(-1) X^T y
 Nhưng nó đòi hỏi nghịch đảo ma trận `X^T X`, chi phí tính toán tăng nhanh
 theo số chiều dữ liệu, và không tổng quát hoá được sang các mô hình phức
 tạp hơn (neural network không có nghiệm đóng dạng này).
+
+Một cạm bẫy thực chiến của nghiệm đóng: nếu các feature **tương quan tuyến
+tính mạnh với nhau** (gọi là **multicollinearity** — ví dụ "diện tích m²" và
+"diện tích ft²" cùng xuất hiện, hai feature này thực chất là một đường
+thẳng), ma trận `X^T X` trở nên gần suy biến, nghịch đảo của nó nổ về giá trị
+lớn và không ổn định — `w*` lúc này dao động dữ dội chỉ với nhiễu nhỏ trong
+dữ liệu. Đây chính là lý do nên nhìn vào **ma trận hiệp phương sai** (bài
+01) trước khi chọn feature: các cặp feature có covariance gần ±1 là tín hiệu
+cảnh báo multicollinearity. Trong thực hành, người ta hoặc bỏ bớt một trong
+các feature trùng lặp, hoặc dùng **regularization** (bài 10) — kỹ thuật phạt
+trọng số lớn để ổn định nghiệm kể cả khi `X^T X` kém điều kiện.
 
 **Cách 2 — Gradient descent.** Thay vì giải trực tiếp, xuất phát từ một bộ
 `w, b` bất kỳ (thường khởi tạo ngẫu nhiên), rồi lặp đi lặp lại:

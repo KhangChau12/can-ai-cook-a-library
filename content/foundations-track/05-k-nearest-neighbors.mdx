@@ -6,7 +6,7 @@ order: 5
 status: stable
 prerequisites: ["04-decision-tree"]
 summary: "Mô hình 'lazy learning' không học tham số nào cả: dự đoán bằng cách nhìn k điểm dữ liệu gần nhất, và vì sao việc chuẩn hoá feature lại quan trọng sống còn với nó."
-last_touched_by_task: "Rà lại theo triết lý nội dung mới (2026-07-06): đọc kỹ, xác nhận bài đã đạt chuẩn (ví dụ căn nhà k=3 cụ thể, curse of dimensionality giải thích rõ, không 'vỏ rỗng') — k-NN là 1 thuật toán đơn, không thuộc dạng 'dòng tiến hoá nhiều model' nên không bắt buộc thêm lịch sử theo mục 2.1. Giữ nguyên nội dung, chỉ nâng status."
+last_touched_by_task: "Tự đề xuất cải thiện (Task 93, 2026-07-07): bài trước chỉ nhắc Euclid là mặc định — thêm mục 'Lựa chọn hàm khoảng cách' giới thiệu Manhattan (ít nhạy outlier, dữ liệu lưới) và cosine similarity (văn bản/embedding), liên hệ word2vec bài 65 + RAG bài 29; nhấn mạnh hàm khoảng cách là siêu tham số quan trọng không kém k."
 ---
 
 Ba mô hình đã học — [Linear Regression](02-linear-regression.mdx),
@@ -80,6 +80,28 @@ feature còn lại gần như bị "lu mờ" dù có thể quan trọng không k
 feature về cùng thang đo trước khi dùng k-NN — khác với decision tree,
 vốn không bị ảnh hưởng bởi thang đo feature (vì nó chỉ so sánh `x_j <= t`
 trên từng feature riêng lẻ, không cộng dồn khoảng cách đa chiều).
+
+## Lựa chọn hàm khoảng cách
+
+Euclid (`‖x − x'‖₂`) chỉ là một trong nhiều cách đo "gần nhau" — mặc định
+phổ biến vì trực quan (khoảng cách đường thằng) và phù hợp khi feature đã
+chuẩn hoá về cùng thang đo liên tục. Nhưng không phải lúc nào cũng là lựa
+chọn tốt nhất:
+
+- **Manhattan (`‖x − x'‖₁`, tổng giá trị tuyệt đối theo từng trục)** —
+  hợp lý khi feature có thang đo khác nhau không cộng tuyến tính được, hoặc
+  khi dữ liệu tự nhiên đi theo "lưới" (ví dụ toạ độ theo block phố: đi theo
+  đường ngang+dọc chứ không cắt xuyên tòa nhà). Ít nhạy hơn với outlier so
+  với Euclid vì không bình phương lên.
+- **Cosine similarity** — đo góc giữa hai vector chứ không đo độ dài, dùng
+  cho dữ liệu văn bản (TF-IDF, embedding): hai văn bản cùng chủ đề nhưng
+  dài ngắn khác nhau vẫn được coi là "gần" nếu hướng vector giống nhau.
+  Liên hệ trực tiếp với word2vec (bài 65) và RAG (bài 29).
+
+Việc đổi hàm khoảng cách thay đổi hoàn toàn "hàng xóm" được chọn, nên nó
+thực chất là một siêu tham số (hyperparameter) quan trọng không kém `k` —
+trong thực hành nên thử vài lựa chọn và chọn theo kết quả trên validation
+set.
 
 ## "Lời nguyền của không gian nhiều chiều" (curse of dimensionality)
 

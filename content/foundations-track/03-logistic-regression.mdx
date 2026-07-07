@@ -6,7 +6,7 @@ order: 3
 status: stable
 prerequisites: ["02-linear-regression"]
 summary: "Từ dự đoán số thực sang dự đoán xác suất thuộc một lớp: hàm sigmoid, cross-entropy loss, và ngưỡng quyết định (threshold)."
-last_touched_by_task: "Rà lại theo triết lý nội dung mới (2026-07-06): đọc kỹ, xác nhận bài đã đạt chuẩn (ví dụ số cụ thể cho sigmoid, không 'vỏ rỗng') — logistic regression không thuộc dạng 'dòng tiến hoá nhiều model' nên không bắt buộc thêm lịch sử/2 nguồn theo mục 2.1. Đã thử tra D2L.ai tìm lịch sử (Fechner 1860/probit, Gibbs 1902/softmax được nhắc nhưng không liên quan trực tiếp) — không tìm được gì đáng thêm, giữ nguyên nội dung, chỉ nâng status."
+last_touched_by_task: "Tự đề xuất cải thiện (Task 92, 2026-07-07): phần decision threshold trước đây chỉ nói 'hai metric phản ứng khác nhau với ngưỡng' mà không cho thấy tradeoff — thêm trực giác: ngưỡng cao → precision↑ recall↓, ngưỡng thấp → ngược lại, kèm ví dụ chi phí false positive vs false negative (báo động giả vs bỏ sót bệnh) để hiểu vì sao chọn ngưỡng là quyết định ngữ cảnh."
 ---
 
 Bài [Linear Regression](02-linear-regression.mdx) giải quyết bài toán dự
@@ -83,6 +83,18 @@ trước dữ liệu bị mất cân bằng (ví dụ 95% ví dụ thuộc lớp
 cân nhắc ngưỡng khác — chi tiết này sẽ quay lại ở bài về các metric
 `precision`/`recall`, vì hai metric đó phản ứng rất khác nhau với việc dời
 ngưỡng.
+
+Trực giác của sự đánh đổi: **ngưỡng cao hơn** (chỉ dự đoán lớp 1 khi mô hình
+rất tự tin, ví dụ `ŷ >= 0.9`) khiến các dự đoán lớp 1 đáng tin hơn →
+**precision tăng** (trong số các lần mô hình nói "1", đúng nhiều hơn), nhưng
+bỏ lỡ nhiều trường hợp lớp 1 thật → **recall giảm** (trong số toàn bộ lớp 1
+thật, phát hiện được ít hơn). **Ngưỡng thấp hơn** (`ŷ >= 0.1`) làm ngược lại:
+bắt được gần hết lớp 1 thật (recall cao) nhưng dự đoán nhầm nhiều (precision
+thấp). Không có ngưỡng nào "tốt nhất" nói chung — chọn ngưỡng là một quyết
+định đánh đổi dựa trên chi phí của hai loại lỗi: **false positive** (dự đoán
+1 nhưng thật ra 0, ví dụ báo động giả) vs **false negative** (dự đoán 0
+nhưng thật ra 1, ví dụ bỏ sót bệnh). Trong y tế, bỏ sót bệnh thường đắt hơn
+báo động giả → chấp nhận ngưỡng thấp để ưu tiên recall.
 
 ## Hàm loss: cross-entropy thay vì squared error
 

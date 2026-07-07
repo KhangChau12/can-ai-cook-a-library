@@ -6,7 +6,7 @@ order: 1
 status: stable
 prerequisites: []
 summary: "Những khái niệm xác suất/thống kê tối thiểu để hiểu ML: biến ngẫu nhiên, xác suất có điều kiện, định lý Bayes, kỳ vọng và phương sai."
-last_touched_by_task: "Rà lại theo triết lý nội dung mới (2026-07-06): đọc kỹ, xác nhận bài đã đạt chuẩn (ví dụ Bayes/đồng xu/xúc xắc đầy đủ, số liệu đã sửa đúng từ trước, không 'vỏ rỗng') — đây là bài toán học/thống kê nền tảng đầu tiên của giáo trình, không có tiền thân cạnh tranh trực tiếp nên không thuộc dạng 'dòng tiến hoá nhiều model' theo mục 2.1. Giữ nguyên nội dung, chỉ nâng status."
+last_touched_by_task: "Tự đề xuất cải thiện (Task 90, 2026-07-07): phần kỳ vọng/phương sai trước đây chỉ có công thức trừu tượng, thiếu con số cụ thể — thêm tính phương sai xúc xắc (≈2.917) + độ lệch chuẩn (≈1.71) để người mới thấy số thật; bổ sung trực giác covariance matrix (dấu dương/âm/≈0 kèm ví dụ chiều cao–cân nặng, thời gian chạy–tốc độ) và liên hệ tới PCA bài 21. Không đổi khái niệm cốt lõi."
 ---
 
 Trước khi chạm vào bất kỳ thuật toán ML nào — kể cả thứ đơn giản như linear
@@ -125,12 +125,32 @@ rất nhiều lần.
 Var[X] = E[(X - E[X])^2] = E[X^2] - E[X]^2
 ```
 
+Áp dụng luôn cho xúc xắc: `E[X^2] = (1+4+9+16+25+36)/6 = 91/6 ≈ 15.167`,
+ nên `Var[X] = 15.167 - 3.5^2 = 15.167 - 12.25 ≈ 2.917`. Căn bậc hai của
+phương sai chính là **độ lệch chuẩn (standard deviation)** — `σ ≈ 1.71` —
+nó có cùng đơn vị với biến gốc (số chấm) nên dễ diễn giải hơn: "mỗi lần
+tung, kết quả thường lệch khoảng ±1.7 chấm so với trung bình 3.5".
+
 Phương sai lớn nghĩa là giá trị thực tế dao động xa quanh trung bình; nhỏ
 nghĩa là các giá trị tập trung gần trung bình. Khi làm việc với nhiều
 biến/nhiều chiều (ví dụ nhiều feature trong một dataset), khái niệm tương
 ứng là **ma trận hiệp phương sai (covariance matrix)** — nó không chỉ cho
-biết mỗi feature phân tán ra sao, mà còn feature nào có xu hướng tăng/giảm
-cùng nhau.
+biết mỗi feature phân tán ra sao (các phần tử trên đường chéo chính, chính
+là phương sai của từng feature), mà còn feature nào có xu hướng tăng/giảm
+cùng nhau (các phần tử ngoài đường chéo, gọi là **covariance**):
+
+- **Covariance dương** — hai feature có xu hướng cùng tăng hoặc cùng giảm.
+  Ví dụ: "chiều cao" và "cân nặng" trong cùng một nhóm người — người cao
+  thường cũng nặng hơn, nên covariance giữa chúng mang dấu dương.
+- **Covariance âm** — một feature tăng thì feature kia có xu hướng giảm.
+  Ví dụ: "thời gian chạy 100m" và "tốc độ sprint tối đa" — chạy càng nhanh
+  thì thời gian càng ngắn, nên covariance mang dấu âm.
+- **Covariance ≈ 0** — hai feature thay đổi độc lập, không có xu hướng
+  đồng biến/đồng biến rõ ràng.
+
+Ma trận hiệp phương sai là nền tảng của **PCA** (bài 21) — kỹ thuật giảm
+chiều tìm các hướng mà dữ liệu phân tán mạnh nhất, chính là các trục có
+phương sai lớn nhất.
 
 ## Vì sao phần này quan trọng cho ML
 

@@ -14,12 +14,11 @@
 
 ## 1. STATUS (đọc đầu mỗi task, không ngoại lệ)
 
-- **Version:** v6.29
-- **Phiên gần nhất:** Task 89 (2026-07-06) — viết `81-autorec.mdx`
-  (Recommendation Systems): đóng khoảng trống đã ghi ở bài 43/44 — nhánh
-  song song với NeuMF, Sedhain et al. 2015, encoder-decoder tái tạo
-  vector rating + gradient masking, RMSE 0.900 MovieLens 100K (nguồn
-  D2L.ai autorec.html). Chi tiết đầy đủ các task gần đây ở `SYLLABUS.md`.
+- **Version:** v6.35
+- **Phiên gần nhất:** Task 95 (2026-07-07) — cải thiện bài `07-k-means-
+  clustering.mdx` (foundations-track): phần giới hạn thêm ví dụ kinh điển
+  thất bại (2 vòng tròn đồng tâm, k-means chia bằng đường thẳng thay vì
+  tách vòng trong/vòng ngoài), liên hệ ngược SVM kernel bài 06.
 - **Tổng số bài hiện có:** 92 (11 exam-track + 81 foundations-track,
   92/92 đã có quiz — 392 câu hỏi, tổ chức thành **10 module** cho
   foundations-track: ML cổ điển (9 bài), DL Nền tảng (3, phẳng),

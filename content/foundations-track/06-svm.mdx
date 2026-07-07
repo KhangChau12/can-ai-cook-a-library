@@ -6,7 +6,7 @@ order: 6
 status: stable
 prerequisites: ["05-k-nearest-neighbors"]
 summary: "Một góc nhìn hoàn toàn khác cho bài toán classification: thay vì tìm ranh giới bất kỳ phân tách đúng dữ liệu (như decision tree) hay so khoảng cách trực tiếp (như k-NN), SVM tìm ranh giới có margin — khoảng cách tới điểm gần nhất mỗi lớp — lớn nhất có thể."
-last_touched_by_task: "Rà lại theo triết lý nội dung mới (2026-07-06): đọc kỹ, xác nhận bài đã đạt chuẩn (margin/support vectors/kernel trick/tham số C giải thích đầy đủ, không 'vỏ rỗng'). Đã thử tra lịch sử (Vapnik & Cortes, 1995) qua nhiều nguồn — scikit-learn xác nhận KHÔNG có lịch sử qua WebFetch trực tiếp, PDF cs229 không đọc được qua WebFetch (binary stream) — không tìm được nguồn whitelist đọc được để trích chính xác, quyết định không bịa từ WebSearch snippet. SVM không thuộc dạng 'dòng tiến hoá nhiều model' (là 1 kỹ thuật/thuật toán đơn) nên không bắt buộc lịch sử theo mục 2.1 — nâng status dựa trên chất lượng nội dung kỹ thuật đã đạt chuẩn, nhất quán với PCA/Autoencoder/RL Framework/MDP."
+last_touched_by_task: "Tự đề xuất cải thiện (Task 94, 2026-07-07): phần kernel trick trước đây hơi trừu tượng về 'không gian biến đổi ngầm' — thêm ví dụ trực giác kinh điển (lớp 0 giữa, lớp 1 vòng tròn bao quanh, không tách tuyến tính được trong 2D; nâng lên 3D bằng toạ độ x₁²+x₂² thì mặt phẳng ngang tách được) để người mới hiểu rõ 'nâng chiều' mà kernel thực hiện ngầm."
 ---
 
 Ba mô hình classification đã học — [Logistic Regression](03-logistic-regression.mdx),
@@ -65,6 +65,17 @@ biến nhất là **RBF (Radial Basis Function)** — cho phép SVM vẽ ra ranh
 giới phân tách phi tuyến, uốn cong theo dữ liệu, dù bản chất thuật toán
 vẫn đang tối ưu một ranh giới "thẳng" trong không gian đã biến đổi ngầm
 định đó.
+
+Trực giác kinh điển của kernel: tưởng tượng dữ liệu 2 chiều có lớp 0 nằm
+gọn giữa (một đám điểm quanh gốc toạ độ) và lớp 1 tạo thành vòng tròn
+bao quanh — không đường thẳng nào tách được 2 lớp này trong mặt phẳng.
+Nhưng nếu "nâng" mỗi điểm lên không gian 3 chiều bằng cách thêm toạ độ
+thứ ba bằng `x₁² + x₂²` (khoảng cách bình phương tới gốc), các điểm lớp 1
+(ở xa gốc) sẽ bị đẩy lên cao, các điểm lớp 0 (gần gốc) ở thấp — lúc này
+một **mặt phẳng ngang** tách được 2 lớp dễ dàng. Kernel trick thực hiện
+chính thao tác "nâng chiều" này mà không bao giờ tính tường minh toạ độ
+mới — nó chỉ cần biết độ tương đồng giữa hai điểm trong không gian đã nâng,
+đủ để SVM tìm ranh giới.
 
 ## Tham số C: đánh đổi giữa margin rộng và phân loại đúng hết
 

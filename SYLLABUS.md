@@ -210,20 +210,36 @@ anchor-free/hiện đại hơn.
   `CLAUDE.md` mục 1.2).
 
 1. `01-xac-suat-thong-ke-co-ban.mdx` — Xác suất & thống kê cơ bản cho ML
-   (`status: stable`)
+   (`status: stable`; cập nhật Task 90, 2026-07-07: phần kỳ vọng/phương
+   sai thêm con số cụ thể — Var xúc xắc ≈2.917, độ lệch chuẩn ≈1.71 — và
+   trực giác covariance matrix 3 dấu dương/âm/≈0 kèm ví dụ chiều cao–cân
+   nặng, thời gian chạy–tốc độ, liên hệ PCA bài 21; không đổi khái niệm
+   cốt lõi)
 2. `02-linear-regression.mdx` — Linear Regression — Hồi quy tuyến tính
-   (`status: stable`)
+   (`status: stable`; cập nhật Task 91, 2026-07-07: phần normal equation
+   thêm cảnh báo multicollinearity — feature tương quan tuyến tính mạnh
+   làm X^T X gần suy biến, w* không ổn định; liên hệ covariance matrix
+   bài 01 và regularization bài 10)
 3. `03-logistic-regression.mdx` — Logistic Regression — Phân loại nhị phân
-   (`status: stable`)
+   (`status: stable`; cập nhật Task 92, 2026-07-07: phần decision
+   threshold thêm trực giác tradeoff precision↑/recall↓ khi nâng ngưỡng,
+   kèm ví dụ chi phí false positive vs false negative)
 4. `04-decision-tree.mdx` — Decision Tree — Cây quyết định
    (`status: stable`, viết lại 2026-07-06: dòng tiến hoá ID3 (Quinlan,
    1986) → C4.5 → CART)
 5. `05-k-nearest-neighbors.mdx` — k-Nearest Neighbors (k-NN)
-   (`status: stable`)
+   (`status: stable`; cập nhật Task 93, 2026-07-07: thêm mục "Lựa chọn hàm
+   khoảng cách" — Euclid/Manhattan/cosine similarity, liên hệ word2vec bài
+   65 + RAG bài 29)
 6. `06-svm.mdx` — Support Vector Machine (SVM) — Phân loại bằng Margin
-   lớn nhất (`status: stable`)
+   lớn nhất (`status: stable`; cập nhật Task 94, 2026-07-07: phần kernel
+   trick thêm ví dụ trực giác kinh điển — 2 lớp đồng tâm tròn 2D nâng lên
+   3D bằng x₁²+x₂² để mặt phẳng ngang tách được)
 7. `07-k-means-clustering.mdx` — K-means Clustering — Phân cụm không giám
-   sát (`status: stable`)
+   sát (`status: stable`; cập nhật Task 95, 2026-07-07: phần giới hạn
+   thêm ví dụ kinh điển thất bại — 2 vòng tròn đồng tâm, k-means chia bằng
+   đường thẳng thay vì tách vòng trong/vòng ngoài, liên hệ SVM kernel bài
+   06)
 8. `08-perceptron-va-mang-no-ron.mdx` — Perceptron & Mạng nơ-ron nhiều lớp
    (`status: stable`, viết lại 2026-07-06: lịch sử McCulloch & Pitts 1943)
 9. `09-backpropagation.mdx` — Backpropagation — Cách huấn luyện mạng
