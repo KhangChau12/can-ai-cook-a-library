@@ -18,10 +18,16 @@ khác, kể cả khi thay đổi ảnh hưởng nhiều file hoặc trông "quan
 **Ghi lý do quyết định — đúng chỗ, đúng độ dài:** lý do chi tiết (vì sao
 chọn phương án này, task nào, nguồn nào) ghi vào `last_touched_by_task`
 của bài `.mdx` liên quan và/hoặc dòng tương ứng trong `SYLLABUS.md` — đây
-là nơi lịch sử được phép dài. **Không ghi lý do lịch sử vào `CLAUDE.md`**
+là nơi lịch sử được phép dài. **Không ghi lý do lịch sử vào `CLAUDE.md`
 (kể cả mục 1.2) — mục đó chỉ liệt kê việc-cần-làm ở thì hiện tại, tối đa
 1-2 dòng mỗi việc, không giải thích "vì sao"/"task nào đã làm gì". Xem quy
 tắc chống phình to ở `CLAUDE.md` mục 6.
+
+**Maintain reading flow trong cùng submodule:** khi thêm/bổ sung bài vào 1
+submodule (ví dụ Computer Vision "Cơ bản", Sequence Model "RNN Family"),
+đảm bảo thứ tự `order` tuân theo độ khó/từ nền tảng → nâng cao, không nhảy
+số hoặc xếp bài lệch mức độ. Nếu cần thêm bài mới vào giữa các bài đã có,
+phải tính toán lại số thứ tự cho toàn bộ submodule đó — không để bị lệch.
 
 `CLAUDE.md` (cùng thư mục) chứa quy tắc thiết kế, quy chuẩn viết, giới hạn
 nội dung, và bảng tóm tắt giáo trình — không lặp lại ở đây. `SYLLABUS.md`

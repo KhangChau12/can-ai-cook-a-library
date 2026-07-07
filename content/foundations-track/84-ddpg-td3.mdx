@@ -1,0 +1,146 @@
+---
+title: "DDPG & TD3 — Off-policy Policy-based cho Không gian Hành động Liên tục"
+track: foundations-track
+module: "Reinforcement Learning"
+submodule: "Policy-based"
+order: 84
+status: stable
+prerequisites: ["78-sac"]
+summary: "DQN/PPO/A3C đều giả định action rời rạc — nhưng robot điều khiển tay cơ khí cần action liên tục (góc xoay, lực). DDPG (Lillicrap et al. 2016) mở rộng DQN sang continuous action space bằng deterministic policy gradient + actor-critic off-policy, nhưng 'hội tụ giòn' (brittle). TD3 (Fujimoto et al. 2018) sửa 3 vấn đề cụ thể: twin critics bù overestimation, target policy smoothing chống khai thác lỗi Q, delayed policy updates. TD3 là tiền đề trực tiếp của SAC (bài 78)."
+last_touched_by_task: "Bài mới (Task 100, 2026-07-07) — Phase 1 RL, lấp dòng tiến hoá Policy-based off-policy: DDPG (Lillicrap 2016) → TD3 (Fujimoto 2018) → SAC (bài 78 đã có). Bài 78 SAC nhắc 'DDPG hội tụ giòn' nhưng DDPG chưa có bài riêng — dòng tiến hoá đứt, bài này lấp đúng tiền đề. Dạng 'dòng tiến hoá' 2 model (DDPG→TD3, TD3 sửa 3 vấn đề cụ thể của DDPG), 2 nguồn: arxiv 1509.02971 + 1802.09477 (2 nhóm tác giả độc lập) theo tiền lệ bài 71."
+---
+
+Cho tới nay, các thuật toán đã học đều giả định **action rời rạc** —
+DQN (bài [18](18-q-learning.mdx)) chọn 1 trong 4-18 phím Atari, PPO
+(bài [47](47-ppo.mdx))/A3C (bài [77](77-a3c.mdx)) tương tự. Nhưng nhiều
+bài toán điều khiển thực tế có **action liên tục**: robot điều khiển góc
+xoay từng khớp, ô tô điều khiển lực phanh/ga, tay cơ khí đặt vị trí trong
+không gian 3D. Không gian action liên tục **vô hạn** — không thể liệt kê
+rồi `argmax` như DQN. Bài này kể 2 thuật toán off-policy policy-based
+giải bài toán đó, và vì sao cái sau (TD3) sửa đúng 3 vấn đề của cái trước
+(DDPG) — đúng tiền đề mà SAC (bài [78](78-sac.mdx)) đã xây tiếp.
+
+## Vấn đề chung: action liên tục phá vỡ DQN
+
+DQN tính `max_{a'} Q(s', a')` để lấy target — phép `max` này khả thi vì
+số action hữu hạn (chỉ cần đánh giá Q cho từng action rồi lấy lớn nhất).
+Khi action liên tục, không thể duyệt hết để tìm max — cần một cách khác.
+Hơn nữa, policy `π(a|s)` dạng phân phối xác suất trên không gian liên tục
+phức tạp hơn nhiều so với rời rạc. Cần một kiến trúc mới.
+
+## DDPG: deterministic policy gradient + actor-critic off-policy
+
+**Lillicrap và cộng sự (2016)**, trong "Continuous control with deep
+reinforcement learning", đề xuất **DDPG** (Deep Deterministic Policy
+Gradient) — kết hợp 2 ý tưởng:
+
+**1. Deterministic policy thay vì stochastic.** Thay vì học phân phối
+`π(a|s)` (chọn action theo xác suất), DDPG học **hàm deterministic**
+`μ_θ(s) → a` — trực tiếp xuất 1 action duy nhất cho mỗi trạng thái. Việc
+này đơn giản hơn nhiều trên không gian liên tục (chỉ cần output 1 vector
+liên tục, không cần parametrise cả phân phối). Policy gradient cho
+deterministic policy (Silver et al. 2014) chứng minh có dạng đơn giản,
+model-free — đây là nền lý thuyết DDPG dựa vào.
+
+**2. Actor-critic off-policy mượn DQN.** DDPG dùng 2 mạng:
+
+- **Actor `μ_θ(s)`** — chính sách, xuất action.
+- **Critic `Q_w(s, a)`** — đánh giá giá trị của cặp (s, a).
+
+Critic học theo đúng mẫu DQN (replay buffer + target network, bài 18),
+nhưng vì action liên tục nên không `max` được — thay vào đó, **actor
+cung cấp action tốt nhất**: target = `r + γ·Q_{w⁻}(s', μ_{θ⁻}(s'))`, dùng
+chính target actor `μ_{θ⁻}` để chọn action ở trạng thái kế. Actor cập
+nhận bằng cách **tối đa hoá Q** mà critic đánh giá — gradient của
+`Q_w(s, μ_θ(s))` theo `θ`, đẩy actor về hướng action có Q cao hơn.
+
+Kết quả: DDPG điều khiển thành công các task MuJoCo (HalfCheetah, Hopper,
+Walker2d) — chứng minh deep RL off-policy hoạt động trên action liên tục.
+Nhưng DDPG nổi tiếng **hội tụ giòn (brittle)**: hyperparameter nhạy, kết
+quả dao động mạnh giữa các random seed, đôi khi Q-value bùng nổ. 3 vấn
+đề cụ thể được TD3 nhận diện và sửa.
+
+## TD3: 3 kỹ thuật sửa DDPG
+
+**Fujimoto, van Hoof và Meger (2018)**, trong "Addressing Function
+Approximation Error in Actor-Critic Methods", phân tích gốc rễ sự giòn
+của DDPG là **Q-function bị overestimate** (giống vấn đề Double DQN nhắc
+ở bài [71](71-double-dueling-dqn.mdx), nhưng cơ chế khác) — và overestimate
+này bị **khuếch đại qua vòng actor-critic**: critic ước lượng Q cao quá →
+actor bám theo action có Q ảo cao → critic lại học dựa trên action ảo đó
+→ Q càng phồng. TD3 cắt đứt vòng này bằng 3 kỹ thuật:
+
+**1. Twin critics (clipped double Q).** Dùng **2 mạng critic** `Q_1` và
+`Q_2` độc lập, cập nhật song song. Khi tính target, lấy **giá trị nhỏ
+hơn** trong 2:
+
+```
+Y = r + γ · min( Q_1(s', a'), Q_2(s', a') )
+```
+
+Ý tưởng: nếu 1 critic overestimate, critic kia (độc lập) ít khả năng cũng
+overestimate cùng lúc — lấy min triệt phần dương ảo. Actor cập nhật dựa
+trên `Q_1` (chỉ 1 trong 2), tránh vòng khuếch đại.
+
+**2. Target policy smoothing.** Khi tính target action `a' = μ_{θ⁻}(s')`,
+thêm **nhiễu clipped** vào action:
+
+```
+a' = μ_{θ⁻}(s') + clip(noise, -c, c)
+```
+
+Lý do: Q-function xấp xỉ có **đỉnh giả (spurious peaks)** — một số action
+đặc biệt có Q ước lượng cao do nhiễu ước lượng, không phải thật sự tốt.
+Actor dễ bám vào đỉnh giả này. Thêm nhiễu nhỏ vào target action bắt critic
+đánh giá **lân cận** của action thay vì đúng điểm đỉnh — làm "phẳng" các
+đỉnh giả, ép actor học action thực sự tốt trên 1 vùng chứ không phải 1
+điểm mỏng manh. Đây thực chất là 1 dạng regularization: tin giá trị Q
+trung bình trên 1 vùng lân cận hơn là 1 điểm cụ thể.
+
+**3. Delayed policy updates.** Trong DDPG, actor và critic cập nhật cùng
+tần suất — nhưng critic thay đổi liên tục (mỗi step), actor bám theo
+critic đang dao động → dao động cộng hưởng. TD3 **cập nhật actor chậm hơn
+critic** (thường 1 lần actor / 2 lần critic): để critic hội tụ ổn hơn
+trước khi actor bám theo, giảm dao động. Đơn giản nhưng hiệu quả — giữ
+critic "đứng yên tương đối" trong mắt actor.
+
+Kết quả: TD3 ổn định hơn DDPG đáng kể trên các benchmark MuJoCo, ít nhạy
+random seed, không còn Q-bùng nổ — biến off-policy continuous control từ
+"khó dùng" thành "đáng tin cậy".
+
+## Liên hệ: DDPG → TD3 → SAC
+
+Dòng tiến hoá policy-based off-policy cho continuous action giờ trọn 3
+bước:
+
+- **DDPG (2016)**: mở DQN sang action liên tục, nhưng hội tụ giòn.
+- **TD3 (2018)**: sửa 3 vấn đề cụ thể của DDPG (overestimation, đỉnh giả
+  Q, dao động actor-critic), ổn định hóa.
+- **SAC (bài [78](78-sac.mdx), 2018)**: cùng năm TD3, khác hướng — thay
+  vì "khắc phục DDPG", thay luôn mục tiêu sang **maximum entropy** (tối
+  đa hoá cả reward lẫn entropy để explore tốt hơn), dùng stochastic policy
+  thay deterministic.
+
+TD3 và SAC là 2 cách trả lời khác nhau cho cùng câu hỏi "DDPG giòn, sửa
+thế nào": TD3 giữ deterministic policy + sửa overestimation; SAC đổi
+hẳn sang stochastic + maximum entropy. Cùng off-policy, cùng continuous
+action, cùng dùng replay buffer — nhưng triết lý exploration và ổn định
+khác. Trong thực hành hiện đại, SAC thường được ưa chuộng hơn nhờ
+exploration tự nhiên hơn, nhưng TD3 vẫn là baseline đơn giản mạnh.
+
+## Liên hệ lại với các bài trước
+
+- DDPG/TD3 là **off-policy** (dùng replay buffer như DQN, bài 18) khác
+  hẳn PPO/A3C on-policy (bài 47/77) — cùng module Policy-based nhưng 2
+  nhánh khác cơ chế dữ liệu.
+- Twin critics của TD3 là **cùng nguyên lý với Double DQN** (bài 71):
+  tách 2 nguồn ước lượng để chống overestimation, dù áp dụng vào
+  actor-critic thay vì DQN thuần.
+- Target policy smoothing là 1 dạng **regularization** giống dropout
+  (bài [10](10-regularization.mdx)) — ép model tin trung bình lân cận thay
+  vì overfit 1 điểm.
+
+## Nguồn tham khảo
+
+- [arXiv — Continuous control with deep reinforcement learning (Lillicrap et al., 2016)](https://arxiv.org/abs/1509.02971) — paper gốc DDPG, dùng cho vấn đề (action liên tục phá vỡ max của DQN), giải pháp (deterministic policy `μ_θ(s)→a` + actor-critic off-policy mượn replay buffer/target network của DQN, actor cập nhật bằng gradient Q), và hạn chế (hội tụ giòn, hyperparameter nhạy).
+- [arXiv — Addressing Function Approximation Error in Actor-Critic Methods (Fujimoto et al., 2018)](https://arxiv.org/abs/1802.09477) — paper gốc TD3, dùng cho 3 kỹ thuật sửa DDPG: twin critics lấy min bù overestimation (vòng khuếch đại actor-critic), target policy smoothing thêm nhiễu clipped triệt đỉnh giả Q, delayed policy updates giảm dao động; kết quả ổn định hơn DDPG trên MuJoCo.

@@ -1,0 +1,143 @@
+---
+title: "Model-based RL — Học Mô hình Môi trường để Lập kế hoạch, Không chỉ Thử-sai"
+track: foundations-track
+module: "Reinforcement Learning"
+submodule: "Model-based"
+order: 86
+status: stable
+prerequisites: ["18-q-learning"]
+summary: "Value-based (DQN) và Policy-based (PPO) đều model-free — chỉ học từ reward, không cần hiểu môi trường. Model-based RL học thêm một 'mô hình môi trường' (transition + reward) để mô phỏng/suy nghĩ trước khi hành động. Dòng tiến hoá: Dyna-Q (Sutton 1990, dùng model sinh experience giả) → AlphaZero (2017, model = luật game đã biết + MCTS) → MuZero (Schrittwieser 2019, học cả dynamics trong latent space, không cần biết luật). Lợi ích: sample efficiency cao hơn model-free rất nhiều."
+last_touched_by_task: "Bài mới (Task 102, 2026-07-07) — Phase 1 RL, mở submodule thứ 3 'Model-based' (trường phái RL thứ 3 còn thiếu hoàn toàn, song song Value-based/Policy-based). Bài dòng tiến hoá 3 model (Dyna-Q→AlphaZero→MuZero), mỗi cái giải hạn chế cái trước. 2 nguồn: arxiv MuZero (Schrittwieser 2019) + lilianweng.github.io (RL overview có phần model-based). Bài 87 tiếp theo sẽ đào sâu AlphaGo/AlphaZero riêng (MCTS + self-play). Tách submodule 'Model-based' cập nhật modules.json cùng task."
+---
+
+Cho tới nay toàn bộ RL đã học đều là **model-free** — DQN (bài
+[18](18-q-learning.mdx)), PPO (bài [47](47-ppo.mdx)), SAC (bài
+[78](78-sac.mdx))... agent chỉ học từ reward quan sát được qua tương tác
+thực, **không cần hiểu** cơ chế nội tại của environment. Cách này đơn giản
+nhưng lãng phí: mỗi trải nghiệm thực "đắt" (phải chạy environment thật),
+agent không suy nghĩ được "nếu mình làm X thì chuyện gì xảy ra".
+
+**Model-based RL (MBRL)** đi hướng khác: học thêm một **mô hình môi
+trường** (dự đoán state kế + reward từ state/action hiện tại), rồi dùng
+mô hình đó để **lập kế hoạch (planning)** — mô phỏng trước trong đầu
+nhiều bước, chọn action dựa trên mô phỏng. Lợi ích cốt lõi: **sample
+efficiency** — agent có thể "tưởng tượng" hàng nghìn trải nghiệm giả từ
+mô hình, không phải chạy environment thật cho từng cái. Bài này kể dòng
+tiến hoá 3 bước của ý tưởng.
+
+## Dyna-Q (Sutton 1990): học model + dùng nó sinh experience giả
+
+**Dyna-Q** là kiến trúc MBRL kinh điển, kết hợp 3 vòng lặp xen kẽ:
+
+1. **Direct RL**: agent tương tác environment thật, cập nhật Q-value từ
+   trải nghiệm thực (giống Q-learning thường).
+2. **Model learning**: song song, agent học **mô hình** `T̂(s,a,s')` (xác
+   suất chuyển state) và `R̂(s,a)` (reward kỳ vọng) từ trải nghiệm thực
+   đã thu thập.
+3. **Planning**: dùng mô hình vừa học để **sinh trải nghiệm giả** — lấy
+   ngẫu nhiên `(s, a)` đã gặp, dùng `T̂` và `R̂` dự đoán `s'` và `r`, cập
+   nhật Q-value như thể đã trải nghiệm thực. Lặp nhiều lần.
+
+Bước 3 là điểm mấu chốt: mỗi lần "planning" không cần environment thật,
+chỉ cần mô hình đã học — agent có thể chạy hàng trăm nghìn lần cập nhật
+Q-value trong khi chỉ tương tác thực vài nghìn lần. Mô hình càng chính
+xác (học càng nhiều từ experience thực), experience giả càng đáng tin
+cậy.
+
+Hạn chế của Dyna-Q: mô hình dạng bảng, chỉ hoạt động cho state space nhỏ
+và rời rạc. Với state liên tục lớn (ảnh), cần mô hình mạnh hơn — và đó là
+lý do MBRL "ngủ" gần 30 năm trước khi deep learning cho phép học mô hình
+phức tạp.
+
+## AlphaZero (2017): model = luật game đã biết + MCTS
+
+Khi môi trường có **luật chuyển trạng thái đã biết** (cờ vua, cờ tướng,
+cờ vây — simulator có sẵn), không cần học mô hình — dùng luôn luật game
+làm mô hình. **AlphaZero** (Silver et al. 2017) khai thác đúng điều này,
+kết hợp 3 thành phần:
+
+- **Monte Carlo Tree Search (MCTS)**: thuật toán tìm kiếm cây trò chơi —
+  từ state hiện tại, mô phỏng nhiều nhánh đi có thể (dùng luật game để
+  sinh state kế), mở rộng dần các nhánh có vẻ hứa hẹn, chọn action có
+  kết quả mô phỏng tốt nhất.
+- **Mạng policy** `π_θ`: học xác suất chọn action (khởi tạo từ self-play,
+  tinh chỉnh dần).
+- **Mạng value** `v_θ`: học giá trị kỳ vọng của state (dự đoán ai thắng
+  từ state này).
+
+MCTS dùng policy network để **định hướng** nhánh nào đáng mở rộng, và
+value network để **đánh giá** state lá thay vì phải mô phỏng đến hết game
+— kết hợp "tìm kiếm sâu" của MCTS với "trực giác" của mạng nơ-ron. Agent
+self-play (chơi với chính bản sao), mỗi ván vừa tạo dữ liệu huấn luyện
+policy/value, vừa dùng MCTS để chơi tốt hơn — vòng phản hồi tích cực đưa
+policy ngày càng giỏi.
+
+AlphaZero vượt con người trên cờ vây (trước đây AI tưởng không thể), cờ
+vua, cờ tướng — dùng **chung 1 thuật toán**, không cần kiến thức chuyên
+gia domain. Nhưng hạn chế: cần **luật game đã biết** để mô phỏng — không
+áp dụng được cho môi trường có dynamics ẩn (Atari, robot thực).
+
+## MuZero (Schrittwieser 2019): học cả dynamics trong latent space
+
+**MuZero** giải đúng hạn chế của AlphaZero: **học mô hình dynamics** thay
+vì cần luật game. Nhưng học dynamics trực tiếp trên raw observation (ảnh
+pixel) rất khó — MuZero chuyển sang **không gian ẩn (latent space)**, học
+3 mạng:
+
+- **Representation** `s_0 = h(o_0)`: ánh xạ observation thô (ảnh màn
+  hình) thành hidden state.
+- **Dynamics** `r_t, s_{t+1} = g(s_t, a_t)`: dự đoán reward và hidden
+  state kế từ hidden state hiện tại + action — đây chính là "mô hình môi
+  trường" nhưng trong không gian ẩn, không phải raw observation.
+- **Prediction** `π, v = f(s)`: dự đoán policy và value từ hidden state.
+
+MuZero chạy MCTS trong **không gian ẩn** — không cần mô phỏng raw
+observation, chỉ dự đoán hidden state kế. Điểm khéo léo: không bắt mô
+hình dynamics phải dự đoán chính xác pixel của khung hình kế (rất khó,
+lãng phí chi tiết không quan trọng), chỉ cần hidden state đủ tốt để
+policy/value dự đoán đúng — học "những gì quan trọng cho quyết định",
+bỏ qua chi tiết thừa.
+
+Kết quả: MuZero đạt SOTA trên **cả Atari lẫn cờ vây/cờ vua/cờ tướng** —
+lần đầu tiên 1 thuật toán MBRL tổng quát hoạt động trên cả môi trường
+có luật (board game) và không có luật (Atari), không cần simulator trước.
+Đây là đỉnh cao hiện tại của MBRL, mở đường cho các world model hiện đại
+(Dreamer series — học world model cho sample-efficient RL trên task phức
+tạp).
+
+## So sánh 3 trường phái RL
+
+Giờ cả 3 trường phái RL đều có mặt trong giáo trình:
+
+| Trường phái | Học cái gì | Ví dụ | Sample efficiency |
+|---|---|---|---|
+| **Model-free Value-based** | Q-function | DQN, Rainbow | Thấp |
+| **Model-free Policy-based** | Policy trực tiếp | PPO, SAC | Thấp-trung bình |
+| **Model-based** | Mô hình môi trường + policy/value | MuZero | Cao |
+
+Trade-off cốt lõi: model-based hiệu quả dữ liệu hơn (tưởng tượng được
+nhiều experience), nhưng **phụ thuộc chất lượng mô hình** — mô hình sai
+→ planning sai → action sai. Model-free chậm hơn nhưng không bị lỗi mô
+hình. Trong thực hành, nhiều hệ thống kết hợp cả 2 (model-based cho
+khám phá/sample efficiency, model-free để tinh chỉnh cuối).
+
+## Liên hệ lại với các bài trước
+
+- Model-based RL giải quyết vấn đề **sample efficiency** mà model-free
+  (DQN/PPO/SAC) vật lộn — mỗi trải nghiệm thực "đắt", mô hình cho phép
+  "tưởng tượng" thêm nhiều trải nghiệm rẻ. Đây là chiều đánh giá quan
+  trọng khi chọn thuật toán: nếu environment rẻ để mô phỏng → model-based
+  lợi thế lớn; nếu environment đắt/khó mô hình hoá → model-free an toàn
+  hơn.
+- Dyna-Q là minh chứng cho nguyên lý "kết hợp" — không phải chọn giữa
+  model-free và model-based, mà xen kẽ direct RL (model-free) và planning
+  (model-based), lấy điểm mạnh cả 2. Mẫu hình "kết hợp thay vì chọn 1"
+  đã gặp ở Rainbow (kết hợp 6 cải tiến) và NeuMF (GMF+MLP).
+- MCTS của AlphaZero/MuZero là thuật toán **tìm kiếm cây** — tương tự
+  minimax ở cờ vua truyền thống, nhưng dùng Monte Carlo (ngẫu nhiên) thay
+  cho duyệt exhaust, kết hợp neural network để định hướng.
+
+## Nguồn tham khảo
+
+- [arXiv — Mastering Atari, Go, chess and shogi by planning with a learned model (Schrittwieser et al., 2019)](https://arxiv.org/abs/1911.08265) — paper gốc MuZero, dùng cho ý tưởng cốt lõi: học 3 mạng (representation/dynamics/prediction) trong latent space thay vì raw observation, MCTS trong không gian ẩn, đạt SOTA cả Atari (không có luật) lẫn board game (có luật) — mở rộng AlphaZero sang môi trường dynamics ẩn.
+- [Lilian Weng — A (Long) Peek into Reinforcement Learning](https://lilianweng.github.io/posts/2018-02-19-rl-overview/) — blog tổng quan RL, dùng cho phần khái niệm model-based vs model-free (MBRL học transition/reward model để planning), Dyna-Q kiến trúc 3 vòng lặp (direct RL + model learning + planning sinh experience giả), và bối tranh 3 trường phái RL (value/policy/model-based).

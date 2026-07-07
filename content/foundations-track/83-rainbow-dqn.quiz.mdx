@@ -1,0 +1,43 @@
+---
+quiz_for: 83-rainbow-dqn
+---
+
+## Q1
+Multi-step (n-step) return giải quyết vấn đề gì của DQN 1-step, và đánh đổi là gì?
+
+- [ ] Giảm variance, đánh đổi là tăng chi phí tính toán
+- [x] Lan truyền reward từ tương lai về nhanh hơn, đánh đổi là tăng bias vì target phụ thuộc n bước policy cũ
+- [ ] Loại bỏ hoàn toàn overestimation, đánh đổi là mất exploration
+- [ ] Học phân phối return, đánh đổi là tăng bộ nhớ
+
+> 1-step chỉ nhìn 1 bước → reward xa lan truyền chậm. n-step nhìn n bước → lan truyền nhanh hơn nhưng target `G_t^(n)` phụ thuộc n bước policy cũ (đã đổi từ khi trải nghiệm thu thập) → bias cao. Tradeoff bias-variance điển hình: n=1 ít bias variance cao, n lớn ngược lại.
+
+## Q2
+Distributional RL (C51) khác DQN gốc ở điểm cốt lõi nào?
+
+- [ ] Học 51 mạng nơ-ron song song thay vì 1
+- [x] Học toàn bộ phân phối xác suất của return thay vì chỉ kỳ vọng (mean)
+- [ ] Dùng 51 step return thay vì 1-step
+- [ ] Học 51 action thay vì chọn 1
+
+> DQN học Q = kỳ vọng return. C51 chia phạm vi return thành 51 atom và học xác suất return rơi vào mỗi atom. 2 action cùng Q (kỳ vọng) có thể có phân phối rất khác (1 cái chắc chắn, 1 cái rủi ro) — distributional RL phân biệt được điều mà mean che giấu.
+
+## Q3
+Noisy Networks thay ε-greedy bằng cách nào, và lợi ích chính?
+
+- [ ] Thêm nhiễu vào reward để khuyến khích khám phá
+- [x] Thêm nhiễu Gaussian vào trọng số tuyến tính (học được σ), khám phá trong không gian tham số phụ thuộc trạng thái thay vì ngẫu nhiên mù
+- [ ] Thêm nhiễu vào input pixel
+- [ ] Tăng ε theo thời gian thay vì giảm
+
+> ε-greedy chọn action ngẫu nhiên không phụ thuộc trạng thái (mù). Noisy Nets thêm nhiễu trọng số → cùng trạng thái, trọng số khác nhau cho Q khác nhau → action khác nhau theo hướng có cấu trúc. σ học được nên agent tự giảm nhiễu ở phần không gian đã hiểu — khám phá thích ứng, không cần đặt lịch ε tay.
+
+## Q4
+Theo ablation study của Rainbow, bỏ thành phần nào gây giảm hiệu năng nhiều nhất?
+
+- [ ] Double DQN
+- [ ] Noisy Networks
+- [x] Prioritized Experience Replay (PER)
+- [ ] Dueling DQN
+
+> Bỏ PER giảm nhiều nhất — PER (chỉ đổi cách lấy mẫu) lại là thành phần quan trọng nhất theo ablation. Bỏ multi-step và C51 cũng giảm đáng kể. Bỏ Double/Noisy giảm ít bất ngờ vì các thành phần khác (đặc biệt distributional + prioritization) đã giải một số vấn đề mà chúng nhắm tới. Bài học: ưu tiên PER + multi-step + distributional khi tài nguyên hạn chế.

@@ -1,0 +1,43 @@
+---
+quiz_for: 82-prioritized-experience-replay
+---
+
+## Q1
+PER ưu tiên phát lại transition nào?
+
+- [ ] Transition có reward lớn nhất
+- [x] Transition có TD error tuyệt đối lớn nhất
+- [ ] Transition mới được thêm vào buffer gần nhất
+- [ ] Transition xuất hiện nhiều lần trong episode
+
+> TD error |δ| đo độ "bất ngờ" — agent dự đoán sai nhiều tức còn nhiều điều phải học. Reward lớn không tương đương đáng học (reward có thể dự đoán đúng). Transition mới được gán priority tối đa để đảm bảo được lấy mẫu lần đầu, nhưng sau đó ưu tiên theo |δ| thật.
+
+## Q2
+Vì sao PER dùng lấy mẫu ngẫu nhiên có ưu tiên (stochastic) thay vì greedy (luôn chọn |δ| lớn nhất)?
+
+- [ ] Greedy chậm hơn về mặt tính toán
+- [x] Greedy overfit vào subset nhỏ, mất đa dạng, và nhạy với nhiễu ngẫu nhiên trong |δ|
+- [ ] Greedy không thể cài đặt với replay buffer lớn
+- [ ] Greedy vi phạm giả định Markov
+
+> Luôn chọn |δ| lớn nhất khiến agent phát lại lặp đi lặp lại một vài transition (có thể |δ| lớn chỉ do nhiễu), overfit và bỏ qua phần còn lại. Stochastic vẫn ưu tiên đúng hướng nhưng giữ yếu tố ngẫu nhiên để chống nhiễu và giữ đa dạng. Sum-tree giải quyết vấn đề tốc độ cho cả 2 cách.
+
+## Q3
+Hàm ý của tham số α trong `P(i) = p_i^α / Σ p_k^α` là gì?
+
+- [ ] α càng lớn càng ít ưu tiên
+- [x] α = 0 là lấy mẫu đều (DQN gốc), α = 1 là ưu tiên đầy đủ theo |δ|
+- [ ] α luôn phải bằng 1 để PER hoạt động
+- [ ] α kiểm soát learning rate
+
+> α = 0 khiến mọi p_i^0 = 1 → P(i) đều → quay về DQN gốc. α = 1 ưu tiên đầy đủ. 0 < α < 1 (thường 0.6) là trung gian giữa 2 cực.
+
+## Q4
+Vì sao cần importance-sampling weights `w_i = (1/(N·P(i)))^β`?
+
+- [ ] Để tăng tốc huấn luyện trên transition ưu tiên cao
+- [x] Để bù thiên lệch do lấy mẫu không đều — transition được lấy thường cần đóng góp ít hơn mỗi lần để kỳ vọng tổng thể không chệch
+- [ ] Để giảm variance của gradient
+- [ ] Để thay thế learning rate α trong Q-learning
+
+> Lấy mẫu ưu tiên phá vỡ giả định phân phối đều của Q-learning → ước lượng chệch. IS weights hạ trọng số loss của transition ưu tiên cao (P(i) lớn → w_i nhỏ) để cân bằng. β = 1 bù đầy đủ (không chệch), β tăng tuyến tính trong huấn luyện vì thiên lệch quan trọng hơn khi gần hội tụ.

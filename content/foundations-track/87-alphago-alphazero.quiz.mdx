@@ -1,0 +1,43 @@
+---
+quiz_for: 87-alphago-alphazero
+---
+
+## Q1
+AlphaGo (2016) dùng cả SL policy network (học từ dữ liệu người) và RL policy network (self-play). Vì sao cần cả 2, không chỉ 1?
+
+- [ ] SL nhanh hơn RL, dùng để khởi tạo kiến trúc
+- [x] SL policy cho "trực giác" bắt chước chuyên gia (57% chính xác) làm điểm khởi tạo, RL policy tinh chỉnh từ đó để VƯỢT con người — chỉ sao chép không vượt được, chỉ RL không có điểm khởi tạo tốt
+- [ ] SL cho action rời rạc, RL cho action liên tục
+- [ ] SL giảm variance, RL giảm bias
+
+> SL policy học sao chép chuyên gia → giới hạn ở trình độ con người (không thể vượt người nếu chỉ bắt chước). RL policy khởi tạo từ SL (điểm khởi tạo tốt) rồi self-play tối đa hoá thắng → vượt con người. Không có SL, RL khởi tạo ngẫu nhiên khó hội tụ; không có RL, bị giới hạn sao chép.
+
+## Q2
+AlphaGo Zero (2017) bỏ dữ liệu người. Đổi gì trong kiến trúc để vẫn học được?
+
+- [ ] Dùng MCTS thuần không neural network
+- [x] Gộp policy + value thành 1 mạng thống nhất, khởi tạo ngẫu nhiên, cải thiện hoàn toàn qua self-play (MCTS + network tạo dữ liệu huấn luyện)
+- [ ] Dùng reward shaping phức tạp hơn
+- [ ] Tăng kích thước mạng 10 lần
+
+> AlphaGo Zero: bỏ SL policy (không dữ liệu người), gộp policy+value thành 1 mạng (2 đầu output chia sẻ tham số), self-play thuần tạo dữ liệu. Vòng lặp: MCTS+network chơi → dữ liệu → huấn luyện network → chơi tốt hơn. Vượt AlphaGo sau 3 ngày, khám phá nước đi con người chưa nghĩ.
+
+## Q3
+AlphaZero (2018) khác AlphaGo Zero ở điểm cốt lõi nào?
+
+- [ ] AlphaZero dùng dữ liệu người, AlphaGo Zero không
+- [x] AlphaZero tổng quát hoá sang cờ vua/cờ tướng (cùng 1 thuật toán, chỉ khác luật game), AlphaGo Zero chỉ cờ vây
+- [ ] AlphaZero dùng 2 mạng tách, AlphaGo Zero 1 mạng gộp
+- [ ] AlphaZero không dùng MCTS
+
+> AlphaGo Zero chỉ cờ vây. AlphaZero cùng thuật toán (self-play + MCTS + 1 mạng policy/value), không đổi kiến trúc, áp dụng cho cờ vây + cờ vua + cờ tướng — vượt Stockfish (cờ vua) và Elmo (cờ tướng). Chỉ cần luật game, không cần heuristic domain hay dữ liệu người.
+
+## Q4
+AlphaGo/AlphaZero kết hợp cả search (MCTS) và RL. Vai trò của phần RL là gì?
+
+- [ ] RL thay thế MCTS trong khi chơi
+- [x] RL học policy/value NGOÀI thời gian chơi (từ self-play tích luỹ), khiến agent giỏi dần theo thời gian — MCTS thuần không tự cải thiện
+- [ ] RL chỉ để giảm variance của MCTS
+- [ ] RL để sinh dữ liệu người
+
+> MCTS tìm nước đi tốt tại thời điểm chơi (search), nhưng MCTS thuần không học gì từ ván trước. RL học network ngoài thời gian chơi (policy/value từ self-play) → network giỏi dần → MCTS định hướng tốt hơn → self-play tạo dữ liệu tốt hơn → vòng tích cực. Đây là lý do AlphaZero "thuộc RL" dù dùng MCTS.

@@ -1,0 +1,130 @@
+---
+title: "WGAN & StyleGAN — Hai Hướng Nâng cấp GAN: Ổn định hoá và Kiểm soát"
+track: foundations-track
+module: "Generative Models"
+submodule: "GAN Family"
+order: 88
+status: stable
+prerequisites: ["46-dcgan"]
+summary: "GAN/DCGAN (bài 23/46) mạnh nhưng bất ổn định, và generator thiếu kiểm soát chi tiết ảnh sinh. 2 hướng nâng cấp độc lập: WGAN (Arjovsky 2017) thay JS divergence bằng Wasserstein distance (Earth Mover's Distance), giải bài toán gradient biến mất khi 2 phân phối cách xa — loss `L=E[D(x_real)]−E[D(x_fake)]` + Lipschitz qua weight clipping/gradient penalty. StyleGAN (Karras 2019) đổi kiến trúc generator thành style-based + AdaIN, cho phép kiểm soát độc lập thang độ coarse/medium/fine của ảnh (kiểu tóc, màu mắt, ánh sáng)."
+last_touched_by_task: "Bài mới (Task 108, 2026-07-07) — Phase 2 Generative, lấp dòng GAN family: GAN (23) → DCGAN (46) → WGAN/StyleGAN (88). WGAN và StyleGAN không có quan hệ tiến hoá trực tiếp (1 về loss ổn định, 1 về kiến trúc kiểm soát) — gộp 1 bài vì cùng 'đỉnh cao nâng cấp GAN family', tiền lệ bài 71 gộp 2 cải tiến độc lập. 2 nguồn: arxiv WGAN 1701.07875 + arxiv StyleGAN 1812.04948."
+---
+
+Bài [GAN](23-gan.mdx) và [DCGAN](46-dcgan.mdx) đặt nền móng sinh ảnh
+đối kháng, nhưng để lại 2 vấn đề mở: (1) huấn luyện bất ổn định do JS
+divergence bão hoà, (2) generator thiếu kiểm soát chi tiết — chỉ nhập
+nhiễu `z`, không điều khiển được "kiểu tóc", "màu mắt", "ánh sáng" riêng.
+Bài này kể 2 hướng nâng cấp độc lập, mỗi hướng giải 1 vấn đề.
+
+## WGAN: thay JS divergence bằng Wasserstein distance
+
+**Vấn đề JS divergence.** Bài [GAN](23-gan.mdx) đã chỉ ra hàm mục tiêu
+minimax tự động hoá về Jensen-Shannon Divergence — điểm cân bằng lý tưởng
+`JSD = 0` khi `p_g = p_data`. Nhưng JS có một vấn đề nghiêm trọng khi
+huấn luyện thực tế: **khi 2 phân phối `p_g` và `p_data` không giao nhau
+(cách xa nhau, như đầu huấn luyện khi generator còn tệ)**, `JSD = log 2`
+hằng số — gradient = 0, generator không học được gì. Đây là lý do sâu xa
+GAN hay "không hội tụ đầu": lúc generator cần học nhiều nhất (còn xa data
+thật), tín hiệu gradient lại biến mất.
+
+**Wasserstein distance (Earth Mover's Distance).** WGAN (Arjovsky,
+Chintala, Bottou 2017) thay JS bằng **Wasserstein distance** `W(p_data, p_g)`
+— đo "chi phí tối thiểu để biến phân phối `p_data` thành `p_g`" (phép
+ẩn dụ: coi 2 phân phối là 2 đống đất, W = công vận chuyển đống này thành
+đống kia). Khác biệt then chốt với JS: **W liên tục và có gradient khác
+0 ngay cả khi 2 phân phối không giao nhau** — generator luôn có tín hiệu
+học, dù còn xa data thật.
+
+**Cài đặt.** Để tính được W, WGAN dùng đối ngẫu Kantorovich-Rubinstein —
+thay discriminator (phân loại thật/giả) bằng **critic** (đánh giá giá
+trị thực, không sigmoid):
+
+```
+critic loss:  L = E[D(x_real)] - E[D(x_fake)]     (max hoá khoảng cách)
+generator loss: L = -E[D(x_fake)]                  (min hoá, đẩy giả gần thật)
+```
+
+Điều kiện để đối ngẫu hợp lệ: critic phải **1-Lipschitz** (gradient bị
+chặn ≤ 1). 2 cách thực hiện:
+
+- **Weight clipping** (WGAN gốc): kẹp trọng số critic vào `[-0.01, 0.01]`
+  — đơn giản nhưng gây underfitting, hành vi bệnh lý nếu ngưỡng sai.
+- **Gradient penalty** (WGAN-GP, Gulrajani 2017): thêm penalty
+  `λ·E[(‖∇D(x̂)‖₂ − 1)²]` vào loss (x̂ nội suy giữa real/fake) — ép gradient
+  norm gần 1, ổn định hơn weight clipping, là chuẩn thực hành hiện đại.
+
+Kết quả: WGAN huấn luyện ổn định hơn GAN, giảm mode collapse, và **loss
+có ý nghĩa** (giảm dần tương quan với chất lượng ảnh — khác GAN gốc loss
+không nói gì). WGAN-GP trở thành baseline ổn định cho GAN family.
+
+## StyleGAN: kiểm soát ảnh sinh theo thang độ
+
+**Vấn đề kiểm soát.** GAN/DCGAN sinh ảnh từ vector nhiễu `z` duy nhất —
+không có cách nói "giữ nguyên khuôn mặt, đổi chỉ màu tóc". `z` trộn lẫn
+mọi đặc điểm, không có cấu trúc. StyleGAN (Karras, Laine, Aila 2019,
+NVIDIA) giải bằng cách **thay đổi kiến trúc generator** để tách kiểm soát
+theo thang độ.
+
+**Kiến trúc style-based.** Thay vì `z` đi qua 1 mạng duy nhất, StyleGAN:
+
+- **Mapping network** `f`: biến `z` thành `w` (trong không gian "style" W,
+  less entangled — các chiều độc lập hơn).
+- **Synthesis network**: bắt đầu từ một **hằng số học được** (không phải
+  nhiễu ngẫu nhiên), rồi ở mỗi lớp tích chập, `w` điều khiển qua **AdaIN**
+  (Adaptive Instance Normalization):
+
+  ```
+  AdaIN(x, w) = σ(w_scale) · ( (x - μ(x)) / σ(x) ) + μ(w_shift)
+  ```
+
+  `w` quyết định **scale và shift** cho mỗi lớp — tức "phong cách" (style)
+  của lớp đó.
+
+**Thang độ kiểm soát.** Vì lớp sâu trong generator chịu trách nhiệm
+đặc điểm thô (khuôn mặt tổng thể, tư thế), lớp nông chịu chi tiết (màu
+tóc, mắt, ánh sáng), việc inject `w` khác nhau ở các cấp khác nhau cho
+phép kiểm soát **độc lập theo thang độ**:
+
+- `w` ở lớp sâu → đổi kiểu khuôn mặt/tư thế (coarse).
+- `w` ở lớp giữa → đổi kiểu tóc/kính (medium).
+- `w` ở lớp nông → đổi màu/ánh sáng (fine).
+
+**Stochastic variation.** Ngoài style, StyleGAN thêm nhiễu riêng cho từng
+lớp — cho phép chi tiết ngẫu nhiên (lông mày hơi lệch, nếp tàn nhang)
+mà không đổi đặc điểm chính. Đây là điểm GAN gốc không có.
+
+Kết quả: StyleGAN sinh ảnh khuôn mặt **chất lượng cao chưa từng có**
+(FID thấp hơn DCGAN nhiều trên FFHQ dataset), và đặc biệt — **có thể pha
+trộn style** giữa 2 ảnh (lấy coarse style ảnh A + fine style ảnh B).
+StyleGAN2/3 sau này tinh chỉnh thêm (bỏ artefact giọt nước, điều khiển
+resolution cao hơn), nhưng kiến trúc style-based gốc đã định hình toàn bộ
+sinh ảnh điều kiện hiện đại.
+
+## Hai hướng, một module
+
+WGAN và StyleGAN giải 2 vấn đề khác nhau (ổn định hoá loss vs kiểm soát
+kiến trúc), không thay thế nhau — thực hành thường kết hợp cả 2 (WGAN-GP
+loss + StyleGAN kiến trúc). Cùng nâng GAN family từ "sinh được ảnh" lên
+"sinh ổn định + kiểm soát được", đặt nền cho ứng dụng thực tế trước khi
+diffusion models (bài [49](49-diffusion-models.mdx)) vượt qua cả 2 về
+chất lượng.
+
+## Liên hệ lại với các bài trước
+
+- WGAN minh chứng cho bài học "chọn độ đo divergence quan trọng": JS
+  divergence có nền tảng lý thuyết đẹp nhưng **gradient biến mất khi
+  phân phối cách xa** —wasserstein khắc phục đúng điểm đó. Tương tự
+  pattern "đổi công thức nền lý thuyết để giải vấn đề thực hành" đã gặp
+  ở LoRA (bài [80](80-lora.mdx), đổi cách fine-tune).
+- AdaIN của StyleGAN là dạng **conditional normalization** — cùng họ với
+  batch norm (bài [DCGAN](46-dcgan.mdx)) nhưng tham số normalization học
+  được từ `w` thay vì thống kê batch. Mẫu hình "điều khiển qua
+  normalization" lặp lại nhiều trong DL hiện đại.
+- StyleGAN tách `z` → `w` qua mapping network để "disentangle" — cùng
+  tinh thần giảm chiều tự động của [Autoencoder](22-autoencoder.mdx),
+  nhưng mục tiêu là "biểu diễn độc lập" chứ không phải nén.
+
+## Nguồn tham khảo
+
+- [arXiv — Wasserstein GAN (Arjovsky, Chintala, Bottou, 2017)](https://arxiv.org/abs/1701.07875) — paper gốc WGAN, dùng cho vấn đề JS divergence bão hoà (gradient = 0 khi 2 phân phối không giao nhau), giải pháp thay bằng Wasserstein/Earth Mover's Distance (liên tục, gradient khác 0 ngay cả khi phân phối cách xa), critic thay discriminator, điều kiện 1-Lipschitz qua weight clipping, loss `L=E[D(x_real)]−E[D(x_fake)]`.
+- [arXiv — A Style-Based Generator Architecture for Generative Adversarial Networks (Karras, Laine, Aila, 2019)](https://arxiv.org/abs/1812.04948) — paper gốc StyleGAN, dùng cho kiến trúc style-based: mapping network `z→w` (disentangled), synthesis network từ hằng số học được + AdaIN inject `w` mỗi lớp (`σ(w)·norm(x)+μ(w)`), thang độ kiểm soát coarse/medium/fine, stochastic variation per-layer noise, chất lượng SOTA trên FFHQ.

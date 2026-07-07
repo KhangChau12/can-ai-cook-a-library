@@ -1,0 +1,43 @@
+---
+quiz_for: 85-trpo-a2c
+---
+
+## Q1
+TRPO ràng buộc KL divergence `D_KL(π_old ‖ π) ≤ δ` thay vì chỉ dùng learning rate. Vấn đề nào của policy gradient gốc mà điều này nhắm tới?
+
+- [ ] Learning rate quá nhỏ làm học chậm
+- [x] Không có cách tự nhiên biết "bao nhiêu cập nhật là quá lớn" — 1 bước lớn có thể phá hỏng policy, và độ nhạy thay đổi theo từng điểm trong không gian tham số
+- [ ] Gradient không chính xác với mạng sâu
+- [ ] Learning rate phải đổi theo từng layer
+
+> α cố định không phản ánh độ nhạy cục bộ: cùng α, ở vùng tham số nhạy có thể phá policy, ở vùng kém nhạy lại quá chậm. TRPO ràng buộc trực tiếp khoảng cách policy (KL) thay vì gián tiếp qua α — đảm bảo policy mới trong "vùng lân cận" an toàn của policy cũ.
+
+## Q2
+TRPO đảm bảo "monotonic improvement" (trong vùng tin cậy, policy mới không tệ hơn cũ). Vậy vì sao PPO thay thế TRPO trong thực hành?
+
+- [ ] PPO đảm bảo monotonic improvement chặt hơn TRPO
+- [x] PPO đơn giản hơn nhiều (clip tỉ lệ, không cần Fisher/conjugate gradient/line search) mà hiệu năng thực hành tương đương
+- [ ] PPO không cần replay buffer
+- [ ] PPO chạy nhanh hơn 10 lần
+
+> TRPO cài đặt phức tạp: Fisher information matrix + conjugate gradient + backtracking line search. PPO phát hiện clip tỉ lệ `r(θ)` vào [1-ε,1+ε] giữ tinh thần "không đổi quá nhanh" mà bỏ hết độ phức tạp. PPO mất đảm bảo monotonic chặt nhưng thực hành đủ tốt — "đơn giản mà đủ dùng" thường thắng.
+
+## Q3
+A2C (đồng bộ) so với A3C (bất đồng bộ) — vì sao A2C thường được chọn trong thực hành hiện đại?
+
+- [ ] A2C tận dụng CPU đa nhân tốt hơn A3C
+- [x] A2C tránh race condition gradient (stale gradient), gộp batch lớn tận dụng GPU tốt hơn, cài đặt đơn giản hơn
+- [ ] A2C hội tụ nhanh hơn A3C về lý thuyết
+- [ ] A2C không cần advantage function
+
+> A3C bất đồng bộ: worker cập nhật tham số chung bất kỳ lúc nào → race condition, gradient stale. A2C đồng bộ: chờ tất cả worker, gộp batch lớn, cập nhật 1 lần → không race, GPU-friendly, đơn giản. Khi có GPU (phổ biến), A2C ngang/tốt hơn A3C. A3C chỉ còn lợi khi chỉ có CPU đa nhân.
+
+## Q4
+TRPO và A2C được gộp chung 1 bài dù không có quan hệ tiến hoá trực tiếp. Lý do chính?
+
+- [ ] Cùng tác giả
+- [x] Cùng đóng vai trò tiền đề lịch sử của bài đã có (PPO/A3C), mỗi cái riêng quá mỏng cho 1 bài độc lập
+- [ ] Cùng năm công bố
+- [ ] Cùng dùng KL divergence
+
+> Theo mục 2.1, 2 model không có quan hệ tiến hoá trực tiếp đáng lẽ tách bài. Nhưng TRPO và A2C cùng vai trò "tiền đề bị nhắc tên mà chưa dạy", mỗi cái nếu tách riêng quá ngắn (TRPO chủ yếu để kể vì sao PPO ra đời, A2C chỉ là A3C bỏ async). Gộp tránh 2 bài còng, làm rõ cả 2 thuộc "lịch sử Policy-based on-policy".

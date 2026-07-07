@@ -139,21 +139,27 @@ trong sidebar viewer:
    WordPiece + 72 SentencePiece/Segmentation + 65 word2vec + 66 GloVe/
    Embedding — sub-module này có 2 nhánh con theo làm rõ của người vận
    hành: Segmentation và Embedding, xem `CLAUDE.md` mục 1.2)
-5. `"Reinforcement Learning"` — bài 16-19, 47, 71, tách 2 sub-module
-   (2026-07-06): "Value-based" (18, 71 Double/Dueling DQN — 2 bài) và
-   "Policy-based" (19, 47 PPO — 2 bài); bài 16-17 giữ phẳng (nền tảng
-   chung)
+5. `"Reinforcement Learning"` — bài 16-19, 47, 71, 77-78, 82-86, tách 3
+   sub-module (2026-07-06 Value/Policy, 2026-07-07 thêm Model-based):
+   "Value-based" (18 Q-learning, 71 Double/Dueling, 82 PER, 83 Rainbow —
+   4 bài), "Policy-based" (19 Policy Gradient, 47 PPO, 77 A3C, 78 SAC,
+   84 DDPG/TD3, 85 TRPO/A2C — 6 bài), "Model-based" (86 Dyna-Q→AlphaZero→
+   MuZero — 1 bài); bài 16-17 giữ phẳng (nền tảng chung)
 6. `"Dimensionality Reduction"` — bài 21-22, 48, 50 (PCA, Autoencoder,
    t-SNE, UMAP — tách thành module riêng 2026-07-06, độc lập khỏi
    Ensemble và Generative, dòng tiến hoá t-SNE→UMAP hoàn thành)
-7. `"Generative Models"` — bài 23, 46, 49, 70 (GAN → DCGAN [MLP→CNN],
-   GAN → Diffusion Models [đối kháng→forward/reverse cố định], và
-   Diffusion Models → DDIM [Markovian→non-Markovian, sinh nhanh hơn
-   10-50 lần] — 3 dòng tiến hoá từ cùng gốc GAN, module tách riêng
-   2026-07-06)
+7. `"Generative Models"` — bài 23, 46, 49, 70, 88, 89 (tách 2 sub-module
+   2026-07-07: "GAN Family" [23 GAN, 46 DCGAN, 88 WGAN/StyleGAN] và
+   "Diffusion Models" [49 DDPM, 70 DDIM, 89 Latent Diffusion/Stable
+   Diffusion] — 2 nhánh song song khác bản chất: đối kháng vs khuếch tán;
+   3 dòng tiến hoá từ cùng gốc GAN: GAN→DCGAN→WGAN/StyleGAN,
+   GAN→Diffusion→DDIM→Latent Diffusion (text-to-image thực tế); module
+   tách riêng 2026-07-06)
 8. `"LLM"` — bài 24-29, tách 2 sub-module (2026-07-06): "Huấn luyện &
    Alignment" (24-27) và "Ứng dụng & Inference-time" (28-29)
-9. `"Audio"` — bài 30-32
+9. `"Audio"` — bài 30-32, 90-91, tách 3 sub-module (2026-07-07): "Biểu
+   diễn âm thanh" (30), "Speech-to-Text" (31, 90 Whisper chi tiết),
+   "Text-to-Speech" (32, 91 Tacotron 2/FastSpeech chi tiết)
 10. `"Recommendation Systems"` — bài 43-44, 51-52 (2026-07-06, dòng tiến
     hoá tuyến tính→phi tuyến: Matrix Factorization → NeuMF, + feature-rich:
     DeepFM, + tiêu chí ranking đúng: BPR — coi khá đầy đủ)
@@ -274,10 +280,125 @@ anchor-free/hiện đại hơn.
     Hình thức hoá bài toán RL (`status: stable`)
 18. `18-q-learning.mdx` — Q-learning — Học Q-function tối ưu qua thử-sai
     (`status: stable`, viết lại 2026-07-06: giới hạn Q-table + DQN Mnih
-    et al. 2013)
+    et al. 2013; cập nhật Task 96, 2026-07-07: bổ sung phần "Hai kỹ thuật
+    ổn định DQN" — experience replay phá tương quan thời gian + target
+    network giải moving target, bản DQN 2015 Nature, hàm loss MSE dạng
+    gần supervised, 29/49 game Atari ngang con người, nguồn arxiv
+    1312.5602 Nature)
 19. `19-policy-gradient.mdx` — Policy Gradient — Học trực tiếp Policy thay
     vì Q-function (`status: stable`, viết lại 2026-07-06: thêm baseline
     + Actor-Critic)
+87. `87-alphago-alphazero.mdx` — AlphaGo/AlphaZero — MCTS + Self-play,
+   Đỉnh cao Ứng dụng RL (`status: stable` — 2026-07-07, `module:
+   "Reinforcement Learning"`, `submodule: "Model-based"`, đào sâu case
+   study kinh điển — AlphaGo Silver 2016 [4 thành phần: SL policy 30M
+   thế cờ KGS + RL policy self-play + value network + MCTS định hướng,
+   thắng Lee Sedol 4-1] → AlphaGo Zero 2017 [bỏ dữ liệu người + gộp 1
+   mạng policy+value, self-play thuần, vượt AlphaGo 3 ngày] → AlphaZero
+   2018 [tổng quát cờ vua/cờ tướng, cùng 1 thuật toán]; 2 nguồn arxiv
+   1602.01772 + Lil'Log RL overview)
+
+92. `92-hifigan-neural-vocoder.mdx` — HiFi-GAN — Đào sâu Neural Vocoder:
+    Kiến trúc GAN Song song Thay thế WaveNet (`status: stable` —
+    2026-07-07, `module: "Audio"`, `submodule: "Text-to-Speech"`, đào
+    sâu HiFi-GAN đã giới thiệu sơ ở bài 32: generator transposed conv +
+    Multi-Receptive Field Fusion (nhiều residual block kernel/dilation
+    song song), 2 discriminator (multi-period bắt tính tuần hoàn giọng
+    nói, multi-scale bắt đa độ phân giải), 3 loss kết hợp (adversarial
+    least-squares + mel-spectrogram L1 + feature matching); kết nối GAN
+    Family bài 23/46/88; nguồn arxiv 2210.15533. **Kết thúc kế hoạch đào
+    sâu 3 module RL→Generative→Audio (30 task, xem CLAUDE.md mục 1).**)
+
+91. `91-tacotron-fastspeech.mdx` — Tacotron 2 & FastSpeech — Đào sâu
+    Text-to-Spectrogram: Autoregressive vs Song song (`status: stable` —
+    2026-07-07, `module: "Audio"`, `submodule: "Text-to-Speech"`, đào
+    sâu kiến trúc đã giới thiệu sơ ở bài 32: Tacotron 2 (pre-net/
+    post-net/stop token/location-sensitive attention/teacher forcing,
+    vấn đề attention misalignment) → FastSpeech (Feed-Forward Transformer
+    self-attention+1D CNN, length regulator từ duration predictor, giải
+    cả tốc độ lẫn lỗi căn chỉnh, nhanh hơn 10 lần); nguồn arxiv 1809.08895
+    + 2106.15561)
+
+90. `90-whisper.mdx` — Whisper — Đào sâu Kiến trúc Multitask Decoding
+    Qua Token Đặc biệt (`status: stable` — 2026-07-07, `module: "Audio"`,
+    `submodule: "Speech-to-Text"`, đào sâu Whisper đã giới thiệu sơ ở bài
+    31: input 80-channel log-mel qua conv, chuỗi token đặc biệt
+    `<SOT>`/ngôn ngữ/tác vụ transcribe-translate/timestamp điều khiển 1
+    decoder đa tác vụ (prompt engineering cho audio), cross-attention làm
+    cơ sở timestamp prediction, so sánh CTC vs encoder-decoder; nguồn
+    arxiv 2212.04356)
+
+89. `89-latent-diffusion.mdx` — Latent Diffusion (Stable Diffusion) —
+    Khử nhiễu Trong Không gian Latent để Text-to-image Thực tế (`status:
+    stable` — 2026-07-07, `module: "Generative Models"`, `submodule:
+    "Diffusion Models"`, chạm tới text-to-image thực tế — Rombach et al.
+    2022, 2 giai đoạn: perceptual compression autoencoder nén f=8 ~64×
+    rồi diffusion trong latent space nhỏ, CLIP text conditioning +
+    cross-attention inject vào U-Net + classifier-free guidance amplifiy
+    prompt; Stable Diffusion bản phát hành công khai LAION-5B chạy trên
+    GPU người dùng 8GB, dân chủ hoá sinh ảnh AI; 2 nguồn arxiv 2112.10752
+    + Lil'Log diffusion)
+
+88. `88-wgan-stylegan.mdx` — WGAN & StyleGAN — Hai Hướng Nâng cấp GAN:
+    Ổn định hoá và Kiểm soát (`status: stable` — 2026-07-07, `module:
+    "Generative Models"`, `submodule: "GAN Family"`, 2 hướng nâng cấp
+    độc lập: WGAN Arjovsky/Chintala/Bottou 2017 thay JS divergence bằng
+    Wasserstein distance [giải gradient biến mất khi 2 phân phối cách
+    xa], critic thay discriminator, 1-Lipschitz qua weight clipping/
+    gradient penalty + StyleGAN Karras/Laine/Aila 2019 kiến trúc
+    style-based [mapping z→w + AdaIN inject mỗi lớp], kiểm soát thang độ
+    coarse/medium/fine; 2 nguồn arxiv 1701.07875 + 1812.04948 theo tiền
+    lệ bài 71 gộp 2 cải tiến độc lập)
+
+86. `86-model-based-rl.mdx` — Model-based RL — Học Mô hình Môi trường để
+    Lập kế hoạch, Không chỉ Thử-sai (`status: stable` — 2026-07-07,
+    `module: "Reinforcement Learning"`, `submodule: "Model-based"` (mới
+    tách, trường phái RL thứ 3 còn thiếu), dòng tiến hoá Dyna-Q (Sutton
+    1990, 3 vòng lặp direct RL + model learning + planning) → AlphaZero
+    (2017, model = luật game đã biết + MCTS + policy/value network
+    self-play) → MuZero (Schrittwieser 2019, học dynamics trong latent
+    space — representation/dynamics/prediction 3 mạng, MCTS không gian
+    ẩn, SOTA cả Atari lẫn board game); 2 nguồn arxiv 1911.08265 + Lil'Log
+    RL overview)
+
+85. `85-trpo-a2c.mdx` — TRPO & A2C — Hai Tiền đề Trực tiếp của PPO và A3C
+    (`status: stable` — 2026-07-07, `module: "Reinforcement Learning"`,
+    `submodule: "Policy-based"`, lấp 2 tiền đề bị nhắc tên mà chưa có
+    bài: TRPO Schulman 2015 ràng buộc KL `D_KL(π_old‖π)≤δ` trust region
+    (đảm bảo monotonic improvement nhưng phức tạp Fisher+conjugate
+    gradient+line search → PPO clip đơn giản hoá) + A2C biến thể đồng bộ
+    A3C (tránh race condition, GPU-friendly); 2 nguồn arxiv 1502.05477 +
+    1602.01783 theo tiền lệ 2 paper độc lập)
+
+84. `84-ddpg-td3.mdx` — DDPG & TD3 — Off-policy Policy-based cho Không
+    gian Hành động Liên tục (`status: stable` — 2026-07-07, `module:
+    "Reinforcement Learning"`, `submodule: "Policy-based"`, lấp tiền đề
+    đứt của SAC 78 (nhắc 'DDPG giòn' mà DDPG chưa có bài): Lillicrap 2016
+    DDPG deterministic policy + actor-critic off-policy cho continuous
+    action, hội tụ giòn → Fujimoto 2018 TD3 3 kỹ thuật (twin critics min
+    bù overestimation vòng actor-critic, target policy smoothing triệt
+    đỉnh giả, delayed updates giảm dao động), tiền đề trực tiếp SAC;
+    2 nguồn arxiv 1509.02971 + 1802.09477 theo tiền lệ bài 71)
+
+83. `83-rainbow-dqn.mdx` — Rainbow DQN — Tổng hợp 6 Cải tiến Độc lập
+    của DQN thành Một Agent (`status: stable` — 2026-07-07, `module:
+    "Reinforcement Learning"`, `submodule: "Value-based"`, hoàn thiện
+    dòng Value-based: Hessel et al. 2017 DeepMind, 6 thành phần (Double/
+    Dueling/PER đã học + 3 mới: multi-step n-step return tradeoff
+    bias-variance, C51 distributional 51 atom, Noisy Nets nhiễu tham số
+    thay ε-greedy), kết quả vượt DQN 57 game Atari, ablation: bỏ PER giảm
+    nhiều nhất; 1 nguồn arxiv 1710.02298 theo tiền lệ PER)
+
+82. `82-prioritized-experience-replay.mdx` — Prioritized Experience
+    Replay — Ưu tiên Phát lại Trải nghiệm Có nhiều tín hiệu Học hơn
+    (`status: stable` — 2026-07-07, `module: "Reinforcement Learning"`,
+    `submodule: "Value-based"`, lấp dòng tiến hoá Value-based: DQN→
+    Double/Dueling→PER→Rainbow — Schaul/Quan/Antonoglou/Silver 2015
+    DeepMind, TD error làm priority, stochastic sampling `P(i)∝|δ|^α`,
+    importance-sampling weights bù bias, sum-tree O(log N), 41/49 game
+    Atari cải thiện đặc biệt khi reward thưa; bài cải tiến trực tiếp 1
+    kỹ thuật nên 1 nguồn arxiv 1511.05952 theo tiền lệ LoRA/DPO/WordPiece)
+
 71. `71-double-dueling-dqn.mdx` — Double DQN & Dueling DQN — Hai Cách Sửa
     Lỗi Của DQN Gốc (`status: stable` — 2026-07-06, `module:
     "Reinforcement Learning"`, `submodule: "Value-based"`, nối tiếp
@@ -285,7 +406,11 @@ anchor-free/hiện đại hơn.
     bias (decouple action selection/evaluation qua 2 mạng) + Wang et al.
     2015 DeepMind sửa generalize kém qua action (tách Value/Advantage
     function) — 2 vấn đề độc lập, 2 paper khác nhau kết hợp 1 bài, nguồn
-    arxiv 1509.06461 + 1511.06581)
+    arxiv 1509.06461 + 1511.06581; cập nhật Task 97, 2026-07-07: bổ sung
+    công thức toán cụ thể — Double DQN target `Y=r+γ·Q_{θ⁻}(s',argmax
+    Q_θ(s',a'))` so với DQN gốc, Dueling `Q(s,a)=V(s)+(A(s,a)−mean A)`
+    kèm giải thích identifiability, bỏ đoạn Rainbow 'chưa đủ chuẩn' vì
+    giờ có bài PER/Rainbow riêng)
 20. `20-ensemble-methods.mdx` — Ensemble Methods — Kết hợp nhiều mô hình
     yếu thành một mô hình mạnh (`status: stable`, viết lại 2026-07-06:
     lịch sử Breiman 2001/Freund & Schapire 1997, nguồn cs229;
@@ -300,7 +425,10 @@ anchor-free/hiện đại hơn.
 23. `23-gan.mdx` — GAN — Hai mạng nơ-ron thi đấu để tạo dữ liệu giả chân
     thực (`status: stable`, viết lại 2026-07-06: lịch sử Goodfellow et
     al. 2014, động cơ lý thuyết cụ thể; `module: "Generative Models"` —
-    module mới tách 2026-07-06)
+    module mới tách 2026-07-06; cập nhật Task 104, 2026-07-07: bổ sung
+    công thức minimax đầy đủ + non-saturating loss + JS divergence [D*
+    tối ưu, C(G)=-log4+2·JSD, điểm cân bằng p_g=p_data], nguồn Lil'Log
+    'From GAN to WGAN' cho phần lý thuyết hội tụ)
 24. `24-pretraining-llm.mdx` — Pretraining — Vì sao LLM học được từ hàng
     tỷ trang văn bản không nhãn (`status: stable`)
 25. `25-scaling-laws.mdx` — Scaling Laws — Vì sao LLM cứ to hơn lại
@@ -353,11 +481,25 @@ anchor-free/hiện đại hơn.
     Sản phẩm thật (`status: stable`, viết lại 2026-07-06: paper gốc
     Lewis et al. 2020 NeurIPS)
 30. `30-bieu-dien-am-thanh.mdx` — Biểu diễn Âm thanh cho ML — Từ Waveform
-    tới Spectrogram (`status: stable`)
+    tới Spectrogram (`status: stable`; cập nhật Task 110, 2026-07-07:
+    bổ sung section STFT chi tiết [cửa sổ trượt win/hop, FFT n_fft, nguyên
+    lý bất định Gabor tradeoff time-frequency, tham số chuẩn 2048/512] +
+    section MFCC [DCT nén cho ASR truyền thống] + ví dụ số cụ thể
+    [16kHz 1s → 16.000 mẫu → 80×32 mel-spectrogram]; nguồn D2L.ai)
 31. `31-speech-to-text.mdx` — Speech-to-Text — Từ Spectrogram sang Chuỗi
-    Văn bản (`status: stable`)
+    Văn bản (`status: stable`; cập nhật Task 111, 2026-07-07: bổ sung
+    công thức CTC loss `L=-log Σ_π P(π|x)` + forward-backward algorithm
+    + beam search decoding [score kết hợp CTC+LM] + WER `(S+D+I)/N` +
+    Whisper chi tiết [680K giờ, multitask training, zero-shot transfer];
+    nguồn arxiv 2212.04356 + arxiv 1708.04469)
 32. `32-text-to-speech.mdx` — Text-to-Speech — Sinh Giọng nói từ Văn bản
-    (`status: stable`)
+    (`status: stable`; cải thiện Task 82: thêm WaveNet — van den Oord
+    2016, dilated causal convolution, nguồn arxiv 1609.03499; cập nhật
+    Task 112, 2026-07-07: bổ sung Tacotron 2 [Shen 2018, location-
+    sensitive attention] + FastSpeech [non-autoregressive, duration
+    predictor] cho giai đoạn 1 + HiFi-GAN [GAN vocoder, nhanh hơn
+    WaveNet hàng nghìn lần] cho giai đoạn 2 + mục đánh giá MOS; nguồn
+    arxiv 1712.05884 + 2006.04558 + 2010.05646)
 33. `33-object-detection.mdx` — Object Detection — Không chỉ Phân loại,
     mà còn Định vị Vật thể (`status: stable`, viết lại 2026-07-06: dòng
     tiến hoá R-CNN → Fast R-CNN → Faster R-CNN, `submodule: "Detection"`)
@@ -460,14 +602,21 @@ anchor-free/hiện đại hơn.
     Cách Học Khử nhiễu Dần (`status: stable` — 2026-07-06, `module:
     "Generative Models"`, nối tiếp bài 23 GAN/46 DCGAN: Ho/Jain/Abbeel
     2020 bỏ cơ chế đối kháng, forward/reverse process, FID 3.17 SOTA
-    CIFAR-10, nguồn arxiv 2006.11239 + Lil'Log)
+    CIFAR-10, nguồn arxiv 2006.11239 + Lil'Log; cập nhật Task 105,
+    2026-07-07: bổ sung variance schedule + closed-form `x_t=√ᾱ_t·x_0+
+    √(1-ᾱ_t)·ε` + loss `L_simple=E[‖ε-ε_θ‖²]` + kiến trúc U-Net/time
+    embedding/self-attention)
 70. `70-ddim.mdx` — DDIM — Sinh Nhanh Hơn 10-50 Lần Bằng Quá trình
     Non-Markovian Tất định (`status: stable` — 2026-07-06, `module:
     "Generative Models"`, nối tiếp bài 49 Diffusion Models: Song, Meng,
     Ermon 2020, quá trình reverse non-Markovian chia sẻ training
     objective với DDPM (dùng trực tiếp mô hình đã train), tham số η
     điều khiển tất định (η=0)/ngẫu nhiên (η=1), nhanh hơn 10-50 lần +
-    khả năng nội suy ngữ nghĩa mới, nguồn arxiv 2010.02502 + Lil'Log)
+    khả năng nội suy ngữ nghĩa mới, nguồn arxiv 2010.02502 + Lil'Log;
+    cập nhật Task 106, 2026-07-07: bổ sung update rule (dự đoán x_0 rồi
+    tính x_{t-1}) + section classifier-free guidance [Ho & Salimans 2022,
+    `ε̂=(1+w)·ε(x_t,c)−w·ε(x_t,∅)`, guidance scale 7.5, biến diffusion
+    thành text-to-image thực tế], nguồn arxiv 2207.12598)
 50. `50-umap.mdx` — UMAP — Giữ Cấu trúc Toàn cục Tốt hơn t-SNE Với Tốc
     độ Nhanh hơn (`status: stable` — 2026-07-06, `module:
     "Dimensionality Reduction"`, nối tiếp bài 48 t-SNE: McInnes/Healy/
@@ -741,9 +890,8 @@ tách khi có ≥2 nhánh khác nhau về bản chất, không phải chỉ khá
   nhất — 1 bài không đủ khối lượng để tách). Ranh giới "regression vs
   classification" cũng không sạch vì Decision Tree/Ensemble dùng được cho
   cả 2 loại bài toán. Giữ phẳng.
-- **"Audio"** (3 bài: 30 Biểu diễn âm thanh → 31 Speech-to-Text → 32
-  Text-to-Speech): chuỗi tuần tự biểu diễn→input task→output task, không
-  phải nhánh song song. 3 bài quá mỏng để tách dù có ranh giới.
+- **"Audio"**: đã tách 3 sub-module 2026-07-07 (xem ghi chú dưới) — không
+  còn giữ phẳng như đánh giá Task 68 ban đầu.
 - **"Recommendation Systems"** (4 bài: 43 MF → 44 NeuMF → 51 DeepFM → 52
   BPR): dòng tiến hoá tuyến tính từ 1 gốc (Matrix Factorization), không
   có nhánh song song khác biệt bản chất như CV (CNN-based vs

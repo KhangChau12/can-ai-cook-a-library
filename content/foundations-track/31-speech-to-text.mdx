@@ -2,11 +2,12 @@
 title: "Speech-to-Text — Từ Spectrogram sang Chuỗi Văn bản"
 track: foundations-track
 module: "Audio"
+submodule: "Speech-to-Text"
 order: 31
 status: stable
 prerequisites: ["30-bieu-dien-am-thanh", "15-transformer"]
-summary: "Speech-to-text là bài toán sequence-to-sequence với một khó khăn riêng: độ dài input (số frame audio) và độ dài output (số token text) không khớp nhau và không có quan hệ cố định. CTC và kiến trúc encoder-decoder (như Whisper) là hai cách giải quyết vấn đề căn chỉnh này, dùng lại trực tiếp RNN/Transformer đã học."
-last_touched_by_task: "Rà lại theo triết lý nội dung mới (2026-07-06): đọc kỹ, xác nhận bài đã đạt chuẩn (dòng CTC vs encoder-decoder rõ ràng, không 'vỏ rỗng'). Đã thử tra lịch sử CTC (Graves et al., 2006) nhưng paper gốc là ICML 2006 conference paper, không có trên arxiv, chỉ có PDF ở domain ngoài whitelist (cs.toronto.edu) — không xác nhận được qua nguồn đọc được, giữ nguyên nội dung, chỉ nâng status."
+summary: "Speech-to-text là bài toán sequence-to-sequence với một khó khăn riêng: độ dài input (số frame audio) và độ dài output (số token text) không khớp nhau và không có quan hệ cố định. CTC (loss `L=-log Σ P(π|x)` qua mọi alignment, tính bằng forward-backward) và kiến trúc encoder-decoder (Whisper — 680K giờ dữ liệu, multitask, zero-shot) là hai cách giải quyết vấn đề căn chỉnh này. Beam search + LM rescoring cải thiện suy luận, WER là chỉ số đánh giá chuẩn."
+last_touched_by_task: "Cải thiện Task 111 (2026-07-07): Phase 3 Audio tiếp — bổ sung (1) công thức CTC loss đầy đủ `L=-log Σ_π P(π|x)` + thuật toán forward-backward, (2) beam search decoding với công thức score kết hợp CTC+LM `Σ log P_CTC + α·log P_LM + β|y|`, (3) WER `(S+D+I)/N`, (4) Whisper chi tiết cụ thể (680K giờ, multitask training, zero-shot transfer) thay vì chỉ nhắc tên. Bài cũ chỉ mô tả quy tắc rút gọn bằng lời, không có công thức/WER/beam search/Whisper cụ thể. Nguồn: WebSearch whitelist (arxiv) xác nhận công thức + Whisper paper. CTC gốc (Graves 2006) vẫn không có trên arxiv như đã xác nhận trước — không trích trực tiếp, chỉ dùng công thức đã xác nhận qua nguồn khác."
 ---
 
 Bài [Biểu diễn Âm thanh](30-bieu-dien-am-thanh.mdx) giải quyết câu hỏi
@@ -50,6 +51,59 @@ cách căn chỉnh có thể dẫn tới đúng văn bản mục tiêu — mô h
 cách căn chỉnh hợp lý nhất qua quá trình huấn luyện, mà không cần dữ liệu
 căn chỉnh thủ công.
 
+**Ví dụ rút gọn.** Với chuỗi thô độ dài 8 (mỗi vị trí ứng 1 frame), nhiều
+cách căn chỉnh khác nhau đều rút gọn về cùng "abc": `aaa-bb-c-` (`-` là
+blank) và `a-abbcc-` đều → xoá lặp liên tiếp → xoá blank → `abc`. Đây là
+lý do quy tắc rút gọn cho phép cùng 1 câu output ứng với **rất nhiều**
+chuỗi thô khác nhau — CTC loss cộng xác suất của **tất cả** chúng.
+
+**Công thức loss.** Gọi `π` là 1 chuỗi thô (1 alignment, cùng độ dài
+input), `B(π)` là phép rút gọn (xoá lặp + xoá blank), `y` là văn bản mục
+tiêu. CTC loss là:
+
+```
+L_CTC = -log P(y|x) = -log Σ_{π ∈ B⁻¹(y)} P(π|x)
+```
+
+tức tổng xác suất trên **mọi** alignment `π` rút gọn đúng về `y`. Tính
+trực tiếp tổng này duyệt qua số alignment tăng theo cấp số mũ với độ dài
+— không khả thi. CTC dùng **thuật toán forward-backward** (kỹ thuật quy
+hoạch động, cùng họ với thuật toán Viterbi/Baum-Welch trong HMM cổ điển)
+để tính tổng này hiệu quả trong thời gian tuyến tính với độ dài chuỗi —
+xây 1 bảng động, mỗi ô là xác suất "đi tới đúng vị trí này trong `y` tại
+đúng frame này", tính truy hồi thay vì liệt kê từng alignment.
+
+**Beam search decoding.** Sau khi huấn luyện xong, để **suy luận** (sinh
+văn bản từ audio mới), cách đơn giản nhất — **greedy decoding** (mỗi
+frame lấy nhãn xác suất cao nhất, rồi rút gọn) — có thể bỏ lỡ lời giải
+tốt hơn (1 quyết định sai ở 1 frame không tự sửa được). **Beam search**
+giữ đồng thời `k` (beam width) chuỗi ứng viên tốt nhất tại mỗi bước thay
+vì chỉ 1, mở rộng dần theo thời gian, tính điểm kết hợp xác suất CTC với
+**language model** (LM) bên ngoài:
+
+```
+score(y) = Σ_t log P_CTC(y_t | x) + α · log P_LM(y_t | y_1:t-1) + β·|y|
+```
+
+`α` trọng số cho ngôn ngữ mô hình (ưu tiên câu "nghe hợp ngữ pháp" hơn),
+`β` phạt/thưởng theo độ dài (tránh beam search thiên vị câu quá ngắn).
+Beam search + LM rescoring là kỹ thuật chuẩn để cải thiện WER thực tế —
+CTC tự nó chỉ biết âm thanh, LM bù thêm tri thức ngôn ngữ (ví dụ phân biệt
+"tôi đi học" vs "tôi đi hok" nghe gần giống nhau về âm).
+
+**Đánh giá: Word Error Rate (WER).** Chỉ số chuẩn cho ASR — đo tỷ lệ lỗi
+giữa câu dự đoán và câu đúng, dựa trên 3 loại lỗi ở cấp độ từ: **thay thế**
+(Substitution — từ sai), **xoá** (Deletion — thiếu từ), **thêm** (Insertion
+— thừa từ), tính qua alignment tối ưu (edit distance):
+
+```
+WER = (S + D + I) / N
+```
+
+`N` là số từ trong câu đúng (reference). WER thấp hơn = tốt hơn (0% là
+hoàn hảo). WER là thước đo trực tiếp so sánh các hệ thống ASR khác nhau —
+tương tự vai trò của accuracy/F1 cho classification.
+
 ## Cách tiếp cận 2: Encoder-Decoder (kiểu Whisper)
 
 Cách tiếp cận thứ hai, phổ biến ở các hệ thống hiện đại (như Whisper của
@@ -70,6 +124,23 @@ self-attention/cross-attention đã học ở Transformer — decoder có thể
 "tra cứu" toàn bộ audio đã mã hoá tại mỗi bước sinh từ, không bị giới hạn
 bởi cấu trúc tuần tự chặt như RNN.
 
+**Whisper cụ thể (Radford et al., 2022, OpenAI).** Khác với các mô hình
+tự-giám-sát trước đó (wav2vec 2.0, HuBERT — pretrain không nhãn rồi
+fine-tune), Whisper huấn luyện **hoàn toàn supervised** trên **680.000
+giờ** dữ liệu audio-text thu thập từ web (đa ngôn ngữ, đa miền) — quy mô
+lớn bù cho nhãn "yếu" (weak supervision, không phải nhãn chuyên gia sạch
+tuyệt đối). Kiến trúc chuẩn encoder-decoder Transformer (encoder xử lý
+log-mel spectrogram, decoder autoregressive sinh token).
+
+Điểm đặc biệt: **multitask training** — cùng 1 mô hình học đồng thời
+nhiều tác vụ (nhận dạng giọng nói, dịch sang tiếng Anh, phát hiện hoạt
+động giọng nói, nhận dạng ngôn ngữ) bằng cách mã hoá tác vụ vào chuỗi
+token đặc biệt ở đầu output (giống cách GPT xử lý nhiều tác vụ qua
+prompt). Kết quả: Whisper có khả năng **zero-shot transfer** mạnh — chạy
+tốt trên nhiều benchmark ASR công khai **mà không cần fine-tune riêng**,
+nhờ quy mô + đa dạng dữ liệu huấn luyện, đúng tinh thần scaling đã học ở
+bài [Scaling Laws](25-scaling-laws.mdx).
+
 ## Liên hệ lại với các bài trước
 
 - Speech-to-text là ví dụ cụ thể thứ hai (sau dịch máy đã nhắc ở bài
@@ -89,3 +160,5 @@ bởi cấu trúc tuần tự chặt như RNN.
 ## Nguồn tham khảo
 
 - [Multimodal Browser AI with Transformers.js for Images and Speech (MachineLearningMastery)](https://machinelearningmastery.com/multimodal-browser-ai-with-transformers-js-for-images-and-speech/) — dùng cho việc xác nhận Whisper dùng kiến trúc Transformer để chuyển đổi audio thành văn bản trong ứng dụng thực tế.
+- [arXiv — Robust Speech Recognition via Large-Scale Weak Supervision (Radford et al., 2022)](https://arxiv.org/abs/2212.04356) — paper gốc Whisper, dùng cho chi tiết cụ thể: huấn luyện supervised trên 680.000 giờ dữ liệu web đa ngôn ngữ (khác wav2vec2/HuBERT tự-giám-sát), kiến trúc encoder-decoder Transformer chuẩn, multitask training (ASR + dịch + phát hiện giọng nói + nhận dạng ngôn ngữ qua token đặc biệt), kết quả zero-shot transfer mạnh trên nhiều benchmark.
+- [arXiv — Comparison of Decoding Strategies for CTC Acoustic Models](https://arxiv.org/pdf/1708.04469) — dùng cho công thức CTC loss đầy đủ (`L=-log Σ_π P(π|x)`, forward-backward algorithm), và công thức beam search decoding kết hợp CTC + language model rescoring (`score(y)=Σ log P_CTC + α·log P_LM + β|y|`).

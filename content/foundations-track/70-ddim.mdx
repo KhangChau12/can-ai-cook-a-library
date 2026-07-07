@@ -2,11 +2,12 @@
 title: "DDIM — Sinh Nhanh Hơn 10-50 Lần Bằng Quá trình Non-Markovian Tất định"
 track: foundations-track
 module: "Generative Models"
+submodule: "Diffusion Models"
 order: 70
 status: stable
 prerequisites: ["49-diffusion-models"]
-summary: "Diffusion Models/DDPM (bài 49) sinh ảnh chất lượng cao nhưng phải mô phỏng một chuỗi Markov qua HÀNG NGÀN bước khử nhiễu tuần tự — cực kỳ chậm so với GAN (chỉ cần 1 lần forward). Song, Meng và Ermon (2020, Stanford) giải quyết bằng DDIM (Denoising Diffusion Implicit Models): xây một quá trình reverse KHÔNG-Markov (non-Markovian) chia sẻ đúng cùng mục tiêu huấn luyện với DDPM, nhưng cho phép BỎ QUA bước — sinh ảnh nhanh hơn 10-50 lần mà chất lượng vẫn cao. Tham số η điều khiển tính ngẫu nhiên: η=0 cho quá trình sinh HOÀN TOÀN TẤT ĐỊNH (deterministic), mở ra khả năng nội suy (interpolation) có ý nghĩa ngữ nghĩa trong latent space — điều DDPM gốc không làm được."
-last_touched_by_task: "Bài mới (2026-07-06), mở rộng module 'Generative Models' (chỉ 1 bài GAN gốc + DCGAN + Diffusion Models trước đó, được đánh giá là module mỏng nhất track ở CLAUDE.md — xem entry bài 23) — DDIM đã được ghi nhận là ứng viên mở rộng biến thể Diffusion từ nhiều task trước ('sinh nhanh hơn'). Nguồn: arxiv 2010.02502 (paper gốc Song, Meng, Ermon 2020, 'Denoising Diffusion Implicit Models', xác nhận qua WebFetch abstract: vấn đề cụ thể DDPM cần mô phỏng chuỗi Markov nhiều bước để sinh 1 mẫu, giải pháp quá trình non-Markovian chia sẻ training objective với DDPM, kết quả tăng tốc 10-50 lần vẫn giữ chất lượng cao, hỗ trợ nội suy ngữ nghĩa trong latent space) + lilianweng.github.io (bài 'What are Diffusion Models?' — đã dùng cho bài 49, xác nhận qua WebFetch: cơ chế kỹ thuật chi tiết công thức σ_t² = η·β̃_t, η=0 cho quá trình tất định/η=1 cho DDPM gốc ngẫu nhiên, cách bỏ qua bước từ T xuống S, so sánh FID cụ thể cho thấy DDIM vượt trội DDPM khi S nhỏ)."
+summary: "Diffusion Models/DDPM (bài 49) sinh ảnh chất lượng cao nhưng phải mô phỏng một chuỗi Markov qua HÀNG NGÀN bước khử nhiễu tuần tự — cực kỳ chậm so với GAN (chỉ cần 1 lần forward). Song, Meng và Ermon (2020, Stanford) giải quyết bằng DDIM (Denoising Diffusion Implicit Models): quá trình reverse KHÔNG-Markov (non-Markovian) chia sẻ cùng mục tiêu huấn luyện với DDPM nhưng cho phép BỎ QUA bước (update rule dự đoán x_0 rồi nhảy), sinh nhanh 10-50×. Tham số η=0 cho quá trình TẤT ĐỊNH (nội suy ngữ nghĩa). Bổ sung classifier-free guidance (Ho & Salimans 2022, `ε̂=(1+w)·ε(x_t,c)−w·ε(x_t,∅)`) — kỹ thuật biến diffusion thành text-to-image thực tế."
+last_touched_by_task: "Cải thiện Task 106 (2026-07-07): Phase 2 Generative — bổ sung (1) update rule cụ thể (dự đoán x_0 từ x_t+ε_θ, rồi tính x_{t-1} với 3 phần hướng x_0/hướng ε/nhiễu), (2) section mới 'classifier-free guidance' (Ho & Salimans 2022, công thức `(1+w)·ε(x_t,c)−w·ε(x_t,∅)`, guidance scale 7.5, kỹ thuật biến diffusion thành text-to-image thực tế). Nguồn: WebSearch whitelist (arxiv/lilianweng) xác nhận công thức. Giữ nguyên cấu trúc non-Markovian + η + kết quả 10-50× (đã đúng)."
 ---
 
 Bài [Diffusion Models/DDPM](49-diffusion-models.mdx) học cách sinh ảnh
@@ -56,6 +57,28 @@ quá trình sinh từ `T` bước xuống chỉ còn `S` bước (`S` nhỏ hơn
 với `T`), trong khi vẫn tận dụng đúng mô hình đã huấn luyện theo mục tiêu
 DDPM ban đầu.
 
+**Update rule cụ thể.** Mấu chốt của DDIM là **dự đoán `x_0`** từ ảnh
+nhiễu `x_t` và nhiễu dự đoán `ε_θ` — đảo ngược closed-form forward (bài
+[49](49-diffusion-models.mdx)):
+
+```
+x_0 dự đoán = ( x_t - sqrt(1 - ᾱ_t) · ε_θ(x_t, t) ) / sqrt(ᾱ_t)
+```
+
+Có `x_0` dự đoán, DDIM tính `x_{t-1}` (hoặc `x_{t-⌈T/S⌉}` khi bỏ bước)
+bằng công thức:
+
+```
+x_{t-1} = sqrt(ᾱ_{t-1}) · (x_0 dự đoán)  +  sqrt(1 - ᾱ_{t-1} - σ_t²) · ε_θ(x_t, t)  +  σ_t · ε
+```
+
+với `ε ~ N(0, I)` nhiễu ngẫu nhiên, `σ_t² = η·β̃_t` như trên. 3 phần: (1)
+hướng về `x_0` dự đoán, (2) phần "hướng ε" giữ nhất quán với nhiễu đã dự
+đoán, (3) nhiễu ngẫu nhiên với độ lớn `σ_t`. Khi `η = 0`, phần (3) biến
+mất → quá trình tất định, lặp lại đúng cùng 1 ảnh nếu khởi đầu từ cùng 1
+nhiễu. Đây chính là cơ sở cho khả năng nội suy ngữ nghĩa (xem phần kết
+quả).
+
 ## Kết quả: nhanh hơn 10-50 lần, chất lượng vẫn cao — và có thêm khả năng mới
 
 Song và cộng sự công bố: DDIM đạt tốc độ sinh ảnh nhanh hơn **10 đến 50
@@ -71,6 +94,37 @@ ngữ nghĩa** trực tiếp trong không gian latent — vì quá trình sinh k
 còn phụ thuộc vào nhiễu ngẫu nhiên ở mỗi bước, hai điểm gần nhau trong
 latent space sẽ cho ra ảnh có đặc điểm cấp cao **tương tự nhau** một cách
 nhất quán (DDIM gọi đây là tính chất "consistency").
+
+## Mở rộng: classifier-free guidance — biến diffusion thành text-to-image
+
+DDPM/DDIM tới đây sinh ảnh **vô điều kiện** (unconditional) — không kiểm
+soát ảnh sinh ra cái gì. Để tạo text-to-image (nhập "mèo ngồi trên xe" →
+sinh ảnh đó), cần **điều kiện** `c` (text prompt). Cách tiếp cận chuẩn
+hiện đại là **classifier-free guidance** (Ho & Salimans 2022) — đơn giản
+nhưng thay đổi cuộc chơi:
+
+Huấn luyện 1 mạng duy nhất học **cả 2 chế độ**: có điều kiện `ε_θ(x_t, c)`
+và không điều kiện `ε_θ(x_t, ∅)` (thực hiện bằng cách random **bỏ điều
+kiện** trong ~10% batch huấn luyện, ép mạng học cả 2). Khi sample, thay
+dùng trực tiếp `ε_θ(x_t, c)`, dùng tổ hợp **nội suy-ngoại suy**:
+
+```
+ε̂_θ = (1 + w) · ε_θ(x_t, c)  -  w · ε_θ(x_t, ∅)
+```
+
+`w` là **guidance scale** (thường 7.5). Công thức này **đẩy ra xa** phân
+phối không điều kiện, **về phía** phân phối có điều kiện — kết quả: ảnh
+sinh ra **bám sát prompt hơn** nhiều so với điều kiện thuần. Trade-off:
+`w` cao → ảnh rõ nét, bám prompt, nhưng giảm đa dạng và có thể tạo artefact;
+`w = 0` → sinh có điều kiện thuần (thiếu sắc nét); `w` quá lớn (>15) →
+ảnh bão hoà, méo mó.
+
+Classifier-free guidance là kỹ thuật then chốt biến diffusion từ "sinh
+ảnh vô điều kiện" thành text-to-image thực tế — Stable Diffusion (bài
+sau) và DALL·E 2, Imagen đều dùng nó. Đây là phần mở rộng quan trọng nhất
+của diffusion hiện đại, dù không thuộc paper DDIM gốc — nhưng chỉ khi DDIM
+làm sampling nhanh (10-50 bước thay vì 1000), text-to-image diffusion mới
+khả thi về mặt thời gian.
 
 ## Liên hệ lại với các bài trước
 
@@ -95,4 +149,5 @@ nhất quán (DDIM gọi đây là tính chất "consistency").
 ## Nguồn tham khảo
 
 - [arXiv — Denoising Diffusion Implicit Models](https://arxiv.org/abs/2010.02502) — paper gốc của Song, Meng và Ermon (2020), dùng cho vấn đề cụ thể (DDPM cần mô phỏng chuỗi Markov nhiều bước để sinh 1 mẫu), giải pháp (quá trình non-Markovian chia sẻ training objective với DDPM), và kết quả tổng quan (tăng tốc 10-50 lần, hỗ trợ nội suy ngữ nghĩa).
-- [Lil'Log — What are Diffusion Models?](https://lilianweng.github.io/posts/2021-07-11-diffusion-models/) — dùng cho cơ chế kỹ thuật chi tiết (công thức σ_t² = η·β̃_t, ý nghĩa η=0 tất định/η=1 DDPM gốc), cách bỏ qua bước từ T xuống S, và so sánh FID cụ thể cho thấy DDIM vượt trội DDPM khi số bước sample nhỏ.
+- [Lil'Log — What are Diffusion Models?](https://lilianweng.github.io/posts/2021-07-11-diffusion-models/) — dùng cho cơ chế kỹ thuật chi tiết (công thức σ_t² = η·β̃_t, ý nghĩa η=0 tất định/η=1 DDPM gốc), update rule dự đoán x_0 từ x_t+ε_θ rồi tính x_{t-1}, cách bỏ qua bước từ T xuống S, và so sánh FID cụ thể cho thấy DDIM vượt trội DDPM khi số bước sample nhỏ.
+- [arXiv — Classifier-Free Diffusion Guidance (Ho & Salimans, 2022)](https://arxiv.org/abs/2207.12598) — dùng cho section classifier-free guidance: huấn luyện 1 mạng học cả điều kiện/không điều kiện (dropout 10%), công thức `ε̂=(1+w)·ε(x_t,c)−w·ε(x_t,∅)` ngoại suy về phía phân phối có điều kiện, guidance scale ~7.5, biến diffusion thành text-to-image thực tế (Stable Diffusion/DALL·E 2/Imagen đều dùng).

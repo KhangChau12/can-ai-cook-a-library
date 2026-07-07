@@ -1,0 +1,43 @@
+---
+quiz_for: 86-model-based-rl
+---
+
+## Q1
+Khác biệt cốt lõi giữa model-based RL và model-free RL (DQN/PPO/SAC) là gì?
+
+- [ ] Model-based dùng mạng nơ-ron, model-free dùng bảng
+- [x] Model-based học thêm mô hình dynamics môi trường (transition + reward) để lập kế hoạch/mô phỏng, model-free chỉ học từ reward quan sát
+- [ ] Model-based chỉ cho action rời rạc
+- [ ] Model-based không cần exploration
+
+> Model-free (DQN/PPO/SAC) học trực tiếp Q/policy từ reward, không hiểu môi trường. Model-based học thêm mô hình (dự đoán state kế + reward) để "tưởng tượng" experience giả → planning. Lợi ích chính: sample efficiency cao (ít cần chạy environment thật).
+
+## Q2
+Dyna-Q kết hợp 3 vòng lặp. Vai trò của bước "planning" (dùng mô hình sinh experience giả) là gì?
+
+- [ ] Thay thế hoàn toàn experience thực
+- [x] Cập nhật Q-value thêm từ experience giả (không cần environment thật), tăng sample efficiency
+- [ ] Giảm variance của gradient
+- [ ] Khám phá action mới
+
+> Dyna-Q xen kẽ: direct RL (experience thực) + model learning (học T̂, R̂) + planning (dùng T̂, R̂ sinh experience giả cập nhật Q). Bước planning rẻ (chỉ dùng mô hình) → chạy nhiều lần → Q-value hội tụ nhanh hơn với ít experience thực.
+
+## Q3
+MuZero học mô hình dynamics trong "latent space" thay vì raw observation. Vì sao?
+
+- [ ] Latent space giảm kích thước input, tiết kiệm bộ nhớ
+- [x] Dự đoán raw observation (pixel khung hình kế) quá khó và lãng phí chi tiết không quan trọng — latent state chỉ cần đủ tốt để policy/value dự đoán đúng, học "cái quan trọng cho quyết định"
+- [ ] MCTS chỉ chạy được trong latent space
+- [ ] Latent space tránh overfitting
+
+> Dự đoán chính xác pixel khung hình kế cực khó (chi tiết thừa nhiều). MuZero học hidden state đủ tốt để prediction (policy/value) đúng, bỏ qua chi tiết không ảnh hưởng quyết định. MCTS chạy trên hidden state, không cần raw observation → khả thi.
+
+## Q4
+AlphaZero cần "luật game đã biết" làm mô hình, MuZero không. Hệ quả thực tế?
+
+- [ ] AlphaZero chính xác hơn MuZero
+- [x] AlphaZero giới hạn ở môi trường có simulator (cờ vây/cờ vua), MuZero mở rộng sang môi trường dynamics ẩn (Atari)
+- [ ] MuZero chậm hơn AlphaZero
+- [ ] Không khác biệt đáng kể
+
+> AlphaZero dùng luật game (đã biết) làm mô hình → chỉ áp dụng board game. MuZero học cả dynamics → áp dụng cả Atari (không có luật trước) lẫn board game, SOTA cả 2. Đây là bước tiến cốt lõi: bỏ phụ thuộc vào simulator có sẵn.

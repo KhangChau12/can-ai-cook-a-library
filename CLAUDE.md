@@ -14,20 +14,26 @@
 
 ## 1. STATUS (đọc đầu mỗi task, không ngoại lệ)
 
-- **Version:** v6.35
-- **Phiên gần nhất:** Task 95 (2026-07-07) — cải thiện bài `07-k-means-
-  clustering.mdx` (foundations-track): phần giới hạn thêm ví dụ kinh điển
-  thất bại (2 vòng tròn đồng tâm, k-means chia bằng đường thẳng thay vì
-  tách vòng trong/vòng ngoài), liên hệ ngược SVM kernel bài 06.
-- **Tổng số bài hiện có:** 92 (11 exam-track + 81 foundations-track,
-  92/92 đã có quiz — 392 câu hỏi, tổ chức thành **10 module** cho
+- **Version:** v7.0
+- **Phiên gần nhất:** Task 116 (2026-07-07) — PHASE 3 AUDIO HOÀN THÀNH,
+  KẾ HOẠCH ĐÀO SÂU 3 MODULE (RL→Generative→Audio) HOÀN TẤT TOÀN BỘ: viết
+  bài mới `92-hifigan-neural-vocoder.mdx` (submodule Text-to-Speech) —
+  đào sâu kiến trúc HiFi-GAN (generator MRF, 2 discriminator multi-
+  period/multi-scale, 3 loss kết hợp adversarial+mel+feature matching).
+  Submodule Text-to-Speech từ 2→3 bài. Tổng kết 3 phase: 30 task, 92→100
+  bài (+8), 3 module đào sâu toàn diện (RL 8→14 bài 3 submodule,
+  Generative 4→6 bài 2 submodule, Audio 3→5 bài 3 submodule).
+- **Tổng số bài hiện có:** 103 (11 exam-track + 92 foundations-track) —
+  số liệu xác nhận qua build viewer, tổ chức thành **10 module** cho
   foundations-track: ML cổ điển (9 bài), DL Nền tảng (3, phẳng),
   Computer Vision (17 bài, 3 sub-module), Sequence Model (20 bài, 3
   sub-module: RNN Family 5/Transformer Architecture 9/Tokenization 6),
-  Reinforcement Learning (8, 2 sub-module: Value-based 2/Policy-based 4),
-  Dimensionality Reduction (4), Generative Models (4), LLM (8, 2
-  sub-module), Audio (3, phẳng), Recommendation Systems (5))
-- **Số bài cần review/cải thiện lại (flagged):** 0 — toàn bộ 92 bài đạt
+  Reinforcement Learning (14, 3 sub-module: Value-based 4/Policy-based 6/
+  Model-based 2), Dimensionality Reduction (4), Generative Models (6,
+  2 sub-module: GAN Family 3/Diffusion Models 3), LLM (8, 2 sub-module),
+  Audio (6, 3 sub-module: Biểu diễn 1/STT 2/TTS 3), Recommendation
+  Systems (5)
+- **Số bài cần review/cải thiện lại (flagged):** 0 — toàn bộ 103 bài đạt
   `stable`
 
 ### 1.1 Việc phải làm ngay (nếu đúng, bỏ qua chọn task ở mục 3, làm luôn)
@@ -131,10 +137,14 @@ mục 4/`SYLLABUS.md`):
   Segmentation, Embedding)
 - **LLM**: "Huấn luyện & Alignment" (thay đổi tham số) / "Ứng dụng &
   Inference-time" (không đổi tham số)
-- **Reinforcement Learning**: "Value-based" / "Policy-based" (bài 16-17
-  là nền tảng chung, giữ phẳng không gán `submodule`)
-- Các module còn lại (ML cổ điển, Audio, Recommendation Systems) chưa
-  tách — xem mục 1.2 để tiếp tục đánh giá.
+- **Reinforcement Learning**: "Value-based" / "Policy-based" /
+  "Model-based" (bài 16-17 là nền tảng chung, giữ phẳng không gán
+  `submodule`)
+- **Generative Models**: "GAN Family" / "Diffusion Models" (2 nhánh song
+  song, khác bản chất: đối kháng vs khuếch tán)
+- **Audio**: "Biểu diễn âm thanh" / "Speech-to-Text" / "Text-to-Speech"
+- Các module còn lại (ML cổ điển, Recommendation Systems) chưa tách —
+  xem mục 1.2 để tiếp tục đánh giá.
 
 Khi cân nhắc tách sub-module hoặc tạo module mới: nếu 1 mảng con đã có
 module tương ứng ở nơi khác trong track, trả về module đó thay vì tạo
@@ -427,15 +437,17 @@ bài này bị sửa mà không phải vì nó sai.
    sub-module: RNN Family 5/Transformer Architecture 9/Tokenization 6 —
    Tokenization có 2 nhánh con Segmentation+Embedding, cả 3 sub-module
    coi là đã khai thác hết khoảng trống có nguồn whitelist phù hợp)
-5. `"Reinforcement Learning"` — bài 16-19, 47, 71, 77-78 (8 bài, 2
-   sub-module: Value-based 2/Policy-based 4; bài 16-17 phẳng)
+5. `"Reinforcement Learning"` — bài 16-19, 47, 71, 77-78, 82-87 (14 bài,
+   3 sub-module: Value-based 4/Policy-based 6/Model-based 2; bài 16-17
+   phẳng)
 6. `"Dimensionality Reduction"` — bài 21-22, 48, 50 (4 bài: PCA→
    Autoencoder→t-SNE→UMAP)
-7. `"Generative Models"` — bài 23, 46, 49, 70 (4 bài: GAN→DCGAN,
-   GAN→Diffusion, Diffusion→DDIM)
+7. `"Generative Models"` — bài 23, 46, 49, 70, 88, 89 (6 bài, 2 sub-module:
+   GAN Family 3/Diffusion Models 3)
 8. `"LLM"` — bài 24-29, 79-80 (8 bài, 2 sub-module: Huấn luyện &
    Alignment 24-27+79-80/Ứng dụng & Inference-time 28-29)
-9. `"Audio"` — bài 30-32 (3 bài, phẳng)
+9. `"Audio"` — bài 30-32, 90-92 (6 bài, 3 sub-module: Biểu diễn âm thanh
+   1/Speech-to-Text 2/Text-to-Speech 3)
 10. `"Recommendation Systems"` — bài 43-44, 51-52, 81 (5 bài: MF→NeuMF/
     AutoRec 2 nhánh song song, +DeepFM, +BPR)
 
