@@ -1,0 +1,45 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import SiteHeader from '../components/SiteHeader.astro';
+import SidebarNav from '../components/SidebarNav.astro';
+import TableOfContents from '../components/TableOfContents.astro';
+import type { Heading } from '../lib/renderMarkdown';
+import type { ModuleGroup, Track, Lesson } from '../lib/content';
+
+interface Props {
+  track: Track;
+  group: ModuleGroup;
+  lesson: Lesson;
+  headings: Heading[];
+}
+const { track, group, lesson, headings } = Astro.props;
+---
+
+<BaseLayout title={lesson.data.title} description={lesson.data.summary}>
+  <SiteHeader />
+  <div class="mx-auto flex max-w-[1400px]">
+    <aside class="sticky top-[57px] hidden h-[calc(100vh-57px)] w-[280px] shrink-0 border-r border-border-default lg:block">
+      <SidebarNav track={track} currentModuleSlug={group.slug} group={group} currentLessonId={lesson.id} />
+    </aside>
+
+    <main class="min-w-0 flex-1 px-5 py-10 sm:px-10 sm:py-12">
+      <div class="grid grid-cols-1 gap-10 xl:grid-cols-[minmax(0,1fr)_200px]">
+        <div class="min-w-0" id="lesson-content-col">
+          <slot />
+        </div>
+        <div class="hidden xl:block">
+          <TableOfContents headings={headings} />
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script define:vars={{ lessonId: lesson.id }} data-mark-viewed>
+    window.__lessonId = lessonId;
+  </script>
+  <script>
+    import { markViewed } from '../lib/progress';
+    const id = (window as any).__lessonId as string | undefined;
+    if (id) markViewed(id);
+  </script>
+</BaseLayout>

@@ -1,0 +1,54 @@
+---
+import type { Heading } from '../lib/renderMarkdown';
+
+interface Props {
+  headings: Heading[];
+}
+const { headings } = Astro.props;
+---
+
+{headings.length > 0 && (
+  <nav class="sticky top-20 text-[12.5px]" aria-label="Mục lục bài viết">
+    <div class="mb-3 text-[10.5px] font-bold uppercase tracking-wide text-text-disabled">Mục lục</div>
+    <ul class="flex flex-col border-l border-border-default">
+      {headings.map((h) => (
+        <li>
+          <a
+            href={`#${h.id}`}
+            data-toc-link={h.id}
+            class={`-ml-px block border-l-2 border-transparent py-1.5 text-text-tertiary transition hover:text-text-secondary ${h.depth === 3 ? 'pl-6' : 'pl-3.5'}`}
+          >
+            {h.text}
+          </a>
+        </li>
+      ))}
+    </ul>
+  </nav>
+)}
+
+<script>
+  const links = document.querySelectorAll<HTMLAnchorElement>('[data-toc-link]');
+  if (links.length) {
+    const headingEls = Array.from(links)
+      .map((l) => document.getElementById(l.dataset.tocLink!))
+      .filter((el): el is HTMLElement => !!el);
+
+    const setActive = (id: string) => {
+      links.forEach((l) => {
+        const active = l.dataset.tocLink === id;
+        l.classList.toggle('text-accent-blue', active);
+        l.classList.toggle('border-accent-blue', active);
+        l.classList.toggle('font-semibold', active);
+      });
+    };
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries.filter((e) => e.isIntersecting);
+        if (visible.length > 0) setActive(visible[0].target.id);
+      },
+      { rootMargin: '-80px 0px -70% 0px' },
+    );
+    headingEls.forEach((el) => observer.observe(el));
+  }
+</script>

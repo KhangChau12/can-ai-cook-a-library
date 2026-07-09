@@ -1,0 +1,76 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SiteHeader from '../components/SiteHeader.astro';
+import TrackCard from '../components/TrackCard.astro';
+import { getTrackLessons, getModuleGroups } from '../lib/content';
+
+const [examLessons, foundationLessons, examGroups, foundationGroups] = await Promise.all([
+  getTrackLessons('exam-track'),
+  getTrackLessons('foundations-track'),
+  getModuleGroups('exam-track'),
+  getModuleGroups('foundations-track'),
+]);
+
+const totalLessons = examLessons.length + foundationLessons.length;
+---
+
+<BaseLayout title="Trang chủ" description="Thư viện bài học AI/ML song ngữ Việt, viết bởi Claude Code chạy autopilot.">
+  <SiteHeader />
+
+  <main class="mx-auto max-w-6xl px-5 py-16 sm:py-24">
+    <div class="mx-auto max-w-2xl text-center">
+      <span class="inline-flex items-center gap-1.5 rounded-full border border-border-default bg-bg-surface px-3 py-1 text-[11.5px] font-semibold text-text-tertiary">
+        <span class="h-1.5 w-1.5 rounded-full bg-accent-cyan-bright"></span>
+        {totalLessons} bài học · viết bởi Claude Code autopilot
+      </span>
+      <h1 class="mt-5 text-4xl font-extrabold tracking-tight text-text-primary sm:text-5xl">
+        Can AI Cook a Library?
+      </h1>
+      <p class="mt-4 text-[15.5px] leading-relaxed text-text-tertiary">
+        Một thư viện bài học AI/ML song ngữ Việt — từ Linear Regression tới Transformer,
+        LLM và Reinforcement Learning hiện đại. Chọn lộ trình để bắt đầu.
+      </p>
+    </div>
+
+    <div class="mt-14 grid gap-6 sm:grid-cols-2">
+      <TrackCard
+        track="exam-track"
+        title="Bổ trợ thi đấu"
+        description="Mẹo thực chiến để nộp bài tốt hơn trên The Noders Platform: đọc leaderboard, tránh overfit, chọn baseline nhanh."
+        lessonCount={examLessons.length}
+        moduleCount={examGroups.length}
+        accent="blue"
+      />
+      <TrackCard
+        track="foundations-track"
+        title="Nền tảng"
+        description="Lý thuyết nền tảng ML/DL từ số 0: hồi quy, cây quyết định, mạng nơ-ron, tới Transformer/LLM/RL hiện đại."
+        lessonCount={foundationLessons.length}
+        moduleCount={foundationGroups.length}
+        accent="cyan"
+      />
+    </div>
+  </main>
+
+  <script>
+    import { getAllProgress } from '../lib/progress';
+
+    const progress = getAllProgress();
+    document.querySelectorAll<HTMLAnchorElement>('[data-track-card]').forEach((card) => {
+      const track = card.dataset.trackCard!;
+      const total = parseInt(card.dataset.total || '0', 10);
+      const ids = Object.keys(progress).filter((id) => id.startsWith(`${track}/`) && progress[id] !== 'unread');
+      const ratio = total > 0 ? ids.length / total : 0;
+
+      const ring = card.querySelector('[data-track-progress]');
+      const circle = ring?.querySelector<SVGCircleElement>('[data-ring-progress]');
+      const label = ring?.querySelector<HTMLElement>('[data-ring-label]');
+      if (circle) {
+        const r = circle.r.baseVal.value;
+        const circumference = 2 * Math.PI * r;
+        circle.style.strokeDashoffset = String(circumference * (1 - ratio));
+      }
+      if (label) label.textContent = `${Math.round(ratio * 100)}%`;
+    });
+  </script>
+</BaseLayout>

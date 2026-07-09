@@ -1,0 +1,63 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SiteHeader from '../../components/SiteHeader.astro';
+import ModuleCard from '../../components/ModuleCard.astro';
+import { getModuleGroups, trackLabel, type Track } from '../../lib/content';
+
+export function getStaticPaths() {
+  return [{ params: { track: 'exam-track' } }, { params: { track: 'foundations-track' } }];
+}
+
+const { track } = Astro.params as { track: Track };
+const groups = await getModuleGroups(track);
+const totalLessons = groups.reduce(
+  (n, g) => n + g.lessons.length + g.submodules.reduce((m, s) => m + s.lessons.length, 0),
+  0,
+);
+const base = import.meta.env.BASE_URL;
+---
+
+<BaseLayout title={trackLabel(track)}>
+  <SiteHeader />
+
+  <main class="mx-auto max-w-6xl px-5 py-12 sm:py-16">
+    <nav class="mb-6 flex items-center gap-2 text-[12.5px] text-text-disabled">
+      <a href={base} class="transition hover:text-text-tertiary">Trang chủ</a>
+      <span>/</span>
+      <span class="text-text-tertiary">{trackLabel(track)}</span>
+    </nav>
+
+    <div class="mb-10">
+      <h1 class="text-3xl font-extrabold tracking-tight text-text-primary">{trackLabel(track)}</h1>
+      <p class="mt-2 text-[14.5px] text-text-tertiary">
+        {groups.length} module · {totalLessons} bài học
+      </p>
+    </div>
+
+    <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      {groups.map((group) => (
+        <ModuleCard track={track} group={group} />
+      ))}
+    </div>
+  </main>
+
+  <script>
+    import { getAllProgress } from '../../lib/progress';
+
+    const progress = getAllProgress();
+    document.querySelectorAll<HTMLElement>('[data-module-dots]').forEach((wrap) => {
+      const key = wrap.dataset.moduleDots!;
+      const total = parseInt(wrap.dataset.total || '0', 10);
+      const ids = Object.keys(progress).filter((id) => id.startsWith(`${key}/`) && progress[id] !== 'unread');
+      const dots = wrap.querySelectorAll<HTMLElement>('[data-dot]');
+      const shownTotal = dots.length;
+      const doneScaled = total > 0 ? Math.round((ids.length / total) * shownTotal) : 0;
+      dots.forEach((dot, i) => {
+        if (i < doneScaled) {
+          dot.classList.remove('bg-bg-elevated');
+          dot.classList.add('bg-accent-blue');
+        }
+      });
+    });
+  </script>
+</BaseLayout>

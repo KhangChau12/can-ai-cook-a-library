@@ -14,12 +14,14 @@
 
 ## 1. STATUS (đọc đầu mỗi task, không ngoại lệ)
 
-- **Version:** v7.2
-- **Phiên gần nhất:** TÁI CẤU TRÚC HỆ THỐNG FILE (2026-07-08) — toàn bộ
-  file `.mdx` được sắp xếp vào thư mục module/submodule thay vì flat.
-  Mỗi bài đánh số local trong submodule/module. Cập nhật CLAUDE.md,
-  SYLLABUS.md, _index.mdx, viewer/build-data.js. Tổng số bài không đổi.
-  Audio thêm submodule Audio-Understanding (2 bài).
+- **Version:** v8.0
+- **Phiên gần nhất:** REBUILD SITE BẰNG ASTRO (2026-07-09) — thay thế
+  toàn bộ viewer HTML tĩnh (`viewer/template.html` + `build-data.js`) bằng
+  site Astro thật (SSG, React quiz island, Tailwind v4, Pagefind search),
+  deploy GitHub Pages qua workflow build+deploy 2 job. IA mới: hub → track
+  (lưới module) → module (danh sách bài, sub-module là section không phải
+  card riêng) → bài đọc. `content/` không đổi convention, `modules.json`
+  chuyển vào `content/`. Xem mục 7 để biết chi tiết kiến trúc hiện hành.
 - **Tổng số bài hiện có:** 121 (11 exam-track + 110 foundations-track) —
   tổ chức thành **10 module** cho foundations-track:
   ML cổ điển (9 bài, phẳng), DL Nền tảng (3, phẳng),
@@ -526,71 +528,49 @@ mục nào (đặc biệt 1, 1.2, 2.1, 4, 7.1):
 
 ---
 
-## 7. Viewer nội bộ (`viewer/index.html`)
+## 7. Site (Astro, deploy GitHub Pages)
 
-Trang tĩnh, tự chứa (không cần server/build step — mở thẳng bằng file://
-hoặc double-click), mục đích để người vận hành (không phải agent) lướt cây
-bài viết nhanh mà không cần mở từng file `.mdx`.
+**Kiến trúc (2026-07-09, thay thế hoàn toàn viewer HTML tĩnh cũ):** site
+thật build bằng Astro (SSG), deploy tự động lên GitHub Pages qua
+`.github/workflows/pages.yml` mỗi push nhánh `main`. Không còn giới hạn
+"vanilla HTML, không dependency" — site dùng npm, Tailwind v4, React
+(chỉ cho quiz island), Pagefind (search).
 
-Yêu cầu tối thiểu:
-- Đọc danh sách bài từ chính các file `.mdx` trong `content/` (agent tự
-  quyết định cách nạp dữ liệu — ví dụ một bước build nhỏ sinh ra
-  `viewer/data.json` từ frontmatter + nội dung mỗi khi có bài mới, rồi
-  `index.html` fetch file JSON đó).
-- Hiển thị 2 cột/2 tab theo track, đúng thứ tự `order`.
-- Click vào 1 bài → hiện nội dung (render Markdown cơ bản là đủ, không cần
-  render đúng JSX của MDX).
-- Badge trạng thái (`draft` / `needs-review` / `stable`) hiện rõ trên mỗi
-  mục trong danh sách.
-- Đây là một phần hợp lệ của roadmap tối ưu — khi mục 4 (giáo trình) đổi
-  cấu trúc lớn, cải thiện viewer để phản ánh đúng cấu trúc mới cũng là một
-  task hợp lệ (xem mục 3, bước 6).
+`content/` vẫn là nguồn sự thật duy nhất, không đổi convention: mỗi bài
+là `.mdx` (frontmatter + markdown thuần, không JSX) để có thể tái dùng
+nguyên vẹn cho `/learn` thật trên web chính sau này. `content/modules.json`
+(chuyển từ `viewer/modules.json`) chứa mô tả module/sub-module.
 
-Giữ viewer đơn giản — đây là công cụ nội bộ cho 1 người dùng (bạn), không
-cần polish UI, không cần responsive, không cần dark mode riêng (dù có thể
-tái dùng bảng màu dark của web chính nếu thuận tiện).
+**Đường dẫn:** `/` (hub — 2 track card) → `/<track>/` (lưới module) →
+`/<track>/<module>/` (danh sách bài, nhóm theo sub-module nếu có) →
+`/<track>/<module>/<...slug>/` (đọc bài). Route id/slug tự sinh từ
+frontmatter (`module`/`submodule`/tên file, qua `src/lib/slugify.ts`) —
+KHÔNG dựa vào tên thư mục trên đĩa (tên thư mục transliterate không nhất
+quán, có thư mục ASCII thuần, có thư mục giữ nguyên dấu).
 
-### 7.1 Cơ chế build (đọc trước khi động vào viewer)
+**Cập nhật khi thêm/sửa bài:** không cần chạy build thủ công như trước —
+`npm run dev` tự đọc lại `content/` (Astro content collection, xem
+`src/content.config.ts`). Chỉ cần `npm run build` khi muốn kiểm tra bản
+production thật (kèm Pagefind index) hoặc trước khi push.
 
-`viewer/build-data.js` đọc toàn bộ `.mdx` trong `content/`, sinh
-`viewer/data.json`, rồi nhúng thẳng data đó vào `<script>` của
-`viewer/index.html` (build từ `viewer/template.html`) — không dùng
-`fetch()` vì bị trình duyệt chặn (CORS) khi mở `index.html` qua `file://`
-trực tiếp.
+**Thứ tự module/sub-module:** lấy từ thứ tự key trong `content/modules.json`
+(không phải `order` trong frontmatter — field đó chỉ có ý nghĩa cục bộ
+trong 1 module/sub-module, xem mục 2.3). Khi thêm module mới, thêm đúng vị
+trí mong muốn vào `content/modules.json`, không chỉ thêm cuối file.
 
-**KHÔNG tự chạy `viewer/watch.js`** — không tự khởi động watcher nền
-dưới bất kỳ hình thức nào. Người vận hành tự build viewer thủ công khi
-cần. Quy trình: sau khi sửa/tạo bài `.mdx`, agent gọi `node
-viewer/build-data.js` **một lần thủ công** để cập nhật `data.json` +
-`index.html`. Nếu phát hiện một process `node.exe` chạy nền không rõ
-nguồn gốc, báo người vận hành và xin phép trước khi kill — không tự ý
-cho rằng đó là watcher cũ của agent.
+**Quiz:** `.quiz.mdx` giữ nguyên convention cũ (mục 2.6), parse bởi
+`src/lib/quizParser.ts` (port 1:1 từ `build-data.js` cũ), join với bài gốc
+theo slug filename (bỏ số thứ tự đầu). Hiển thị qua `QuizIsland.tsx` (React
+island, `client:visible`) — tab "Nội dung bài" / "Quiz (N câu)" trên trang
+đọc bài, chấm ngay khi chọn, có giải thích, đếm tiến độ, nút làm lại.
 
-Khi thêm/tách một sub-module mới, **phải cập nhật `viewer/modules.json`**
-(field `submodules` của module tương ứng) trong cùng task — không chỉ
-gán `submodule` trong frontmatter. Bỏ qua bước này khiến sub-module vẫn
-hiển thị đúng nhóm bài nhưng thiếu mô tả ngắn ở đầu mỗi nhóm.
+**Tiến độ đọc:** `localStorage` (`src/lib/progress.ts`), key theo route id
+— không có backend/tài khoản, không đổi so với thiết kế cũ.
 
-Luôn xác nhận số liệu build bằng cách đọc trực tiếp `data.json` qua Node
-sau mỗi thay đổi lớn tới cấu trúc build — không chỉ tin dòng log in ra.
-
-### 7.2 Quiz interactive (đã triển khai 2026-07-05)
-
-`build-data.js` tự động tìm mọi file `*.quiz.mdx` cùng thư mục track,
-parse thành mảng câu hỏi có cấu trúc (`prompt`, `options[].text`,
-`options[].correct`, `explanation`) dựa theo `quiz_for` trong frontmatter,
-rồi gắn field `quiz` vào đúng object bài gốc trong `data.json`. Bài không
-có file quiz tương ứng thì không có field `quiz` (không hiển thị gì thêm
-trên viewer).
-
-`template.html`: nếu `page.quiz` tồn tại, hiện 2 nút chuyển tab ("Nội
-dung bài" / "Quiz (N câu)") ngay dưới header — click "Quiz" hiện danh
-sách câu hỏi dạng chọn 1 đáp án, chấm ngay khi chọn (tô xanh đáp án đúng,
-đỏ nếu chọn sai + tô xanh đáp án đúng để đối chiếu), hiện giải thích ngay
-dưới, có bộ đếm "đã làm X/N — đúng Y/X" và nút "Làm lại từ đầu".
-
-File `*.quiz.mdx` cũng cần `node viewer/build-data.js` chạy thủ công như
-mọi file `.mdx` khác (xem mục 7.1) — không có watcher tự động.
+**Không tự ý đổi lại field `order` thành ý nghĩa track-wide** — logic
+group/sort (`src/lib/content.ts`) đã cố ý dùng thứ tự file trên đĩa
+(`sourcePath`) + thứ tự module.json làm nguồn sắp xếp chính, vì `order`
+chỉ đúng cục bộ trong 1 module/sub-module (xem mục 2.3).
 
 ---
 

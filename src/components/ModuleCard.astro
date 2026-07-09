@@ -1,0 +1,44 @@
+---
+import type { ModuleGroup, Track } from '../lib/content';
+
+interface Props {
+  track: Track;
+  group: ModuleGroup;
+}
+const { track, group } = Astro.props;
+const base = import.meta.env.BASE_URL;
+
+const totalLessons = group.lessons.length + group.submodules.reduce((n, s) => n + s.lessons.length, 0);
+const sectionCount = group.submodules.length;
+---
+
+<a
+  href={`${base}${track}/${group.slug}/`}
+  data-module-card={`${track}/${group.slug}`}
+  class="group flex flex-col gap-4 rounded-xl border border-border-default bg-bg-surface p-6 transition-all duration-150 hover:-translate-y-0.5 hover:border-border-subtle hover:bg-bg-surface-2 hover:shadow-lg"
+>
+  <div class="flex items-start justify-between gap-3">
+    <h3 class="text-[17px] font-bold leading-snug text-text-primary">{group.name}</h3>
+    <span class="shrink-0 rounded-full border border-border-default bg-bg-inset px-2.5 py-1 font-mono text-[10.5px] font-bold text-text-tertiary">
+      {totalLessons} bài
+    </span>
+  </div>
+
+  {group.meta?.description && (
+    <p class="line-clamp-3 text-[13.5px] leading-relaxed text-text-tertiary">{group.meta.description}</p>
+  )}
+
+  <div class="mt-auto flex items-center justify-between gap-3 border-t border-border-default pt-4">
+    {sectionCount > 0 ? (
+      <span class="inline-flex items-center gap-1.5 text-[11.5px] font-semibold text-text-disabled">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        {sectionCount} phần
+      </span>
+    ) : <span></span>}
+    <div class="flex items-center gap-1" data-module-dots={`${track}/${group.slug}`} data-total={totalLessons}>
+      {Array.from({ length: Math.min(totalLessons, 10) }).map(() => (
+        <span class="h-1.5 w-1.5 rounded-full bg-bg-elevated" data-dot></span>
+      ))}
+    </div>
+  </div>
+</a>

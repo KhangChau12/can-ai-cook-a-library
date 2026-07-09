@@ -1,0 +1,76 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import SiteHeader from '../../../components/SiteHeader.astro';
+import LessonRow from '../../../components/LessonRow.astro';
+import { getModuleGroups, trackLabel, type Track } from '../../../lib/content';
+
+export async function getStaticPaths() {
+  const tracks: Track[] = ['exam-track', 'foundations-track'];
+  const paths = [];
+  for (const track of tracks) {
+    const groups = await getModuleGroups(track);
+    for (const group of groups) {
+      paths.push({ params: { track, module: group.slug }, props: { group, track } });
+    }
+  }
+  return paths;
+}
+
+const { group, track } = Astro.props as { group: Awaited<ReturnType<typeof getModuleGroups>>[number]; track: Track };
+const base = import.meta.env.BASE_URL;
+const totalLessons = group.lessons.length + group.submodules.reduce((n, s) => n + s.lessons.length, 0);
+---
+
+<BaseLayout title={group.name}>
+  <SiteHeader />
+
+  <main class="mx-auto max-w-4xl px-5 py-12 sm:py-16">
+    <nav class="mb-6 flex flex-wrap items-center gap-2 text-[12.5px] text-text-disabled">
+      <a href={base} class="transition hover:text-text-tertiary">Trang chủ</a>
+      <span>/</span>
+      <a href={`${base}${track}/`} class="transition hover:text-text-tertiary">{trackLabel(track)}</a>
+      <span>/</span>
+      <span class="text-text-tertiary">{group.name}</span>
+    </nav>
+
+    <div class="mb-10 border-b border-border-default pb-8">
+      <h1 class="text-3xl font-extrabold tracking-tight text-text-primary">{group.name}</h1>
+      {group.meta?.description && (
+        <p class="mt-3 max-w-2xl text-[14.5px] leading-relaxed text-text-tertiary">{group.meta.description}</p>
+      )}
+      <p class="mt-3 font-mono text-[12.5px] text-text-disabled">{totalLessons} bài học</p>
+    </div>
+
+    {group.lessons.length > 0 && (
+      <div class="mb-10">
+        <div class="flex flex-col">
+          {group.lessons.map((lesson, i) => <LessonRow lesson={lesson} index={i} />)}
+        </div>
+      </div>
+    )}
+
+    {group.submodules.map((sub) => (
+      <section class="mb-10">
+        <h2 class="text-lg font-bold text-text-primary">{sub.name}</h2>
+        {sub.description && <p class="mt-1.5 max-w-2xl text-[13.5px] text-text-tertiary">{sub.description}</p>}
+        <div class="mt-4 flex flex-col">
+          {sub.lessons.map((lesson, i) => <LessonRow lesson={lesson} index={i} />)}
+        </div>
+      </section>
+    ))}
+  </main>
+
+  <script>
+    import { getProgress } from '../../../lib/progress';
+
+    document.querySelectorAll<HTMLElement>('[data-lesson-check]').forEach((el) => {
+      const id = el.dataset.lessonCheck!;
+      const state = getProgress(id);
+      if (state === 'quiz_done') {
+        el.classList.add('bg-success', 'border-success');
+      } else if (state === 'viewed') {
+        el.classList.add('bg-accent-blue', 'border-accent-blue');
+      }
+    });
+  </script>
+</BaseLayout>

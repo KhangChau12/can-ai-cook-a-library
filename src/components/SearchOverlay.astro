@@ -1,0 +1,100 @@
+---
+const base = import.meta.env.BASE_URL;
+---
+
+<div id="search-overlay" class="fixed inset-0 z-50 hidden items-start justify-center bg-black/60 px-4 pt-[12vh] backdrop-blur-sm">
+  <div class="w-full max-w-xl overflow-hidden rounded-2xl border border-border-subtle bg-bg-surface-2 shadow-2xl">
+    <div class="flex items-center gap-3 border-b border-border-default px-4 py-3">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="text-text-disabled"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input
+        id="search-overlay-input"
+        type="text"
+        placeholder="Tìm bài viết trong cả 2 track…"
+        autocomplete="off"
+        class="flex-1 bg-transparent text-[14.5px] text-text-primary placeholder:text-text-disabled focus:outline-none"
+      />
+      <kbd class="rounded border border-border-subtle bg-bg-elevated px-1.5 py-0.5 font-mono text-[10px] text-text-disabled">Esc</kbd>
+    </div>
+    <div id="search-overlay-results" class="max-h-[60vh] overflow-y-auto p-2"></div>
+  </div>
+</div>
+
+<script define:vars={{ base }}>
+  const overlay = document.getElementById('search-overlay');
+  const input = document.getElementById('search-overlay-input');
+  const resultsEl = document.getElementById('search-overlay-results');
+  const trigger = document.getElementById('search-trigger');
+  let pagefindInstance = null;
+
+  async function loadPagefind() {
+    if (pagefindInstance) return pagefindInstance;
+    try {
+      pagefindInstance = await import(/* @vite-ignore */ `${base}pagefind/pagefind.js`);
+      await pagefindInstance.init();
+    } catch (e) {
+      console.warn('Pagefind chưa sẵn sàng (chỉ có sau khi build):', e);
+    }
+    return pagefindInstance;
+  }
+
+  function open() {
+    overlay.classList.remove('hidden');
+    overlay.classList.add('flex');
+    input.value = '';
+    resultsEl.innerHTML = '';
+    input.focus();
+    loadPagefind();
+  }
+
+  function close() {
+    overlay.classList.add('hidden');
+    overlay.classList.remove('flex');
+  }
+
+  trigger?.addEventListener('click', open);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === '/' && document.activeElement?.tagName !== 'INPUT') {
+      e.preventDefault();
+      open();
+    } else if (e.key === 'Escape') {
+      close();
+    }
+  });
+
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) close();
+  });
+
+  let debounceTimer;
+  input.addEventListener('input', () => {
+    clearTimeout(debounceTimer);
+    const query = input.value.trim();
+    debounceTimer = setTimeout(async () => {
+      if (!query) {
+        resultsEl.innerHTML = '';
+        return;
+      }
+      const pf = await loadPagefind();
+      if (!pf) {
+        resultsEl.innerHTML = '<div class="px-3 py-6 text-center text-[13px] text-text-disabled">Tìm kiếm chỉ hoạt động trên bản build đã deploy.</div>';
+        return;
+      }
+      const search = await pf.search(query);
+      const items = await Promise.all(search.results.slice(0, 8).map((r) => r.data()));
+      if (!items.length) {
+        resultsEl.innerHTML = '<div class="px-3 py-6 text-center text-[13px] text-text-disabled">Không tìm thấy kết quả.</div>';
+        return;
+      }
+      resultsEl.innerHTML = items
+        .map(
+          (item) => `
+          <a href="${item.url}" class="block rounded-lg px-3 py-2.5 transition hover:bg-bg-elevated">
+            <div class="text-[13.5px] font-bold text-text-primary">${item.meta?.title ?? item.url}</div>
+            <div class="mt-0.5 line-clamp-2 text-[12px] text-text-tertiary">${item.excerpt}</div>
+          </a>`,
+        )
+        .join('');
+    }, 150);
+  });
+</script>
