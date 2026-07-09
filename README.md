@@ -78,7 +78,6 @@ autopilot-learn/
 ├── .github/workflows/pages.yml  # Build (Astro + Pagefind) và deploy lên GitHub Pages mỗi push
 ├── CLAUDE.md          # Nguồn sự thật: quy chuẩn viết, trạng thái, mọi
 │                       # quyết định thiết kế đã chốt, bảng tóm tắt giáo trình
-├── SYLLABUS.md         # Chi tiết đầy đủ từng bài (tên file, nguồn, lý do)
 ├── AUTOPILOT.md        # Vòng lặp vận hành cho agent (đọc CLAUDE.md mỗi task)
 ├── content/
 │   ├── modules.json           # Mô tả ngắn module/sub-module (dùng bởi src/lib/content.ts)
@@ -111,9 +110,10 @@ sau này. Frontmatter: `title`, `track`, `module`, `submodule` (tuỳ chọn),
 
 Chi tiết đầy đủ về quy chuẩn viết, whitelist nguồn tham khảo, cách chia
 module/sub-module... nằm hết trong `CLAUDE.md` — đọc file đó nếu muốn hiểu
-sâu hơn về "luật chơi" của thư viện này. Danh sách chi tiết từng bài (tên
-file, nguồn, lý do viết) nằm ở `SYLLABUS.md` — tách riêng để `CLAUDE.md`
-gọn hơn (file này được nạp vào context mọi task nên càng gọn càng tốt).
+sâu hơn về "luật chơi" của thư viện này. Chi tiết từng bài cụ thể (nguồn,
+lý do viết) nằm ngay trong chính file `.mdx` của bài đó (`summary`,
+`last_touched_by_task`, `## Nguồn tham khảo`) — không có file tóm tắt
+trung gian nào khác.
 
 ---
 
@@ -154,15 +154,14 @@ thư mục này.
      trúc frontmatter, whitelist nguồn, chuẩn quiz...).
    - Mục 3 — thứ tự ưu tiên chọn task tiếp theo.
    - Mục 4 — bảng tóm tắt giáo trình (module/sub-module, số bài mỗi
-     module); chi tiết từng bài nằm ở `SYLLABUS.md` riêng.
-   - Mục 6 — bắt buộc cập nhật lại mục 1 (và `SYLLABUS.md`) cuối mỗi task,
-     để phiên sau (hoặc chính agent trong vòng lặp tiếp theo) luôn có bức
-     tranh đúng.
+     module); chi tiết từng bài đọc trực tiếp từ file `.mdx` tương ứng.
+   - Mục 6 — bắt buộc cập nhật lại mục 1 cuối mỗi task, để phiên sau (hoặc
+     chính agent trong vòng lặp tiếp theo) luôn có bức tranh đúng.
 
 2. **`AUTOPILOT.md`** là kịch bản vòng lặp: chọn task → đọc bối cảnh → viết/
-   sửa → tự kiểm tra → cập nhật `CLAUDE.md`/`SYLLABUS.md` → quay lại từ đầu.
-   Đây là file được nạp làm system prompt cho phiên autopilot, tách riêng
-   khỏi `CLAUDE.md` để nội dung "luật chơi" và "vòng lặp vận hành" không lẫn
+   sửa → tự kiểm tra → cập nhật `CLAUDE.md` → quay lại từ đầu. Đây là file
+   được nạp làm system prompt cho phiên autopilot, tách riêng khỏi
+   `CLAUDE.md` để nội dung "luật chơi" và "vòng lặp vận hành" không lẫn
    vào nhau.
 
 3. **Cách tôi khởi động một phiên autopilot:**

@@ -1,0 +1,128 @@
+---
+title: DCGAN — Kiến trúc Convolutional Ổn định hoá Huấn luyện GAN
+track: foundations-track
+module: Generative Models
+submodule: GAN Family
+order: 2
+status: stable
+prerequisites: ["01-gan", "01-cnn"]
+summary: GAN gốc dùng MLP cho cả generator và discriminator — hoạt động kém với ảnh vì MLP không khai thác được cấu trúc không gian. Radford, Metz và Chintala (2015) giải quyết bằng DCGAN: thay MLP bằng kiến trúc convolutional (transposed convolution cho generator, convolution thường cho discriminator) kèm các quy tắc thiết kế cụ thể (batch normalization, LeakyReLU) giúp huấn luyện ổn định hơn hẳn, đồng thời chứng minh generator/discriminator học được biểu diễn phân cấp hữu ích cho các tác vụ khác.
+last_touched_by_task: Bài mới (2026-07-06), bài thứ 2 module Generative Models — module mỏng nhất track (trước đó chỉ 1 bài, GAN) sau đợt tái cấu trúc hệ thống module theo yêu cầu người vận hành. Nguồn: D2L.ai (chapter_generative-adversarial-networks/dcgan.html, xác nhận qua WebFetch chi tiết kiến trúc generator/discriminator, batch normalization, LeakyReLU, thay đổi hyperparameter Adam) + arxiv 1511.06434 (paper gốc Radford, Metz, Chintala 2015, xác nhận qua WebFetch abstract: vấn đề khoảng cách giữa CNN supervised và unsupervised, đóng góp architectural guidelines, kết quả biểu diễn phân cấp học được).
+---
+
+Bài [GAN](23-gan.mdx) giới thiệu ý tưởng cốt lõi: hai mạng nơ-ron thi đấu
+với nhau, một sinh dữ liệu giả, một phân biệt thật/giả. Nhưng bài đó
+không nói rõ **kiến trúc cụ thể** của hai mạng này — trên thực tế, GAN
+gốc (Goodfellow et al., 2014) dùng **MLP** (mạng nơ-ron nhiều lớp thông
+thường, đã học ở bài [Perceptron](08-perceptron-va-mang-no-ron.mdx)) cho
+cả generator và discriminator. Bài này kể cách một kiến trúc cụ thể hơn
+giải quyết đúng hạn chế đó cho bài toán sinh ảnh.
+
+## Vấn đề: MLP không khai thác được cấu trúc không gian của ảnh
+
+Bài [CNN](11-convolutional-neural-network.mdx) đã giải thích rõ vì sao
+MLP hoạt động kém với ảnh: nó không khai thác được tính **cục bộ** và
+**bất biến vị trí** của dữ liệu ảnh — mỗi pixel được coi như một feature
+độc lập, không có khái niệm "các pixel lân cận thường liên quan tới
+nhau". GAN gốc dùng MLP cho cả hai mạng nên gặp đúng vấn đề này khi áp
+dụng cho ảnh: khó tạo ra ảnh chất lượng cao, và quá trình huấn luyện dễ
+bất ổn định (đã nhắc ở bài 23 — GAN nổi tiếng khó huấn luyện).
+
+Trong khi đó, CNN đã chứng minh hiệu quả vượt trội cho các tác vụ ảnh
+**supervised** (classification, object detection — đã học ở nhiều bài
+trước). Nhưng tại thời điểm DCGAN ra đời, việc áp dụng CNN cho các tác
+vụ **unsupervised** (như sinh ảnh) vẫn chưa được nghiên cứu kỹ — có một
+khoảng cách rõ rệt giữa thành công của CNN ở supervised learning và ứng
+dụng còn hạn chế của nó ở unsupervised learning.
+
+## Giải pháp: thay MLP bằng kiến trúc convolutional có quy tắc thiết kế cụ thể
+
+**Radford, Metz và Chintala (2015)**, trong bài báo "Unsupervised
+Representation Learning with Deep Convolutional Generative Adversarial
+Networks", đề xuất **DCGAN** (Deep Convolutional GAN) — thay thế hoàn
+toàn các lớp fully-connected của GAN gốc bằng kiến trúc **convolutional**
+đã chứng minh hiệu quả ở CV, kèm theo một bộ quy tắc thiết kế cụ thể giúp
+huấn luyện ổn định hơn.
+
+## Kiến trúc Generator: transposed convolution để "phóng to" dần
+
+Generator của DCGAN nhận một vector nhiễu ngẫu nhiên (latent vector `z`,
+thường 100 chiều — giống vector `z` ở bottleneck của
+[Autoencoder](../01-Overview/02-autoencoder.mdx), nhưng lấy ngẫu nhiên thay vì nén từ
+dữ liệu thật), rồi dùng **transposed convolution** (phép tích chập
+ngược, "phóng to" dần kích thước không gian thay vì thu nhỏ như
+convolution thông thường) qua 4 khối liên tiếp để biến vector 100 chiều
+đó thành một ảnh 64×64 pixel hoàn chỉnh — mỗi khối tăng gấp đôi kích
+thước không gian trong khi giảm một nửa số kênh. Mỗi khối gồm:
+
+```
+transposed convolution → batch normalization → ReLU
+```
+
+Riêng lớp output cuối cùng dùng activation **tanh** để đưa giá trị pixel
+về khoảng `[-1, 1]`.
+
+## Kiến trúc Discriminator: gần như đối xứng, dùng LeakyReLU
+
+Discriminator có cấu trúc gần như đối xứng với generator — dùng
+convolution thông thường (không phải transposed) để thu nhỏ dần ảnh đầu
+vào, qua các khối:
+
+```
+convolution → batch normalization → LeakyReLU
+```
+
+(trừ lớp input đầu tiên, không dùng batch normalization), rồi kết thúc
+bằng một giá trị dự đoán duy nhất: ảnh này thật hay giả.
+
+Điểm kỹ thuật đáng chú ý: discriminator dùng **LeakyReLU** thay vì ReLU
+thông thường. ReLU tiêu chuẩn cho output bằng 0 với mọi input âm — nếu
+quá nhiều neuron rơi vào trạng thái này, chúng ngừng học hoàn toàn (vấn
+đề gọi là "dying ReLU"). LeakyReLU khắc phục bằng cách cho phép một độ
+dốc nhỏ, khác 0, với input âm — vẫn giữ được gradient chảy qua, giúp quá
+trình huấn luyện ổn định hơn, đặc biệt quan trọng với GAN vì discriminator
+và generator liên tục thay đổi động lực học đối kháng lẫn nhau.
+
+## Điều chỉnh huấn luyện: giảm learning rate, đổi hệ số Adam
+
+Ngoài kiến trúc, nhóm tác giả còn điều chỉnh cụ thể quá trình huấn luyện:
+giảm learning rate và đổi hệ số `β₁` của bộ tối ưu Adam từ 0.9 (giá trị
+mặc định phổ biến) xuống 0.5. Thay đổi này giúp thích ứng tốt hơn với
+đặc thù của GAN: gradient thay đổi nhanh và bất ổn định do động lực đối
+kháng giữa hai mạng, khác với huấn luyện supervised thông thường nơi
+gradient thường ổn định hơn qua các bước.
+
+## Kết quả: biểu diễn phân cấp hữu ích, không chỉ ảnh đẹp hơn
+
+Điểm đáng chú ý nhất trong kết quả của Radford và cộng sự không chỉ là
+chất lượng ảnh sinh ra tốt hơn — họ chứng minh được rằng cả generator
+lẫn discriminator của DCGAN học được một **hệ thống phân cấp biểu diễn**
+(hierarchy of representations), từ các bộ phận nhỏ của vật thể tới toàn
+cảnh. Các đặc trưng học được này có thể tái sử dụng làm **biểu diễn ảnh
+tổng quát** cho các tác vụ khác (ví dụ dùng làm feature extractor cho
+một bài toán classification khác) — một minh chứng cho thấy quá trình
+huấn luyện GAN (vốn không có nhãn) vẫn có thể tạo ra biểu diễn hữu ích
+tương tự những gì CNN học được qua huấn luyện supervised.
+
+## Liên hệ lại với các bài trước
+
+- DCGAN không thay đổi nguyên lý đối kháng generator/discriminator đã
+  học ở bài [GAN](23-gan.mdx) — nó chỉ thay **kiến trúc cụ thể** của cả
+  hai mạng, đúng mẫu hình đã lặp lại nhiều lần trong track: giữ nguyên ý
+  tưởng cốt lõi, thay công cụ biểu diễn để giải quyết hạn chế về kiến
+  trúc (tương tự cách NeuMF thay tích vô hướng tuyến tính của Matrix
+  Factorization bằng MLP, hay Autoencoder tổng quát hoá PCA bằng mạng
+  nơ-ron phi tuyến).
+- Việc dùng convolution/transposed convolution dựa trực tiếp trên
+  nguyên lý đã học ở bài [CNN](11-convolutional-neural-network.mdx) —
+  DCGAN là ví dụ rõ ràng cho thấy kiến trúc CNN không chỉ dùng được cho
+  classification mà còn cho các tác vụ sinh dữ liệu.
+- LeakyReLU là một biến thể của ReLU đã học ở bài
+  [Perceptron & Mạng nơ-ron](08-perceptron-va-mang-no-ron.mdx) — cùng
+  mục tiêu (giữ gradient chảy qua tốt hơn) nhưng giải quyết một vấn đề cụ
+  thể hơn (dying ReLU) chưa được nhắc tới ở bài đó.
+
+## Nguồn tham khảo
+
+- [arXiv — Unsupervised Representation Learning with Deep Convolutional Generative Adversarial Networks](https://arxiv.org/abs/1511.06434) — paper gốc của Radford, Metz và Chintala (2015), dùng cho vấn đề cụ thể (khoảng cách giữa thành công CNN ở supervised learning và ứng dụng hạn chế ở unsupervised learning) và kết quả (DCGAN học được hệ thống phân cấp biểu diễn hữu ích cho các tác vụ downstream khác).
+- [Dive into Deep Learning — Deep Convolutional Generative Adversarial Networks](http://d2l.ai/chapter_generative-adversarial-networks/dcgan.html) — dùng cho chi tiết kiến trúc cụ thể: generator dùng transposed convolution + batch normalization + ReLU (tanh ở output), discriminator dùng convolution + batch normalization + LeakyReLU, và điều chỉnh hyperparameter Adam (β₁ từ 0.9 xuống 0.5).

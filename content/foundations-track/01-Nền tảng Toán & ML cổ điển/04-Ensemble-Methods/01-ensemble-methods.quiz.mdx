@@ -1,0 +1,43 @@
+---
+quiz_for: 01-ensemble-methods
+---
+
+## Q1
+Bagging (Random Forest) giải quyết vấn đề gì của decision tree đơn lẻ?
+
+- [x] Variance cao (overfitting) — bằng cách huấn luyện nhiều cây độc lập trên các tập con bootstrap, kết hợp dự đoán để "triệt tiêu" sai số riêng của từng cây
+- [ ] Bias cao (underfitting)
+- [ ] Tốc độ huấn luyện quá chậm
+- [ ] Số lượng feature quá ít
+
+> Bagging huấn luyện nhiều cây (thường sâu, dễ overfit nếu đứng một mình) trên các tập con dữ liệu/feature khác nhau (bootstrap + random feature subset), rồi lấy trung bình/biểu quyết — giảm variance vì sai số của các cây không tương quan với nhau.
+
+## Q2
+Boosting giải quyết vấn đề gì, và bằng cơ chế nào?
+
+- [x] Bias cao (underfitting) — bằng cách huấn luyện các cây TUẦN TỰ, mỗi cây mới tập trung sửa lỗi còn sót lại từ các cây trước
+- [ ] Variance cao — bằng cách huấn luyện các cây độc lập song song
+- [ ] Cả bias và variance cùng lúc bằng đúng 1 cây duy nhất
+- [ ] Tốc độ inference — bằng cách giảm số lượng cây xuống còn 1
+
+> Nếu giới hạn mỗi cây rất nông (dễ underfit), boosting huấn luyện tuần tự: tăng trọng số các điểm bị dự đoán sai, cây tiếp theo ưu tiên học tốt các điểm đó — mỗi cây mới "sửa" lỗi còn sót từ các cây trước.
+
+## Q3
+Bagging và boosting khác nhau ở cách huấn luyện các cây như thế nào?
+
+- [x] Bagging huấn luyện các cây SONG SONG, ĐỘC LẬP; boosting huấn luyện TUẦN TỰ, PHỤ THUỘC lẫn nhau
+- [ ] Cả hai đều huấn luyện song song, chỉ khác cách kết hợp kết quả
+- [ ] Cả hai đều huấn luyện tuần tự, chỉ khác số lượng cây
+- [ ] Bagging dùng gradient descent, boosting không dùng gradient
+
+> Đây là khác biệt cốt lõi: bagging — mỗi cây độc lập, không biết các cây khác; boosting — mỗi cây biết trước các cây trước đã sai ở đâu để tập trung sửa đúng chỗ đó.
+
+## Q4
+Loại cây thành phần nào phù hợp nhất cho boosting?
+
+- [x] Cây nông, đơn giản ("yếu") — vì boosting giải quyết bias cao, cần cây thành phần đơn giản để tránh mỗi cây đã tự overfit
+- [ ] Cây sâu, phức tạp — giống bagging
+- [ ] Không có cây nào, boosting không dùng decision tree
+- [ ] Cây với đúng 1 leaf duy nhất
+
+> Boosting thường dùng cây "yếu" (nông, đơn giản, dễ underfit khi đứng một mình) làm thành phần — ngược với bagging vốn phù hợp cây sâu, phức tạp (dễ overfit khi đứng một mình) vì bagging giải quyết vấn đề variance.

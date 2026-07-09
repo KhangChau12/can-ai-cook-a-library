@@ -1,0 +1,43 @@
+---
+quiz_for: 05-svm
+---
+
+## Q1
+SVM chọn ranh giới phân tách (hyperplane) theo tiêu chí nào?
+
+- [ ] Ranh giới đầu tiên phân tách đúng toàn bộ dữ liệu train, bất kể margin
+- [x] Ranh giới có margin (khoảng cách tới điểm gần nhất mỗi lớp) lớn nhất có thể
+- [ ] Ranh giới làm giảm Gini impurity nhiều nhất
+- [ ] Ranh giới đi qua đúng điểm trung bình của mỗi lớp
+
+> Maximum margin classifier: trong vô số ranh giới có thể phân tách đúng dữ liệu train, SVM chọn đúng ranh giới có margin lớn nhất — khác hẳn tiêu chí tối thiểu hoá loss (logistic regression) hay độ thuần khiết (decision tree).
+
+## Q2
+"Support vectors" trong SVM là gì?
+
+- [x] Các điểm dữ liệu nằm gần ranh giới nhất (chạm vào biên margin) — chỉ những điểm này quyết định ranh giới cuối cùng
+- [ ] Toàn bộ điểm dữ liệu trong tập train
+- [ ] Các vector trọng số w của mô hình
+- [ ] Các điểm dữ liệu bị phân loại sai
+
+> Một hệ quả đáng chú ý của tối ưu theo margin: ranh giới chỉ phụ thuộc vào một số ít điểm gần biên nhất — các điểm khác có thể bị xoá khỏi tập train mà không làm thay đổi ranh giới đã tìm được, khác hẳn k-NN (dùng mọi điểm) hay logistic regression (mọi điểm đóng góp vào gradient).
+
+## Q3
+Kernel trick (ví dụ RBF kernel) giúp SVM giải quyết vấn đề gì?
+
+- [x] Cho phép vẽ ranh giới phân tách phi tuyến khi dữ liệu không phân tách tuyến tính được, mà không cần tường minh biến đổi dữ liệu sang không gian nhiều chiều hơn
+- [ ] Giảm số lượng support vectors xuống còn 1
+- [ ] Tăng tốc độ huấn luyện lên gấp đôi trong mọi trường hợp
+- [ ] Chuyển bài toán classification thành bài toán regression
+
+> Kernel trick tính độ tương đồng giữa 2 điểm dữ liệu như thể chúng đã được biến đổi sang không gian nhiều chiều hơn, mà không cần thực sự thực hiện phép biến đổi tốn kém đó — cho phép ranh giới uốn cong theo dữ liệu dù bản chất vẫn là "thẳng" trong không gian đã biến đổi ngầm định.
+
+## Q4
+Tham số `C` trong SVM kiểm soát đánh đổi giữa điều gì?
+
+- [x] Margin rộng (chấp nhận vài điểm phân loại sai/nằm trong margin) và phân loại đúng càng nhiều điểm train càng tốt (margin hẹp hơn)
+- [ ] Số lượng kernel được dùng cùng lúc
+- [ ] Tốc độ huấn luyện và độ chính xác của kernel RBF
+- [ ] Số chiều của không gian feature gốc
+
+> `C` nhỏ ưu tiên margin rộng, tổng quát hoá tốt hơn (chấp nhận một số lỗi trên train); `C` lớn ưu tiên phân loại đúng train, chấp nhận margin hẹp hơn — đây là đánh đổi bias-variance quen thuộc, chỉ khác tham số điều khiển so với max_depth hay k.

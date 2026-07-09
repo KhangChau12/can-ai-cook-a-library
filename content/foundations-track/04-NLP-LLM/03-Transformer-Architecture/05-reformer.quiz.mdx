@@ -1,0 +1,66 @@
+---
+quiz_for: 05-reformer
+---
+
+## Q1
+Khác biệt cốt lõi giữa cách Reformer và Longformer giảm độ phức tạp của
+self-attention là gì?
+
+- [ ] Reformer bỏ hẳn cơ chế attention, Longformer thì không
+- [ ] Reformer chỉ dùng được cho ảnh, Longformer chỉ dùng được cho văn bản
+- [x] Longformer dùng mẫu hình cố định trước (cửa sổ cục bộ + global chọn lọc), Reformer học cách nhóm động các vị trí tương tự qua hashing
+- [ ] Longformer giảm độ phức tạp xuống O(L log L), còn Reformer vẫn giữ O(L²)
+
+> Longformer quyết định trước "ai chú ý tới ai" bằng một mẫu hình cố định
+> (cửa sổ cục bộ cộng một số token global cố định theo tác vụ). Reformer
+> không cố định trước — nó dùng locality-sensitive hashing để tự động
+> nhóm các query/key có khả năng tương đồng cao vào cùng bucket, dựa trên
+> chính giá trị của chúng. Chính Reformer mới là bên đạt O(L log N), không
+> phải Longformer.
+
+## Q2
+Tại sao Locality-Sensitive Hashing (LSH) giúp giảm chi phí tính attention,
+theo lập luận của Kitaev, Kaiser, và Levskaya (2020)?
+
+- [ ] Vì LSH tính chính xác toàn bộ ma trận L×L nhưng nhanh hơn nhờ phần cứng chuyên dụng
+- [x] Vì sau softmax chỉ các cặp query/key có độ tương đồng cao mới đóng góp đáng kể, nên chỉ cần tìm và tính đúng các cặp đó thay vì toàn bộ L×L cặp
+- [ ] Vì LSH loại bỏ hoàn toàn nhu cầu dùng key, chỉ cần query
+- [ ] Vì LSH nén chuỗi input xuống độ dài cố định trước khi vào attention
+
+> Quan sát cốt lõi: giá trị attention nhỏ gần như bị triệt tiêu bởi
+> softmax, nên chi phí tính toán chúng gần như "lãng phí". LSH nhóm trước
+> các vị trí có khả năng tương đồng cao (dựa trên hàm hash h(x) =
+> argmax([xR; -xR])) để chỉ tính attention trong phạm vi mỗi nhóm/bucket
+> đó, tránh phải tính rồi bỏ đi phần lớn L×L cặp không đóng góp nhiều.
+
+## Q3
+Reversible residual layers trong Reformer giải quyết vấn đề gì, và bằng
+cách đánh đổi nào?
+
+- [ ] Giải quyết vấn đề overfitting, đánh đổi bằng cách thêm dropout mạnh hơn
+- [x] Giải quyết vấn đề bộ nhớ khi huấn luyện Transformer sâu (phải lưu activation mọi lớp), đánh đổi bằng cách tính lại (recompute) activation trong lúc lan truyền ngược thay vì lưu trữ sẵn
+- [ ] Giải quyết vấn đề vanishing gradient, đánh đổi bằng cách thêm nhiều residual connection hơn
+- [ ] Giải quyết vấn đề độ phức tạp bậc hai của attention, đánh đổi bằng cách giảm số đầu attention
+
+> Residual layer thông thường (y = x + F(x)) buộc phải lưu x để dùng khi
+> backprop, khiến bộ nhớ tỷ lệ thuận với số lớp N. Reversible layers
+> (y1 = x1 + Attention(x2), y2 = x2 + FeedForward(y1)) cho phép tính
+> ngược lại chính xác (x1, x2) từ (y1, y2) chỉ bằng tham số mô hình — nên
+> không cần lưu activation từ trước, chỉ cần tính lại khi cần, đổi thêm
+> một ít compute để giảm mạnh bộ nhớ.
+
+## Q4
+Vì sao Reformer dùng "shared-QK attention" (dùng chung một phép chiếu
+cho cả query và key, Q = K) thay vì hai phép chiếu riêng biệt như
+Transformer gốc?
+
+- [ ] Vì Q = K giúp giảm độ phức tạp tính toán từ O(L log L) xuống O(L)
+- [x] Vì nó đảm bảo query và key của cùng một vị trí luôn rơi vào cùng một bucket khi băm, giúp việc nhóm bucket nhất quán hơn mà không làm giảm chất lượng mô hình đáng kể
+- [ ] Vì Transformer gốc không có khái niệm key, chỉ Reformer mới thêm vào
+- [ ] Vì shared-QK là yêu cầu bắt buộc để dùng được reversible residual layers
+
+> Nếu query và key được chiếu riêng biệt, vector query và key của cùng
+> một vị trí có thể rơi vào 2 bucket khác nhau sau khi băm, làm phức tạp
+> việc nhóm và tính attention theo bucket. Dùng chung một phép chiếu
+> (Q=K) đảm bảo tính nhất quán này, và theo thực nghiệm của nhóm tác giả,
+> không làm giảm chất lượng mô hình đáng kể.

@@ -1,0 +1,43 @@
+---
+quiz_for: 04-bidirectional-rnn
+---
+
+## Q1
+"Bidirectional" là một kiến trúc cell hồi quy mới, hay một kỹ thuật áp dụng chung cho nhiều loại cell?
+
+- [x] Là một kỹ thuật/cách bọc (wrapper) tổng quát, áp dụng được cho bất kỳ loại cell hồi quy nào — có cả Bidirectional RNN, Bidirectional LSTM, và Bidirectional GRU
+- [ ] Là một kiến trúc cell hoàn toàn mới, chỉ dùng được với RNN thuần, không dùng được với LSTM/GRU
+- [ ] Là một loại activation function mới thay thế cho tanh/sigmoid
+- [ ] Là một kỹ thuật chỉ áp dụng được cho Transformer, không áp dụng được cho RNN
+
+> Đây là điểm quan trọng nhất của bài — nguyên lý ghép nối 2 mạng chạy ngược chiều không phụ thuộc vào chi tiết bên trong cell, nên áp dụng được y hệt cho RNN, LSTM, hay GRU.
+
+## Q2
+Vấn đề cụ thể mà Bidirectional giải quyết là gì?
+
+- [x] RNN/LSTM/GRU một chiều chỉ biết thông tin từ các bước TRƯỚC, không biết gì về các bước SAU — trong khi nhiều tác vụ (gán nhãn từ loại, điền từ khuyết) cần cả 2 loại ngữ cảnh
+- [ ] RNN/LSTM/GRU một chiều không thể học được qua backpropagation
+- [ ] RNN/LSTM/GRU một chiều chỉ xử lý được chuỗi có độ dài cố định
+- [ ] RNN/LSTM/GRU một chiều không thể xử lý được dữ liệu văn bản
+
+> Ví dụ cụ thể: điền từ khuyết trong "Tôi đang ___" cần biết phần câu phía sau để chọn đúng từ — thông tin mà RNN một chiều không có được.
+
+## Q3
+Kiến trúc Bidirectional hoạt động như thế nào?
+
+- [x] Chạy 2 mạng độc lập trên cùng 1 chuỗi theo 2 chiều ngược nhau (1 mạng xuôi, 1 mạng ngược), rồi ghép nối (concatenate) hidden state của cả 2 tại mỗi bước thời gian
+- [ ] Chạy 1 mạng duy nhất nhưng đảo ngược thứ tự input trước khi đưa vào
+- [ ] Dùng 2 mạng riêng biệt cho 2 nửa đầu và nửa cuối của chuỗi
+- [ ] Chỉ chạy mạng ngược, bỏ hẳn mạng xuôi
+
+> Cả 2 mạng chạy độc lập trên TOÀN BỘ chuỗi (không phải chia đôi chuỗi) — 1 mạng xử lý xuôi từ đầu, 1 mạng xử lý ngược từ cuối, rồi ghép kết quả tại mỗi bước.
+
+## Q4
+Vì sao Bidirectional KHÔNG dùng được cho dự đoán token tiếp theo kiểu GPT?
+
+- [x] Để tính hidden state ngược tại 1 bước, cần biết toàn bộ phần chuỗi phía SAU bước đó — nhưng next-token prediction đòi hỏi mô hình không được phép nhìn thấy phần chuỗi phía sau (giống lý do GPT dùng causal mask)
+- [ ] Vì Bidirectional chạy chậm hơn nên không đủ nhanh cho GPT
+- [ ] Vì Bidirectional chỉ hoạt động với dữ liệu ảnh, không hoạt động với văn bản
+- [ ] Vì GPT không dùng RNN/LSTM/GRU nên không liên quan
+
+> Đây là cùng một đánh đổi cơ bản (ngữ cảnh hai chiều >< khả năng sinh tuần tự) xuất hiện lặp lại ở cả RNN (không dùng Bidirectional cho sinh tuần tự) và Transformer (GPT phải dùng causal mask thay vì attention hai chiều đầy đủ).

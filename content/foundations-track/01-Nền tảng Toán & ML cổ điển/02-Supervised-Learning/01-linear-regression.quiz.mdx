@@ -1,0 +1,43 @@
+---
+quiz_for: 01-linear-regression
+---
+
+## Q1
+Nhà thật giá 2000 (triệu đồng), mô hình dự đoán 2300 (sai số 300). Nếu một dự đoán khác sai gấp đôi (sai số 600), squared error loss của dự đoán đó gấp bao nhiêu lần dự đoán đầu?
+
+- [ ] Gấp 2 lần
+- [x] Gấp 4 lần
+- [ ] Bằng nhau
+- [ ] Gấp 6 lần
+
+> Squared error bình phương sai số trước khi tính loss — sai số gấp đôi (từ 300 lên 600) khiến loss gấp 4 lần (2²=4), đây chính là tính chất "phạt nặng hơn với sai số lớn" của squared error.
+
+## Q2
+Nghiệm đóng (normal equation) `w* = (X^T X)^(-1) X^T y` có ưu điểm và hạn chế gì so với gradient descent?
+
+- [x] Cho nghiệm chính xác không cần lặp, nhưng đòi hỏi nghịch đảo ma trận (tốn kém khi số chiều lớn) và không tổng quát hoá được cho mô hình phức tạp như neural network
+- [ ] Luôn nhanh hơn gradient descent trong mọi trường hợp
+- [ ] Chỉ dùng được cho bài toán classification, không dùng được cho regression
+- [ ] Không cần dữ liệu train, chỉ cần biết trước công thức
+
+> Normal equation cho nghiệm "chính xác" ngay lập tức, nhưng chi phí nghịch đảo ma trận tăng nhanh theo số chiều, và neural network (hàm loss không còn dạng bậc hai đơn giản) không có nghiệm đóng dạng này — đây là lý do gradient descent phổ biến hơn trong thực tế.
+
+## Q3
+Trong công thức cập nhật gradient descent `w := w - η * (dL/dw)`, nếu loss dao động không hội tụ (nhảy lung tung giữa các bước) thay vì giảm dần, nguyên nhân thường gặp nhất là gì?
+
+- [x] Learning rate `η` quá lớn
+- [ ] Learning rate `η` quá nhỏ
+- [ ] Dữ liệu train có quá nhiều điểm
+- [ ] Feature chưa được one-hot encode
+
+> Learning rate quá lớn khiến mỗi bước cập nhật "nhảy" qua điểm cực tiểu thay vì tiến gần dần tới nó — dấu hiệu để giảm `η` khi thấy loss dao động thay vì giảm ổn định.
+
+## Q4
+Vì sao cần chuẩn hoá (scaling) các feature có thang đo khác nhau (ví dụ diện tích tính m² và số năm tuổi) trước khi train bằng gradient descent?
+
+- [ ] Vì linear regression không chấp nhận feature có đơn vị khác nhau
+- [x] Vì thang đo khác nhau lớn khiến gradient descent hội tụ chậm hoặc không ổn định
+- [ ] Vì chuẩn hoá giúp tăng số chiều dữ liệu
+- [ ] Chỉ cần thiết khi dùng normal equation, không cần khi dùng gradient descent
+
+> Feature có thang đo chênh lệch lớn khiến bề mặt loss bị "méo" theo các trục khác nhau, làm gradient descent khó hội tụ ổn định — nguyên tắc này áp dụng cho mọi mô hình dựa trên gradient descent, không riêng linear regression.

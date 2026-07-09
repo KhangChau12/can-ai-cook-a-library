@@ -1,0 +1,88 @@
+---
+title: WordPiece & SentencePiece — Hai Biến thể Subword Dẫn tới Tokenizer Hiện đại
+track: foundations-track
+module: NLP & LLM
+submodule: Tokenization
+order: 3
+status: stable
+prerequisites: ["01-tokenization-word-to-subword"]
+summary: BPE ghép cặp ký hiệu theo tần suất thô — không phải cách duy nhất hợp lý. WordPiece (dùng trong BERT) đổi tiêu chí ghép sang "tăng khả năng (likelihood) của dữ liệu"; SentencePiece (dùng trong T5) đi xa hơn, bỏ luôn giả định "đã tách từ theo khoảng trắng" để xử lý trực tiếp từ Unicode thô, độc lập ngôn ngữ. Cả hai đều là biến thể thực dụng của cùng ý tưởng subword đã học ở bài BPE, và đều đang được dùng trong các mô hình SOTA hiện tại.
+last_touched_by_task: Bài mới (2026-07-09), tái cấu trúc module Sequence Model theo yêu cầu người vận hành — cắt gọn Tokenization xuống dòng chính dẫn tới SOTA, gộp 2 bài WordPiece + SentencePiece (trước đây tách riêng) thành 1 bài "biến thể subword hiện đại" vì cả hai cùng trả lời câu hỏi "BPE còn thiếu gì" theo 2 hướng bổ sung nhau, không phải 2 dòng tiến hoá độc lập. Nội dung kỹ thuật giữ nguyên từ 2 bài gốc (đã xác nhận nguồn qua lilianweng.github.io + arxiv 1808.06226 + machinelearningmastery.com), chỉ rút gọn phần dẫn nhập/liên hệ trùng lặp giữa 2 bài cũ.
+---
+
+Bài [BPE](01-tokenization-word-to-subword.mdx) giới thiệu ý tưởng cắt văn
+bản thành **subword** bằng cách ghép dần cặp ký hiệu xuất hiện **thường
+xuyên nhất**. Đây không phải cách duy nhất để chọn subword — bài này kể
+hai biến thể thực dụng, mỗi biến thể trả lời một câu hỏi khác mà BPE để
+ngỏ. Cả hai đều đang được dùng trong các mô hình pretrained hiện đại mà
+module sẽ học kỹ ở submodule "Pretrained Language Models" phía sau —
+**BERT** và **T5** — nên chỉ cần nhớ tên ở đây, chưa cần biết kiến trúc
+của chúng.
+
+## WordPiece: đổi tiêu chí ghép từ "tần suất" sang "khả năng của dữ liệu"
+
+BPE ở mỗi bước chọn cặp ký hiệu liền kề **xuất hiện thường xuyên nhất** để
+ghép — tiêu chí đơn giản nhưng chỉ nhìn tần suất thô, không quan tâm việc
+ghép cặp đó có thực sự "đáng giá" xét trên toàn bộ mô hình ngôn ngữ hay
+không. **WordPiece** — kỹ thuật tokenize dùng để huấn luyện BERT — áp
+dụng đúng sơ đồ chung của BPE (bắt đầu từ ký tự đơn, lặp lại ghép cặp),
+nhưng đổi câu hỏi ở mỗi bước: thay vì "cặp nào xuất hiện nhiều nhất?",
+WordPiece hỏi "cặp nào, khi ghép vào từ vựng, làm **tăng khả năng
+(likelihood)** của toàn bộ dữ liệu huấn luyện nhiều nhất?".
+
+Hệ quả cụ thể: WordPiece có xu hướng ưu tiên ghép các mảnh ký hiệu **hay
+xuất hiện cùng nhau một cách bất thường** — hai mảnh riêng lẻ có thể
+không phổ biến lắm, nhưng khi đứng cạnh nhau lại xuất hiện thường xuyên
+hơn nhiều so với kỳ vọng nếu chúng độc lập. Đây là tiêu chí thống kê tinh
+hơn tần suất thô — gần với đo **mức độ liên kết** giữa hai mảnh, thay vì
+chỉ đếm số lần cặp đó xuất hiện. WordPiece có nguồn gốc từ bài toán phân
+đoạn từ trong tiếng Nhật/Hàn (ngôn ngữ không có khoảng trắng phân tách từ
+rõ ràng), và được BERT (submodule "Pretrained Language Models" phía sau)
+kế thừa làm bước tiền xử lý trước khi token đi qua embedding layer.
+
+## SentencePiece: bỏ luôn giả định "đã tách từ theo khoảng trắng"
+
+Cả BPE lẫn WordPiece có chung một **giả định ẩn**: văn bản input đã được
+**tách từ sẵn** (dựa trên khoảng trắng) trước khi thuật toán ghép subword
+chạy **bên trong** từng từ. Giả định này đúng với tiếng Anh, nhưng **thất
+bại hoàn toàn** với các ngôn ngữ không có khoảng trắng phân tách từ rõ
+ràng (tiếng Nhật, Trung, Thái...) — với các ngôn ngữ này, "tách từ trước"
+tự nó đã là một bài toán khó, cần công cụ riêng theo từng ngôn ngữ.
+
+**Kudo và Richardson (2018)** giải quyết vấn đề này bằng **SentencePiece**:
+coi văn bản input là một **chuỗi ký tự Unicode thô**, xử lý khoảng trắng
+như **một ký hiệu bình thường** (thường biểu diễn bằng ký tự `▁`) thay vì
+một ranh giới đặc biệt phải xử lý trước. Nhờ vậy, SentencePiece huấn
+luyện mô hình subword **trực tiếp từ câu thô** — không cần công cụ tách
+từ riêng theo ngôn ngữ, cho ra một pipeline tokenize hoàn toàn end-to-end
+và độc lập ngôn ngữ.
+
+SentencePiece thường đi kèm thuật toán **Unigram Language Model** — khác
+hẳn cách tiếp cận bottom-up (ghép dần từ ký tự nhỏ) của BPE/WordPiece,
+Unigram đi **top-down**: khởi tạo một từ vựng **lớn**, rồi **loại bỏ dần**
+các đơn vị subword đóng góp ít nhất vào khả năng (log-likelihood) của dữ
+liệu huấn luyện, cho tới khi đạt kích thước từ vựng mong muốn. Kudo và
+Richardson xác nhận qua thực nghiệm dịch máy Anh-Nhật: SentencePiece huấn
+luyện trực tiếp từ câu thô đạt độ chính xác **tương đương** các phương
+pháp cần tách từ trước. SentencePiece hiện là tokenizer cho nhiều mô hình
+hiện đại, bao gồm **T5** (submodule "Pretrained Language Models" phía
+sau) và XLNet.
+
+## Liên hệ lại: ba câu trả lời cho cùng một câu hỏi "chọn subword thế nào"
+
+- BPE (tần suất thô, bottom-up) → WordPiece (likelihood, bottom-up nhưng
+  khác tiêu chí) → SentencePiece/Unigram (likelihood, nhưng **top-down**
+  và **độc lập ngôn ngữ** ngay từ khâu xử lý input thô) — ba câu trả lời
+  khác nhau cho cùng câu hỏi "làm sao chọn đúng các subword để ghép",
+  tương tự cách word2vec và GloVe (bài trước) là hai câu trả lời khác
+  nhau cho câu hỏi "làm sao biến token thành vector".
+- BERT dùng WordPiece, T5 dùng SentencePiece — một minh chứng cụ thể cho
+  thấy lựa chọn tokenizer không phải chi tiết vặt vãnh, mà là một quyết
+  định kiến trúc thực sự ảnh hưởng tới mô hình cuối cùng (cả hai model sẽ
+  học kỹ ở submodule "Pretrained Language Models" phía sau).
+
+## Nguồn tham khảo
+
+- [Lil'Log — Generalized Language Models](https://lilianweng.github.io/posts/2019-01-31-lm/) — dùng cho việc xác nhận BERT dùng WordPiece tokenization embeddings, nguồn gốc kỹ thuật này từ bài toán phân đoạn từ tiếng Nhật/Hàn.
+- [arXiv — SentencePiece: A simple and language independent subword tokenizer and detokenizer for Neural Text Processing](https://arxiv.org/abs/1808.06226) — paper gốc của Kudo và Richardson (2018), dùng cho vấn đề cụ thể (BPE/WordPiece cần input đã tách từ sẵn), giải pháp (huấn luyện trực tiếp từ câu thô, hệ thống end-to-end độc lập ngôn ngữ), và kết quả thực nghiệm (độ chính xác tương đương trên dịch máy Anh-Nhật).
+- [Machine Learning Mastery — Tokenizers in Language Models](https://machinelearningmastery.com/tokenizers-in-language-models/) — dùng cho cơ chế xử lý khoảng trắng như ký hiệu bình thường, thuật toán Unigram Language Model chi tiết (top-down, loại dần đơn vị dựa trên log-likelihood), và xác nhận T5/XLNet dùng SentencePiece.

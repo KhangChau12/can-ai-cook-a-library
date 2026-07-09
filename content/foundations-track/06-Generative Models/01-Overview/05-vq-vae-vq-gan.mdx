@@ -1,0 +1,154 @@
+---
+title: VQ-VAE & VQ-GAN — Lượng Tử Hóa Không Gian Latent Cho Sinh Ảnh Chất Lượng Cao
+track: foundations-track
+module: Generative Models
+order: 5
+status: stable
+prerequisites: ["03-vae-variational-autoencoder", "01-gan"]
+summary: VAE (bài trước) thường sinh ảnh mờ vì ELBO + Gaussian prior. VQ-VAE (van den Oord 2017) giải quyết bằng cách lượng tử hoá không gian latent thành discrete codebook — mỗi ảnh là chuỗi index từ codebook. VQ-GAN (Esser 2021) thêm adversarial loss cho ảnh sắc nét hơn. Cả hai là nền tảng cho DALL-E, Stable Diffusion, và nhiều model sinh hiện đại.
+last_touched_by_task: Bài mới (2026-07-08): Phase 3.4 đào sâu Generative Models — VQ-VAE/VQ-GAN, nền tảng cho DALL-E và Stable Diffusion. Nguồn: arxiv VQ-VAE 1711.00937 + arxiv VQ-GAN 2012.09841 + lilianweng.github.io.
+submodule: Overview
+---
+
+Bài [VAE](03-vae-variational-autoencoder.mdx) giới thiệu autoencoder biến
+phân với latent space liên tục (z ~ N(μ, σ²)). Cách này có hai hạn chế:
+
+1. **Ảnh mờ:** VAE dùng MSE reconstruction loss + Gaussian prior → ảnh
+   sinh thường bị mờ, thiếu chi tiết tần số cao.
+2. **Latent mượt quá mức:** không gian latent liên tục khuyến khích nội suy
+   mượt, nhưng không khuyến khích "tính rời rạc" đặc trưng của dữ liệu thế
+   giới thật (mèo là mèo, chó là chó — không phải "60% mèo + 40% chó").
+
+**VQ-VAE** (Vector Quantized VAE, van den Oord, Vinyals & Kavukcuoglu 2017,
+DeepMind) giải quyết bằng cách thay latent liên tục bằng **discrete codebook**
+— giống một cuốn từ điển các "từ" latent, mỗi ảnh được biểu diễn bằng một
+chuỗi index vào từ điển đó.
+
+## Kiến trúc VQ-VAE
+
+VQ-VAE gồm 3 thành phần:
+
+```
+Input x → Encoder → z_e(x) → Quantize → z_q(x) → Decoder → Output x̂
+                            │
+                    Codebook {e₁, e₂, ..., e_K}
+```
+
+1. **Encoder:** biến ảnh x thành continuous latent z_e(x) (giống VAE thường)
+2. **Vector Quantization:** thay z_e(x) bằng vector codebook gần nhất
+3. **Decoder:** tái tạo ảnh từ z_q(x) (quantized latent)
+4. **Codebook:** một tập K vector học được, mỗi vector là một "từ" trong
+   từ điển latent
+
+### Vector Quantization
+
+Bước lượng tử hoá — phần cốt lõi:
+
+```
+z_q(x) = e_k  với k = argmin_j ||z_e(x) - e_j||₂
+```
+
+Nghĩa là: z_e(x) (liên tục) được thay bằng vector e_k trong codebook gần
+nó nhất theo khoảng cách Euclidean.
+
+Một ảnh 256×256 sau encoder có thể thành grid 32×32×D (D là chiều latent).
+Mỗi ô trong grid 32×32 được lượng tử hoá riêng → một ảnh tương ứng với
+một chuỗi 1024 index (32×32), mỗi index trỏ tới một vector trong codebook.
+
+### Vấn đề: argmin không differentiable
+
+Argmin là phép toán rời rạc — không thể gradient qua nó. VQ-VAE giải
+quyết bằng **straight-through estimator**: gradient từ decoder sang encoder
+bỏ qua bước lượng tử hoá:
+
+```
+z_q(x) = z_e(x) + sg[z_q(x) - z_e(x)]
+```
+
+- **Forward:** z_q = e_k (lượng tử hoá thật)
+- **Backward:** ∇L = ∇L (đối với z_q) = ∇L (đối với z_e) — như thể không có
+  lượng tử hoá
+
+Trong đó sg = stop-gradient — không cho gradient đi qua.
+
+### Loss function
+
+VQ-VAE có 3 loss:
+
+```
+L = L_recon + ||sg[z_e(x)] - e||² + β · ||z_e(x) - sg[e]||²
+```
+
+1. **L_recon:** reconstruction loss (MSE giữa x và x̂)
+2. **Codebook loss:** ||sg[z_e] - e||² — kéo vector codebook e lại gần
+   encoder output z_e (chỉ cập nhật codebook)
+3. **Commitment loss:** β·||z_e - sg[e]||² — kéo encoder output lại gần
+   codebook (chỉ cập nhật encoder, β thường = 0.25)
+
+### Prior học riêng
+
+Sau khi VQ-VAE được train, latent code là discrete index. Prior (phân phối
+của index) được học riêng bằng **autoregressive model** (PixelCNN hoặc
+Transformer) — đây là điểm khác biệt lớn so với VAE thường (prior là
+Gaussian cố định).
+
+## VQ-GAN — Thêm Adversarial Loss
+
+VQ-GAN (Esser, Rombach & Ommer 2021) cải thiện VQ-VAE bằng 2 thay đổi:
+
+1. **Discriminator:** thêm một PatchGAN discriminator (giống pix2pix bài
+   105) để phân biệt ảnh thật/giả — giúp ảnh sinh sắc nét hơn.
+2. **Perceptual loss:** thay MSE reconstruction loss bằng perceptual loss
+   (LPIPS — Learned Perceptual Image Patch Similarity) — đo khoảng cách
+   trong không gian feature của mạng pretrained.
+
+Loss function của VQ-GAN:
+
+```
+L = L_recon + L_perceptual + L_VQ + λ · L_GAN
+```
+
+Trong đó L_GAN là adversarial loss từ discriminator.
+
+### Transformer Prior
+
+VQ-GAN dùng **Transformer** (thay vì PixelCNN) làm prior — cho phép học
+phân phối của discrete code hiệu quả hơn. Đây là nền tảng cho DALL-E
+(Ramesh et al. 2021): VQ-GAN encoder-decoder + Transformer prior.
+
+### Ứng dụng trong Stable Diffusion
+
+[Latent Diffusion](89-latent-diffusion.mdx) (Stable Diffusion) dùng
+encoder-decoder của VQ-GAN (hoặc KL-regularized autoencoder) để nén ảnh
+vào latent space, rồi chạy diffusion trong latent space đó — không phải
+trong pixel space. VQ-GAN là thành phần quan trọng trong pipeline:
+- Encoder nén ảnh 256×256×3 → latent 32×32×4
+- Diffusion trong latent space 32×32 (thay vì 256×256)
+- Decoder giải nén latent → ảnh
+
+## So sánh VAE, VQ-VAE và VQ-GAN
+
+| Mô hình | Latent space | Prior | Chất lượng ảnh |
+|---|---|---|---|
+| **VAE** | Continuous (Gaussian) | Gaussian cố định | Mờ |
+| **VQ-VAE** | Discrete (codebook) | PixelCNN (học) | Sắc nét hơn |
+| **VQ-GAN** | Discrete (codebook) | Transformer (học) | Sắc nét, chi tiết |
+
+## Liên hệ lại với các bài trước
+
+- **VAE (bài trước):** VQ-VAE thay continuous latent bằng discrete codebook
+  — giải quyết vấn đề posterior collapse và blurry images của VAE.
+- **GAN (bài 23):** VQ-GAN thêm discriminator và adversarial loss vào
+  VQ-VAE — kết hợp ưu điểm của cả VAE (cấu trúc latent) và GAN (chất
+  lượng ảnh).
+- **Latent Diffusion / Stable Diffusion (bài 89):** dùng VQ-GAN's encoder-
+  decoder để nén ảnh vào latent space — VQ-GAN là thành phần không thể
+  thiếu trong pipeline.
+- **Conditional GAN (bài 105):** VQ-GAN dùng PatchGAN discriminator giống
+  pix2pix.
+
+## Nguồn tham khảo
+
+- [arXiv — Neural Discrete Representation Learning (van den Oord, Vinyals & Kavukcuoglu, 2017)](https://arxiv.org/abs/1711.00937) — paper gốc VQ-VAE, dùng cho vector quantization, straight-through estimator, codebook loss, và discrete latent space.
+- [arXiv — Taming Transformers for High-Resolution Image Synthesis (Esser, Rombach & Ommer, 2021)](https://arxiv.org/abs/2012.09841) — paper gốc VQ-GAN, dùng cho discriminator + perceptual loss, Transformer prior, và kết nối với DALL-E/Stable Diffusion.
+- [Lilian Weng — From Autoencoder to Beta-VAE](https://lilianweng.github.io/posts/2018-08-12-vae/) — dùng cho tổng quan dòng tiến hoá VAE→VQ-VAE và so sánh continuous vs discrete latent.

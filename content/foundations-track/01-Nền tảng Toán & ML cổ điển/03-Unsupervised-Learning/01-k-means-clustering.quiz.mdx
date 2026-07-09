@@ -1,0 +1,43 @@
+---
+quiz_for: 01-k-means-clustering
+---
+
+## Q1
+K-means khác các mô hình đã học trước đó (Linear/Logistic Regression, Decision Tree, k-NN, SVM) ở điểm căn bản nào?
+
+- [x] K-means là unsupervised learning — dữ liệu không có nhãn `y`, mục tiêu là tự tìm cấu trúc/nhóm tiềm ẩn
+- [ ] K-means không dùng khoảng cách Euclid
+- [ ] K-means chỉ hoạt động với dữ liệu 1 chiều
+- [ ] K-means không cần chọn tham số nào
+
+> Toàn bộ 6 mô hình trước đều là supervised learning (có nhãn y sẵn để học). K-means là ví dụ đầu tiên về unsupervised learning — chỉ có điểm dữ liệu x, không có y, mục tiêu là tìm ra k cụm.
+
+## Q2
+Thuật toán K-means lặp lại 2 bước nào cho tới khi hội tụ?
+
+- [x] Gán mỗi điểm vào centroid gần nhất, rồi cập nhật lại vị trí centroid theo trung bình các điểm vừa gán
+- [ ] Tính gradient của loss rồi cập nhật trọng số w
+- [ ] Chia node theo Gini impurity rồi lặp đệ quy
+- [ ] Tìm hyperplane có margin lớn nhất rồi cập nhật support vectors
+
+> K-means lặp 2 bước: (1) gán điểm vào centroid gần nhất, (2) cập nhật centroid bằng trung bình các điểm vừa được gán vào cụm đó — lặp lại cho tới khi centroid không đổi (hội tụ).
+
+## Q3
+"Inertia" trong K-means đo lường điều gì?
+
+- [x] Tổng bình phương khoảng cách từ mỗi điểm tới centroid của cụm nó thuộc về — càng nhỏ nghĩa là các cụm càng "chặt" (gọn)
+- [ ] Số lượng cụm k đã chọn
+- [ ] Thời gian huấn luyện của thuật toán
+- [ ] Khoảng cách giữa các centroid với nhau
+
+> Inertia tương tự MSE đã gặp ở Linear Regression/Decision Tree — đo tổng bình phương khoảng cách từ điểm tới centroid của cụm. Cách chia cụm tốt hơn (chặt hơn) cho inertia nhỏ hơn.
+
+## Q4
+K-means giống k-NN ở điểm nào, khiến cả hai đều cần chuẩn hoá feature và đều gặp curse of dimensionality?
+
+- [x] Cả hai đều dựa trên khoảng cách Euclid giữa các điểm dữ liệu
+- [ ] Cả hai đều là supervised learning
+- [ ] Cả hai đều không có tham số nào cần chọn
+- [ ] Cả hai đều dùng cross-entropy loss
+
+> K-means và k-NN dùng chung phép đo khoảng cách Euclid — cùng hệ quả: cần chuẩn hoá feature để tránh 1 feature chi phối khoảng cách, và cùng gặp khó khăn khi số chiều dữ liệu quá lớn.

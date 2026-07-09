@@ -1,0 +1,174 @@
+---
+title: Generative Models — Tổng quan và Phân loại
+track: foundations-track
+module: Generative Models
+order: 1
+status: stable
+prerequisites: ["02-autoencoder"]
+summary: Bài mở đầu module Generative Models — phân biệt generative vs discriminative, vì sao sinh dữ liệu khó hơn phân loại, và 3 trường phái chính (likelihood-based, implicit, energy-based) với trade-off giữa chất lượng ảnh, độ bao phủ và tốc độ sinh.
+last_touched_by_task: Bài mới (2026-07-08): mở đầu module Generative Models — làm rõ người đọc cần bản đồ tư duy trước khi đi vào từng kỹ thuật cụ thể (GAN, VAE, Diffusion). Nguồn: Lilian Weng taxonomy diagram + d2l.ai introduction chapter + CS231n generative models notes.
+submodule: Overview
+---
+
+Cho tới nay, mọi mô hình trong giáo trình đều thuộc một trong hai dạng:
+**supervised learning** (học ánh xạ từ input `x` tới nhãn `y`) hoặc
+**unsupervised learning** (tìm cấu trúc ẩn trong dữ liệu `x`). Bài này mở
+ra một hướng hoàn toàn khác: thay vì học cách **phân loại** hay **nén** dữ
+liệu, học cách **tạo ra** dữ liệu mới — gọi là **generative modeling**.
+
+## Generative vs Discriminative: khác biệt căn bản
+
+Mọi mô hình supervised đã học (linear regression, logistic regression,
+CNN, RNN, Transformer...) đều có chung một cấu trúc: nhận input `x`, trả
+ra output `y` — học **conditional probability** `p(y|x)` (xác suất của nhãn
+`y` khi biết input `x`). Đây gọi là **discriminative model**: nó học cách
+**phân biệt** giữa các lớp, vẽ ranh giới quyết định trong không gian dữ
+liệu.
+
+**Generative model** đi xa hơn: học **phân phối xác suất của chính dữ liệu**
+`p(x)` — hiểu được "dữ liệu trông như thế nào", không chỉ "hai lớp này
+khác nhau ở đâu". Hệ quả: một generative model có thể **tạo ra** dữ liệu
+mới chưa từng tồn tại (một khuôn mặt người giả, một bức ảnh mèo mới, một
+bản nhạc chưa ai từng nghe), trong khi discriminative model chỉ biết phân
+loại dữ liệu có sẵn.
+
+Trực giác: một đứa trẻ học phân biệt chó và mèo (discriminative) có thể
+chỉ ra con nào là chó khi nhìn thấy, nhưng không tự vẽ được một con chó
+chưa từng thấy. Muốn vẽ được, nó cần hiểu "chó thường có hình dạng thế
+nào, lông ra sao, mắt mũi ở đâu" — tức là học phân phối của dữ liệu "chó"
+(generative).
+
+## Vì sao sinh dữ liệu khó hơn phân loại rất nhiều?
+
+Bài toán generative khó hơn discriminative ở ba điểm cốt lõi:
+
+**1. Dữ liệu đa chiều (high-dimensional).** Một ảnh 256×256 RGB có
+196.608 chiều — mỗi pixel có thể có 256 giá trị cường độ, tạo ra không
+gian 256^196608 trạng thái có thể, gần như toàn bộ đều là "ảnh nhiễu"
+không có nghĩa. Mô hình phải học tập trung xác suất vào một tập con cực
+nhỏ — những ảnh trông giống thật — trong không gian mênh mông đó.
+
+**2. Phân phối đa mode (multimodal).** Một input mơ hồ (ví dụ "một con mèo
+màu cam") có thể ứng với vô số output hợp lệ khác nhau (mèo nằm, mèo ngồi,
+mèo nhìn xa, mèo nhìn gần...). Mô hình không chỉ cần tạo ra một cái đúng,
+mà phải **bao phủ** được sự đa dạng đó — không được "lười" chỉ học một
+vài kiểu mèo.
+
+**3. Không có ground truth để so sánh.** Ở supervised, mỗi input có nhãn
+đúng — mô hình biết chính xác sai bao nhiêu qua hàm loss. Ở generative,
+không có "ảnh đúng" cho một prompt "mèo cam" — chỉ có đánh giá chủ quan
+"trông giống thật không?". Định nghĩa hàm loss đo độ chân thực là bài toán
+trung tâm, và mỗi trường phái generative model giải nó một cách khác nhau.
+
+## Ba trường phái generative model
+
+Có ba cách tiếp cận chính để giải bài toán sinh dữ liệu, khác nhau ở cách
+**định nghĩa hàm mục tiêu**:
+
+### 1. Likelihood-based: tối đa hoá xác suất của dữ liệu thật
+
+Ý tưởng: định nghĩa một mô hình `p_θ(x)` có tham số, và tối ưu `θ` để
+xác suất mô hình gán cho dữ liệu thật là **cao nhất**. Nếu mô hình gán
+xác suất cao cho mọi ảnh thật trong tập huấn luyện, nó đã học được phân
+phối dữ liệu tốt — và có thể sinh ảnh mới bằng cách lấy mẫu từ `p_θ(x)`.
+
+Trường phái này gồm ba nhánh con:
+
+- **VAE (Variational Autoencoder):** không tính trực tiếp `p(x)` (vì khó),
+  mà tối ưu một cận dưới gọi là **ELBO** (Evidence Lower Bound). Kết quả:
+  huấn luyện ổn định, có không gian latent đẹp (có thể nội suy giữa các
+  ảnh), nhưng ảnh sinh thường **mờ** hơn các phương pháp khác.
+
+- **Flow-based (Normalizing Flows):** dùng một chuỗi biến đổi khả nghịch
+  để biến một phân phối đơn giản (Gaussian) thành phân phối phức tạp của
+  dữ liệu. Tính được chính xác `p(x)` (không xấp xỉ), nhưng kiến trúc bị
+  ràng buộc (phải khả nghịch, Jacobian tính được) — ít phổ biến trong
+  thực tế hiện nay.
+
+- **Diffusion Models:** học một quy trình khử nhiễu dần, biến nhiễu Gaussian
+  thuần tuý thành dữ liệu. Loss cũng là một dạng ELBO (giống VAE), nhưng
+  chất lượng ảnh sinh **vượt trội** — đang là SOTA cho sinh ảnh (DALL-E,
+  Stable Diffusion, Midjourney). Đánh đổi: **sinh chậm** (cần 10-50 bước
+  khử nhiễu so với 1 bước của GAN).
+
+### 2. Implicit: không cần tính xác suất, chỉ cần sinh được
+
+Ý tưởng: thay vì cố gắng định nghĩa `p(x)` (khó), định nghĩa một quy
+trình lấy mẫu — một mạng nơ-ron nhận nhiễu ngẫu nhiên `z` và biến nó
+thành dữ liệu `G(z)`. Không ai tính xem xác suất của một ảnh cụ thể là
+bao nhiêu, chỉ cần ảnh sinh ra trông giống thật. Đại diện duy nhất của
+trường phái này trong thực tế:
+
+- **GAN (Generative Adversarial Network):** dùng hai mạng — generator
+  (sinh ảnh giả) và discriminator (phân biệt thật/giả) — thi đấu với nhau.
+  Generator học đánh lừa discriminator, discriminator học phát hiện giả.
+  Kết quả: ảnh sinh **rất sắc nét**, **sinh nhanh** (1 lần forward), nhưng
+  nổi tiếng **khó huấn luyện** (mất cân bằng G/D, mode collapse).
+
+### 3. Energy-based: định nghĩa năng lượng thay vì xác suất
+
+Ý tưởng: gán mỗi mẫu dữ liệu một "năng lượng" `E(x)` — mẫu thật có năng
+lượng thấp, mẫu giả có năng lượng cao. Xác suất `p(x) ∝ exp(-E(x))` —
+chuẩn hoá (tính tổng trên mọi `x`) là bất khả thi, nên cần kỹ thuật đặc
+biệt để huấn luyện (contrastive divergence, MCMC). EBM ít phổ biến hơn
+trong sinh ảnh, nhưng có ảnh hưởng trong học biểu diễn và mô hình năng
+lượng cho video.
+
+**Trong giáo trình này, chúng ta tập trung vào hai trường phái chính:**
+**Implicit (GAN Family)** và **Likelihood-based dạng Diffusion** — vì
+đây là hai hướng đang chi phối sinh ảnh hiện đại (GAN cho chất lượng/speed,
+Diffusion cho SOTA quality + mode coverage). VAE sẽ được học như nền tảng
+cho khái niệm ELBO và latent space, có ảnh hưởng trực tiếp tới Diffusion.
+
+## Trade-off giữa các trường phái
+
+Không có generative model nào "tốt nhất" — mỗi trường phái đánh đổi giữa
+ba mục tiêu:
+
+| Tiêu chí | GAN | VAE | Diffusion |
+|----------|-----|-----|-----------|
+| Chất lượng ảnh | Rất tốt | Trung bình (mờ) | Xuất sắc |
+| Độ bao phủ (mode coverage) | Kém (mode collapse) | Tốt | Xuất sắc |
+| Tốc độ sinh | Rất nhanh (1 bước) | Nhanh (1 bước) | Chậm (10-1000 bước) |
+| Ổn định huấn luyện | Kém (khó cân bằng) | Tốt | Tốt |
+| Không gian latent có cấu trúc | Không rõ ràng | Có (nội suy được) | Có |
+
+Đây là lý do GAN thống trị sinh ảnh trong 2014-2020, nhưng Diffusion dần
+thay thế từ 2021 trở đi — chất lượng và độ bao phủ vượt trội, dù phải
+đánh đổi tốc độ sinh (đã được cải thiện nhiều nhờ DDIM và các phương pháp
+distillation).
+
+## Module này có gì?
+
+Module Generative Models được tổ chức thành ba nhánh:
+
+**Sub-module: GAN Family** — dòng tiến hoá sinh đối kháng:
+- [GAN (Goodfellow 2014)](../02-GAN-Family/01-gan.mdx) — ý tưởng gốc:
+  discriminator thay hàm loss
+- [DCGAN (2015)](../02-GAN-Family/02-dcgan.mdx) — ổn định hoá bằng kiến
+  trúc convolutional
+- [WGAN & StyleGAN (2017-2019)](../02-GAN-Family/03-wgan-stylegan.mdx) —
+  2 hướng nâng cấp: Wasserstein distance cải thiện ổn định, style-based
+  cho kiểm soát ảnh
+
+**Sub-module: Diffusion Models** — dòng tiến hoá khuếch tán:
+- [Diffusion Models (DDPM, Ho 2020)](../03-Diffusion-Models/01-diffusion-models.mdx) —
+  quy trình forward/reverse + loss MSE
+- [DDIM (Song 2020)](../03-Diffusion-Models/02-ddim.mdx) — sinh nhanh
+  10-50 lần + classifier-free guidance cho conditional generation
+- [Latent Diffusion (Rombach 2022)](../03-Diffusion-Models/03-latent-diffusion.mdx) —
+  nén vào latent space, text-to-image thực tế (Stable Diffusion)
+
+**Bài tiếp theo: Autoencoder rồi VAE** — nền tảng likelihood-based, giải
+thích ELBO và latent space có cấu trúc, là cầu nối giữa Autoencoder và
+Diffusion Models (sắp học).
+
+## Nguồn tham khảo
+
+- [d2l.ai Chapter 1: Introduction](https://d2l.ai/chapter_introduction/index.html) — bảng so sánh
+  các loại generative model (VAE, GAN, Flow, Diffusion) ở mức tổng quan
+- [Lilian Weng — What are Diffusion Models? (2021)](https://lilianweng.github.io/posts/2021-07-11-diffusion-models/) — taxonomy
+  diagram phân loại generative models thành likelihood-based và implicit,
+  phần mở đầu so sánh 4 họ model
+- [CS231n Lecture Notes — Generative Models](https://cs231n.github.io/) — phân biệt
+  generative vs discriminative qua ví dụ GAN generator/discriminator

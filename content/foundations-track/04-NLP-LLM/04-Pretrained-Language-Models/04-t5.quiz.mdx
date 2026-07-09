@@ -1,0 +1,43 @@
+---
+quiz_for: 04-t5
+---
+
+## Q1
+Vấn đề cụ thể mà T5 giải quyết là gì?
+
+- [x] Mỗi tác vụ NLP (phân loại, hỏi-đáp, dịch máy...) thường cần một cách đặt bài toán/thiết kế output khác nhau, khiến lĩnh vực NLP phân mảnh thành nhiều cách tiếp cận rời rạc dù dùng chung nền tảng Transformer
+- [ ] Transformer không thể xử lý được câu dài hơn 100 từ
+- [ ] BERT và GPT không thể huấn luyện được cùng lúc trên cùng một GPU
+- [ ] Các tác vụ NLP không có đủ dữ liệu huấn luyện
+
+> T5 nhắm đúng vào sự phân mảnh này — mỗi tác vụ trước đó cần thiết kế lớp output và hàm loss riêng, T5 thống nhất tất cả dưới 1 khuôn dạng.
+
+## Q2
+Giải pháp "text-to-text" của T5 hoạt động như thế nào?
+
+- [x] Ép mọi tác vụ NLP vào cùng khuôn dạng: input là văn bản (kèm task prefix mô tả nhiệm vụ), output cũng là văn bản — dùng chung 1 kiến trúc và 1 hàm loss cho mọi tác vụ
+- [ ] Chuyển mọi văn bản thành số trước khi xử lý, không giữ định dạng text
+- [ ] Chỉ hoạt động được với đúng 1 tác vụ duy nhất là dịch máy
+- [ ] Yêu cầu người dùng tự viết code riêng cho mỗi tác vụ mới
+
+> Ví dụ: "translate English to German: ..." hay "sentiment: ..." đều là input dạng text, và output cũng luôn là text (kể cả nhãn phân loại, thay vì chỉ số lớp).
+
+## Q3
+Vì sao T5 chọn kiến trúc encoder-decoder thay vì chỉ encoder (như BERT) hay chỉ decoder (như GPT)?
+
+- [x] Encoder đọc toàn bộ input với ngữ cảnh hai chiều (giống BERT) để hiểu đúng nhiệm vụ, decoder sinh output từng token một (giống GPT) — kết hợp cả 2 ưu điểm phù hợp tự nhiên với khuôn dạng text-to-text
+- [ ] Vì encoder-decoder chạy nhanh hơn cả BERT và GPT cộng lại
+- [ ] Vì BERT và GPT đều đã lỗi thời, không dùng được nữa
+- [ ] Vì encoder-decoder không cần huấn luyện, chỉ cần thiết kế thủ công
+
+> T5 không chọn "hoặc BERT hoặc GPT" — nó dùng nguyên vẹn kiến trúc Transformer gốc (Vaswani et al. 2017) đã có sẵn cả 2 thành phần.
+
+## Q4
+T5 hoàn thiện bức tranh nào về các nhánh kiến trúc dựa trên Transformer trong track?
+
+- [x] 3 nhánh: decoder-only (GPT, sinh văn bản tự do), encoder-only (BERT, hiểu ngôn ngữ), encoder-decoder (T5, thống nhất mọi tác vụ dưới 1 khuôn dạng)
+- [ ] Chỉ có đúng 1 nhánh kiến trúc Transformer duy nhất, T5 không khác gì BERT
+- [ ] T5 thay thế hoàn toàn BERT và GPT, 2 kiến trúc đó không còn giá trị
+- [ ] T5 không liên quan gì tới Transformer, dùng kiến trúc RNN hoàn toàn khác
+
+> Đây là bức tranh đầy đủ 3 nhánh chính dựa trên Transformer mà track đã kể: GPT (decoder-only), BERT (encoder-only), và T5 (encoder-decoder) — mỗi nhánh phù hợp một mục tiêu khác nhau.

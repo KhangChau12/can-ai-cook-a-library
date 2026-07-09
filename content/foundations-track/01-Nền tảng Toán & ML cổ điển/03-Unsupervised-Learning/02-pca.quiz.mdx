@@ -1,0 +1,43 @@
+---
+quiz_for: 02-pca
+---
+
+## Q1
+PCA giải bài toán giảm chiều bằng công cụ toán học nào?
+
+- [x] Đại số tuyến tính — tìm eigenvector/eigenvalue của ma trận hiệp phương sai
+- [ ] Mạng nơ-ron với backpropagation
+- [ ] Cây quyết định với Gini impurity
+- [ ] Reinforcement learning với reward tự định nghĩa
+
+> PCA không cần mạng nơ-ron hay gradient descent — nó dùng đại số tuyến tính thuần tuý: eigenvector của ma trận hiệp phương sai chỉ ra các hướng, eigenvalue cho biết lượng phương sai theo hướng đó.
+
+## Q2
+Principal component đầu tiên (eigenvector có eigenvalue lớn nhất) tương ứng với điều gì?
+
+- [x] Hướng mà dữ liệu có phương sai LỚN NHẤT
+- [ ] Hướng mà dữ liệu có phương sai nhỏ nhất
+- [ ] Feature gốc có giá trị trung bình lớn nhất
+- [ ] Điểm dữ liệu bất thường nhất (outlier)
+
+> Giải bài toán tối ưu "tìm hướng phương sai lớn nhất" cho ra chính xác nghiệm là eigenvector ứng với eigenvalue lớn nhất của ma trận hiệp phương sai — đây không phải sự trùng hợp mà là kết quả toán học.
+
+## Q3
+PCA và Autoencoder cùng giải bài toán giảm chiều nhưng khác nhau ở điểm cốt lõi nào?
+
+- [x] PCA là phép chiếu TUYẾN TÍNH (nghiệm đóng, không cần huấn luyện lặp); Autoencoder dùng mạng nơ-ron PHI TUYẾN (cần huấn luyện lặp qua backpropagation)
+- [ ] PCA chỉ dùng được cho ảnh, Autoencoder chỉ dùng được cho văn bản
+- [ ] Autoencoder không giảm chiều, chỉ tăng chiều dữ liệu
+- [ ] PCA cần nhãn y, Autoencoder không cần nhãn
+
+> Nếu autoencoder dùng encoder/decoder chỉ là lớp tuyến tính thuần (bỏ activation phi tuyến), kết quả học được hội tụ về đúng không gian mà PCA tìm ra bằng công thức đóng — PCA có thể xem là trường hợp đặc biệt, tuyến tính của bài toán mà autoencoder tổng quát hoá.
+
+## Q4
+Tỷ lệ phương sai giữ lại khi chỉ giữ k principal component đầu tiên được tính như thế nào?
+
+- [x] Tổng eigenvalue của k component đã giữ, chia cho tổng toàn bộ eigenvalue
+- [ ] Số lượng principal component chia cho tổng số chiều gốc
+- [ ] Luôn cố định ở mức 50%, không phụ thuộc vào k
+- [ ] Bằng đúng k/100
+
+> Vì các principal component đầu luôn là hướng phương sai lớn nhất, phần thông tin "bỏ qua" khi chỉ giữ k chiều là phần phương sai nhỏ nhất còn lại — tỷ lệ này cho biết chính xác giữ được bao nhiêu phần trăm thông tin của dữ liệu gốc.

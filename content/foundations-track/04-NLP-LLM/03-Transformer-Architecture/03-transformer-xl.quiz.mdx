@@ -1,0 +1,43 @@
+---
+quiz_for: 03-transformer-xl
+---
+
+## Q1
+"Context fragmentation" là vấn đề gì?
+
+- [x] Khi văn bản dài bị cắt thành nhiều segment cố định xử lý độc lập, mô hình không thể học được phụ thuộc vượt ra ngoài ranh giới 1 segment, và đánh giá tốn kém vì phải tính lại phần trùng lặp mỗi khi dịch chuyển segment
+- [ ] Vấn đề khi ảnh bị chia thành nhiều mảnh (patch) trong Vision Transformer
+- [ ] Lỗi xảy ra khi huấn luyện mô hình trên GPU không đủ bộ nhớ
+- [ ] Việc dữ liệu huấn luyện bị thiếu nhãn ở một số điểm
+
+> Đây là 2 vấn đề cụ thể của cách xử lý văn bản dài truyền thống với Transformer gốc — cả 2 đều xuất phát từ việc xử lý mỗi segment hoàn toàn độc lập.
+
+## Q2
+Segment-level recurrence giải quyết vấn đề đó bằng cách nào?
+
+- [x] Tái sử dụng (cache lại) hidden state đã tính từ segment trước, ghép nối với hidden state segment hiện tại khi tính self-attention — mở rộng phạm vi ngữ cảnh mà không cần tính lại từ đầu
+- [ ] Tăng kích thước segment lên vô hạn để không cần cắt văn bản nữa
+- [ ] Bỏ hoàn toàn cơ chế self-attention, chỉ dùng RNN
+- [ ] Huấn luyện riêng biệt một mô hình cho mỗi segment, không chia sẻ thông tin
+
+> Nhờ tái sử dụng hidden state, query ở segment hiện tại có thể "nhìn thấy" thông tin từ segment trước mà không cần tính toán lại toàn bộ.
+
+## Q3
+Vì sao Transformer-XL cần dùng relative positional encoding thay vì absolute positional encoding?
+
+- [x] Vì khi ghép nối hidden state từ nhiều segment, các vị trí ở segment khác nhau có thể trùng chỉ số tuyệt đối — relative encoding (khoảng cách i-j) vẫn nhất quán dù 2 vị trí thuộc segment nào
+- [ ] Vì absolute positional encoding tốn nhiều bộ nhớ hơn relative encoding
+- [ ] Vì relative encoding giúp mô hình chạy nhanh hơn trên CPU
+- [ ] Vì absolute positional encoding không thể học được qua backpropagation
+
+> Đây là vấn đề kỹ thuật cụ thể khi ghép nối hidden state từ nhiều segment — absolute encoding sẽ gây nhầm lẫn vì trùng chỉ số vị trí giữa các segment.
+
+## Q4
+Kết quả cụ thể của Transformer-XL so với Transformer gốc là gì?
+
+- [x] Bắt được phụ thuộc dài hơn Transformer gốc tới 450%, và nhanh hơn tới hơn 1800 lần khi đánh giá (evaluation)
+- [ ] Transformer-XL luôn chậm hơn Transformer gốc nhưng chính xác hơn
+- [ ] Transformer-XL chỉ hoạt động được với chuỗi ngắn hơn 10 token
+- [ ] Transformer-XL không thể sinh văn bản mạch lạc dài hơn vài từ
+
+> Đây là cải thiện đáng kể cả về khả năng bắt phụ thuộc dài (nhờ segment-level recurrence) và tốc độ đánh giá (nhờ tái sử dụng hidden state thay vì tính lại từ đầu).

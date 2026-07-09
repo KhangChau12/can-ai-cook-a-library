@@ -1,0 +1,43 @@
+---
+quiz_for: 04-longformer
+---
+
+## Q1
+Vấn đề cụ thể mà Longformer giải quyết là gì, và nó khác gì so với vấn đề Transformer-XL giải quyết?
+
+- [x] Longformer giải quyết trực tiếp độ phức tạp bậc hai của self-attention (chi phí tính toán gốc); Transformer-XL mở rộng phạm vi ngữ cảnh hiệu quả bằng segment recurrence nhưng không giảm độ phức tạp attention bên trong mỗi segment
+- [ ] Longformer và Transformer-XL giải quyết chính xác cùng 1 vấn đề theo cùng 1 cách
+- [ ] Longformer giải quyết vấn đề overfitting, không liên quan tới độ phức tạp tính toán
+- [ ] Transformer-XL giải quyết độ phức tạp bậc hai, còn Longformer giải quyết vấn đề context fragmentation
+
+> 2 bài này bổ sung cho nhau: Transformer-XL mở rộng ngữ cảnh hiệu quả (tái sử dụng thông tin), Longformer giảm chi phí tính toán gốc của attention — có thể kết hợp cả 2.
+
+## Q2
+Cơ chế attention của Longformer kết hợp 2 thành phần nào?
+
+- [x] Local windowed attention (mỗi token chỉ chú ý token lân cận trong 1 cửa sổ cố định, độ phức tạp tuyến tính) và task-motivated global attention (1 số ít token đặc biệt được chú ý bởi toàn bộ chuỗi)
+- [ ] Chỉ có global attention, không có local attention
+- [ ] 2 lớp CNN xếp chồng thay thế hoàn toàn self-attention
+- [ ] RNN kết hợp với LSTM để xử lý chuỗi dài
+
+> Kết hợp cả 2 giúp đạt độ phức tạp tuyến tính trong khi vẫn giữ được khả năng lan truyền thông tin quan trọng ở phạm vi toàn tài liệu qua các token global attention.
+
+## Q3
+Cơ chế của Longformer giống với ý tưởng nào đã học ở module Computer Vision?
+
+- [x] Swin Transformer — cùng nguyên lý "giới hạn attention trong phạm vi cục bộ, rồi bổ sung cơ chế để trao đổi thông tin ở phạm vi rộng hơn", chỉ khác cơ chế cụ thể (global attention có chọn lọc vs shifted window) và modality (văn bản vs ảnh)
+- [ ] ResNet — cùng ý tưởng skip connection để giải quyết vanishing gradient
+- [ ] YOLO — cùng ý tưởng biến bài toán thành hồi quy 1 bước
+- [ ] GAN — cùng ý tưởng huấn luyện đối kháng 2 mạng
+
+> Đây là minh chứng cho việc cùng 1 nguyên lý thiết kế (cục bộ + cơ chế bổ sung toàn cục) giải quyết đúng loại vấn đề tương tự ở 2 modality khác nhau.
+
+## Q4
+Ngoài Longformer, còn 2 hướng tiếp cận nào khác cùng mục tiêu giảm độ phức tạp attention từ bậc hai xuống gần tuyến tính?
+
+- [x] Sparse Transformer (dùng factorized self-attention) và Reformer (dùng locality-sensitive hashing, đạt O(L log L))
+- [ ] Chỉ có đúng 1 cách duy nhất là Longformer, không có hướng nào khác
+- [ ] BERT và GPT là 2 hướng tiếp cận khác cho vấn đề này
+- [ ] CNN và RNN là 2 giải pháp thay thế hoàn toàn cho self-attention
+
+> Cả 3 hướng (Longformer, Sparse Transformer, Reformer) đều nhắm chung mục tiêu giảm độ phức tạp attention nhưng bằng cơ chế kỹ thuật khác nhau — cho thấy đây là hướng nghiên cứu tích cực với nhiều lời giải song song.

@@ -11,8 +11,13 @@
   },
   "foundations-track": {
     "Nền tảng Toán & ML cổ điển": {
-      "description": "Toán bổ trợ và các thuật toán học máy cơ bản: Regression, Decision Tree, SVM, k-NN, Naive Bayes.",
-      "submodules": {}
+      "description": "Toán bổ trợ và các thuật toán học máy cổ điển, chia theo 4 nhánh bản chất: nền toán, supervised, unsupervised (gồm cả giảm chiều PCA/t-SNE/UMAP), và ensemble.",
+      "submodules": {
+        "Overview": "Nền toán tối thiểu: xác suất, thống kê, định lý Bayes, kỳ vọng/phương sai.",
+        "Supervised Learning": "Học có giám sát: Linear/Logistic Regression, Decision Tree, k-NN, SVM, Naive Bayes.",
+        "Unsupervised Learning": "Học không giám sát: K-means (phân cụm) và giảm chiều dữ liệu PCA → t-SNE → UMAP.",
+        "Ensemble Methods": "Kết hợp nhiều mô hình yếu: Random Forest (bagging, giảm variance) và AdaBoost (boosting, giảm bias)."
+      }
     },
     "Deep Learning Nền tảng": {
       "description": "Kiến thức cốt lõi về mạng nơ-ron nhân tạo: Perceptron, Backpropagation và kỹ thuật Regularization.",
@@ -26,12 +31,16 @@
         "Segmentation": "Phân vùng ảnh cấp độ pixel: kiến trúc U-Net, Mask R-CNN, DeepLab và SegFormer."
       }
     },
-    "Sequence Model": {
-      "description": "Xử lý dữ liệu dạng chuỗi và NLP: tiến trình từ RNN/LSTM đến Transformer, BERT, T5 và các biến thể ngữ cảnh dài.",
+    "NLP & LLM": {
+      "description": "Xử lý ngôn ngữ tự nhiên từ nền tảng tới mô hình ngôn ngữ lớn: pipeline văn bản → token → vector → mô hình, kiến trúc hồi quy và Transformer, các mô hình pretrained (BERT, GPT), và cách huấn luyện/khai thác LLM hiện đại.",
       "submodules": {
-        "RNN Family": "Kiến trúc hồi quy cổ điển: RNN, LSTM/GRU và kỹ thuật Bidirectional dùng chung cho mọi cell.",
-        "Transformer Architecture": "Họ kiến trúc dựa trên Attention: Transformer, BERT, T5 và các biến thể xử lý văn bản dài (Transformer-XL, Longformer).",
-        "Tokenization": "Tiền xử lý văn bản: cắt token bằng subword (BPE) và biến token thành vector số (word2vec)."
+        "Overview": "Bản đồ tư duy module: vì sao dữ liệu chuỗi cần kiến trúc riêng, pipeline chung nối 6 sub-module còn lại.",
+        "Tokenization": "Tiền xử lý văn bản: cắt token bằng subword (BPE, WordPiece, SentencePiece) và biến token thành vector số (word2vec, GloVe).",
+        "RNN Family": "Kiến trúc hồi quy cổ điển: RNN, LSTM/GRU, ứng dụng Seq2seq và kỹ thuật Bidirectional/Deep RNN dùng chung cho mọi cell.",
+        "Transformer Architecture": "Kiến trúc dựa hoàn toàn trên Attention: Transformer gốc và các biến thể xử lý văn bản dài (Transformer-XL, Longformer, Reformer).",
+        "Pretrained Language Models": "Kiến trúc pretrained quy mô lớn dựa trên Transformer: BERT (encoder-only) → RoBERTa/ALBERT (cải tiến huấn luyện/tham số) → T5 (encoder-decoder, text-to-text).",
+        "Huấn luyện & Alignment": "Lộ trình cập nhật tham số cho LLM decoder-only (GPT-style): Pretraining, Scaling Laws, Fine-tuning và Alignment (RLHF, LoRA, DPO).",
+        "Ứng dụng & Inference-time": "Khai thác mô hình không cập nhật tham số: Prompting, RAG và Agent."
       }
     },
     "Reinforcement Learning": {
@@ -43,23 +52,12 @@
         "Overview": "Nền tảng chung: Framework, MDP, Actor-Critic, Imitation Learning, Exploration, Offline RL, Hierarchical RL."
       }
     },
-    "Dimensionality Reduction": {
-      "description": "Giảm chiều dữ liệu và trực quan hóa: các phương pháp PCA, Autoencoder, t-SNE và UMAP.",
-      "submodules": {}
-    },
     "Generative Models": {
-      "description": "Mô hình sinh dữ liệu hình ảnh: 2 nhánh song song — sinh đối kháng (GAN family) và khuếch tán (Diffusion Models).",
+      "description": "Mô hình sinh dữ liệu hình ảnh: nền tảng representation learning (Autoencoder/VAE) và 2 nhánh song song — sinh đối kháng (GAN family) và khuếch tán (Diffusion Models).",
       "submodules": {
         "GAN Family": "Mô hình sinh đối kháng: GAN gốc (Goodfellow 2014) → DCGAN (convolutional), giải quyết khó định nghĩa loss đo độ chân thực bằng discriminator học được.",
         "Diffusion Models": "Mô hình sinh khuếch tán: DDPM (forward/reverse process) → DDIM (sample nhanh 10-50×) → classifier-free guidance + Latent Diffusion (Stable Diffusion) biến thành text-to-image thực tế.",
-        "Overview": "Nền tảng chung: phân loại generative models, VAE, Flow-based models, VQ-VAE/VQ-GAN."
-      }
-    },
-    "LLM": {
-      "description": "Mô hình ngôn ngữ lớn: huấn luyện, alignment và các phương pháp tối ưu hóa lúc chạy (RAG, Agent).",
-      "submodules": {
-        "Huấn luyện & Alignment": "Lộ trình cập nhật tham số: Pretraining, Scaling Laws, Fine-tuning và Alignment (RLHF).",
-        "Ứng dụng & Inference-time": "Khai thác mô hình không cập nhật tham số: Prompting, RAG và Agent."
+        "Overview": "Nền tảng chung: phân loại generative models, Autoencoder → VAE (mạch tiến hoá nén dữ liệu → sinh dữ liệu), Flow-based models, VQ-VAE/VQ-GAN."
       }
     },
     "Audio": {

@@ -14,26 +14,45 @@
 
 ## 1. STATUS (đọc đầu mỗi task, không ngoại lệ)
 
-- **Version:** v8.0
-- **Phiên gần nhất:** REBUILD SITE BẰNG ASTRO (2026-07-09) — thay thế
-  toàn bộ viewer HTML tĩnh (`viewer/template.html` + `build-data.js`) bằng
-  site Astro thật (SSG, React quiz island, Tailwind v4, Pagefind search),
-  deploy GitHub Pages qua workflow build+deploy 2 job. IA mới: hub → track
-  (lưới module) → module (danh sách bài, sub-module là section không phải
-  card riêng) → bài đọc. `content/` không đổi convention, `modules.json`
-  chuyển vào `content/`. Xem mục 7 để biết chi tiết kiến trúc hiện hành.
-- **Tổng số bài hiện có:** 121 (11 exam-track + 110 foundations-track) —
-  tổ chức thành **10 module** cho foundations-track:
-  ML cổ điển (9 bài, phẳng), DL Nền tảng (3, phẳng),
+- **Version:** v9.2
+- **Phiên gần nhất:** TÁCH SUBMODULE CHO "NỀN TẢNG TOÁN & ML CỔ ĐIỂN"
+  (2026-07-09) — theo phản hồi người vận hành: module này (9 bài, phẳng)
+  gộp lẫn nhiều nhóm bản chất khác nhau (toán nền, supervised, unsupervised,
+  ensemble), và "Dimensionality Reduction" (module riêng, 3 bài) thực chất
+  chỉ là một nhánh kỹ thuật unsupervised ML cổ điển, không đáng đứng
+  ngang hàng CV/NLP/RL. Tách "Nền tảng Toán & ML cổ điển" thành 4
+  sub-module: Overview (1 bài, Xác suất & thống kê) → Supervised Learning
+  (6 bài: Linear/Logistic Regression, Decision Tree, k-NN, SVM, chuyển
+  Naive Bayes từ cuối track vào đây vì cũng là supervised) → Unsupervised
+  Learning (4 bài: K-means + PCA/t-SNE/UMAP chuyển từ module
+  Dimensionality Reduction đã xoá vào đây, cùng nhánh "học không giám
+  sát") → Ensemble Methods (1 bài, đứng riêng vì là kỹ thuật tổ hợp mô
+  hình chứ không phải 1 thuật toán đơn). Module "Deep Learning Nền tảng"
+  giữ nguyên (đã đúng vai trò nền chung, chỉ là tên gọi không cần đổi).
+  Đã renumber toàn bộ file trong module + sửa frontmatter
+  (submodule/order/prerequisites) + sửa `quiz_for` của 12 file quiz +
+  cross-track links (exam-track → Linear Regression/Ensemble Methods).
+  Phát hiện quan trọng trong task: `src/lib/renderMarkdown.ts` resolve
+  link nội bộ `.mdx` bằng cách khớp **filename sau khi bỏ số thứ tự đầu**
+  (không quan tâm path/thư mục thật) qua map toàn track — nghĩa là link
+  `(02-linear-regression.mdx)` vẫn tự động trỏ đúng dù file thật đã đổi
+  thành `01-linear-regression.mdx`, miễn bare-slug (`linear-regression`)
+  không đổi và không trùng với bài khác trong track. Việc sửa path tường
+  minh trong các bài không di chuyển là không bắt buộc cho build đúng,
+  chỉ giúp dễ đọc source — không cần quét lại toàn track cho việc này.
+- **Tổng số bài hiện có:** 119 (11 exam-track + 108 foundations-track) —
+  tổ chức thành **8 module** cho foundations-track:
+  ML cổ điển (12 bài, 4 sub-module: Overview 1/Supervised Learning 6/
+  Unsupervised Learning 4/Ensemble Methods 1), DL Nền tảng (3, phẳng),
   Computer Vision (17 bài, 3 sub-module: Cơ bản 8/Detection 4/Segmentation 5),
-  Sequence Model (20 bài, 3 sub-module: RNN Family 5/Transformer Architecture 9/Tokenization 6),
+  NLP & LLM (25 bài, 7 sub-module: Overview 1/Tokenization 3/RNN Family 5/
+  Transformer Architecture 5/Pretrained Language Models 4/Huấn luyện &
+  Alignment 6/Ứng dụng & Inference-time 2),
   Reinforcement Learning (21 bài, 4 sub-module: Overview 7/Value-based 5/Policy-based 7/Model-based 2),
-  Dimensionality Reduction (4), Generative Models (13 bài, 3 sub-module:
-  Overview 4/GAN Family 5/Diffusion Models 4), LLM (8, 2 sub-module),
+  Generative Models (14 bài, 3 sub-module: Overview 5/GAN Family 5/Diffusion Models 4),
   Audio (10, 5 sub-module: Overview 1/Biểu diễn âm thanh 2/STT 2/TTS 3/Audio-Understanding 2), Recommendation
   Systems (5)
-- **Số bài cần review/cải thiện lại (flagged):** 0 — toàn bộ 103 bài đạt
-  `stable`
+- **Số bài cần review/cải thiện lại (flagged):** 0 — toàn bộ đạt `stable`
 
 ### 1.1 Việc phải làm ngay (nếu đúng, bỏ qua chọn task ở mục 3, làm luôn)
 
@@ -43,8 +62,8 @@
 ### 1.2 Việc tiếp theo (agent tự cập nhật cuối mỗi task theo mục 6)
 
 > Chỉ liệt kê **việc cần làm**, không giải thích lịch sử/lý do — lý do
-> chi tiết (task nào, vì sao, nguồn nào) thuộc về `SYLLABUS.md` hoặc
-> `## Nguồn tham khảo` của từng bài `.mdx`. Khi 1 việc xong, xoá hẳn
+> chi tiết (task nào, vì sao, nguồn nào) thuộc về `last_touched_by_task`
+> hoặc `## Nguồn tham khảo` của từng bài `.mdx`. Khi 1 việc xong, xoá hẳn
 > dòng đó (không giữ lại để "ghi công"). Khi thêm việc mới, viết tối đa
 > 1-2 dòng.
 
@@ -58,9 +77,14 @@
    xem có bài cũ đang thiếu đúng nguồn academic gốc đó không, cải thiện
    bài đó thay vì ép viết bài mới yếu.
 4. Quy tắc bắt buộc khi sửa mục 1 "Phiên gần nhất": `old_string` PHẢI
-   khớp và thay thế TOÀN BỘ entry cũ, không chỉ prepend. Luôn xác nhận
-   số liệu build bằng cách đọc trực tiếp `data.json` qua Node sau mọi
-   thay đổi lớn (mục 7.1).
+   khớp và thay thế TOÀN BỘ entry cũ, không chỉ prepend.
+5. Link nội bộ dạng `(NN-slug.mdx)` trong nhiều bài dùng số thứ tự cũ
+   (trước khi tách thư mục module/submodule) — **không phải bug**:
+   `src/lib/renderMarkdown.ts` resolve link bằng bare-slug (bỏ số thứ tự
+   đầu) qua map toàn track, không quan tâm path/số thật, nên các link này
+   vẫn trỏ đúng miễn bare-slug không đổi và không trùng bài khác. Chỉ nên
+   sửa path cho khớp khi đang sửa bài đó vì lý do khác (dễ đọc source),
+   không cần task quét riêng.
 
 ### 1.3 Human Pin (người ngoài có thể ghi task ưu tiên vào đây, agent luôn ưu tiên đọc dòng này trước khi tự chọn task)
 
@@ -128,13 +152,16 @@ trúc/công thức cuối cùng. Cụ thể:
 **Sub-module hiện có** (field `submodule`, xem mục 2.3) — dùng khi 1
 module có ≥2 nhánh/giai đoạn/trường phái đủ khác biệt về bản chất, không
 có ngưỡng số bài tối thiểu cứng. Danh sách hiện tại (chi tiết bài nào ở
-mục 4/`SYLLABUS.md`):
+mục 4, hoặc đọc trực tiếp `content/modules.json` + thư mục bài):
 - **Computer Vision**: "Cơ bản" / "Detection" / "Segmentation"
-- **Sequence Model**: "RNN Family" / "Transformer Architecture" /
-  "Tokenization" (Tokenization có 2 nhánh con không chính thức:
-  Segmentation, Embedding)
-- **LLM**: "Huấn luyện & Alignment" (thay đổi tham số) / "Ứng dụng &
-  Inference-time" (không đổi tham số)
+- **NLP & LLM**: "Overview" (bản đồ tư duy module) / "Tokenization" (tiền
+  xử lý text→token→vector) / "RNN Family" (kiến trúc hồi quy) /
+  "Transformer Architecture" (kiến trúc dựa attention) / "Pretrained
+  Language Models" (BERT/RoBERTa/ALBERT/T5) / "Huấn luyện & Alignment"
+  (thay đổi tham số, GPT-style) / "Ứng dụng & Inference-time" (không đổi
+  tham số) — 7 sub-module theo đúng thứ tự pipeline; module này gộp 2
+  module cũ "Sequence Model" + "LLM" (2026-07-09) vì cùng một mạch tiến
+  hoá liền (RNN → Transformer → BERT/GPT → LLM hiện đại)
 - **Reinforcement Learning**: "Value-based" / "Policy-based" /
   "Model-based" (bài 16-17 là nền tảng chung, giữ phẳng không gán
   `submodule`)
@@ -156,9 +183,9 @@ nhau về bản chất** (không phải chỉ khác độ khó — 2 bài cùng 
 một bài nền tảng một bài nâng cao thì vẫn ở chung 1 submodule, bài khó
 hơn xếp `order` sau trong submodule đó, không tách riêng). Khi tách:
 cập nhật `submodule` frontmatter của các bài liên quan, mục 4 CLAUDE.md,
-`SYLLABUS.md`, và `viewer/modules.json` (field `submodules` — bắt buộc,
-xem mục 7.1) trong cùng task. Không tách chỉ vì 1 module "có nhiều bài"
-— số lượng bài không phải tiêu chí, chỉ tách khi có ranh giới bản chất rõ.
+và `content/modules.json` (field `submodules` — bắt buộc, xem mục 7)
+trong cùng task. Không tách chỉ vì 1 module "có nhiều bài" — số lượng
+bài không phải tiêu chí, chỉ tách khi có ranh giới bản chất rõ.
 
 ### 2.2 Một bài không được làm gì
 
@@ -424,10 +451,10 @@ chặn các công việc khác của autopilot.
      11 CNN, 33 Detection, 34 Segmentation ưu tiên trước các bài
      `needs-review` khác) vì viết lại chúng trước sẽ mở khoá ngữ cảnh rõ
      ràng hơn cho bài mới nối tiếp.
-   - **Lấp khoảng trống sub-module:** rà mục 4 (và `SYLLABUS.md` nếu cần
-     chi tiết), viết bài tiếp theo còn thiếu trong dòng tiến hoá đã định
-     (mục 2.1 phần C) — ví dụ nếu CV
-     "Cơ bản" đã có CNN+LeNet+AlexNet, bài tiếp theo là VGG.
+   - **Lấp khoảng trống sub-module:** rà mục 4 (và thư mục bài `.mdx`
+     thật nếu cần chi tiết), viết bài tiếp theo còn thiếu trong dòng tiến
+     hoá đã định (mục 2.1 phần C) — ví dụ nếu CV "Cơ bản" đã có
+     CNN+LeNet+AlexNet, bài tiếp theo là VGG.
 5. Không còn bài `needs-review` nào VÀ không còn khoảng trống sub-module
    rõ ràng → agent tự đề xuất cải thiện: đọc lại 1 bài `stable` cũ dưới
    góc nhìn người mới, tìm chỗ có thể rõ hơn/ví dụ tốt hơn, sửa trực tiếp
@@ -441,14 +468,15 @@ bài này bị sửa mà không phải vì nó sai.
 
 ---
 
-## 4. Giáo trình hiện tại (tóm tắt — chi tiết đầy đủ ở `SYLLABUS.md`)
+## 4. Giáo trình hiện tại (chỉ tóm tắt module/submodule + số bài)
 
-> **Chi tiết từng bài (nguồn, lý do viết, dòng tiến hoá) đã chuyển sang
-> `SYLLABUS.md`** (2026-07-06, để giảm kích thước CLAUDE.md — file này
-> được nạp vào context mọi task nên càng gọn càng tốt). Khi cần tra cứu
-> 1 bài cụ thể, đọc `SYLLABUS.md` hoặc trực tiếp file `.mdx` của bài đó
-> (đã có `summary`/`last_touched_by_task`/`## Nguồn tham khảo`). Mục này
-> chỉ giữ bảng tóm tắt module — **cập nhật cả 2 file** khi cấu trúc giáo
+> Mục này **không** liệt kê chi tiết từng bài (tên file, nguồn, lý do viết,
+> dòng tiến hoá) — file này được nạp vào context mọi task nên càng gọn
+> càng tốt, và chi tiết từng bài đã có sẵn ngay trong chính file `.mdx`
+> đó (`summary`/`last_touched_by_task`/`## Nguồn tham khảo`). Khi cần tra
+> cứu 1 bài cụ thể, đọc trực tiếp file đó hoặc mục lục ở
+> `content/<track>/_index.mdx`. Mục này chỉ giữ bảng tóm tắt module —
+> **cập nhật cả CLAUDE.md và `content/modules.json`** khi cấu trúc giáo
 > trình thay đổi (thêm/xoá bài, tách sub-module, đổi module).
 
 ### exam-track — 11 bài, 2 module
@@ -456,30 +484,25 @@ bài này bị sửa mà không phải vì nó sai.
 - `"Hướng dẫn dùng nền tảng"` — bài 1-3
 - `"Kỹ thuật thi đấu nâng cao"` — bài 4-11
 
-### foundations-track — 110 bài, 10 module
+### foundations-track — 108 bài, 8 module
 
-1. `"Nền tảng Toán & ML cổ điển"` — 9 bài, phẳng
+1. `"Nền tảng Toán & ML cổ điển"` — 12 bài, 4 sub-module: Overview 1
+   (Xác suất & thống kê)/Supervised Learning 6 (Linear/Logistic
+   Regression, Decision Tree, k-NN, SVM, Naive Bayes)/Unsupervised
+   Learning 4 (K-means, PCA, t-SNE, UMAP)/Ensemble Methods 1
 2. `"Deep Learning Nền tảng"` — 3 bài, phẳng
 3. `"Computer Vision"` — 17 bài, 3 sub-module: Cơ bản 8/Detection 4/Segmentation 5
-4. `"Sequence Model"` — 20 bài, 3 sub-module: RNN Family 5/Transformer Architecture 9/Tokenization 6
+4. `"NLP & LLM"` — 25 bài, 7 sub-module: Overview 1/Tokenization 3/RNN Family 5/Transformer Architecture 5/Pretrained Language Models 4/Huấn luyện & Alignment 6/Ứng dụng & Inference-time 2
 5. `"Reinforcement Learning"` — 21 bài, 4 sub-module: Overview 7/Value-based 5/Policy-based 7/Model-based 2
-6. `"Dimensionality Reduction"` — 4 bài, phẳng
-7. `"Generative Models"` — 13 bài, 3 sub-module: Overview 4/GAN Family 5/Diffusion Models 4
-   phẳng)
-6. `"Dimensionality Reduction"` — bài 21-22, 48, 50 (4 bài: PCA→
-   Autoencoder→t-SNE→UMAP)
-7. `"Generative Models"` — bài 23, 46, 49, 70, 88, 89, 93, 94 (8 bài, 2
-   sub-module: GAN Family 3/Diffusion Models 3; bài 93-94 phẳng: overview
-   + VAE)
-8. `"LLM"` — bài 24-29, 79-80 (8 bài, 2 sub-module: Huấn luyện &
-   Alignment 24-27+79-80/Ứng dụng & Inference-time 28-29)
-8. `"LLM"` — 8 bài, 2 sub-module: Huấn luyện & Alignment 6/Ứng dụng & Inference-time 2
-9. `"Audio"` — 10 bài, 5 sub-module: Overview 1/Biểu diễn âm thanh 2/STT 2/TTS 3/Audio-Understanding 2
-10. `"Recommendation Systems"` — 5 bài, phẳng
+6. `"Generative Models"` — 14 bài, 3 sub-module: Overview 5 (gồm
+   Autoencoder → VAE → Flow-based → VQ-VAE, mạch tiến hoá "nén → sinh dữ
+   liệu")/GAN Family 5/Diffusion Models 4
+7. `"Audio"` — 10 bài, 5 sub-module: Overview 1/Biểu diễn âm thanh 2/STT 2/TTS 3/Audio-Understanding 2
+8. `"Recommendation Systems"` — 5 bài, phẳng
 
 **Trạng thái review:** 0 bài `needs-review` trên cả 2 track — toàn bộ đã
-đạt `stable`. Xem `SYLLABUS.md` nếu cần chi tiết lịch sử "vì sao mỗi bài
-đạt stable" hoặc danh sách đầy đủ từng bài kèm nguồn.
+đạt `stable`. Lý do cụ thể "vì sao mỗi bài đạt stable" nằm trong
+`last_touched_by_task` của chính file `.mdx` đó.
 
 ---
 
@@ -504,20 +527,17 @@ Bắt buộc cập nhật trong `CLAUDE.md` này trước khi coi task là xong:
   khoảng trống còn lại (tối đa 1-2 dòng/việc — xem quy tắc chống phình
   to bên dưới).
 - Mục 4: bảng tóm tắt module + số bài, nếu task vừa làm thay đổi cấu trúc
-  giáo trình (thêm/xoá bài, tách sub-module, đổi module).
-- **`SYLLABUS.md`**: thêm/sửa dòng chi tiết tương ứng cho bài vừa viết
-  (tên file, tiêu đề, `status`, nối tiếp bài nào, nguồn) — đây là nơi lưu
-  chi tiết đầy đủ, mục 4 của CLAUDE.md chỉ là bản tóm tắt siêu ngắn trỏ
-  sang file này.
+  giáo trình (thêm/xoá bài, tách sub-module, đổi module). Cập nhật cùng
+  lúc `content/modules.json` nếu module/submodule đổi tên hoặc mô tả.
 
 **Quy tắc chống phình to (bắt buộc, áp dụng cho MỌI mục trong file này,
 không chỉ mục 1 "Phiên gần nhất"):** `CLAUDE.md` được nạp vào context ở
 mọi task, nên đây không phải nơi ghi lịch sử/nhật ký. Khi cập nhật bất kỳ
-mục nào (đặc biệt 1, 1.2, 2.1, 4, 7.1):
+mục nào (đặc biệt 1, 1.2, 2.1, 4):
 - Viết **rule/trạng thái hiện hành**, không viết lý do lịch sử ("vì task
   X đã làm Y", "người vận hành yêu cầu ngày Z", "trước đây từng lỗi vì
-  W"). Lý do/lịch sử thuộc về `SYLLABUS.md`, `last_touched_by_task` của
-  từng bài, hoặc `## Nguồn tham khảo` — không phải CLAUDE.md.
+  W"). Lý do/lịch sử thuộc về `last_touched_by_task` của từng bài, hoặc
+  `## Nguồn tham khảo` — không phải CLAUDE.md.
 - Khi thêm 1 dòng mới vào danh sách (mục 1.2, whitelist, v.v.), luôn tự
   hỏi: có dòng cũ nào đã xong/hết giá trị hành động để xoá hẳn không?
   Thêm mà không xoá là nguyên nhân chính gây phình to.

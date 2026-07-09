@@ -1,0 +1,112 @@
+---
+title: RNN — Mạng nơ-ron hồi quy cho dữ liệu chuỗi
+track: foundations-track
+module: NLP & LLM
+submodule: RNN Family
+order: 1
+status: stable
+prerequisites: ["01-cnn", "01-tokenization-word-to-subword"]
+summary: Vì sao CNN/MLP không xử lý được input/output độ dài thay đổi, hidden state giải quyết vấn đề đó thế nào, và giới hạn cụ thể (vanishing gradient qua thời gian) khiến RNN thuần cần một kiến trúc kế nhiệm — mở đầu dòng tiến hoá RNN → LSTM/GRU.
+last_touched_by_task: Tái cấu trúc module (2026-07-09): module đổi tên 'Sequence Model' → 'NLP & LLM', RNN Family chuyển từ submodule thứ 1 xuống thứ 2 (sau Tokenization) — trước đó công thức `X_t` dùng khái niệm "vector biểu diễn từ" mà chưa bài nào định nghĩa (Tokenization từng đứng sau RNN Family). Sửa đoạn giải thích `X_t` để trỏ thẳng tới bài Tokenization vừa học, thêm prerequisite tương ứng. Nội dung kỹ thuật khác không đổi.
+---
+
+Bài [CNN](11-convolutional-neural-network.mdx) giải quyết bài toán dữ liệu
+có cấu trúc **không gian** (ảnh) bằng cách khai thác tính cục bộ và bất
+biến vị trí. Dữ liệu dạng **chuỗi** — văn bản, chuỗi thời gian, âm thanh —
+có một loại cấu trúc khác: **thứ tự**. Từ đứng trước ảnh hưởng tới nghĩa
+của từ đứng sau; giá cổ phiếu hôm nay phụ thuộc vào giá những ngày trước
+đó. MLP và CNN không có cơ chế nào để nắm bắt sự phụ thuộc theo thứ tự
+này — đây là lý do cần một kiến trúc riêng: **RNN** (Recurrent Neural
+Network — mạng nơ-ron hồi quy).
+
+## Vấn đề: MLP/CNN không xử lý được input/output độ dài thay đổi
+
+Một MLP hay CNN thông thường được thiết kế cho bài toán có **kích thước
+input cố định** — một ảnh luôn có cùng số pixel, một vector đặc trưng
+luôn có cùng số chiều — và xử lý mỗi mẫu hoàn toàn độc lập, không có khái
+niệm "trước đó đã thấy gì". Dữ liệu chuỗi phá vỡ giả định này theo hai
+cách: (1) độ dài chuỗi thay đổi tuỳ mẫu (một câu có thể 5 từ hoặc 50 từ),
+và (2) nghĩa của một phần tử phụ thuộc vào các phần tử đứng trước nó
+trong cùng chuỗi. Cách đơn giản nhất — đưa toàn bộ chuỗi từ đầu vào một
+MLP lớn — không khả thi: MLP cần kích thước input cố định (không xử lý
+được câu dài ngắn khác nhau bằng cùng một mạng), và số tham số bùng nổ
+nếu cố gán một bộ trọng số riêng cho từng vị trí trong chuỗi dài.
+
+## Ý tưởng cốt lõi: hidden state
+
+RNN giải quyết vấn đề này bằng cách xử lý chuỗi **từng bước một** (từng từ,
+từng mốc thời gian), và duy trì một **hidden state** (trạng thái ẩn) —
+một vector tóm tắt lại toàn bộ thông tin quan trọng đã thấy từ đầu chuỗi
+tới bước hiện tại. Tại mỗi bước, hidden state được cập nhật dựa trên input
+hiện tại **và** hidden state của bước trước:
+
+```
+H_t = activation( X_t * W_xh + H_{t-1} * W_hh + b_h )
+```
+
+Trong đó `X_t` là input tại bước thời gian `t` — cụ thể là **vector
+embedding** của token thứ `t` trong câu, đúng theo quy trình tokenization
+→ embedding đã học ở submodule
+[Tokenization](../01-Tokenization/01-tokenization-word-to-subword.mdx)
+ngay trước bài này — `H_{t-1}` là hidden state từ bước trước, và `H_t` là
+hidden state mới — vừa chứa thông tin từ `X_t`, vừa "kế thừa" thông tin
+tích luỹ từ mọi bước trước đó qua `H_{t-1}`.
+
+Điểm quan trọng: **cùng một bộ trọng số** (`W_xh`, `W_hh`, `b_h`) được
+dùng lại ở **mọi bước thời gian** — giống nguyên lý chia sẻ trọng số đã
+gặp ở CNN (một kernel áp dụng ở mọi vị trí ảnh), chỉ khác đối tượng chia
+sẻ là theo **thời gian** thay vì theo **không gian**. Nhờ vậy, số tham số
+không phụ thuộc vào độ dài chuỗi — một RNN có thể xử lý chuỗi dài 5 từ
+hay 500 từ với đúng một bộ tham số.
+
+## Trực giác: đọc một câu từng từ một
+
+Tưởng tượng đọc câu "con mèo đang ngồi trên..." từng từ một. Sau khi đọc
+"con", "mèo", "đang", "ngồi", "trên", bạn đã tích luỹ đủ ngữ cảnh để đoán
+từ tiếp theo nhiều khả năng là "ghế" hay "ngưỡng cửa", không phải từ ngẫu
+nhiên. Hidden state của RNN đóng đúng vai trò "ngữ cảnh tích luỹ" này —
+không lưu lại nguyên văn mọi từ đã đọc, mà nén thành một vector tóm tắt
+đủ dùng cho bước dự đoán tiếp theo.
+
+## RNN vẫn dùng backpropagation — chỉ "trải" qua thời gian
+
+Việc huấn luyện RNN vẫn dựa trên [backpropagation](09-backpropagation.mdx)
+đã học — chỉ khác ở cách áp dụng: vì hidden state ở bước `t` phụ thuộc
+vào hidden state ở bước `t-1`, gradient phải được lan truyền ngược qua
+**từng bước thời gian**, từ bước cuối cùng về bước đầu tiên. Kỹ thuật này
+gọi là **backpropagation through time** (BPTT) — về bản chất toán học
+giống hệt backprop thông thường, chỉ "trải phẳng" chuỗi thời gian ra thành
+một mạng nhiều lớp (mỗi bước thời gian tương ứng một lớp) rồi áp dụng
+chain rule như bình thường.
+
+## Giới hạn: khó nhớ phụ thuộc xa
+
+RNN thuần (như công thức ở trên) gặp khó khăn thực tế khi chuỗi dài:
+thông tin từ những bước rất xa trong quá khứ dễ bị "pha loãng" hoặc mất
+hẳn khi truyền qua quá nhiều bước cập nhật hidden state liên tiếp. Cơ chế
+cụ thể: hàm kích hoạt phổ biến cho hidden state là `tanh`, có đạo hàm
+luôn nhỏ hơn 1. Khi lan truyền gradient ngược qua BPTT, gradient tại một
+bước xa trong quá khứ phải đi qua **tích của rất nhiều đạo hàm nhỏ hơn 1
+liên tiếp** — với chuỗi càng dài, tích này càng tiến nhanh về 0. Đây
+chính là vanishing gradient qua thời gian: gradient tại các bước xa gần
+như bằng 0, nghĩa là mô hình gần như không học được gì từ thông tin ở xa.
+Đây là vấn đề nghiêm trọng trong thực tế — ví dụ để hiểu đúng đại từ ở
+cuối một đoạn văn dài, đôi khi cần nhớ lại một danh từ đã xuất hiện từ
+rất đầu đoạn, nhưng gradient từ vị trí đó gần như không "chạm" tới được
+bước đầu tiên nữa. Cách khắc phục vấn đề này bằng kiến trúc LSTM/GRU sẽ
+là chủ đề của bài tiếp theo.
+
+## Liên hệ lại với các bài trước
+
+- RNN và CNN cùng chung một nguyên lý: **chia sẻ trọng số** để giảm số
+  tham số và khai thác cấu trúc đặc thù của dữ liệu — CNN chia sẻ theo
+  không gian (cùng kernel ở mọi vị trí ảnh), RNN chia sẻ theo thời gian
+  (cùng bộ trọng số ở mọi bước chuỗi).
+- Huấn luyện RNN vẫn là backpropagation — không phải thuật toán học mới,
+  chỉ là cách áp dụng chain rule qua một cấu trúc "trải theo thời gian"
+  thay vì trải theo lớp như MLP/CNN thông thường.
+
+## Nguồn tham khảo
+
+- [Dive into Deep Learning — Recurrent Neural Networks](http://d2l.ai/chapter_recurrent-neural-networks/rnn.html) — dùng làm nguồn chính cho công thức hidden state cơ bản (`H_t = φ(X_t·W_xh + H_{t-1}·W_hh + b_h)`), khái niệm chia sẻ tham số qua thời gian, và trực giác vì sao cần kiến trúc riêng cho dữ liệu chuỗi.
+- [Stanford CS231n — Recurrent Neural Networks](https://cs231n.github.io/rnn/) — dùng cho cách phát biểu vấn đề (CNN/mạng nơ-ron thông thường không đủ để xử lý input/output có độ dài chuỗi biến đổi), và cơ chế cụ thể của vanishing gradient qua đạo hàm `tanh` luôn nhỏ hơn 1 khi lan truyền qua nhiều bước thời gian.

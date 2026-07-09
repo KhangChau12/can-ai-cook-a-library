@@ -1,0 +1,43 @@
+---
+quiz_for: 02-logistic-regression
+---
+
+## Q1
+Vì sao không thể dùng thẳng squared error loss (của linear regression) cho bài toán classification?
+
+- [x] Vì squared error không phạt đúng cách cho bài toán "đúng lớp hay sai lớp" — nó không phản ánh đúng bản chất phân loại
+- [ ] Vì squared error chỉ tính được với số nguyên
+- [ ] Vì logistic regression không có hàm loss
+- [ ] Vì squared error luôn cho kết quả âm với classification
+
+> Squared error coi dự đoán 0.9 (khi đúng là 1, khá tốt) và dự đoán -2 (khi đúng là 1, rất tệ) theo một thang đo không phù hợp với bản chất phân loại — đây là lý do cần cross-entropy loss thay thế.
+
+## Q2
+Hàm sigmoid có tính chất gì khiến nó phù hợp để biểu diễn xác suất?
+
+- [x] Luôn cho kết quả nằm trong khoảng (0, 1) bất kể input là số nào
+- [ ] Luôn cho kết quả bằng chính xác 0 hoặc 1
+- [ ] Chỉ nhận input là số dương
+- [ ] Tuyến tính với input, giống hàm linear regression
+
+> `sigmoid(z) = 1/(1+exp(-z))` luôn nằm trong (0,1) bất kể z là số nào (âm vô cùng tới dương vô cùng) — nhờ vậy đầu ra `ŷ = sigmoid(w^T x + b)` có thể diễn giải trực tiếp như xác suất P(y=1|x).
+
+## Q3
+Với cross-entropy loss, điều gì xảy ra khi nhãn thật là y=1 nhưng mô hình dự đoán ŷ gần 0 (rất tự tin sai)?
+
+- [x] Loss cực lớn (tiến tới vô cùng), phạt rất nặng việc "tự tin sai"
+- [ ] Loss bằng 0, vì mô hình vẫn dự đoán một xác suất hợp lệ
+- [ ] Loss âm, phản ánh mức độ sai lệch
+- [ ] Loss không đổi so với khi ŷ gần 0.5
+
+> `l(y,ŷ) = -(y*log(ŷ) + (1-y)*log(1-ŷ))` — khi y=1 và ŷ gần 0, log(ŷ) tiến tới âm vô cùng, loss cực lớn. Đây là điểm khác biệt quan trọng so với squared error: cross-entropy phạt cực nặng khi mô hình "tự tin sai".
+
+## Q4
+Ngưỡng quyết định (decision threshold) mặc định 0.5 có phải là quy tắc bắt buộc không?
+
+- [x] Không — đó chỉ là lựa chọn mặc định hợp lý khi không có lý do thiên vị lớp nào; với dữ liệu mất cân bằng, có thể cần ngưỡng khác
+- [ ] Có, mọi mô hình logistic regression đều bắt buộc dùng 0.5
+- [ ] Không, ngưỡng luôn phải bằng 0
+- [ ] Có, vì platform yêu cầu chuẩn hoá ngưỡng về 0.5
+
+> Với dữ liệu mất cân bằng nặng (ví dụ 95% thuộc lớp 0), ngưỡng mặc định 0.5 có thể khiến mô hình gần như không bao giờ dự đoán lớp thiểu số — đây là lúc cần cân nhắc dời ngưỡng, ảnh hưởng trực tiếp tới precision/recall.

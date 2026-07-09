@@ -1,0 +1,183 @@
+---
+title: VAE (Variational Autoencoder) — Từ Nén Dữ Liệu tới Sinh Dữ Liệu Mới
+track: foundations-track
+module: Generative Models
+order: 3
+status: stable
+prerequisites: ["02-autoencoder"]
+summary: Bước tiến từ Autoencoder sang generative model: học phân phối xác suất của dữ liệu trong không gian latent thay vì chỉ nén, dùng ELBO và reparameterization trick để huấn luyện — cầu nối giữa Autoencoder và Diffusion Models, so sánh với GAN.
+last_touched_by_task: Cập nhật order (2026-07-09) sau khi Autoencoder chuyển từ module Dimensionality Reduction vào chung sub-module Overview này (đứng ngay trước, order 2) — sửa lại các link nội bộ trỏ đúng file thật thay vì số thứ tự cũ đã lỗi thời (bài 22/89/93/49).
+submodule: Overview
+---
+
+Bài [Autoencoder](02-autoencoder.mdx) đã dạy cách nén dữ liệu vào một không
+gian ẩn (latent space) nhỏ hơn rồi khôi phục lại — một công cụ unsupervised
+học mạnh. Nhưng autoencoder có một hạn chế cốt lõi: **không thể sinh dữ liệu
+mới**.
+
+Bạn đưa một ảnh số 5 vào encoder → latent vector `z` → decoder → ảnh số 5
+ra. Nhưng nếu bạn tự chọn một vector `z` ngẫu nhiên (không thông qua encoder
+từ ảnh thật), decoder sẽ cho ra một đốm nhiễu vô nghĩa — vì không gian
+latent của autoencoder có **cấu trúc lộn xộn**: các điểm ảnh thật nằm rải
+rác, và những vùng trống giữa chúng decoder chưa từng thấy nên không biết
+cách tái tạo.
+
+**VAE (Variational Autoencoder) — Kingma & Welling 2014** — giải quyết đúng
+vấn đề này: thay vì nén thành một điểm, nén thành một **phân phối xác suất**,
+buộc không gian latent có cấu trúc liên tục, và từ đó **có thể lấy mẫu để
+sinh ảnh mới**.
+
+## Từ nén cứng sang nén mềm
+
+Autoencoder cổ điển (bài trước) học một ánh xạ:
+- Encoder: `z = f(x)` — một vector xác định
+- Decoder: `x̂ = g(z)` — khôi phục từ vector đó
+
+VAE thay đổi ở chỗ:
+- Encoder: `(μ, log σ²) = f(x)` — tham số của một phân phối Gaussian
+- Sampling: `z ~ N(μ, σ²I)` — lấy mẫu từ phân phối đó
+- Decoder: `x̂ = g(z)` — vẫn khôi phục như cũ
+
+Trực giác: autoencoder nói "bức ảnh này tương ứng với toạ độ chính xác
+(3.2, -1.7) trong không gian latent". VAE nói "bức ảnh này nằm **đâu đó
+quanh** (3.2, -1.7), với độ bất định ±0.3". Sự bất định này buộc không
+gian latent trở nên liên tục — các điểm gần nhau đều tạo ra ảnh có nghĩa,
+không chỉ những điểm đúng bằng (3.2, -1.7).
+
+## Kiến trúc VAE
+
+Encoder (cũng gọi là **recognition model** hay **inference network**) nhận
+input `x` và trả ra hai vector:
+
+```
+Input x → [Encoder] → μ (mean)
+                    → log σ² (log-variance)
+```
+
+log σ² được dùng thay vì σ² trực tiếp vì nó có thể nhận giá trị âm dương
+tuỳ ý (không bị ràng buộc ≥0), giúp mạng dễ học hơn.
+
+Sau đó, latent vector `z` được lấy mẫu từ phân phối `N(μ, σ²I)`. Decoder
+nhận `z` và tái tạo `x̂`.
+
+## Reparameterization Trick — Bí quyết giúp VAE huấn luyện được
+
+Có một vấn đề: việc lấy mẫu `z ~ N(μ, σ²I)` là một thao tác **ngẫu nhiên**,
+không thể đạo hàm — bạn không thể backpropagate xuyên qua một random number
+generator để tính gradient cho encoder.
+
+**Reparameterization trick** giải quyết bằng cách tách ngẫu nhiên ra khỏi
+tham số mạng:
+
+```
+z = μ + σ ⊙ ε,    với ε ~ N(0, I)
+```
+
+Trong đó:
+- `μ` và `σ` là output của encoder (có thể học)
+- `ε` là nhiễu Gaussian chuẩn ngẫu nhiên (không học, chỉ là input phụ)
+- `⊙` là phép nhân từng phần tử
+
+Giờ đây, gradient có thể chảy từ decoder xuyên qua phép cộng/nhân (có đạo
+hàm xác định) vào `μ` và `σ` của encoder. Ngẫu nhiên `ε` được coi như một
+input không đổi của mạng — giống như bạn đưa thêm một feature ngẫu nhiên
+vào mạng vậy.
+
+## Hàm loss: ELBO
+
+VAE tối ưu một hàm mục tiêu gọi là **ELBO** (Evidence Lower Bound) — gồm
+hai thành phần:
+
+```
+L = - 𝔼_{z~q(z|x)} log p(x|z) + D_KL( q(z|x) ‖ p(z) )
+```
+
+**1. Reconstruction loss** (số hạng thứ nhất): đo mức độ decoder tái tạo
+tốt input gốc từ `z`. Giống như autoencoder, thường dùng MSE (cho ảnh
+liên tục) hoặc binary cross-entropy (cho ảnh nhị phân). Số hạng này càng
+thấp càng tốt.
+
+**2. KL divergence** (số hạng thứ hai): đo sự khác biệt giữa phân phối
+`q(z|x)` (encoder học được cho input `x`) và `p(z)` (phân phối prior —
+thường là Gaussian chuẩn `N(0, I)`). Đây là **regularizer**: nó kéo mọi
+phân phối `q(z|x)` về gần `N(0, I)`, buộc chúng chồng lấn lên nhau thay
+vì tách rời — tạo ra không gian latent liên tục.
+
+Cụ thể, với `q(z|x) = N(μ, σ²I)` và `p(z) = N(0, I)`, KL divergence có
+nghiệm đóng:
+
+```
+D_KL = -½ Σ ( 1 + log σ² - μ² - σ² )
+```
+
+Công thức này tính được trực tiếp từ output của encoder, không cần lấy mẫu.
+
+**Cân bằng hai loss:** reconstruction loss muốn encoder chính xác đến từng
+chi tiết (σ² → 0, mỗi ảnh có một điểm riêng), KL divergence muốn encoder
+dàn trải (σ² → 1, μ → 0 để gần prior). Chính sự căng thẳng giữa hai mục
+tiêu này tạo ra không gian latent vừa có cấu trúc vừa đủ thông tin để tái
+tạo tốt.
+
+## Ví dụ trực quan: VAE trên MNIST
+
+Giả sử huấn luyện VAE trên MNIST (ảnh số viết tay 28×28). Encoder nén 784
+chiều xuống latent 2 chiều (để dễ hình dung). Sau khi huấn luyện:
+
+- Lấy một lưới điểm trong không gian latent `[-3, 3] × [-3, 3]`
+- Với mỗi điểm, cho decoder sinh ảnh
+- Kết quả: các ô lưới hiện ra **các số khác nhau, chuyển tiếp mượt** —
+  một góc là số 0, góc kia là số 1, giữa chúng là các số lai nửa 0 nửa 1
+  trông mờ nhưng vẫn có dạng số
+
+Điều này không làm được với autoencoder thường: không gian latent của nó
+có những "lỗ hổng" lớn — chọn một điểm ngẫu nhiên trong lỗ hổng sẽ cho ra
+nhiễu.
+
+## Beta-VAE: kiểm soát disentanglement
+
+Beta-VAE (Higgins et al., 2017) thêm một siêu tham số `β` vào KL divergence:
+
+```
+L = - 𝔼 log p(x|z) + β · D_KL( q(z|x) ‖ p(z) )
+```
+
+- `β = 1` → VAE chuẩn
+- `β > 1` → đè mạnh KL hơn, khuyến khích từng chiều latent **mã hoá một
+  đặc trưng độc lập** (gọi là **disentanglement**): một chiều điều khiển
+  độ nghiêng chữ số, chiều khác điều khiển độ dày nét, v.v.
+
+Đánh đổi: `β` càng cao, các chiều latent càng độc lập nhưng ảnh sinh càng
+mờ (vì reconstruction loss phải nhường chỗ cho KL).
+
+## VAE trong bối cảnh Generative Models
+
+So với các trường phái khác (đã tổng quan ở [Generative Models — Tổng quan và Phân loại](01-generative-models-overview.mdx)):
+
+| Tiêu chí | VAE | GAN | Diffusion |
+|----------|-----|-----|-----------|
+| Chất lượng ảnh | Trung bình (mờ) | Rất tốt | Xuất sắc |
+| Độ bao phủ mode | Tốt | Kém (mode collapse) | Xuất sắc |
+| Tốc độ sinh | Nhanh (1 bước) | Rất nhanh (1 bước) | Chậm (10-1000 bước) |
+| Ổn định huấn luyện | Tốt | Kém | Tốt |
+| Latent space có cấu trúc | Có, nội suy được | Không rõ ràng | Có |
+
+**Điểm đặc biệt của VAE:** nó là cầu nối giữa Autoencoder (bài trước) và
+[Diffusion Models](../03-Diffusion-Models/01-diffusion-models.mdx). Cả VAE và Diffusion đều tối ưu ELBO — nhưng
+Diffusion làm điều đó qua một chuỗi nhiều bước thay vì một bước duy nhất,
+cho chất lượng cao hơn nhiều. VAE cũng có không gian latent có cấu trúc
+đẹp (cho phép nội suy và điều khiển) — điều mà GAN không có và Diffusion
+phải cố gắng nhiều mới đạt được.
+
+**Hạn chế chính của VAE:** ảnh sinh bị **mờ** — vì MSE loss (hoặc
+cross-entropy) khuyến khích decoder "an toàn": nếu không chắc pixel nào
+đúng, nó tô màu xám thay vì đen hoặc trắng, dẫn đến ảnh thiếu sắc nét.
+Đây là lý do VAE hiếm khi được dùng trực tiếp cho sinh ảnh chất lượng
+cao, nhưng nó vẫn là nền tảng cho nhiều ứng dụng khác (anomaly detection,
+data compression, và đặc biệt là thành phần nén trong
+[Latent Diffusion / Stable Diffusion](../03-Diffusion-Models/03-latent-diffusion.mdx)).
+
+## Nguồn tham khảo
+
+- [Lilian Weng — From Autoencoder to Beta-VAE (2018)](https://lilianweng.github.io/posts/2018-08-12-vae/) — giải thích chi tiết VAE: encoder/decoder, ELBO, reparameterization trick, và Beta-VAE
+- [Kingma & Welling — Auto-Encoding Variational Bayes (ICLR 2014)](https://arxiv.org/abs/1312.6114) — paper gốc giới thiệu VAE và SGVB estimator
+- [Machine Learning Mastery — Variational Autoencoder Explained](https://machinelearningmastery.com/) — trực giác VAE qua analogy house painter, so sánh autoencoder vs VAE

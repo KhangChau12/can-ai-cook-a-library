@@ -1,0 +1,113 @@
+---
+title: Seq2seq (Encoder-Decoder) — Ánh xạ Chuỗi sang Chuỗi Độ dài Khác nhau
+track: foundations-track
+module: NLP & LLM
+submodule: RNN Family
+order: 3
+status: stable
+prerequisites: ["02-lstm-gru"]
+summary: Sutskever, Vinyals, Le (2014) giải quyết bài toán RNN/LSTM thông thường không xử lý được: input và output là 2 chuỗi độ dài khác nhau, không tương ứng vị trí (dịch máy) — bằng cách ghép 1 LSTM encoder nén câu nguồn thành 1 vector cố định, và 1 LSTM decoder sinh câu đích từng từ một từ vector đó.
+last_touched_by_task: Tái cấu trúc module Sequence Model (2026-07-09): chuyển từ order 5 lên order 3 — đặt Seq2seq ngay sau LSTM/GRU (thay vì sau Bidirectional/Deep RNN) vì đây là câu trả lời tự nhiên cho câu hỏi "RNN/LSTM dùng để làm gì trong thực tế", tạo động lực rõ ràng hơn trước khi học các biến thể kỹ thuật (Bidirectional, Deep RNN) ở 2 bài sau. Nội dung không đổi.
+---
+
+Các bài [RNN](01-rnn.mdx) và [LSTM & GRU](02-lstm-gru.mdx)
+đều xử lý dữ liệu chuỗi, nhưng có một giả định ngầm: mỗi bước input tương
+ứng với một bước output (ví dụ gán nhãn từng từ trong câu), hoặc toàn bộ
+chuỗi input chỉ cho ra đúng một output cuối cùng (ví dụ phân loại cảm xúc
+cả câu). Bài toán **dịch máy** không khớp với cả hai khuôn mẫu đó: câu
+nguồn "Tôi thích mèo" (3 từ) có thể dịch thành "I like cats" (3 từ) hoặc
+"Je aime les chats" (4 từ) — độ dài input và output khác nhau, và không hề
+có sự tương ứng 1-1 giữa vị trí từ nguồn và từ đích.
+
+## Vấn đề cụ thể: RNN/LSTM thường không xử lý được input/output độ dài khác nhau
+
+**Sutskever, Vinyals, và Le (2014)**, trong bài báo "Sequence to Sequence
+Learning with Neural Networks", chỉ ra hạn chế cụ thể: mạng nơ-ron sâu
+(bao gồm RNN/LSTM) hoạt động tốt khi có tập dữ liệu lớn được gán nhãn rõ
+ràng, nhưng không có cách tự nhiên nào để ánh xạ một chuỗi sang một chuỗi
+khác khi cả input lẫn output đều có độ dài thay đổi và không biết trước.
+Đây chính xác là tình huống của dịch máy, tóm tắt văn bản, hay trả lời câu
+hỏi dạng sinh văn bản tự do.
+
+## Giải pháp: kiến trúc Encoder-Decoder
+
+Ý tưởng của Sutskever và cộng sự: dùng **hai** mạng LSTM riêng biệt, mỗi
+mạng đảm nhiệm một vai trò khác nhau.
+
+- **Encoder:** một LSTM đọc toàn bộ chuỗi input, từng token một. Thay vì
+  quan tâm tới output ở mỗi bước, encoder chỉ giữ lại **hidden state cuối
+  cùng** sau khi đã đọc hết input — hidden state này đóng vai trò một
+  **vector ngữ cảnh** (context vector) có kích thước cố định, được xem là
+  "bản nén" mang toàn bộ thông tin của câu nguồn.
+- **Decoder:** một LSTM khác, được **khởi tạo hidden state bằng chính
+  vector ngữ cảnh** vừa nhận từ encoder, sau đó sinh ra chuỗi output
+  **từng token một** — token sinh ra ở bước trước trở thành một phần input
+  cho bước sau, cho tới khi decoder tự sinh ra token đặc biệt "kết thúc
+  câu" (`<eos>`).
+
+Cơ chế này giải quyết đúng vấn đề: encoder không bị ràng buộc phải sinh ra
+đúng số token bằng với input, và decoder có thể tiếp tục sinh token cho
+tới khi nào nó "quyết định" là đủ — độ dài output hoàn toàn độc lập với độ
+dài input.
+
+## Token đặc biệt và teacher forcing khi huấn luyện
+
+Để huấn luyện và suy luận nhất quán, kiến trúc seq2seq dùng thêm vài token
+đặc biệt:
+
+- `<bos>` (beginning-of-sequence): token đầu vào đầu tiên của decoder, báo
+  hiệu "bắt đầu sinh câu".
+- `<eos>` (end-of-sequence): khi decoder sinh ra token này, quá trình sinh
+  dừng lại.
+- `<pad>`: dùng để các câu trong cùng một batch có độ dài bằng nhau (đệm
+  thêm cho câu ngắn hơn), loss ở các vị trí `<pad>` bị **che (mask) về 0**
+  để không ảnh hưởng tới việc học.
+
+Khi huấn luyện, decoder không dùng token do chính nó vừa sinh ra ở bước
+trước làm input cho bước sau — thay vào đó, nó được cho xem trước token
+**đúng** (ground truth) đã dịch xuống một bước, kỹ thuật này gọi là
+**teacher forcing**. Lý do: nếu decoder đoán sai ở một bước sớm rồi phải tự
+dùng dự đoán sai đó làm input cho bước tiếp theo, lỗi sẽ tích luỹ và
+khuếch đại qua toàn bộ câu, khiến việc học chậm và bất ổn hơn nhiều. Khi
+suy luận (không còn ground truth), decoder buộc phải dùng token tự sinh ra
+ở bước trước làm input cho bước sau.
+
+## Một chi tiết thực nghiệm bất ngờ: đảo ngược câu nguồn
+
+Sutskever và cộng sự phát hiện một kỹ thuật đơn giản nhưng cải thiện rõ
+rệt: **đảo ngược thứ tự từ trong câu nguồn** trước khi đưa vào encoder
+(giữ nguyên thứ tự câu đích). Trực giác: đảo ngược câu nguồn giúp từ đầu
+câu nguồn ở **gần** từ đầu câu đích hơn về mặt số bước trong chuỗi tính
+toán, rút ngắn "khoảng cách phụ thuộc xa" (long-term dependency) trung
+bình mà mô hình phải học — giúp quá trình tối ưu hoá dễ hội tụ hơn dù
+không đổi bản chất bài toán.
+
+Trên bộ dữ liệu dịch Anh→Pháp WMT'14, LSTM encoder-decoder (4 lớp, huấn
+luyện trực tiếp) đạt điểm BLEU 34.8 trên toàn bộ tập test — vượt qua
+baseline dịch máy thống kê theo cụm từ (phrase-based SMT) ở mức 33.3.
+
+## Hạn chế: bottleneck của một vector ngữ cảnh cố định
+
+Toàn bộ thông tin của câu nguồn — dù dài 5 từ hay 50 từ — đều phải được
+nén vào **đúng một** vector có kích thước cố định (hidden state cuối của
+encoder). Với câu càng dài, việc nén càng mất mát thông tin, đặc biệt là
+thông tin ở đầu câu (bị "ghi đè" dần qua các bước xử lý tuần tự của
+encoder). Đây chính là bottleneck mà bài [Attention](../03-Transformer-Architecture/01-attention.mdx)
+giải quyết trực tiếp — thay vì chỉ dùng một vector ngữ cảnh cố định,
+decoder được phép "nhìn lại" toàn bộ chuỗi hidden state của encoder tại
+mỗi bước sinh token.
+
+## Liên hệ lại với các bài trước và sau
+
+- Seq2seq dùng lại nguyên vẹn kiến trúc [LSTM & GRU](02-lstm-gru.mdx) đã
+  học — điểm mới không nằm ở cell hồi quy, mà ở cách **ghép hai mạng**
+  (encoder + decoder) để xử lý bài toán input/output độ dài khác nhau.
+- Bài tiếp theo trong submodule (Bidirectional RNN/LSTM/GRU) quay lại đào
+  sâu bản thân cell hồi quy trước khi track chuyển hẳn sang kiến trúc
+  Attention/Transformer — nắm chắc bottleneck của vector ngữ cảnh cố định
+  ở đây vẫn là điều kiện cần để hiểu động lực ra đời của attention sau này.
+
+## Nguồn tham khảo
+
+- [Dive into Deep Learning — Sequence-to-Sequence Learning for Machine Translation](https://d2l.ai/chapter_recurrent-modern/seq2seq.html) — dùng cho kiến trúc encoder-decoder cụ thể (encoder nén thành context vector cố định, decoder sinh token có điều kiện theo context vector + token trước đó), vai trò token đặc biệt `<bos>`/`<eos>`/`<pad>`, cơ chế teacher forcing khi huấn luyện, và cách loss được che (mask) ở vị trí padding.
+- [Sutskever, Vinyals, Le (2014) — Sequence to Sequence Learning with Neural Networks](https://arxiv.org/abs/1409.3215) — dùng cho bối cảnh vấn đề gốc (DNN không xử lý được ánh xạ chuỗi-sang-chuỗi độ dài biến đổi), kiến trúc LSTM encoder-decoder nguyên bản, kỹ thuật đảo ngược câu nguồn cải thiện tối ưu hoá, và kết quả BLEU 34.8 trên WMT'14 Anh→Pháp.

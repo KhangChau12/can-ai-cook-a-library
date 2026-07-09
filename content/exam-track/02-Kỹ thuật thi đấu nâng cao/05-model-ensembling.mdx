@@ -4,12 +4,12 @@ track: exam-track
 module: Kỹ thuật thi đấu nâng cao
 order: 5
 status: stable
-prerequisites: ["02-load-va-dung-pretrained-checkpoint", "foundations-track/20-ensemble-methods"]
+prerequisites: ["02-load-va-dung-pretrained-checkpoint", "foundations-track/01-ensemble-methods"]
 summary: Ba kỹ thuật kết hợp nhiều model đã huấn luyện trong thi đấu thật: voting/averaging đơn giản, stacking (meta-model học từ out-of-fold prediction), và blending (meta-model học từ holdout set) — cùng lưu ý về rủi ro leakage khi làm sai cách.
 last_touched_by_task: Rà lại dưới góc nhìn triết lý mới (2026-07-06): đọc kỹ, xác nhận bài đã đạt chuẩn đúng tiêu chí exam-track (mục 2.1 sườn A) — số liệu thực tế (Netflix Prize), quy trình chi tiết cho cả 3 kỹ thuật (voting/stacking/blending), bảng so sánh stacking vs blending rõ ràng, lưu ý leakage cụ thể. Không 'vỏ rỗng', không cần viết lại. Giữ nguyên nội dung, chỉ nâng status.
 ---
 
-Bài [Ensemble Methods](../foundations-track/20-ensemble-methods.mdx) đã
+Bài [Ensemble Methods](../foundations-track/01-Nền tảng Toán & ML cổ điển/04-Ensemble-Methods/01-ensemble-methods.mdx) đã
 dạy nguyên lý cốt lõi: kết hợp nhiều mô hình yếu thường thắng một mô hình
 mạnh duy nhất, miễn là các mô hình đó có sai số không tương quan hoàn
 toàn với nhau. Bagging và boosting áp dụng nguyên lý này **bên trong một
