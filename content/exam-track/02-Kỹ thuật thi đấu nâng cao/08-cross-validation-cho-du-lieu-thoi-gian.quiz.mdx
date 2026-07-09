@@ -1,0 +1,60 @@
+---
+quiz_for: 08-cross-validation-cho-du-lieu-thoi-gian
+---
+
+## Q1
+Vấn đề cụ thể gì xảy ra khi dùng k-fold cross-validation ngẫu nhiên
+(chia fold không quan tâm thứ tự) cho dữ liệu chuỗi thời gian?
+
+- [ ] K-fold ngẫu nhiên chạy chậm hơn nhiều so với walk-forward validation
+- [x] Fold "test" có thể chứa mốc thời gian nằm TRƯỚC một số mốc trong fold "train", khiến model vô tình được huấn luyện với thông tin từ tương lai
+- [ ] K-fold ngẫu nhiên chỉ hoạt động được với bài toán classification, không hoạt động với regression
+- [ ] K-fold ngẫu nhiên yêu cầu dữ liệu phải có đúng số dòng chia hết cho k
+
+> Đây là look-ahead bias: vì chia fold ngẫu nhiên không quan tâm thứ tự
+> thời gian, train có thể chứa dữ liệu ở tương lai so với test — khiến
+> điểm cross-validation cao giả tạo, không phản ánh đúng hiệu năng khi
+> triển khai thật (luôn dự đoán tương lai từ quá khứ).
+
+## Q2
+Walk-forward validation đảm bảo nguyên tắc nào khi chia train/test?
+
+- [ ] Train và test luôn có kích thước bằng nhau ở mọi fold
+- [x] Train luôn chỉ chứa dữ liệu xảy ra TRƯỚC thời điểm của tập test tương ứng, không bao giờ ngược lại
+- [ ] Test luôn chiếm đúng 20% tổng dữ liệu, bất kể fold nào
+- [ ] Train và test phải dùng chung một scoring metric duy nhất
+
+> Nguyên tắc cốt lõi của walk-forward validation là tôn trọng đúng chiều
+> nhân quả (causality): tại mỗi fold, train chỉ dùng dữ liệu đã biết tính
+> tới một điểm cắt, test dùng dữ liệu ngay sau điểm cắt đó — đúng với
+> cách model sẽ thực sự được dùng khi triển khai (luôn dự đoán tương lai
+> từ quá khứ).
+
+## Q3
+Sliding window khác expanding window ở điểm nào?
+
+- [ ] Sliding window chỉ dùng được cho classification, expanding window chỉ dùng được cho regression
+- [x] Sliding window giữ kích thước tập train cố định (bỏ dần dữ liệu cũ nhất), còn expanding window giữ toàn bộ dữ liệu quá khứ và lớn dần qua mỗi lần lặp
+- [ ] Sliding window không cần chia fold theo thời gian, expanding window thì cần
+- [ ] Sliding window cho điểm cross-validation luôn cao hơn expanding window
+
+> Expanding window phù hợp khi pattern dài hạn toàn bộ lịch sử vẫn có giá
+> trị dự đoán (train ngày càng lớn). Sliding window phù hợp khi hành vi
+> gần đây quan trọng hơn nhiều so với lịch sử xa, hoặc dữ liệu quá lớn để
+> giữ toàn bộ (kích thước train cố định, bỏ dữ liệu cũ nhất khi thêm mới).
+
+## Q4
+Vì sao việc tính "giá trung bình 30 ngày gần nhất" cho MỌI dòng dữ liệu
+TRƯỚC KHI chia train/test có thể gây leakage, dù bạn đã dùng walk-forward
+validation để chia fold?
+
+- [ ] Vì giá trung bình 30 ngày luôn là một con số không chính xác về mặt toán học
+- [x] Vì cửa sổ 30 ngày của các dòng gần ranh giới train/test có thể "vượt qua" ranh giới đó, vô tình dùng dữ liệu thuộc về tương lai so với điểm cắt
+- [ ] Vì scikit-learn không hỗ trợ tính rolling mean cho dữ liệu time series
+- [ ] Vì walk-forward validation chỉ hoạt động đúng khi không có bất kỳ feature engineering nào
+
+> Leakage không chỉ nằm ở cách chia fold — nó có thể "lẻn vào" qua chính
+> bước tạo feature. Nếu rolling window được tính trước khi chia, giá trị
+> tại những dòng gần điểm cắt có thể đã "nhìn thấy" dữ liệu ở phía sau
+> ranh giới train/test. Mọi bước tính toán feature phải tăng dần theo
+> đúng trình tự thời gian, chỉ dùng dữ liệu đã biết tới đúng thời điểm đó.

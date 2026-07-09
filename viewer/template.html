@@ -6,17 +6,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
   :root {
-    --bg-primary: #0B1220;
-    --bg-surface: #141F33;
-    --bg-surface-2: #1A2A45;
-    --bg-elevated: #22314D;
+    --bg-primary: #0F172A;
+    --bg-surface: #1E293B;
+    --bg-surface-2: #273548;
+    --bg-elevated: #334155;
     --bg-inset: #070C16;
-    --border-default: #263A5C;
-    --border-subtle: #34496e;
+    --border-default: #334155;
+    --border-subtle: #475569;
     --text-primary: #F8FAFC;
-    --text-secondary: #C7D2E3;
-    --text-tertiary: #8CA0BF;
-    --text-disabled: #5B6E8C;
+    --text-secondary: #CBD5E1;
+    --text-tertiary: #94A3B8;
+    --text-disabled: #64748B;
     --blue: #3B82F6;
     --blue-soft: rgba(59,130,246,0.14);
     --blue-dim: #1d4ed8;
@@ -121,12 +121,53 @@
 
   #page-list-wrap { flex: 1; overflow-y: auto; padding: 10px 12px 20px; }
 
-  ul.page-list { list-style: none; margin: 0; padding: 0; overflow: hidden; }
+  /* Track badge in sidebar */
+  .sidebar-track-badge {
+    font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+    padding: 2px 8px; border-radius: 999px; display: inline-block; margin-right: 6px;
+  }
+  .sidebar-track-badge.exam-track { background: var(--blue-soft); color: var(--blue); }
+  .sidebar-track-badge.foundations-track { background: var(--cyan-soft); color: var(--cyan); }
 
+  /* Collapsible submodule sections */
+  .submod-group { margin-bottom: 4px; }
+  .submod-header {
+    display: flex; align-items: center; gap: 7px; padding: 7px 8px 7px 10px;
+    font-size: 12.5px; font-weight: 700; color: var(--text-secondary);
+    cursor: pointer; border-radius: var(--radius-sm);
+    transition: background 0.14s var(--ease), color 0.14s var(--ease);
+    user-select: none;
+    border: 1px solid transparent;
+  }
+  .submod-header:hover { background: var(--bg-elevated); color: var(--text-primary); }
+  .submod-header.active { color: var(--accent); }
+  .submod-header .collapse-icon {
+    flex-shrink: 0; width: 14px; height: 14px; transition: transform 0.2s var(--ease-out);
+    color: var(--text-disabled);
+  }
+  .submod-header.collapsed .collapse-icon { transform: rotate(-90deg); }
+  .submod-header .submod-meta {
+    margin-left: auto; font-size: 10px; color: var(--text-disabled); font-weight: 600;
+    font-family: var(--font-mono); display: flex; align-items: center; gap: 6px;
+  }
+  .submod-header .submod-progress-dot {
+    width: 14px; height: 14px; border-radius: 999px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .submod-header .submod-progress-dot svg { width: 12px; height: 12px; }
+  .submod-header .submod-progress-dot.unread { border: 1.5px solid var(--border-subtle); }
+  .submod-header .submod-progress-dot.viewed { background: var(--accent); }
+  .submod-header .submod-progress-dot.quiz_done { background: var(--success); }
+  .submod-header .submod-progress-dot.quiz_done svg { stroke: white; stroke-width: 2.5; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+
+  .submod-body { overflow: hidden; transition: max-height 0.25s var(--ease-out); max-height: 0; }
+  .submod-body.expanded { max-height: 2000px; }
+
+  ul.page-list { list-style: none; margin: 0; padding: 0; overflow: hidden; }
   ul.page-list li {
     position: relative;
-    padding: 9px 11px 9px 12px; border-radius: var(--radius-sm); cursor: pointer; margin-bottom: 2px;
-    font-size: 13px; display: flex; align-items: center; gap: 9px;
+    padding: 7px 11px 7px 28px; border-radius: var(--radius-sm); cursor: pointer; margin-bottom: 1px;
+    font-size: 13px; display: flex; align-items: center; gap: 8px;
     border: 1px solid transparent;
     line-height: 1.4;
     transition: background 0.14s var(--ease), border-color 0.14s var(--ease);
@@ -134,28 +175,28 @@
   ul.page-list li:hover { background: var(--bg-elevated); }
   ul.page-list li.active { background: var(--accent-soft); border-color: rgba(59,130,246,0.4); color: var(--text-primary); box-shadow: var(--shadow-xs); }
   ul.page-list li.active::before {
-    content: ""; position: absolute; left: -12px; top: 8px; bottom: 8px; width: 3px;
+    content: ""; position: absolute; left: 0; top: 6px; bottom: 6px; width: 3px;
     background: linear-gradient(180deg, var(--accent), var(--cyan)); border-radius: 0 3px 3px 0;
   }
   ul.page-list li.hidden { display: none; }
 
   .page-num {
-    flex-shrink: 0; width: 21px; height: 21px; border-radius: 6px;
+    flex-shrink: 0; width: 20px; height: 20px; border-radius: 5px;
     background: var(--bg-elevated); color: var(--text-tertiary);
-    font-size: 10.5px; font-weight: 700; font-family: var(--font-mono);
+    font-size: 10px; font-weight: 700; font-family: var(--font-mono);
     display: flex; align-items: center; justify-content: center;
   }
   li.active .page-num { background: var(--accent); color: white; }
   .page-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-  .progress-icon { flex-shrink: 0; width: 15px; height: 15px; display: flex; align-items: center; justify-content: center; }
-  .progress-icon svg { width: 15px; height: 15px; }
+  .progress-icon { flex-shrink: 0; width: 14px; height: 14px; display: flex; align-items: center; justify-content: center; }
+  .progress-icon svg { width: 14px; height: 14px; }
   .progress-icon.unread svg circle { fill: none; stroke: var(--border-subtle); stroke-width: 1.6; }
   .progress-icon.viewed svg circle { fill: var(--accent); stroke: var(--accent); stroke-width: 1.6; }
   .progress-icon.quiz_done svg circle { fill: var(--success); stroke: var(--success); stroke-width: 1.6; }
   .progress-icon.quiz_done svg path { stroke: white; stroke-width: 2.2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
 
-  .status-dot { flex-shrink: 0; width: 7px; height: 7px; border-radius: 999px; cursor: help; }
+  .status-dot { flex-shrink: 0; width: 6px; height: 6px; border-radius: 999px; cursor: help; }
   .status-dot.stable { background: var(--success); box-shadow: 0 0 6px rgba(16,185,129,0.5); }
   .status-dot.needs-review { background: var(--warning); box-shadow: 0 0 6px rgba(245,158,11,0.4); }
   .status-dot.draft { background: var(--text-disabled); }
@@ -392,7 +433,7 @@
   }
   .quiz-retry-btn:hover { background: var(--border-subtle); color: var(--text-primary); }
 
-  /* ================= Library (màn hình chọn track/module/submodule) ================= */
+  /* ================= Library (màn hình chọn module/submodule) ================= */
   #library { flex: 1; overflow-y: auto; display: none; }
   #app.library-mode #library { display: block; }
   #app.library-mode #reader { display: none; }
@@ -416,16 +457,24 @@
   .lib-header .meta-line { font-size: 12px; color: var(--text-disabled); margin: 0; }
 
   .lib-header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 11px; flex-shrink: 0; }
-  .lib-tabs { display: flex; gap: 4px; background: var(--bg-inset); padding: 4px; border-radius: var(--radius-md); border: 1px solid var(--border-default); }
-  .lib-tab-btn {
-    padding: 9px 20px; font-size: 13px; font-weight: 700; text-align: center;
-    background: transparent; color: var(--text-tertiary);
-    border: none; border-radius: 8px; cursor: pointer;
-    transition: background 0.15s var(--ease), color 0.15s var(--ease);
+
+  /* Track filter pills — replaces old lib-tabs */
+  .lib-filter-row {
+    display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
   }
-  .lib-tab-btn:hover { color: var(--text-secondary); }
-  .lib-tab-btn.active[data-track="exam-track"] { background: var(--blue); color: white; box-shadow: var(--shadow-xs); }
-  .lib-tab-btn.active[data-track="foundations-track"] { background: var(--cyan); color: #052a30; box-shadow: var(--shadow-xs); }
+  .lib-filter-pill {
+    display: inline-flex; align-items: center; gap: 6px; padding: 7px 16px; border-radius: 999px;
+    background: var(--bg-inset); border: 1px solid var(--border-default); color: var(--text-tertiary);
+    font-size: 12.5px; font-weight: 700; cursor: pointer; transition: all 0.15s var(--ease);
+  }
+  .lib-filter-pill:hover { border-color: var(--border-subtle); color: var(--text-secondary); }
+  .lib-filter-pill.active { background: var(--accent-soft); border-color: var(--accent); color: var(--text-primary); }
+  .lib-filter-pill .pill-dot {
+    width: 6px; height: 6px; border-radius: 999px; flex-shrink: 0;
+  }
+  .lib-filter-pill[data-filter="all"] .pill-dot { background: linear-gradient(135deg, var(--blue), var(--cyan)); }
+  .lib-filter-pill[data-filter="exam-track"] .pill-dot { background: var(--blue); }
+  .lib-filter-pill[data-filter="foundations-track"] .pill-dot { background: var(--cyan); }
 
   .lib-search-row { position: relative; width: 300px; }
   .lib-search-row svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-disabled); pointer-events: none; }
@@ -471,20 +520,20 @@
   }
 
   /* ---------- Status filter chips ---------- */
-  .lib-filter-row { display: flex; align-items: center; gap: 8px; margin-bottom: 34px; flex-wrap: wrap; }
-  .lib-filter-label { font-size: 11.5px; color: var(--text-disabled); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-right: 4px; }
-  .lib-filter-chip {
+  .lib-status-filter-row { display: flex; align-items: center; gap: 8px; margin-bottom: 34px; flex-wrap: wrap; }
+  .lib-status-filter-label { font-size: 11.5px; color: var(--text-disabled); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-right: 4px; }
+  .lib-status-chip {
     display: inline-flex; align-items: center; gap: 6px; padding: 6px 13px; border-radius: 999px;
     background: var(--bg-surface); border: 1px solid var(--border-default); color: var(--text-tertiary);
     font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s var(--ease);
   }
-  .lib-filter-chip:hover { border-color: var(--border-subtle); color: var(--text-secondary); }
-  .lib-filter-chip.active { background: var(--accent-soft); border-color: var(--accent); color: var(--text-primary); }
-  .lib-filter-chip .dot { width: 6px; height: 6px; border-radius: 999px; flex-shrink: 0; }
-  .lib-filter-chip[data-status="stable"] .dot { background: var(--success); }
-  .lib-filter-chip[data-status="needs-review"] .dot { background: var(--warning); }
-  .lib-filter-chip[data-status="draft"] .dot { background: var(--text-disabled); }
-  .lib-filter-chip[data-status="all"] .dot { background: linear-gradient(135deg, var(--blue), var(--cyan)); }
+  .lib-status-chip:hover { border-color: var(--border-subtle); color: var(--text-secondary); }
+  .lib-status-chip.active { background: var(--accent-soft); border-color: var(--accent); color: var(--text-primary); }
+  .lib-status-chip .dot { width: 6px; height: 6px; border-radius: 999px; flex-shrink: 0; }
+  .lib-status-chip[data-status="stable"] .dot { background: var(--success); }
+  .lib-status-chip[data-status="needs-review"] .dot { background: var(--warning); }
+  .lib-status-chip[data-status="draft"] .dot { background: var(--text-disabled); }
+  .lib-status-chip[data-status="all"] .dot { background: linear-gradient(135deg, var(--blue), var(--cyan)); }
 
   .lib-module-block { margin-top: 48px; }
   .lib-module-block:first-child { margin-top: 0; }
@@ -492,13 +541,22 @@
   .lib-module-title {
     font-size: 18.5px; font-weight: 800; letter-spacing: -0.008em;
     color: var(--text-primary); margin-bottom: 7px;
-    display: flex; align-items: baseline; gap: 11px;
+    display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
   }
   .lib-module-title .lib-module-count {
     font-weight: 600; color: var(--text-disabled); font-family: var(--font-mono);
     font-size: 12px; letter-spacing: 0;
   }
   .lib-module-desc { font-size: 13.5px; color: var(--text-tertiary); line-height: 1.6; margin-bottom: 20px; max-width: 900px; }
+
+  /* Track badge in library */
+  .track-badge {
+    display: inline-flex; align-items: center; font-size: 9.5px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.05em; padding: 2px 9px; border-radius: 999px; vertical-align: middle;
+    margin-left: 2px;
+  }
+  .track-badge.exam-track { background: var(--blue-soft); color: var(--blue); border: 1px solid rgba(59,130,246,0.25); }
+  .track-badge.foundations-track { background: var(--cyan-soft); color: var(--cyan); border: 1px solid rgba(34,211,238,0.25); }
 
   .lib-card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(288px, 1fr)); gap: 15px; }
   .lib-card {
@@ -550,6 +608,9 @@
 
   #reader { flex: 1; display: flex; min-width: 0; height: 100%; }
 
+  /* Scroll sentinel (invisible marker for scroll-tracking) */
+  .scroll-sentinel { height: 1px; pointer-events: none; }
+
   /* ---------- Scrollbars (thin, dark) ---------- */
   #page-list-wrap::-webkit-scrollbar, #main::-webkit-scrollbar, #library::-webkit-scrollbar, #lib-search-results::-webkit-scrollbar { width: 9px; }
   #page-list-wrap::-webkit-scrollbar-thumb, #main::-webkit-scrollbar-thumb, #library::-webkit-scrollbar-thumb, #lib-search-results::-webkit-scrollbar-thumb { background: var(--border-subtle); border-radius: 5px; border: 2px solid transparent; background-clip: content-box; }
@@ -576,25 +637,26 @@
             <div class="meta-line" id="generated-at">đang tải...</div>
           </div>
           <div class="lib-header-right">
-            <div class="lib-tabs">
-              <div class="lib-tab-btn active" data-track="exam-track">Bổ trợ thi đấu</div>
-              <div class="lib-tab-btn" data-track="foundations-track">Nền tảng</div>
+            <div class="lib-filter-row" id="lib-filter-row">
+              <div class="lib-filter-pill active" data-filter="all"><span class="pill-dot"></span>Tất cả</div>
+              <div class="lib-filter-pill" data-filter="exam-track"><span class="pill-dot"></span>Bổ trợ thi đấu</div>
+              <div class="lib-filter-pill" data-filter="foundations-track"><span class="pill-dot"></span>Nền tảng</div>
             </div>
             <div class="lib-search-row">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              <input id="lib-search-input" type="text" placeholder="Tìm bài viết trong track này…" autocomplete="off" />
+              <input id="lib-search-input" type="text" placeholder="Tìm bài viết…" autocomplete="off" />
               <div id="lib-search-results"></div>
             </div>
           </div>
         </div>
         <div class="lib-track-summary" id="lib-track-summary"></div>
         <div class="lib-stats-row" id="lib-stats-row"></div>
-        <div class="lib-filter-row" id="lib-filter-row">
-          <span class="lib-filter-label">Trạng thái</span>
-          <div class="lib-filter-chip active" data-status="all"><span class="dot"></span>Tất cả</div>
-          <div class="lib-filter-chip" data-status="stable"><span class="dot"></span>Stable</div>
-          <div class="lib-filter-chip" data-status="needs-review"><span class="dot"></span>Needs review</div>
-          <div class="lib-filter-chip" data-status="draft"><span class="dot"></span>Draft</div>
+        <div class="lib-status-filter-row" id="lib-status-filter-row">
+          <span class="lib-status-filter-label">Trạng thái</span>
+          <div class="lib-status-chip active" data-status="all"><span class="dot"></span>Tất cả</div>
+          <div class="lib-status-chip" data-status="stable"><span class="dot"></span>Stable</div>
+          <div class="lib-status-chip" data-status="needs-review"><span class="dot"></span>Needs review</div>
+          <div class="lib-status-chip" data-status="draft"><span class="dot"></span>Draft</div>
         </div>
         <div id="lib-modules"></div>
       </div>
@@ -645,25 +707,20 @@
   </div>
 
 <script>
-// Dữ liệu được build-data.js nhúng trực tiếp vào đây (không dùng fetch()),
-// vì fetch('data.json') bị trình duyệt chặn bởi CORS khi mở file qua
-// file:// (double-click) thay vì qua một server thật.
 const DATA = /*__DATA_JSON__*/null/*__END_DATA_JSON__*/;
 
 const STORAGE_KEY = 'ai-learn-viewer-progress-v2';
 const LEGACY_STORAGE_KEY = 'ai-learn-viewer-read-pages';
-let libraryTrack = 'exam-track';   // track đang xem trong màn Library
-let libraryStatusFilter = 'all';   // filter trạng thái đang áp dụng trong Library
-let currentTrack = 'exam-track';   // track của submodule đang mở trong Reader
+let libraryFilter = 'all';           // 'all' | 'exam-track' | 'foundations-track'
+let libraryStatusFilter = 'all';     // filter trạng thái trong Library
+let currentTrack = 'exam-track';     // track của submodule đang mở trong Reader
 let currentModule = null;
 let currentSubmodule = null;
 let currentIndex = -1;
 let searchQuery = '';
+let sidebarCollapsed = new Set();     // tên submodule đang collapse trong sidebar
 
-// Trạng thái đọc mỗi bài, 3 mức: 'unread' (mặc định, không lưu) / 'viewed'
-// (đã mở bài) / 'quiz_done' (đã trả lời hết mọi câu quiz của bài đó).
-// quiz_done chỉ có thể đạt được SAU viewed — không có quiz thì tối đa là viewed.
-
+// -------- Progress tracking --------
 function escapeHtml(s) {
   return s.replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
@@ -679,9 +736,7 @@ function loadProgress() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) return JSON.parse(raw);
-  } catch (e) { /* ignore */ }
-  // Di trú từ định dạng cũ (chỉ có "đã xem" dạng Set) nếu có, để không mất
-  // tiến độ người dùng đã tích luỹ trước khi tính năng này tồn tại.
+  } catch (e) {}
   try {
     const legacy = JSON.parse(localStorage.getItem(LEGACY_STORAGE_KEY) || '[]');
     const migrated = {};
@@ -692,13 +747,13 @@ function loadProgress() {
 function saveProgress(map) {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(map)); } catch (e) {}
 }
-let progressMap = loadProgress(); // file -> 'viewed' | 'quiz_done'
+let progressMap = loadProgress();
 
 function getProgress(file) {
   return progressMap[file] || 'unread';
 }
 function markViewed(file) {
-  if (progressMap[file]) return; // đã 'viewed' hoặc 'quiz_done', không hạ cấp
+  if (progressMap[file]) return;
   progressMap[file] = 'viewed';
   saveProgress(progressMap);
 }
@@ -708,6 +763,25 @@ function markQuizDone(file) {
   saveProgress(progressMap);
 }
 
+// -------- Submodule progress helpers --------
+function submoduleProgress(entries) {
+  let total = entries.length, viewed = 0, quizDone = 0;
+  entries.forEach(({ page }) => {
+    const s = getProgress(page.file);
+    if (s === 'quiz_done') quizDone++;
+    else if (s === 'viewed') viewed++;
+  });
+  return { total, viewed, quizDone };
+}
+
+function progressIconHtml(state) {
+  const check = state === 'quiz_done' ? '<path d="M4.5 8.5l2.5 2.5 4.5-5"/>' : '';
+  return `<span class="progress-icon ${state}" title="${
+    state === 'quiz_done' ? 'Đã làm xong quiz' : state === 'viewed' ? 'Đã xem' : 'Chưa xem'
+  }"><svg viewBox="0 0 15 15"><circle cx="7.5" cy="7.5" r="6"/>${check}</svg></span>`;
+}
+
+// -------- Inline formatting --------
 function inline(text) {
   let t = escapeHtml(text);
   t = t.replace(/`([^`]+)`/g, '<code>$1</code>');
@@ -721,16 +795,12 @@ function parseTableRow(line) {
   return line.trim().replace(/^\||\|$/g, '').split('|').map((c) => c.trim());
 }
 
-// Renderer Markdown tối giản (heading, code block, list thường/checklist/số,
-// table, blockquote, hr, bold/italic/inline-code/link) — đủ cho nội dung
-// .mdx hiện có. Không cần đúng 100% MDX (viewer nội bộ, không phải trang publish).
-// Heading h2/h3 được gắn id (slugify) để table-of-contents nhảy tới.
-// Code block <pre> được bọc thêm <div class="code-block-wrap"> + nút copy.
+// -------- Markdown renderer --------
 function renderMarkdown(md) {
   const lines = md.split(/\r?\n/);
   let html = '';
   let inCode = false;
-  let listType = null; // 'ul' | 'ol' | 'checklist' | null
+  let listType = null;
   let i = 0;
   const usedIds = new Set();
 
@@ -765,7 +835,6 @@ function renderMarkdown(md) {
       continue;
     }
 
-    // Table: header line + separator line (|---|---|)
     if (line.trim().startsWith('|') && lines[i + 1] && /^\s*\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)+\|?\s*$/.test(lines[i + 1])) {
       closeList();
       const headerCells = parseTableRow(line);
@@ -839,9 +908,6 @@ function renderMarkdown(md) {
     closeList();
     if (line.trim() === '') { i++; continue; }
 
-    // Paragraph: một đoạn văn trong .mdx thường trải nhiều dòng vật lý
-    // (wrap ~80 ký tự) — gộp các dòng liên tiếp không rỗng lại thành 1 <p>
-    // thay vì coi mỗi dòng là một đoạn riêng.
     const paraLines = [line];
     i++;
     while (i < lines.length && lines[i].trim() !== '' && !isBlockStart(lines[i])) {
@@ -868,8 +934,7 @@ function isBlockStart(line) {
   );
 }
 
-// Trích heading h2/h3 trực tiếp từ markdown gốc (song song với renderMarkdown)
-// để dựng table-of-contents — dùng cùng logic slugify/uniqueId để id khớp.
+// -------- TOC --------
 function extractToc(md) {
   const lines = md.split(/\r?\n/);
   const toc = [];
@@ -890,21 +955,57 @@ function extractToc(md) {
   return toc;
 }
 
-// Trả về mảng {page, index} thuộc đúng nhánh đang mở trong Reader
-// (currentModule/currentSubmodule) — index là vị trí trong track.pages gốc,
-// dùng xuyên suốt để prev/next và markViewed vẫn đúng bài.
+// -------- Branch entries (pages in current module/submodule) --------
 function currentBranchEntries() {
   const track = DATA.tracks[currentTrack];
+  if (!track) return [];
   return track.pages
     .map((page, index) => ({ page, index }))
     .filter(({ page }) => {
-      const name = page.module || 'Chưa phân module';
-      if (name !== currentModule) return false;
-      const subName = page.submodule || '';
-      return subName === currentSubmodule;
+      if (page.module !== currentModule) return false;
+      return (page.submodule || '') === currentSubmodule;
     });
 }
 
+// All pages in the current module (across all submodules)
+function currentModuleEntries() {
+  const track = DATA.tracks[currentTrack];
+  if (!track) return [];
+  return track.pages
+    .map((page, index) => ({ page, index }))
+    .filter(({ page }) => page.module === currentModule);
+}
+
+// -------- Scroll tracking --------
+let scrollObserver = null;
+
+function setupScrollTracking(pageFile) {
+  const content = document.getElementById('content');
+  // Create sentinel at bottom of the body panel
+  const bodyPanel = document.getElementById('body-panel');
+  if (!bodyPanel) return;
+
+  const sentinel = document.createElement('div');
+  sentinel.className = 'scroll-sentinel';
+  bodyPanel.appendChild(sentinel);
+
+  if (scrollObserver) scrollObserver.disconnect();
+
+  scrollObserver = new IntersectionObserver((entries) => {
+    if (entries[0].isIntersecting) {
+      markViewed(pageFile);
+      scrollObserver.disconnect();
+      sentinel.remove();
+      scrollObserver = null;
+      renderSidebar();
+    }
+  }, { threshold: 0 });
+
+  // Check immediately in case content fits without scrolling
+  scrollObserver.observe(sentinel);
+}
+
+// -------- Render sidebar --------
 function renderProgress() {
   const entries = currentBranchEntries();
   const total = entries.length;
@@ -913,53 +1014,136 @@ function renderProgress() {
   document.getElementById('progress-label').textContent = `${doneCount}/${total}`;
 }
 
-// SVG rỗng (unread) / đặc (viewed) / đặc + dấu check (quiz_done).
-function progressIconHtml(state) {
-  const check = state === 'quiz_done' ? '<path d="M4.5 8.5l2.5 2.5 4.5-5"/>' : '';
-  return `<span class="progress-icon ${state}" title="${
-    state === 'quiz_done' ? 'Đã làm xong quiz' : state === 'viewed' ? 'Đã xem' : 'Chưa xem'
-  }"><svg viewBox="0 0 15 15"><circle cx="7.5" cy="7.5" r="6"/>${check}</svg></span>`;
-}
-
 function renderSidebar() {
   const wrap = document.getElementById('module-groups');
   wrap.innerHTML = '';
   renderProgress();
 
-  const entries = currentBranchEntries();
-  if (!entries.length) {
+  const allEntries = currentModuleEntries();
+  if (!allEntries.length) {
     wrap.innerHTML = '<div class="empty-search">Chưa có bài nào trong mục này.</div>';
     return;
   }
 
   const q = searchQuery.trim().toLowerCase();
   const matchedFiles = q
-    ? new Set(entries.filter(({ page }) => (page.title || '').toLowerCase().includes(q)).map(({ page }) => page.file))
+    ? new Set(allEntries.filter(({ page }) => (page.title || '').toLowerCase().includes(q)).map(({ page }) => page.file))
     : null;
 
-  const list = document.createElement('ul');
-  list.className = 'page-list';
-  let anyVisible = false;
-  entries.forEach(({ page, index }) => {
-    const visible = !matchedFiles || matchedFiles.has(page.file);
-    if (visible) anyVisible = true;
-    const li = document.createElement('li');
-    if (!visible) li.classList.add('hidden');
-    if (index === currentIndex) li.classList.add('active');
-    const progressState = getProgress(page.file);
-    const status = page.status || 'draft';
-    const num = page.order || (index + 1);
-    li.innerHTML = `<span class="page-num">${escapeHtml(String(num))}</span><span class="page-title">${escapeHtml(page.title || page.file)}</span>${progressIconHtml(progressState)}<span class="status-dot ${status}" title="${status}"></span>`;
-    li.addEventListener('click', () => selectPage(index));
-    list.appendChild(li);
+  // Group by submodule
+  const subGroups = new Map();
+  allEntries.forEach((entry) => {
+    const subName = entry.page.submodule || '';
+    if (!subGroups.has(subName)) subGroups.set(subName, []);
+    subGroups.get(subName).push(entry);
   });
-  wrap.appendChild(list);
+
+  const trackLabel = currentTrack === 'exam-track' ? 'Bổ trợ thi đấu' : 'Nền tảng';
+  const trackBadgeClass = currentTrack === 'exam-track' ? 'exam-track' : 'foundations-track';
+
+  // Module header
+  const modHeader = document.createElement('div');
+  modHeader.style.cssText = 'padding: 4px 8px 10px; border-bottom: 1px solid var(--border-default); margin-bottom: 8px;';
+  modHeader.innerHTML = `
+    <div style="font-size:13px;font-weight:700;color:var(--text-primary);display:flex;align-items:center;gap:8px;">
+      <span class="sidebar-track-badge ${trackBadgeClass}">${escapeHtml(trackLabel)}</span>
+      ${escapeHtml(currentModule)}
+    </div>
+  `;
+  wrap.appendChild(modHeader);
+
+  // Render each submodule as a collapsible section
+  let anyVisible = false;
+  subGroups.forEach((entries, subName) => {
+    const isSubmod = !!subName;
+    const displayName = subName || currentModule;
+    const isCollapsed = isSubmod && sidebarCollapsed.has(subName);
+    const isActiveSubmod = subName === currentSubmodule;
+
+    const prog = submoduleProgress(entries);
+    const totalInSub = prog.total;
+    let doneInSub = prog.viewed + prog.quizDone;
+    const progState = doneInSub === 0 ? 'unread' : (doneInSub === totalInSub && prog.quizDone === totalInSub ? 'quiz_done' : 'viewed');
+
+    // Check if any page matches search
+    const visibleEntries = matchedFiles
+      ? entries.filter(({ page }) => matchedFiles.has(page.file))
+      : entries;
+
+    if (matchedFiles && !visibleEntries.length && !isCollapsed) {
+      // If this submodule has no matches, skip rendering its body
+    }
+
+    const groupEl = document.createElement('div');
+    groupEl.className = 'submod-group';
+
+    if (isSubmod) {
+      // Submodule header (collapsible)
+      const header = document.createElement('div');
+      header.className = `submod-header${isCollapsed ? ' collapsed' : ''}${isActiveSubmod ? ' active' : ''}`;
+      header.setAttribute('role', 'button');
+      header.setAttribute('aria-expanded', String(!isCollapsed));
+      header.setAttribute('tabindex', '0');
+      header.innerHTML = `
+        <svg class="collapse-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        <span>${escapeHtml(displayName)}</span>
+        <span class="submod-meta">
+          <span>${doneInSub}/${totalInSub}</span>
+          <span class="submod-progress-dot ${progState}">${progState === 'quiz_done' ? '<svg viewBox="0 0 15 15"><path d="M4.5 8.5l2.5 2.5 4.5-5"/></svg>' : ''}</span>
+        </span>
+      `;
+      header.addEventListener('click', () => toggleSubmodule(subName));
+      header.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleSubmodule(subName); } });
+      groupEl.appendChild(header);
+    }
+
+    // Submodule body (page list)
+    const body = document.createElement('div');
+    body.className = `submod-body${!isCollapsed ? ' expanded' : ''}`;
+
+    if (matchedFiles && !visibleEntries.length) {
+      // No matches — render empty but still show the section
+      if (!isCollapsed) {
+        body.innerHTML = '<div class="empty-search" style="padding:14px 10px;">Không tìm thấy bài khớp.</div>';
+      }
+    } else {
+      const list = document.createElement('ul');
+      list.className = 'page-list';
+
+      (matchedFiles ? visibleEntries : entries).forEach(({ page, index }) => {
+        const li = document.createElement('li');
+        if (matchedFiles && !matchedFiles.has(page.file)) li.classList.add('hidden');
+        else anyVisible = true;
+        if (index === currentIndex) li.classList.add('active');
+        const progressState = getProgress(page.file);
+        const status = page.status || 'draft';
+        const num = page.order || (index + 1);
+        li.innerHTML = `<span class="page-num">${escapeHtml(String(num))}</span><span class="page-title">${escapeHtml(page.title || page.file)}</span>${progressIconHtml(progressState)}<span class="status-dot ${status}" title="${status}"></span>`;
+        li.addEventListener('click', () => selectPage(index));
+        list.appendChild(li);
+      });
+      body.appendChild(list);
+    }
+
+    groupEl.appendChild(body);
+    wrap.appendChild(groupEl);
+  });
 
   if (!anyVisible) {
     wrap.innerHTML = `<div class="empty-search">Không tìm thấy bài khớp "${escapeHtml(searchQuery)}".</div>`;
   }
 }
 
+function toggleSubmodule(subName) {
+  if (sidebarCollapsed.has(subName)) {
+    sidebarCollapsed.delete(subName);
+  } else {
+    sidebarCollapsed.add(subName);
+  }
+  renderSidebar();
+}
+
+// -------- TOC --------
 function renderToc(toc) {
   const tocEl = document.getElementById('toc');
   if (!toc.length) { tocEl.innerHTML = ''; return; }
@@ -979,7 +1163,7 @@ function setupTocScrollSpy(toc) {
   const main = document.getElementById('main');
   if (tocScrollHandler) main.removeEventListener('scroll', tocScrollHandler);
   tocScrollHandler = () => {
-    let activeId = toc[0].id;
+    let activeId = toc[0] ? toc[0].id : '';
     for (const t of toc) {
       const el = document.getElementById(t.id);
       if (el && el.getBoundingClientRect().top - main.getBoundingClientRect().top < 80) activeId = t.id;
@@ -990,6 +1174,7 @@ function setupTocScrollSpy(toc) {
   tocScrollHandler();
 }
 
+// -------- Prev/Next --------
 function pnLink(page, dir) {
   if (!page) return `<span class="pn-link pn-spacer"></span>`;
   const dirLabel = dir === 'prev'
@@ -998,8 +1183,7 @@ function pnLink(page, dir) {
   return `<a class="pn-link ${dir === 'next' ? 'next' : ''}" href="#" data-nav="${dir}"><span class="pn-dir">${dirLabel}</span><span class="pn-title">${escapeHtml(page.title || page.file)}</span></a>`;
 }
 
-// Gắn hành vi copy-to-clipboard cho mọi nút [data-copy-btn] trong #content —
-// đọc trực tiếp text của <pre><code> liền kề, không phụ thuộc thư viện ngoài.
+// -------- Select page --------
 function wireCodeCopyButtons(container) {
   container.querySelectorAll('[data-copy-btn]').forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -1024,7 +1208,8 @@ function selectPage(i) {
   const page = track.pages[i];
   if (!page) return;
   currentIndex = i;
-  markViewed(page.file);
+
+  // NOTE: markViewed is NOT called here — it's triggered by scroll tracking (setupScrollTracking)
 
   const content = document.getElementById('content');
   content.classList.remove('empty-state');
@@ -1050,8 +1235,6 @@ function selectPage(i) {
   const trackLabel = currentTrack === 'exam-track' ? 'Bổ trợ thi đấu' : 'Nền tảng';
   const breadcrumbHtml = `<div class="breadcrumb"><span class="crumb-track">${escapeHtml(trackLabel)}</span>${page.module ? `<span class="sep">/</span><span class="crumb-module">${escapeHtml(page.module)}</span>` : ''}${page.submodule ? `<span class="sep">/</span><span class="crumb-module">${escapeHtml(page.submodule)}</span>` : ''}</div>`;
 
-  // Prev/next điều hướng trong phạm vi nhánh (module/submodule) đang mở,
-  // không nhảy sang bài của nhánh khác dù track.pages liền kề về order.
   const branch = currentBranchEntries();
   const branchPos = branch.findIndex((e) => e.index === i);
   const prevEntry = branchPos > 0 ? branch[branchPos - 1] : null;
@@ -1090,6 +1273,9 @@ function selectPage(i) {
 
   renderToc(extractToc(page.body || ''));
 
+  // Scroll tracking: mark as viewed when user scrolls to bottom
+  setupScrollTracking(page.file);
+
   if (page.quiz && page.quiz.length) {
     const bodyPanel = document.getElementById('body-panel');
     const quizPanel = document.getElementById('quiz-panel');
@@ -1110,12 +1296,11 @@ function selectPage(i) {
     });
   }
 
-  // Cập nhật lại danh sách sidebar để phản ánh trạng thái active/tiến độ mới,
-  // nhưng giữ nguyên trạng thái collapse/search hiện tại.
   renderSidebar();
   if (window.innerWidth <= 760) document.getElementById('sidebar').classList.add('collapsed');
 }
 
+// -------- Quiz --------
 function renderQuiz(questions, container, pageFile) {
   container.dataset.rendered = '1';
   const state = questions.map(() => ({ answered: false, selectedIdx: null }));
@@ -1182,15 +1367,14 @@ function renderQuiz(questions, container, pageFile) {
   render();
 }
 
+// -------- Sidebar search --------
 function applySearch(value) {
   searchQuery = value;
   document.querySelector('#reader .search-row').classList.toggle('has-value', !!value);
   renderSidebar();
 }
 
-// Nhóm bài của 1 track thành module -> submodule (submodule rỗng = module
-// phẳng, coi cả module là 1 "submodule ảo" duy nhất) — dùng chung cho cả
-// renderLibrary() và tra cứu meta.
+// -------- Library helpers --------
 function groupTrackByModule(track) {
   const groups = [];
   const groupByName = new Map();
@@ -1229,8 +1413,6 @@ function cardProgress(entries) {
   };
 }
 
-// Thống kê tổng quan của 1 track (dùng cho dải stat-card đầu màn Library):
-// tổng bài, số stable/needs-review/draft, số bài đã có tiến độ đọc.
 function trackStats(track) {
   const total = track.pages.length;
   let stable = 0, needsReview = 0, draft = 0, done = 0;
@@ -1244,6 +1426,7 @@ function trackStats(track) {
   return { total, stable, needsReview, draft, done };
 }
 
+// -------- Library render --------
 function renderLibraryStats(track) {
   const s = trackStats(track);
   const wrap = document.getElementById('lib-stats-row');
@@ -1268,60 +1451,125 @@ function renderLibraryStats(track) {
 }
 
 function renderLibrary() {
-  const track = DATA.tracks[libraryTrack];
-  const meta = (DATA.moduleMeta && DATA.moduleMeta[libraryTrack]) || {};
-  document.getElementById('lib-track-summary').textContent = track.index ? track.index.summary || '' : '';
-  document.querySelectorAll('.lib-tab-btn').forEach((b) => b.classList.toggle('active', b.dataset.track === libraryTrack));
-
-  renderLibraryStats(track);
-
   const wrap = document.getElementById('lib-modules');
   wrap.innerHTML = '';
 
-  if (!track.pages.length) {
-    wrap.innerHTML = '<div class="empty-search">Chưa có bài nào trong track này.</div>';
-    return;
+  // Determine which tracks to show based on filter
+  const tracksToShow = [];
+  if (libraryFilter === 'all' || libraryFilter === 'exam-track') {
+    tracksToShow.push({ key: 'exam-track', label: 'Bổ trợ thi đấu', track: DATA.tracks['exam-track'] });
+  }
+  if (libraryFilter === 'all' || libraryFilter === 'foundations-track') {
+    tracksToShow.push({ key: 'foundations-track', label: 'Nền tảng', track: DATA.tracks['foundations-track'] });
   }
 
-  const groups = groupTrackByModule(track);
+  // Update filter pills
+  document.querySelectorAll('.lib-filter-pill').forEach((el) => {
+    el.classList.toggle('active', el.dataset.filter === libraryFilter);
+  });
+
+  // Update accent color based on filter
+  const root = document.documentElement;
+  if (libraryFilter === 'foundations-track') {
+    root.style.setProperty('--accent', 'var(--cyan)');
+    root.style.setProperty('--accent-soft', 'var(--cyan-soft)');
+  } else {
+    root.style.setProperty('--accent', 'var(--blue)');
+    root.style.setProperty('--accent-soft', 'var(--blue-soft)');
+  }
+
+  // Summary
+  let summaryText = '';
+  if (tracksToShow.length === 1) {
+    summaryText = tracksToShow[0].track.index ? tracksToShow[0].track.index.summary || '' : '';
+  } else {
+    const examSummary = DATA.tracks['exam-track'].index ? DATA.tracks['exam-track'].index.summary || '' : '';
+    const foundSummary = DATA.tracks['foundations-track'].index ? DATA.tracks['foundations-track'].index.summary || '' : '';
+    summaryText = examSummary + ' ' + foundSummary;
+  }
+  document.getElementById('lib-track-summary').textContent = summaryText;
+
+  // Stats
+  if (tracksToShow.length === 1) {
+    renderLibraryStats(tracksToShow[0].track);
+  } else {
+    // Combined stats
+    const examS = trackStats(DATA.tracks['exam-track']);
+    const foundS = trackStats(DATA.tracks['foundations-track']);
+    const combined = {
+      total: examS.total + foundS.total,
+      done: examS.done + foundS.done,
+      stable: examS.stable + foundS.stable,
+      needsReview: examS.needsReview + foundS.needsReview,
+    };
+    const wrap2 = document.getElementById('lib-stats-row');
+    wrap2.innerHTML = `
+      <div class="lib-stat-card">
+        <div class="lib-stat-num">${combined.total}</div>
+        <div class="lib-stat-label">Tổng số bài</div>
+      </div>
+      <div class="lib-stat-card accent-progress">
+        <div class="lib-stat-num">${combined.done}/${combined.total}</div>
+        <div class="lib-stat-label">Đã đọc qua</div>
+      </div>
+      <div class="lib-stat-card accent-stable">
+        <div class="lib-stat-num">${combined.stable}</div>
+        <div class="lib-stat-label">Stable</div>
+      </div>
+      <div class="lib-stat-card accent-review">
+        <div class="lib-stat-num">${combined.needsReview}</div>
+        <div class="lib-stat-label">Needs review</div>
+      </div>
+    `;
+  }
+
+  const meta = DATA.moduleMeta || {};
   const statusOk = (page) => libraryStatusFilter === 'all' || (page.status || 'draft') === libraryStatusFilter;
 
   let anyCardShown = false;
 
-  groups.forEach((group) => {
-    const groupMeta = meta[group.name] || {};
-    const allEntries = group.subgroups.flatMap((sg) => sg.entries);
-    const visibleEntries = allEntries.filter(({ page }) => statusOk(page));
-    if (!visibleEntries.length) return; // module không còn bài nào khớp filter -> ẩn cả block
+  // Render modules for each track in order
+  tracksToShow.forEach(({ key, label, track }) => {
+    if (!track.pages.length) return;
 
-    const block = document.createElement('div');
-    block.className = 'lib-module-block';
+    const groups = groupTrackByModule(track);
+    const trackMeta = meta[key] || {};
 
-    const titleHtml = `<div class="lib-module-title"><span>${escapeHtml(group.name)}</span><span class="lib-module-count">${allEntries.length} bài</span></div>`;
-    const descHtml = groupMeta.description ? `<div class="lib-module-desc">${escapeHtml(groupMeta.description)}</div>` : '';
-    block.innerHTML = titleHtml + descHtml;
+    groups.forEach((group) => {
+      const groupMeta = trackMeta[group.name] || {};
+      const allEntries = group.subgroups.flatMap((sg) => sg.entries);
+      const visibleEntries = allEntries.filter(({ page }) => statusOk(page));
+      if (!visibleEntries.length) return;
 
-    const grid = document.createElement('div');
-    grid.className = 'lib-card-grid';
+      const block = document.createElement('div');
+      block.className = 'lib-module-block';
 
-    const hasRealSubmodules = group.subgroups.length > 1 || (group.subgroups.length === 1 && group.subgroups[0].name);
+      const trackBadgeClass = key === 'exam-track' ? 'exam-track' : 'foundations-track';
+      const titleHtml = `<div class="lib-module-title"><span>${escapeHtml(group.name)}</span><span class="track-badge ${trackBadgeClass}">${escapeHtml(label)}</span><span class="lib-module-count">${allEntries.length} bài</span></div>`;
+      const descHtml = groupMeta.description ? `<div class="lib-module-desc">${escapeHtml(groupMeta.description)}</div>` : '';
+      block.innerHTML = titleHtml + descHtml;
 
-    if (!hasRealSubmodules) {
-      // Module phẳng — cả module là 1 card duy nhất.
-      grid.appendChild(makeLibCard(group.name, groupMeta.description || '', allEntries, () => openSubmodule(group.name, '')));
-      anyCardShown = true;
-    } else {
-      group.subgroups.forEach((sg) => {
-        if (!sg.entries.some(({ page }) => statusOk(page))) return;
-        const subMeta = (groupMeta.submodules && groupMeta.submodules[sg.name]) || '';
-        const cardName = sg.name || group.name;
-        grid.appendChild(makeLibCard(cardName, subMeta, sg.entries, () => openSubmodule(group.name, sg.name)));
+      const grid = document.createElement('div');
+      grid.className = 'lib-card-grid';
+
+      const hasRealSubmodules = group.subgroups.length > 1 || (group.subgroups.length === 1 && group.subgroups[0].name);
+
+      if (!hasRealSubmodules) {
+        grid.appendChild(makeLibCard(group.name, groupMeta.description || '', allEntries, () => openSubmodule(key, group.name, '')));
         anyCardShown = true;
-      });
-    }
+      } else {
+        group.subgroups.forEach((sg) => {
+          if (!sg.entries.some(({ page }) => statusOk(page))) return;
+          const subMeta = (groupMeta.submodules && groupMeta.submodules[sg.name]) || '';
+          const cardName = sg.name || group.name;
+          grid.appendChild(makeLibCard(cardName, subMeta, sg.entries, () => openSubmodule(key, group.name, sg.name)));
+          anyCardShown = true;
+        });
+      }
 
-    block.appendChild(grid);
-    wrap.appendChild(block);
+      block.appendChild(grid);
+      wrap.appendChild(block);
+    });
   });
 
   if (!anyCardShown) {
@@ -1349,36 +1597,57 @@ function makeLibCard(name, description, entries, onOpen) {
   return card;
 }
 
+// -------- Library search --------
 function runLibrarySearch(value) {
   const resultsEl = document.getElementById('lib-search-results');
   const q = value.trim().toLowerCase();
   if (!q) { resultsEl.classList.remove('show'); resultsEl.innerHTML = ''; return; }
-  const track = DATA.tracks[libraryTrack];
-  const matches = track.pages
-    .map((page, index) => ({ page, index }))
-    .filter(({ page }) => (page.title || '').toLowerCase().includes(q))
-    .slice(0, 20);
+
+  // Search across all tracks (or filtered)
+  const tracksToSearch = [];
+  if (libraryFilter === 'all' || libraryFilter === 'exam-track') {
+    tracksToSearch.push({ key: 'exam-track', track: DATA.tracks['exam-track'] });
+  }
+  if (libraryFilter === 'all' || libraryFilter === 'foundations-track') {
+    tracksToSearch.push({ key: 'foundations-track', track: DATA.tracks['foundations-track'] });
+  }
+
+  const allMatches = [];
+  tracksToSearch.forEach(({ key, track }) => {
+    track.pages.forEach((page, index) => {
+      if ((page.title || '').toLowerCase().includes(q)) {
+        allMatches.push({ page, index, track: key });
+      }
+    });
+  });
+  const matches = allMatches.slice(0, 20);
+
   if (!matches.length) {
     resultsEl.innerHTML = `<div class="lib-search-item" style="cursor:default;">Không tìm thấy bài khớp "${escapeHtml(value)}".</div>`;
     resultsEl.classList.add('show');
     return;
   }
-  resultsEl.innerHTML = matches.map(({ page, index }) => {
-    const path = [page.module, page.submodule].filter(Boolean).join(' / ');
-    return `<div class="lib-search-item" data-index="${index}"><span class="lsi-title">${escapeHtml(page.title || page.file)}</span><span class="lsi-path">${escapeHtml(path)}</span></div>`;
+  resultsEl.innerHTML = matches.map(({ page, track }) => {
+    const path = [track === 'exam-track' ? 'Bổ trợ thi đấu' : 'Nền tảng', page.module, page.submodule].filter(Boolean).join(' / ');
+    return `<div class="lib-search-item" data-track="${track}" data-module="${page.module || ''}" data-submodule="${page.submodule || ''}" data-index="${page.file}"><span class="lsi-title">${escapeHtml(page.title || page.file)}</span><span class="lsi-path">${escapeHtml(path)}</span></div>`;
   }).join('');
-  resultsEl.querySelectorAll('.lib-search-item[data-index]').forEach((el) => {
+  resultsEl.querySelectorAll('.lib-search-item').forEach((el) => {
     el.addEventListener('click', () => {
-      const idx = Number(el.dataset.index);
-      const page = track.pages[idx];
-      openSubmodule(page.module || 'Chưa phân module', page.submodule || '', idx);
+      const track = el.dataset.track;
+      const moduleName = el.dataset.module;
+      const submoduleName = el.dataset.submodule;
+      // Find the page index in the track
+      const t = DATA.tracks[track];
+      const idx = t.pages.findIndex((p) => p.file === el.dataset.index);
+      openSubmodule(track, moduleName, submoduleName, idx >= 0 ? idx : undefined);
     });
   });
   resultsEl.classList.add('show');
 }
 
-function openSubmodule(moduleName, submoduleName, pageIndex) {
-  currentTrack = libraryTrack;
+// -------- Open submodule / Reader --------
+function openSubmodule(trackKey, moduleName, submoduleName, pageIndex) {
+  currentTrack = trackKey;
   currentModule = moduleName;
   currentSubmodule = submoduleName;
   currentIndex = -1;
@@ -1388,10 +1657,22 @@ function openSubmodule(moduleName, submoduleName, pageIndex) {
   document.getElementById('lib-search-input').value = '';
   document.getElementById('lib-search-results').classList.remove('show');
 
+  // Initialize sidebar collapse state: collapse all submodules except current
+  sidebarCollapsed = new Set();
+  const allEntries = currentModuleEntries();
+  const subNames = new Set();
+  allEntries.forEach(({ page }) => {
+    const sn = page.submodule || '';
+    if (sn) subNames.add(sn);
+  });
+  subNames.forEach((sn) => {
+    if (sn !== submoduleName) sidebarCollapsed.add(sn);
+  });
+
   document.getElementById('app').classList.remove('library-mode');
   const trackLabel = currentTrack === 'exam-track' ? 'Bổ trợ thi đấu' : 'Nền tảng';
   document.getElementById('sidebar-title').textContent = submoduleName || moduleName;
-  document.getElementById('sidebar-crumb').textContent = submoduleName ? `${trackLabel} / ${moduleName}` : trackLabel;
+  document.getElementById('sidebar-crumb').textContent = submoduleName ? `${trackLabel} / ${moduleName}` : `${trackLabel} / ${moduleName}`;
 
   renderSidebar();
 
@@ -1412,36 +1693,32 @@ function backToLibrary() {
   renderLibrary();
 }
 
-function switchLibraryTrack(track) {
-  libraryTrack = track;
-  const root = document.documentElement;
-  if (track === 'foundations-track') {
-    root.style.setProperty('--accent', 'var(--cyan)');
-    root.style.setProperty('--accent-soft', 'var(--cyan-soft)');
-  } else {
-    root.style.setProperty('--accent', 'var(--blue)');
-    root.style.setProperty('--accent-soft', 'var(--blue-soft)');
-  }
+function switchLibraryFilter(filter) {
+  libraryFilter = filter;
   renderLibrary();
 }
 
 function switchLibraryStatusFilter(status) {
   libraryStatusFilter = status;
-  document.querySelectorAll('.lib-filter-chip').forEach((el) => el.classList.toggle('active', el.dataset.status === status));
+  document.querySelectorAll('.lib-status-chip').forEach((el) => el.classList.toggle('active', el.dataset.status === status));
   renderLibrary();
 }
 
+// -------- Init --------
 function init(data) {
   document.getElementById('generated-at').textContent = 'Cập nhật: ' + new Date(data.generatedAt).toLocaleString('vi-VN');
 
-  document.querySelectorAll('.lib-tab-btn').forEach((btn) => {
-    btn.addEventListener('click', () => switchLibraryTrack(btn.dataset.track));
+  // Library filter pills (track)
+  document.querySelectorAll('.lib-filter-pill').forEach((btn) => {
+    btn.addEventListener('click', () => switchLibraryFilter(btn.dataset.filter));
   });
 
-  document.querySelectorAll('.lib-filter-chip').forEach((btn) => {
+  // Status filter chips
+  document.querySelectorAll('.lib-status-chip').forEach((btn) => {
     btn.addEventListener('click', () => switchLibraryStatusFilter(btn.dataset.status));
   });
 
+  // Library search
   const libSearchInput = document.getElementById('lib-search-input');
   libSearchInput.addEventListener('input', (e) => runLibrarySearch(e.target.value));
   document.addEventListener('click', (e) => {
@@ -1450,17 +1727,22 @@ function init(data) {
 
   document.getElementById('back-to-library').addEventListener('click', backToLibrary);
 
+  // Sidebar search
   const searchInput = document.getElementById('search-input');
   searchInput.addEventListener('input', (e) => applySearch(e.target.value));
 
+  // Sidebar toggle (mobile)
   document.getElementById('sidebar-toggle').addEventListener('click', () => {
     document.getElementById('sidebar').classList.toggle('collapsed');
   });
 
+  // Keyboard shortcuts
   document.addEventListener('keydown', (e) => {
     const tag = (e.target.tagName || '').toLowerCase();
     const isTyping = tag === 'input' || tag === 'textarea';
-    if (e.key === '/' && !isTyping && !document.getElementById('app').classList.contains('library-mode')) {
+    const inReader = !document.getElementById('app').classList.contains('library-mode');
+
+    if (e.key === '/' && !isTyping && inReader) {
       e.preventDefault();
       searchInput.focus();
       return;
@@ -1469,14 +1751,14 @@ function init(data) {
       if (isTyping) { searchInput.blur(); applySearch(''); searchInput.value = ''; }
       return;
     }
-    if (isTyping) return;
+    if (isTyping || !inReader) return;
     const branch = currentBranchEntries();
     const pos = branch.findIndex((en) => en.index === currentIndex);
     if (e.key === 'ArrowLeft' && pos > 0) { selectPage(branch[pos - 1].index); }
     if (e.key === 'ArrowRight' && pos >= 0 && pos < branch.length - 1) { selectPage(branch[pos + 1].index); }
   });
 
-  switchLibraryTrack(libraryTrack);
+  switchLibraryFilter(libraryFilter);
 }
 
 if (DATA) {

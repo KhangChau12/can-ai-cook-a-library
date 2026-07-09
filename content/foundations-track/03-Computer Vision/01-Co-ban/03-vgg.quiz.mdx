@@ -1,0 +1,53 @@
+---
+quiz_for: 03-vgg
+---
+
+## Q1
+AlexNet để lại khoảng trống nào mà VGG giải quyết?
+
+- [x] AlexNet chứng minh CNN sâu hoạt động tốt nhưng không để lại nguyên tắc thiết kế có hệ thống cho người nghiên cứu sau
+- [ ] AlexNet không dùng được cho ảnh màu
+- [ ] AlexNet không thể huấn luyện bằng backpropagation
+- [ ] AlexNet chỉ hoạt động trên CPU, không hoạt động trên GPU
+
+> AlexNet là tổ hợp các lựa chọn kiến trúc khá đặc thù (kích thước kernel khác nhau ở mỗi lớp) không có công thức tổng quát để áp dụng khi thiết kế mạng sâu hơn cho bài toán khác. VGG giải quyết đúng vấn đề đó bằng khối lặp lại có hệ thống.
+
+## Q2
+Ý tưởng thiết kế cốt lõi của VGG là gì?
+
+- [x] Xây mạng từ các khối (block) lặp lại giống hệt nhau, mỗi khối gồm vài lớp tích chập kernel 3×3 rồi một lớp max-pooling
+- [ ] Dùng một kernel duy nhất kích thước 11×11 cho toàn bộ mạng
+- [ ] Bỏ hoàn toàn lớp pooling, chỉ dùng tích chập
+- [ ] Mỗi lớp dùng một kích thước kernel khác nhau, không lặp lại cấu trúc
+
+> VGG thay thế việc phối hợp nhiều kích thước kernel thủ công (như AlexNet) bằng cấu trúc khối nhất quán: vài lớp 3×3 liên tiếp + 1 lớp max-pooling 2×2, lặp lại nhiều lần với số kênh tăng dần.
+
+## Q3
+Vì sao xếp chồng nhiều lớp kernel 3×3 tốt hơn dùng một kernel lớn (ví dụ 7×7) cho cùng receptive field?
+
+- [x] Ít tham số hơn VÀ nhiều phi tuyến hơn (mỗi lớp 3×3 đều kèm 1 lớp ReLU, nên nhiều lớp nhỏ = nhiều điểm phi tuyến hơn)
+- [ ] Kernel 3×3 luôn nhanh hơn kernel 7×7 khi tính trên GPU
+- [ ] Kernel lớn không thể dùng padding
+- [ ] Không có sự khác biệt nào, chỉ là lựa chọn thẩm mỹ
+
+> Ba lớp 3×3 liên tiếp có cùng receptive field với một lớp 7×7 nhưng ít tham số hơn và có 3 lớp ReLU thay vì 1 — giúp mô hình học được hàm phức tạp hơn với cùng vùng nhìn.
+
+## Q4
+Kết quả của VGG tại ILSVRC 2014 là gì?
+
+- [x] Hạng nhất ở hạng mục định vị ảnh (localization), hạng nhì ở hạng mục phân loại (classification)
+- [ ] Hạng nhất ở cả 2 hạng mục, vượt xa mọi đối thủ
+- [ ] Không lọt vào top 10 ở bất kỳ hạng mục nào
+- [ ] Chỉ tham gia hạng mục segmentation, không tham gia classification
+
+> Simonyan và Zisserman (2014) công bố VGG đạt hạng nhất định vị ảnh và hạng nhì phân loại tại ILSVRC 2014 — kết quả củng cố nguyên tắc "mạng sâu-hẹp thắng mạng nông-rộng".
+
+## Q5
+Đánh đổi (trade-off) cụ thể của VGG là gì?
+
+- [x] Số lượng tham số rất lớn do các lớp fully-connected cuối mạng chiếm phần lớn tham số, dù ý tưởng thiết kế "gọn" hơn AlexNet
+- [ ] VGG không thể phân loại được ảnh có nhiều hơn 10 lớp
+- [ ] VGG chỉ hoạt động với ảnh đen trắng
+- [ ] VGG không dùng được nguyên lý convolution đã học ở bài CNN
+
+> Dù ý tưởng thiết kế (khối lặp lại) đơn giản và có hệ thống, các lớp fully-connected cuối mạng khiến VGG có số tham số rất lớn — đây là hạn chế mà các kiến trúc tiếp theo (ResNet và các kiến trúc hiệu quả hơn) sẽ giải quyết.

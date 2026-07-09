@@ -1,0 +1,53 @@
+---
+quiz_for: 04-conditional-gan
+---
+
+## Q1
+GAN gốc (bài 23) khác cGAN ở điểm nào?
+
+- [ ] GAN gốc dùng kiến trúc khác
+- [ ] GAN gốc không dùng discriminator
+- [x] GAN gốc chỉ nhận noise z — không kiểm soát nội dung ảnh sinh. cGAN thêm condition y (label/text/image) vào cả generator và discriminator
+- [ ] cGAN không dùng noise z
+
+> GAN gốc: G(z) sinh ảnh từ noise, không biết trước nội dung. cGAN: G(z, y) — condition y điều khiển nội dung (mèo/chó, ảnh ngày/đêm...). Hàm minimax thêm y vào cả 2 mạng.
+
+## Q2
+pix2pix dùng generator kiến trúc gì và tại sao?
+
+- [ ] ResNet — vì residual connection giúp train sâu hơn
+- [ ] Transformer — vì self-attention capture toàn cục
+- [x] U-Net — skip connection giữ chi tiết tần số cao (cạnh, đường nét) quan trọng cho image-to-image translation
+- [ ] VGG — vì đơn giản và hiệu quả
+
+> U-Net có skip connection nối encoder-decoder, giữ lại spatial details bị mất qua bottleneck. Điều này rất quan trọng cho image translation (giữ cấu trúc ảnh gốc khi thay đổi style/màu sắc).
+
+## Q3
+PatchGAN discriminator của pix2pix khác discriminator thường thế nào?
+
+- [ ] PatchGAN không có convolution layers
+- [ ] PatchGAN phân biệt toàn bộ ảnh nhanh hơn
+- [x] PatchGAN chia ảnh thành từng patch (VD 70×70) và phân biệt từng patch riêng — chỉ quan tâm texture địa phương, không phải bố cục toàn cục
+- [ ] PatchGAN dùng transformer thay vì CNN
+
+> Discriminator thường phân biệt toàn bộ ảnh thật/giả. PatchGAN phân biệt từng vùng 70×70 — chỉ kiểm tra local texture có "thật" không, bỏ qua global structure (vốn đã được L1 loss đảm bảo).
+
+## Q4
+CycleGAN giải quyết vấn đề gì mà pix2pix không giải quyết được?
+
+- [ ] CycleGAN sinh ảnh chất lượng cao hơn
+- [ ] CycleGAN chạy nhanh hơn
+- [x] CycleGAN không cần paired data — chỉ cần 2 tập ảnh riêng biệt (VD tập ngựa, tập ngựa vằn) nhờ cycle-consistency loss
+- [ ] CycleGAN không cần discriminator
+
+> pix2pix cần paired data (cùng scene ở cả 2 domain) — rất khó thu thập. CycleGAN dùng cycle-consistency: dịch X→Y→X phải giống X gốc, không cần paired data. Đánh đổi: chất lượng thua pix2pix.
+
+## Q5
+Cycle-consistency loss đảm bảo điều gì?
+
+- [ ] Ảnh sinh có màu sắc đẹp
+- [ ] Generator học nhanh hơn
+- [x] Nội dung (content) được giữ lại khi dịch giữa 2 domain — chỉ style thay đổi, content không đổi
+- [ ] Discriminator hội tụ nhanh hơn
+
+> Cycle-consistency: x → G(x) → F(G(x)) ≈ x. Ngựa ở tư thế A → ngựa vằn cũng ở tư thế A → dịch về lại ngựa thường ở tư thế A. Nội dung (tư thế, bố cục) được giữ nguyên, chỉ style (màu lông, texture) thay đổi.

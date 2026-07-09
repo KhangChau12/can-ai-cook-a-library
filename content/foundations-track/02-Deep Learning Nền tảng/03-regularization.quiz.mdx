@@ -1,0 +1,53 @@
+---
+quiz_for: 03-regularization
+---
+
+## Q1
+Trong công thức weight decay `Loss_mới = Loss_gốc + λ * sum(w_i^2)`, giá trị `λ` lớn có tác dụng gì?
+
+- [x] Buộc mô hình ưu tiên trọng số nhỏ hơn, tạo mô hình "đơn giản" hơn
+- [ ] Tăng tốc độ huấn luyện lên gấp λ lần
+- [ ] Làm mô hình bỏ qua hoàn toàn tập validation
+- [ ] Tăng số lượng tham số của mạng
+
+> `λ` lớn tăng mức độ phạt trọng số lớn, buộc mô hình ưu tiên các hàm số đơn giản hơn (gần hàm luôn trả 0) trừ khi dữ liệu thực sự cần trọng số lớn để khớp tốt.
+
+## Q2
+Dropout hoạt động khác nhau thế nào giữa lúc TRAIN và lúc TEST/dự đoán?
+
+- [x] Chỉ bật (tắt ngẫu nhiên một số đơn vị) lúc train — luôn tắt (mọi đơn vị hoạt động bình thường) lúc test/dự đoán
+- [ ] Bật ở cả train và test với cùng xác suất p
+- [ ] Chỉ bật lúc test, không bật lúc train
+- [ ] Tắt hoàn toàn ở cả train và test, chỉ là khái niệm lý thuyết
+
+> Điểm quan trọng cần nhớ: dropout chỉ hoạt động trong lúc huấn luyện (ngẫu nhiên tắt đơn vị với xác suất p) — khi dùng mô hình đã huấn luyện xong để dự đoán, mọi đơn vị đều hoạt động bình thường.
+
+## Q3
+Early stopping dựa trên hiện tượng nào để quyết định thời điểm dừng huấn luyện?
+
+- [x] Loss trên tập train tiếp tục giảm nhưng loss trên validation set bắt đầu tăng trở lại — dấu hiệu mô hình bắt đầu overfit
+- [ ] Số epoch đã đạt đúng 100
+- [ ] Loss trên train đạt chính xác bằng 0
+- [ ] Learning rate giảm về 0
+
+> Đây chính xác là thời điểm mô hình bắt đầu học thuộc lòng nhiễu riêng của tập train thay vì quy luật chung — early stopping dừng huấn luyện tại (hoặc ngay sau) thời điểm validation loss chạm đáy.
+
+## Q4
+Ba kỹ thuật weight decay, dropout, và early stopping có quan hệ với nhau thế nào trong thực hành?
+
+- [x] Thường được dùng kết hợp trong cùng một lần huấn luyện, không loại trừ lẫn nhau
+- [ ] Chỉ được chọn đúng 1 trong 3, không thể dùng cùng lúc
+- [ ] Weight decay và dropout xung đột nhau, không thể dùng chung
+- [ ] Early stopping thay thế hoàn toàn 2 kỹ thuật còn lại
+
+> Weight decay và dropout tác động trong lúc mạng đang học (thay đổi cách tính loss/forward pass), còn early stopping tác động ở quyết định "khi nào dừng" — ba kỹ thuật không xung đột nhau và thường dùng kết hợp.
+
+## Q5
+Srivastava và cộng sự (2014) mở rộng ý tưởng của Bishop (1995) theo hướng nào để tạo ra dropout hiện đại?
+
+- [x] Bishop thêm nhiễu vào INPUT tương đương regularization; Srivastava et al. áp dụng nguyên tắc tương tự cho các LỚP NỘI BỘ của mạng nhiều lớp
+- [ ] Bishop đề xuất dropout hoàn chỉnh, Srivastava chỉ đặt lại tên gọi
+- [ ] Srivastava et al. bỏ hẳn ý tưởng thêm nhiễu, thay bằng phương pháp hoàn toàn khác
+- [ ] Cả hai đều chỉ áp dụng cho input, không liên quan tới lớp ẩn
+
+> Bishop (1995) chứng minh nhiễu Gaussian ở input tương đương Tikhonov regularization về mặt toán học. Srivastava, Hinton, Krizhevsky, Sutskever, Salakhutdinov (2014) mở rộng nguyên tắc "nhiễu = regularization" đó sang các lớp ẩn nội bộ — đây chính là dropout hiện đại (tắt ngẫu nhiên đơn vị lớp ẩn, không chỉ input).

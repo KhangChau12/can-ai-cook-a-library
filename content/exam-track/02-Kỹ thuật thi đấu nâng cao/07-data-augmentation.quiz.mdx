@@ -1,0 +1,58 @@
+---
+quiz_for: 07-data-augmentation
+---
+
+## Q1
+Data augmentation giải quyết trực tiếp vấn đề gì khi thi đấu với dữ liệu ảnh?
+
+- [ ] Tốc độ huấn luyện chậm do model quá lớn
+- [x] Dataset competition thường quá nhỏ và thiếu đa dạng so với lượng dữ liệu model cần để học tổng quát, dễ dẫn tới overfit
+- [ ] File CSV nộp bài sai định dạng cột id/prediction
+- [ ] Model pretrained không tương thích với framework đang dùng
+
+> Dataset competition (vài nghìn tới vài chục nghìn ảnh) nhỏ hơn nhiều so
+> với dataset pretrain gốc (ImageNet, hơn 1 triệu ảnh). Data augmentation
+> tạo thêm biến thể từ ảnh gốc để giảm rủi ro overfit, tấn công đúng
+> nguyên nhân gốc (thiếu dữ liệu đa dạng) thay vì chỉ hạn chế phần model
+> được học (như freeze layer ở bài Transfer Learning).
+
+## Q2
+Tại sao augmentation KHÔNG bao giờ nên áp dụng lên tập validation/test?
+
+- [ ] Vì augmentation làm chậm tốc độ tính điểm trên platform
+- [x] Vì validation/test phải phản ánh đúng phân phối dữ liệu thật mà model sẽ gặp khi dự đoán — augment chúng chỉ làm sai lệch số liệu đánh giá
+- [ ] Vì augmentation chỉ hoạt động được với ảnh có độ phân giải cao
+- [ ] Vì platform tự động từ chối các submission có augment test set
+
+> Mục đích của augmentation là giúp model học tổng quát hơn từ TRAIN hạn
+> chế. Validation/test cần giữ nguyên để đo đúng khả năng model dự đoán
+> trên dữ liệu thật — augment chúng không mang lại lợi ích, chỉ làm méo
+> mó kết quả đánh giá.
+
+## Q3
+Test-time augmentation (TTA) khác gì so với augmentation thông thường
+(dùng lúc huấn luyện)?
+
+- [ ] TTA augment cả nhãn (label) của test set, augmentation thường chỉ augment ảnh
+- [x] TTA tạo nhiều phiên bản biến đổi của MỘT ảnh test rồi lấy trung bình các dự đoán, áp dụng ở giai đoạn dự đoán chứ không phải huấn luyện
+- [ ] TTA chỉ dùng được với gradient boosting, không dùng được với CNN
+- [ ] TTA là tên gọi khác của việc augment thêm dữ liệu train
+
+> TTA tạo nhiều crop/scale khác nhau của cùng một ảnh test, dự đoán trên
+> từng phiên bản rồi lấy trung bình — không vi phạm nguyên tắc "không
+> augment test" vì label thật không hề được dùng để tính toán, chỉ tạo
+> thêm góc nhìn đa dạng cho input khi suy luận.
+
+## Q4
+Vì sao augmentation "xoay ảnh 90 độ" có thể GÂY HẠI cho một số bài toán,
+dù thường hữu ích cho bài toán khác?
+
+- [ ] Xoay ảnh luôn làm tăng kích thước file, khiến submission chậm hơn
+- [x] Với bài toán mà hướng của vật thể có ý nghĩa (ví dụ phân loại chữ số viết tay), xoay 90 độ tạo ra dữ liệu giả không còn đúng với phân phối thật
+- [ ] Xoay ảnh chỉ hoạt động đúng với ảnh màu, không hoạt động với ảnh grayscale
+- [ ] Xoay ảnh làm mất thông tin PCA color perturbation đã áp dụng trước đó
+
+> Cường độ/loại augmentation cần tương xứng với đặc điểm bài toán. Chữ số
+> "6" xoay 180 độ trông giống "9" — augmentation kiểu này tạo nhãn sai
+> lệch thay vì biến thể hợp lệ của cùng lớp. Với ảnh vật thể tự nhiên (mèo,
+> chó), hướng thường không quan trọng nên flip/rotate nhẹ an toàn hơn.

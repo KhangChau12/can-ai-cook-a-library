@@ -1,0 +1,132 @@
+---
+title: K-means Clustering — Phân cụm không giám sát
+track: foundations-track
+module: Nền tảng Toán & ML cổ điển
+order: 7
+status: stable
+prerequisites: ["05-k-nearest-neighbors"]
+summary: Bài đầu tiên về unsupervised learning: nhóm dữ liệu thành k cụm mà không cần nhãn y, bằng cách lặp lại gán điểm vào centroid gần nhất rồi cập nhật centroid.
+last_touched_by_task: Tự đề xuất cải thiện (Task 95, 2026-07-07): phần giới hạn trước đây chỉ nói 'cụm hình cầu' trừu tượng — thêm ví dụ kinh điển thất bại (2 vòng tròn đồng tâm, k-means chia bằng đường thẳng thay vì tách vòng trong/vòng ngoài), liên hệ ngược SVM kernel bài 06 để thấy cùng dữ liệu đó kernel tách được.
+---
+
+Toàn bộ 6 mô hình đã học — từ [Linear Regression](02-linear-regression.mdx)
+tới [SVM](06-svm.mdx) — đều là **supervised learning**
+(học có giám sát): dữ liệu train luôn có sẵn câu trả lời đúng (`y`), và mô
+hình học cách dự đoán `y` từ `x`. K-means clustering bước sang một dạng bài
+toán hoàn toàn khác: **unsupervised learning** (học không giám sát) — dữ
+liệu **không có `y`** nào cả, chỉ có các điểm dữ liệu `x`, và mục tiêu là
+tự tìm ra cấu trúc/nhóm tiềm ẩn trong đó.
+
+## Bài toán: nhóm dữ liệu thành các cụm
+
+Cho một tập dữ liệu không có nhãn — ví dụ thông tin khách hàng (chi tiêu
+hàng tháng, tần suất mua hàng) mà không biết trước "loại khách hàng" nào
+cả — mục tiêu của clustering là chia dữ liệu thành `k` nhóm (cụm), sao cho
+các điểm trong cùng một cụm **giống nhau** hơn so với các điểm ở cụm khác.
+Không có "đáp án đúng" để so sánh như supervised learning — thành công
+được đánh giá bằng việc các cụm tạo ra có "chặt" (compact) và tách biệt
+rõ ràng hay không.
+
+## Thuật toán K-means
+
+K-means là thuật toán clustering đơn giản và phổ biến nhất, hoạt động qua
+một vòng lặp:
+
+1. **Khởi tạo:** chọn `k` điểm làm **centroid** ban đầu (tâm cụm) — có thể
+   chọn ngẫu nhiên, nhưng cách tốt hơn (gọi là `k-means++`) chọn các
+   centroid ban đầu ở xa nhau, giúp thuật toán hội tụ nhanh và ổn định hơn.
+2. **Gán điểm vào cụm:** mỗi điểm dữ liệu được gán vào cụm có centroid
+   **gần nó nhất** (theo khoảng cách Euclid — giống cách đo khoảng cách ở
+   bài [k-NN](05-k-nearest-neighbors.mdx)).
+3. **Cập nhật centroid:** với mỗi cụm, tính lại centroid mới bằng **trung
+   bình** toạ độ của mọi điểm vừa được gán vào cụm đó.
+4. **Lặp lại** bước 2-3 cho tới khi centroid gần như không còn thay đổi
+   giữa hai lần lặp liên tiếp (hội tụ).
+
+Không có gì phức tạp hơn thế: gán — cập nhật trung bình — lặp lại. Nhưng
+đằng sau sự đơn giản này, thuật toán đang tối thiểu hoá một đại lượng cụ
+thể.
+
+## Đại lượng cần tối thiểu hoá: inertia
+
+K-means tối thiểu hoá **inertia** (tổng bình phương khoảng cách trong
+từng cụm — within-cluster sum of squares):
+
+```
+inertia = sum_i( min_j( ||x_i - mu_j||^2 ) )
+```
+
+Với mỗi điểm dữ liệu `x_i`, lấy khoảng cách bình phương tới centroid gần
+nhất `mu_j`, rồi cộng dồn trên toàn bộ điểm dữ liệu. Inertia càng nhỏ,
+các cụm càng "chặt" — điểm dữ liệu trong cùng cụm càng gần centroid của
+chính nó. Công thức này có cùng "họ" với MSE đã gặp ở
+[Linear Regression](02-linear-regression.mdx) và
+[Decision Tree](04-decision-tree.mdx) — vẫn là tổng bình phương khoảng
+cách, chỉ khác đối tượng so sánh (centroid tự học được, không phải giá
+trị target có sẵn).
+
+Ví dụ đơn giản (1 chiều, để tính tay dễ hình dung): 4 điểm dữ liệu
+`{1, 2, 9, 10}`, chia thành 2 cụm `{1, 2}` (centroid = 1.5) và `{9, 10}`
+(centroid = 9.5):
+
+```
+inertia = (1-1.5)^2 + (2-1.5)^2 + (9-9.5)^2 + (10-9.5)^2
+        = 0.25 + 0.25 + 0.25 + 0.25 = 1.0
+```
+
+So sánh với một cách chia khác kém hợp lý hơn, ví dụ `{1, 9}` và
+`{2, 10}` (centroid lần lượt là 5 và 6): mỗi điểm giờ cách xa centroid của
+mình hơn nhiều (`|1-5|=4`, `|9-5|=4`...), inertia sẽ lớn hơn nhiều so với
+`1.0` — đúng như kỳ vọng, vì cách chia này gộp các điểm ở xa nhau vào
+cùng một cụm.
+
+## Chọn `k` bao nhiêu: elbow method
+
+Khác với supervised learning (nơi có thể dùng cross-validation để đánh
+giá khách quan), clustering không có nhãn đúng để so sánh — nên chọn `k`
+dựa trên một kỹ thuật gọi là **elbow method** (phương pháp khuỷu tay):
+chạy k-means với nhiều giá trị `k` khác nhau (ví dụ 2, 3, 4, 5...), vẽ đồ
+thị inertia theo `k`. Inertia luôn giảm khi `k` tăng (nhiều cụm hơn luôn
+"chặt" hơn), nhưng tốc độ giảm thường chậm lại đột ngột tại một điểm — hình
+dạng đồ thị giống một cái khuỷu tay gấp khúc. Điểm gấp khúc đó thường là
+lựa chọn `k` hợp lý: thêm cụm sau điểm này không còn cải thiện đáng kể.
+
+## Giới hạn của K-means
+
+- **Giả định cụm có hình cầu, kích thước tương đồng.** K-means hoạt động
+  kém nếu các cụm thật có hình dạng kéo dài hoặc lồng nhau bất thường —
+  thuật toán chỉ dựa vào khoảng cách tới centroid, không nắm được hình
+  dạng phức tạp. Ví dụ kinh điển thất bại: hai vòng tròn đồng tâm (một
+  cụm nhỏ nằm gọn giữa, một cụm lớn tạo vòng tròn bao quanh) — k-means với
+  `k=2` sẽ luôn chia dữ liệu bằng một đường thẳng qua giữa, cho ra 2 nửa
+  vòng tròn thay vì tách được vòng trong và vòng ngoài. Đây đúng là dữ liệu
+  mà SVM với kernel (bài [06](06-svm.mdx)) tách được dễ dàng — minh hoạ
+  rõ rằng không có thuật toán clustering nào "tốt nhất" cho mọi hình dạng
+  cụm, và k-means chỉ phù hợp khi cấu trúc cụm thật gần với hình cầu.
+- **Nhạy với khởi tạo ban đầu.** Vì thuật toán có thể hội tụ về một điểm
+  tối ưu cục bộ (không phải tối ưu toàn cục), kết quả có thể khác nhau
+  giữa các lần chạy — thực hành phổ biến là chạy nhiều lần với khởi tạo
+  khác nhau rồi chọn kết quả có inertia thấp nhất.
+- **Phải chọn trước số cụm `k`.** Không giống một số thuật toán clustering
+  khác, k-means bắt buộc biết trước `k` — chọn sai `k` cho ra kết quả gán
+  cụm không phản ánh đúng cấu trúc dữ liệu thật.
+- **Nhạy cảm với thang đo feature**, giống k-NN — vì đều dựa trên khoảng
+  cách Euclid, cần chuẩn hoá feature trước khi áp dụng (xem bài
+  [k-NN](05-k-nearest-neighbors.mdx)).
+
+## Liên hệ lại với các bài trước
+
+- Đây là lần đầu tiên gặp bài toán ML **không có `y`** — điểm khác biệt
+  căn bản nhất so với 6 bài trước, dù công thức toán học (tổng bình
+  phương khoảng cách, tối thiểu hoá lặp) trông rất quen thuộc.
+- K-means dùng chung phép đo khoảng cách Euclid với k-NN — cùng hệ quả:
+  cần chuẩn hoá feature, và cùng gặp khó khăn khi số chiều dữ liệu quá lớn
+  (curse of dimensionality, đã nói ở bài k-NN).
+- Việc chọn `k` qua elbow method là một dạng khác của đánh đổi bias-variance
+  đã gặp nhiều lần (qua `max_depth` ở decision tree, qua `k` ở k-NN) — chỉ
+  khác ở chỗ không có cross-validation làm trọng tài khách quan, vì không
+  có nhãn đúng để so sánh.
+
+## Nguồn tham khảo
+
+- [scikit-learn — Clustering](https://scikit-learn.org/stable/modules/clustering.html) — dùng làm nguồn chính cho thuật toán k-means (khởi tạo, gán điểm, cập nhật centroid, lặp lại), công thức inertia, khởi tạo `k-means++`, elbow method để chọn k, và các giới hạn (giả định cụm hình cầu, nhạy với khởi tạo, cần biết trước k).

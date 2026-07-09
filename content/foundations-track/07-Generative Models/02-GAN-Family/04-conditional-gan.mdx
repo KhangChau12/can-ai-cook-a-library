@@ -1,0 +1,177 @@
+---
+title: Conditional GAN — Sinh Ảnh Có Điều Kiện Từ Nhãn, Ảnh Khác, Và Miền
+track: foundations-track
+module: Generative Models
+submodule: GAN Family
+order: 4
+status: stable
+prerequisites: ["02-dcgan", "03-wgan-stylegan"]
+summary: GAN gốc sinh ảnh từ noise ngẫu nhiên — không kiểm soát được nội dung. Conditional GAN cho phép sinh ảnh có điều kiện: sinh ảnh mèo từ label 'mèo' (cGAN), chuyển ảnh đen trắng sang màu (pix2pix), chuyển ảnh ngựa sang ngựa vằn (CycleGAN). Bài này kể dòng tiến hoá từ cGAN đơn giản tới pix2pix (có cặp) và CycleGAN (không cặp).
+last_touched_by_task: Bài mới (2026-07-08): Phase 3.3 đào sâu Generative Models — Conditional GAN, lấp khoảng trống ứng dụng GAN. Nguồn: arxiv cGAN 1411.1784 + arxiv pix2pix 1611.07004 + arxiv CycleGAN 1703.10593.
+---
+
+Bài [GAN](23-gan.mdx) và [DCGAN](46-dcgan.mdx) sinh ảnh từ noise ngẫu
+nhiên z ~ N(0, I). Agent hoàn toàn không kiểm soát được nội dung — không
+thể bảo "sinh ảnh con mèo" hay "biến ảnh này thành ảnh kia". Đây là điểm
+yếu lớn nhất của GAN gốc.
+
+**Conditional GAN** giải quyết: thêm một **condition (điều kiện)** y vào
+cả generator và discriminator. y có thể là label class ("mèo"), một câu
+text ("con mèo màu cam"), hay một ảnh khác (ảnh đen trắng → ảnh màu).
+
+## cGAN — GAN Có Điều Kiện
+
+cGAN (Mirza & Osindero 2014) là phiên bản đơn giản nhất: thêm condition
+y vào input của cả generator và discriminator.
+
+### Công thức
+
+Generator nhận noise z và condition y:
+
+```
+G(z, y) → x_fake
+```
+
+Discriminator nhận x (thật/giả) và condition y:
+
+```
+D(x, y) → xác suất "thật"
+```
+
+Hàm mục tiêu minimax trở thành:
+
+```
+min_G max_D E_{(x,y)~p_data}[log D(x, y)] + E_{z~p_z, y~p_y}[log (1 - D(G(z, y), y))]
+```
+
+### Các loại condition
+
+- **Label (nhãn):** y là one-hot vector (mèo=0010, chó=0100, ...). Generator
+  học sinh ảnh mèo khi y=0010.
+- **Text:** y là embedding của câu mô tả (dùng word2vec hoặc CLIP).
+- **Image:** y là một ảnh khác (input cho image-to-image translation).
+
+### Hạn chế
+
+cGAN đơn giản nhưng không kiểm soát được chi tiết — condition chỉ là một
+vector nhỏ thêm vào, generator có thể "bỏ qua" condition và sinh ảnh
+không liên quan (mode collapse có điều kiện).
+
+## pix2pix — Image-to-Image Translation Có Cặp
+
+pix2pix (Isola et al. 2017, Berkeley) giải quyết bài toán cụ thể: **ánh
+xạ từ ảnh input sang ảnh output** với dữ liệu có cặp (paired). Ví dụ:
+bản đồ → ảnh vệ tinh, ảnh nháp → ảnh thật, ảnh đen trắng → ảnh màu.
+
+### Kiến trúc
+
+**Generator — U-Net:**
+- Thay vì encoder-decoder thường (nén hết thông tin vào bottleneck rồi
+  giải nén), U-Net có **skip connection** nối encoder layer với decoder
+  layer tương ứng.
+- Skip connection giữ lại **chi tiết tần số cao** (cạnh, đường nét) —
+  quan trọng cho image translation.
+
+**Discriminator — PatchGAN:**
+- Không phân biệt toàn bộ ảnh thật/giả, mà chia ảnh thành N×N patch,
+  phân biệt từng patch.
+- PatchGAN chỉ quan tâm **cấu trúc địa phương** (local texture), không
+  quan tâm bố cục toàn cục.
+- Kích thước patch thường là 70×70 — ảnh hưởng: 70 pixel → discriminator
+  chỉ kiểm tra từng vùng 70×70 có "thật" không.
+
+### Loss function
+
+pix2pix kết hợp 2 loss:
+
+```
+L = L_cGAN(G, D) + λ · L_L1(G)
+```
+
+- **L_cGAN:** adversarial loss — generator cố gắng đánh lừa discriminator
+- **L_L1:** L1 distance giữa ảnh sinh và ảnh thật: E[||y - G(x,z)||₁]
+- **λ:** tunning parameter (thường λ=100 — L1 chiếm trọng số cao hơn)
+
+L1 loss khuyến khích generator sinh ảnh sát với ground truth về tổng thể
+(low-frequency). GAN loss giúp ảnh sắc nét hơn (high-frequency). Kết hợp
+cả hai cho kết quả tốt nhất — thiếu L1 → ảnh sinh có thể sai cấu trúc,
+thiếu GAN → ảnh sinh mờ (giống L1 regression thuần).
+
+### Giới hạn
+
+Cần **paired data** — cùng một scene phải có cả ảnh input lẫn ảnh output.
+Rất khó thu thập: cùng một góc phố vừa có ảnh ngày lẫn ảnh đêm, cùng một
+khuôn mặt vừa có ảnh thường lẫn ảnh hoạt hình.
+
+## CycleGAN — Image Translation Không Cần Cặp
+
+CycleGAN (Zhu, Park, Isola & Efros 2017, Berkeley) giải quyết giới hạn
+paired data bằng **cycle-consistency loss**: không cần ảnh có cặp, chỉ
+cần hai tập ảnh riêng biệt (tập ngựa, tập ngựa vằn).
+
+### Kiến trúc
+
+CycleGAN có **4 mạng** (2 generator + 2 discriminator):
+
+1. **G:** X → Y (ngựa thường → ngựa vằn)
+2. **F:** Y → X (ngựa vằn → ngựa thường)
+3. **D_Y:** phân biệt ảnh Y thật vs ảnh Y do G sinh
+4. **D_X:** phân biệt ảnh X thật vs ảnh X do F sinh
+
+### Cycle-consistency loss
+
+Ý tưởng: nếu dịch ngựa thường → ngựa vằn → ngựa thường, ảnh cuối phải
+giống ảnh gốc.
+
+```
+L_cycle(G, F) = E_{x~p_X}[||F(G(x)) - x||₁] + E_{y~p_Y}[||G(F(y)) - y||₁]
+```
+
+- Forward cycle: x → G(x) → F(G(x)) ≈ x (ngựa thường → vằn → về thường)
+- Backward cycle: y → F(y) → G(F(y)) ≈ y (vằn → thường → về vằn)
+
+Cycle-consistency đảm bảo nội dung (content) được giữ lại, chỉ style thay
+đổi — ngựa đứng ở tư thế nào thì ngựa vằn cũng đứng tư thế đó.
+
+### Identity loss (tuỳ chọn)
+
+Thêm loss khuyến khích G(y) ≈ y khi input là ảnh từ domain Y — nghĩa là
+nếu input là ngựa vằn thật, generator G (ngựa→vằn) không cần làm gì cả:
+
+```
+L_identity(G, F) = E_{y~p_Y}[||G(y) - y||₁] + E_{x~p_X}[||F(x) - x||₁]
+```
+
+### Giới hạn
+
+- **Có thể học mapping tầm thường:** nếu cycle-consistency quá mạnh, mô
+  hình học identity mapping (không làm gì cả) thay vì dịch thật.
+- **4 mạng → nhiều tham số, lâu train.**
+- **Chất lượng không bằng pix2pix** (có paired data) — đây là cái giá
+  của việc không cần cặp.
+
+## So sánh 3 phương pháp
+
+| Phương pháp | Condition | Cần paired data? | Loss | Ứng dụng chính |
+|---|---|---|---|---|
+| **cGAN** | Label/text vector | Không | Adversarial | Class-conditional generation |
+| **pix2pix** | Image (paired) | Có | Adversarial + L1 | Edge→photo, map→satellite |
+| **CycleGAN** | Image (unpaired) | Không | Adversarial + cycle-consistency | Style transfer, domain adaptation |
+
+## Liên hệ lại với các bài trước
+
+- **GAN (bài 23):** cGAN thay đổi hàm minimax để có condition — một mở
+  rộng tự nhiên đầu tiên của GAN.
+- **DCGAN (bài 46):** pix2pix's U-Net generator và PatchGAN discriminator
+  đều dùng convolutional architecture — kế thừa từ DCGAN.
+- **U-Net (bài 40):** pix2pix's generator dùng trực tiếp U-Net từ
+  segmentation — một ví dụ transfer learning giữa các tác vụ CV.
+- **StyleGAN (bài 88):** StyleGAN cũng là conditional (style code w), nhưng
+  condition là latent code được học, không phải label/image từ bên ngoài.
+
+## Nguồn tham khảo
+
+- [arXiv — Conditional Generative Adversarial Nets (Mirza & Osindero, 2014)](https://arxiv.org/abs/1411.1784) — paper gốc cGAN, dùng cho conditional minimax và various conditions.
+- [arXiv — Image-to-Image Translation with Conditional Adversarial Networks (Isola et al., 2017)](https://arxiv.org/abs/1611.07004) — paper gốc pix2pix, dùng cho U-Net generator, PatchGAN discriminator, và L1+GAN loss.
+- [arXiv — Unpaired Image-to-Image Translation using Cycle-Consistent Adversarial Networks (Zhu et al., 2017)](https://arxiv.org/abs/1703.10593) — paper gốc CycleGAN, dùng cho cycle-consistency loss, 2 generators + 2 discriminators.
+- [machinelearningmastery.com — pix2pix and CycleGAN tutorials](https://machinelearningmastery.com/tag/cyclegan/) — dùng cho overview và so sánh paired vs unpaired.

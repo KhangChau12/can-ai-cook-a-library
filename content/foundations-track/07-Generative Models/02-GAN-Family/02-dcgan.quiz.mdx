@@ -1,0 +1,43 @@
+---
+quiz_for: 02-dcgan
+---
+
+## Q1
+Vấn đề cụ thể mà DCGAN (Radford, Metz, Chintala 2015) giải quyết là gì?
+
+- [x] GAN gốc dùng MLP cho cả generator và discriminator — không khai thác được cấu trúc không gian của ảnh, khiến sinh ảnh chất lượng kém và huấn luyện bất ổn định
+- [ ] GAN gốc không thể huấn luyện được trên bất kỳ loại dữ liệu nào
+- [ ] GAN gốc chỉ hoạt động với dữ liệu văn bản, không hoạt động với ảnh
+- [ ] GAN gốc không có discriminator, chỉ có generator
+
+> MLP coi mỗi pixel là 1 feature độc lập, không khai thác được tính cục bộ/bất biến vị trí của ảnh (đã học ở bài CNN) — đây chính là hạn chế DCGAN giải quyết bằng cách thay MLP bằng kiến trúc convolutional.
+
+## Q2
+Generator và Discriminator của DCGAN dùng loại phép toán nào, và chúng khác nhau ở điểm gì?
+
+- [x] Generator dùng transposed convolution để phóng to dần từ vector nhiễu thành ảnh; Discriminator dùng convolution thông thường để thu nhỏ dần ảnh về 1 giá trị dự đoán — gần như đối xứng nhau
+- [ ] Cả hai đều dùng chính xác cùng một loại convolution giống hệt nhau, không có khác biệt
+- [ ] Generator dùng RNN, Discriminator dùng CNN
+- [ ] Cả hai đều không dùng convolution, chỉ dùng fully-connected layer
+
+> Transposed convolution "phóng to" không gian (dùng cho generator, đi từ vector nhỏ thành ảnh lớn), convolution thông thường "thu nhỏ" không gian (dùng cho discriminator, đi từ ảnh lớn thành 1 giá trị dự đoán) — hai phép toán ngược nhau cho hai vai trò ngược nhau.
+
+## Q3
+Vì sao Discriminator của DCGAN dùng LeakyReLU thay vì ReLU thông thường?
+
+- [x] ReLU cho output bằng 0 với mọi input âm — nếu quá nhiều neuron rơi vào trạng thái này (dying ReLU), chúng ngừng học; LeakyReLU cho phép một độ dốc nhỏ khác 0 với input âm, giữ gradient chảy qua tốt hơn
+- [ ] LeakyReLU chạy nhanh hơn ReLU trên mọi loại phần cứng
+- [ ] ReLU không thể dùng được cho bài toán phân loại nhị phân
+- [ ] LeakyReLU chỉ là tên gọi khác của sigmoid
+
+> Dying ReLU đặc biệt nghiêm trọng với GAN vì discriminator liên tục thay đổi động lực học đối kháng với generator — giữ gradient chảy qua ổn định hơn giúp huấn luyện GAN ổn định hơn.
+
+## Q4
+Kết quả đáng chú ý nhất của DCGAN, ngoài việc sinh ảnh đẹp hơn, là gì?
+
+- [x] Cả generator và discriminator học được một hệ thống phân cấp biểu diễn (từ bộ phận nhỏ tới toàn cảnh) — có thể tái sử dụng làm feature extractor cho các tác vụ khác, dù huấn luyện hoàn toàn không có nhãn
+- [ ] DCGAN là kiến trúc đầu tiên và duy nhất có thể sinh ảnh màu
+- [ ] DCGAN chứng minh CNN không thể dùng cho bài toán sinh dữ liệu
+- [ ] DCGAN loại bỏ hoàn toàn nhu cầu huấn luyện đối kháng giữa 2 mạng
+
+> Đây là đóng góp quan trọng về mặt lý thuyết: chứng minh unsupervised learning (qua GAN) vẫn có thể tạo ra biểu diễn hữu ích tương tự supervised learning, dù không cần nhãn nào trong quá trình huấn luyện.

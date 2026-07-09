@@ -1,0 +1,43 @@
+---
+quiz_for: 05-albert
+---
+
+## Q1
+Vấn đề cụ thể mà ALBERT giải quyết ở BERT là gì?
+
+- [x] Tăng kích thước mô hình BERT để cải thiện hiệu năng gặp giới hạn cứng về bộ nhớ GPU/TPU và thời gian huấn luyện kéo dài hơn
+- [ ] BERT không thể xử lý được câu có độ dài trên 50 từ
+- [ ] BERT không thể huấn luyện bằng backpropagation
+- [ ] BERT chỉ hoạt động với tiếng Anh, không hoạt động với ngôn ngữ khác
+
+> Đây là vấn đề thực tế về khả năng mở rộng (scaling) — không phải vấn đề về khả năng của kiến trúc, mà về giới hạn phần cứng và thời gian khi cố tăng kích thước mô hình.
+
+## Q2
+Factorized embedding parameterization giải quyết vấn đề gì?
+
+- [x] Tách ma trận embedding V×H (trong đó E=H như BERT gốc) thành 2 ma trận nhỏ hơn V×E và E×H, cho phép H lớn hơn nhiều so với E mà không làm tăng số tham số embedding tương ứng
+- [ ] Loại bỏ hoàn toàn lớp embedding, dùng one-hot vector trực tiếp
+- [ ] Tăng kích thước từ vựng lên gấp đôi để cải thiện độ chính xác
+- [ ] Chuyển đổi toàn bộ mô hình sang kiến trúc CNN
+
+> Trong BERT gốc, kích thước embedding E bị ràng buộc bằng kích thước hidden layer H — ALBERT phá vỡ ràng buộc này bằng cách tách thành 2 ma trận nhỏ hơn, giảm đáng kể tổng số tham số.
+
+## Q3
+Cross-layer parameter sharing hoạt động như thế nào?
+
+- [x] Dùng chung (share) trọng số giữa TẤT CẢ các lớp Transformer, thay vì mỗi lớp có bộ trọng số riêng như BERT gốc — giúp tăng số lớp không làm tăng tổng số tham số
+- [ ] Mỗi lớp Transformer dùng một loại activation function khác nhau
+- [ ] Chỉ lớp đầu tiên và lớp cuối cùng có trọng số, các lớp giữa bị bỏ qua
+- [ ] Chia mô hình thành nhiều mô hình con độc lập, mỗi mô hình xử lý 1 câu
+
+> ALBERT chọn phương án chia sẻ TOÀN BỘ tham số giữa mọi lớp (có nhiều cách khác như chỉ chia sẻ FFN hoặc chỉ attention) — đây là lý do chính giúp giảm mạnh số tham số dù giữ nguyên độ sâu mô hình.
+
+## Q4
+Sentence-Order Prediction (SOP) của ALBERT khác gì so với Next Sentence Prediction (NSP) của BERT?
+
+- [x] SOP yêu cầu mô hình phát hiện xem 2 đoạn văn bản liên tiếp có đúng THỨ TỰ GỐC hay đã bị đảo ngược — khó hơn NSP (vốn chỉ phân biệt câu tiếp theo thật với câu ngẫu nhiên không liên quan, có thể giải quyết chỉ bằng tín hiệu chủ đề)
+- [ ] SOP không cần dữ liệu văn bản, chỉ cần dữ liệu số
+- [ ] SOP là một loại optimizer mới thay thế Adam
+- [ ] SOP và NSP hoàn toàn giống nhau, chỉ khác tên gọi
+
+> NSP dễ giải quyết bằng tín hiệu chủ đề đơn giản (câu ngẫu nhiên thường khác chủ đề rõ rệt) — SOP buộc mô hình phải hiểu mạch lạc/tính liên kết thực sự giữa các câu, một tác vụ pretraining khó và có giá trị hơn.

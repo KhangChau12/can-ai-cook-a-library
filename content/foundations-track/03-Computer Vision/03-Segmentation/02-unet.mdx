@@ -1,0 +1,102 @@
+---
+title: U-Net — Encoder-Decoder Đối xứng Giải quyết Bài toán Dữ liệu Y tế Khan hiếm
+track: foundations-track
+module: Computer Vision
+submodule: Segmentation
+order: 2
+status: stable
+prerequisites: ["01-image-segmentation"]
+summary: FCN (Long et al. 2015) chứng minh 'toàn bộ tích chập' hoạt động cho segmentation nhưng chưa giải quyết vấn đề dữ liệu y tế khan hiếm nhãn. Ronneberger, Fischer, và Brox (2015) giải quyết đúng vấn đề đó: kiến trúc encoder-decoder đối xứng + skip connection, huấn luyện được từ rất ít ảnh, xử lý ảnh 512×512 dưới 1 giây trên GPU, thắng ISBI Cell Tracking Challenge 2015 với khoảng cách lớn.
+last_touched_by_task: Bài mới (2026-07-06) tách riêng U-Net từ tóm tắt đã có ở bài 34 (Image Segmentation) — đào sâu hơn kiến trúc cụ thể (contracting/expanding path, cơ chế skip connection) và bối cảnh so sánh trực tiếp với sliding-window cổ điển, không chỉ với FCN. Nguồn: arxiv (paper gốc Ronneberger et al. 2015, xác nhận qua WebFetch trực tiếp abstract — đã dùng 1 phần ở bài 34, giờ khai thác sâu hơn: so sánh với sliding-window, tốc độ xử lý cụ thể).
+---
+
+Bài [Image Segmentation](34-image-segmentation.mdx) đã tóm tắt dòng
+tiến hoá FCN → U-Net trong khuôn khổ giới thiệu tổng quan. Bài này đào
+sâu hơn vào chính U-Net — kiến trúc cụ thể, và bối cảnh đầy đủ hơn về
+vấn đề nó giải quyết.
+
+## Bối cảnh: FCN giải quyết được "làm sao", nhưng chưa giải quyết "với bao nhiêu dữ liệu"
+
+FCN (Long, Shelhamer, Darrell, 2015 — đã kể ở bài 34) chứng minh nguyên
+lý quan trọng: thay lớp fully-connected bằng lớp tích chập `1×1` +
+transposed convolution giữ được tương ứng không gian pixel-to-pixel cần
+thiết cho segmentation. Nhưng khi áp dụng cho ảnh **y tế** (ví dụ ảnh
+hiển vi phân đoạn cấu trúc tế bào thần kinh), một vấn đề khác nổi lên rõ
+ràng: **huấn luyện thành công một mạng deep learning thường cần hàng
+nghìn mẫu có nhãn**, trong khi dữ liệu y tế có nhãn chính xác (đòi hỏi
+chuyên gia gán nhãn thủ công từng pixel, tốn thời gian và chi phí cao)
+luôn khan hiếm. Trước U-Net, phương pháp phổ biến cho bài toán này là
+**sliding window** — trượt một cửa sổ nhỏ qua ảnh, phân loại pixel trung
+tâm dựa trên vùng lân cận — cách này hoạt động nhưng chậm (phải chạy lại
+gần như toàn bộ tính toán cho mỗi cửa sổ chồng lấn) và không tận dụng
+được ngữ cảnh toàn ảnh một cách hiệu quả.
+
+## Giải pháp: kiến trúc đối xứng, tận dụng tối đa dữ liệu ít ỏi
+
+**Ronneberger, Fischer, và Brox (2015)**, trong bài báo "U-Net:
+Convolutional Networks for Biomedical Image Segmentation", giải quyết
+đúng vấn đề dữ liệu khan hiếm bằng một kiến trúc gồm hai nhánh đối xứng:
+
+- **Contracting path (đường co lại):** giống một CNN classification
+  thông thường — xen kẽ các lớp tích chập và pooling, thu nhỏ dần kích
+  thước không gian trong khi tăng số kênh đặc trưng, để **nắm bắt ngữ
+  cảnh** (context) tổng thể của ảnh — "đây là vùng gì, thuộc cấu trúc
+  nào".
+- **Expanding path (đường mở rộng):** đối xứng với đường co lại, dùng
+  các phép upsampling để phóng to dần trở lại đúng kích thước ảnh gốc,
+  cho phép **định vị chính xác** (precise localization) — "chính xác
+  pixel nào thuộc về đâu".
+- **Skip connection:** nối trực tiếp các lớp tương ứng giữa contracting
+  path và expanding path — mang thông tin không gian chi tiết (đã bị
+  "nén mất" một phần qua các lớp pooling ở đường co lại) thẳng sang
+  đường mở rộng, không phải đi qua toàn bộ "nút thắt cổ chai" ở giữa
+  mạng.
+
+Kết hợp với việc tận dụng mạnh **data augmentation** (các phép biến đổi
+ảnh như xoay, lật, biến dạng đàn hồi để "nhân bản" hiệu quả số lượng mẫu
+huấn luyện có hạn), kiến trúc này cho phép huấn luyện thành công **từ
+rất ít ảnh** — giải quyết đúng vấn đề khan hiếm dữ liệu mà FCN thuần
+chưa xử lý tốt.
+
+## Kết quả: nhanh và chính xác hơn hẳn phương pháp trước
+
+Ronneberger và cộng sự công bố kết quả cụ thể: U-Net **vượt trội** so
+với phương pháp sliding-window trước đó trong bài toán phân đoạn cấu
+trúc thần kinh tại cuộc thi ISBI, và **thắng cuộc thi ISBI Cell Tracking
+Challenge 2015** trên ảnh hiển vi với **khoảng cách lớn** so với các
+phương pháp còn lại. Về mặt tốc độ, nhóm tác giả ghi nhận: phân đoạn một
+ảnh kích thước 512×512 mất **dưới một giây** trên một GPU đời gần đó —
+nhanh hơn nhiều so với cách tiếp cận sliding-window vốn phải xử lý lặp
+lại nhiều vùng chồng lấn cho cùng một ảnh.
+
+## Điểm mấu chốt: bổ sung đúng cơ chế còn thiếu, không phát minh lại nguyên lý
+
+U-Net không phát minh lại nguyên lý "toàn bộ tích chập" của FCN — nó
+**bổ sung đúng hai cơ chế** để giải quyết vấn đề cụ thể mà FCN thuần
+chưa xử lý tốt: (1) kiến trúc đối xứng contracting/expanding rõ ràng
+hơn (thay vì chỉ một lần upsampling như FCN cơ bản), giúp mô hình cân
+bằng tốt hơn giữa "hiểu ngữ cảnh tổng thể" và "định vị chính xác từng
+pixel"; (2) skip connection dày đặc hơn để giữ chi tiết không gian khi
+dữ liệu huấn luyện khan hiếm — đặc biệt quan trọng cho ảnh y tế, nơi
+ranh giới chính xác giữa các cấu trúc nhỏ (tế bào, mạch máu) quyết định
+trực tiếp chất lượng chẩn đoán.
+
+## Liên hệ lại với các bài trước
+
+- U-Net dùng lại chính xác nguyên lý convolution đã học ở bài
+  [CNN](11-convolutional-neural-network.mdx) cho cả hai nhánh contracting
+  và expanding — điểm mới nằm ở **cách tổ chức kiến trúc** (đối xứng +
+  skip connection dày đặc), không phải một nguyên lý xử lý ảnh hoàn
+  toàn khác.
+- Đây là ví dụ khác của mẫu hình "kiến trúc mới bổ sung đúng cơ chế còn
+  thiếu của kiến trúc trước" đã gặp nhiều lần trong sub-module này —
+  tương tự cách VGG bổ sung template thiết kế có hệ thống mà AlexNet
+  thiếu, hay ResNet bổ sung skip connection giải quyết degradation mà
+  VGG không xử lý được.
+- Vẫn huấn luyện bằng [backpropagation](09-backpropagation.mdx) như mọi
+  mạng nơ-ron khác — U-Net chỉ thay đổi cấu trúc kiến trúc (đối xứng +
+  skip connection), không thay đổi cơ chế tối ưu hoá.
+
+## Nguồn tham khảo
+
+- [arXiv — U-Net: Convolutional Networks for Biomedical Image Segmentation](https://arxiv.org/abs/1505.04597) — paper gốc của Ronneberger, Fischer, và Brox (2015), dùng cho vấn đề cụ thể (dữ liệu y tế khan hiếm nhãn, so sánh với sliding-window trước đó), kiến trúc contracting/expanding path + skip connection, kết quả (thắng ISBI Cell Tracking Challenge 2015 với khoảng cách lớn), và tốc độ xử lý (ảnh 512×512 dưới 1 giây trên GPU).

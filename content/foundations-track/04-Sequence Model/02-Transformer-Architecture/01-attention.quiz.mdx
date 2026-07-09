@@ -1,0 +1,43 @@
+---
+quiz_for: 01-attention
+---
+
+## Q1
+Vấn đề "bottleneck" mà attention giải quyết là gì?
+
+- [x] Toàn bộ thông tin từ chuỗi input phải nén vào MỘT hidden state có kích thước cố định, khó giữ đủ chi tiết với chuỗi rất dài
+- [ ] Mạng nơ-ron chạy quá chậm trên phần cứng CPU
+- [ ] LSTM/GRU không thể xử lý được dữ liệu văn bản
+- [ ] Số lượng tham số của RNN quá ít
+
+> Dù LSTM/GRU giảm nhẹ vấn đề mất thông tin so với RNN thuần, chúng vẫn giữ cấu trúc nén toàn bộ ngữ cảnh vào một vector cố định — đây là bottleneck mà attention loại bỏ hoàn toàn.
+
+## Q2
+Trong framework Query/Key/Value, thành phần nào đại diện cho "mình đang cần tìm thông tin gì" tại bước hiện tại?
+
+- [x] Query
+- [ ] Key
+- [ ] Value
+- [ ] Attention weight
+
+> Query đại diện cho nhu cầu thông tin hiện tại; Key đại diện cho đặc điểm của từng vị trí input (để so khớp với query); Value là thông tin thực sự được lấy ra sau khi tính trọng số chú ý.
+
+## Q3
+Sau khi tính điểm tương thích giữa query và các key, bước tiếp theo trong quy trình attention là gì?
+
+- [x] Chuẩn hoá bằng softmax để có attention weight (tổng bằng 1, mọi giá trị không âm)
+- [ ] Áp dụng ReLU rồi bỏ qua các giá trị âm
+- [ ] Chọn duy nhất 1 vị trí có điểm cao nhất, bỏ qua mọi vị trí khác
+- [ ] Nhân trực tiếp với query mà không qua bước chuẩn hoá nào
+
+> Softmax chuẩn hoá điểm tương thích thành một phân phối xác suất (attention weight) — sau đó dùng để tổng hợp có trọng số các value, cho ra output cuối cùng "nghiêng" nhiều về vị trí có attention weight cao.
+
+## Q4
+Attention khác gì so với cơ chế gate của LSTM/GRU về phạm vi "nhìn" thông tin?
+
+- [x] Attention tính trọng số so với TOÀN BỘ chuỗi input cùng lúc, có thể "nhảy cóc" tới vị trí xa; gate chỉ hoạt động cục bộ theo thời gian (so sánh trạng thái hiện tại với ngay trước đó)
+- [ ] Attention chỉ hoạt động với 2 bước thời gian liền kề, giống hệt gate
+- [ ] Gate có phạm vi nhìn rộng hơn attention
+- [ ] Cả hai đều không liên quan gì tới thời gian/thứ tự chuỗi
+
+> Đây là lý do attention là bước tiến so với gating: mô hình có thể chú ý trực tiếp tới một vị trí ở rất xa nếu query cho thấy liên quan, mà không cần truyền thông tin tuần tự qua từng bước ở giữa như gate.

@@ -1,0 +1,122 @@
+---
+title: Neural Collaborative Filtering (NeuMF) — Thay Tích Vô Hướng Bằng Mạng Nơ-ron
+track: foundations-track
+module: Recommendation Systems
+order: 2
+status: stable
+prerequisites: ["01-collaborative-filtering-matrix-factorization", "01-perceptron-va-mang-no-ron"]
+summary: Matrix Factorization dự đoán rating chỉ bằng tích vô hướng giữa 2 vector latent factor — một hàm tuyến tính đơn giản, giới hạn khả năng biểu diễn các tương tác phức tạp giữa người dùng và item. He và cộng sự (2017) giải quyết bằng NeuMF: kết hợp song song một nhánh tái tạo Matrix Factorization (GMF) với một nhánh MLP học hàm tương tác phi tuyến tổng quát, rồi hợp nhất 2 nhánh ở lớp cuối.
+last_touched_by_task: Bài mới (2026-07-06), bài thứ 2 module Recommendation Systems — nối tiếp trực tiếp bài 43 (Matrix Factorization), đúng quan hệ tiến hoá 'thay phép nhân tuyến tính bằng mạng nơ-ron học phi tuyến' đã lặp lại nhiều lần trong track (ví dụ PCA→Autoencoder). Nguồn: D2L.ai (chapter_recommender-systems/neumf.html, xác nhận kiến trúc GMF+MLP/cách hợp nhất qua WebFetch) + arxiv 1708.05031 (paper gốc He et al. 2017 'Neural Collaborative Filtering', xác nhận đúng vấn đề tích vô hướng giới hạn biểu diễn + đề xuất MLP học hàm tương tác tổng quát qua WebFetch abstract) — đủ 2 nguồn theo chuẩn bài 'dòng tiến hoá' mục 2.1. Cập nhật (2026-07-06, Task 89): thay ghi chú 'có thể là bài tiếp theo' bằng liên kết thật sang bài 81 (AutoRec) vừa viết.
+---
+
+Bài [Collaborative Filtering & Matrix Factorization](43-collaborative-filtering-matrix-factorization.mdx)
+giới thiệu cách dự đoán rating bằng cách phân rã ma trận rating thành 2 ma
+trận latent factor nhỏ hơn, rồi tính rating dự đoán bằng **tích vô hướng**
+giữa vector người dùng và vector item: `R̂[u][i] = P[u] · Q[i]`. Bài này kể
+cách một hạn chế cụ thể của phép tính đơn giản đó được giải quyết.
+
+## Vấn đề: tích vô hướng là một hàm tuyến tính, giới hạn khả năng biểu diễn
+
+**He và cộng sự (2017)**, trong bài báo "Neural Collaborative Filtering",
+chỉ ra một hạn chế căn bản của Matrix Factorization: dù các phương pháp
+collaborative filtering trước đó (kể cả những cách tiếp cận có dùng deep
+learning ở một khâu nào đó) vẫn quay lại dùng **tích vô hướng** (inner
+product) để mô hình hoá tương tác giữa latent feature của người dùng và
+item — và tích vô hướng về bản chất là một **hàm tuyến tính đơn giản**,
+giới hạn khả năng biểu diễn các dạng tương tác phức tạp hơn giữa sở thích
+người dùng và đặc điểm item.
+
+Trực giác cụ thể: tích vô hướng giả định mối quan hệ "sở thích khớp đặc
+điểm" luôn có dạng cộng dồn từng chiều latent factor một cách tuyến tính.
+Nhưng tương tác thật giữa người dùng và item trong thực tế có thể phức tạp
+hơn nhiều — ví dụ một người dùng có thể thích một item vì sự **kết hợp**
+đặc biệt giữa hai đặc điểm cụ thể (không phải tổng tuyến tính của từng đặc
+điểm riêng lẻ) — dạng tương tác này khó biểu diễn chính xác chỉ bằng tích
+vô hướng, dù có tăng số chiều latent factor `k` lên bao nhiêu.
+
+## Giải pháp: thay tích vô hướng bằng một mạng nơ-ron học hàm tương tác tổng quát
+
+Giải pháp của He và cộng sự: thay vì cố định dạng hàm tương tác là tích vô
+hướng, **dùng một mạng nơ-ron** (cụ thể là MLP — đã học ở bài
+[Perceptron & Mạng nơ-ron](08-perceptron-va-mang-no-ron.mdx)) để **tự học**
+hàm tương tác giữa người dùng và item từ dữ liệu, thay vì áp đặt trước một
+công thức toán cụ thể. Vì MLP có thể xấp xỉ được nhiều dạng hàm phi tuyến
+phức tạp (đã biết từ bài Perceptron/MLP), nó tổng quát hoá được nhiều hơn
+tích vô hướng đơn thuần — và về lý thuyết, MLP đủ sâu/rộng có thể học lại
+được cả chính hàm tích vô hướng, nghĩa là NeuMF không "mất" khả năng biểu
+diễn của Matrix Factorization, chỉ **mở rộng thêm** khả năng đó.
+
+## Kiến trúc NeuMF: hai nhánh song song, hợp nhất ở lớp cuối
+
+**NeuMF** (Neural Matrix Factorization) kết hợp **hai nhánh** chạy song
+song trên cùng input (embedding của người dùng và item), rồi hợp nhất kết
+quả ở lớp cuối:
+
+```
+input (user id, item id)
+       │
+       ├──► [Nhánh GMF] ──► tích Hadamard (element-wise) 2 vector embedding
+       │                     → biến đổi tuyến tính + activation
+       │                     (tái tạo lại chính xác tinh thần Matrix
+       │                      Factorization gốc)
+       │
+       └──► [Nhánh MLP] ──► ghép nối (concatenate) 2 vector embedding
+                             → nhiều lớp ẩn phi tuyến (ReLU)
+                             (học hàm tương tác tổng quát, không giả định
+                              trước dạng cụ thể)
+       │
+       ▼
+  ghép nối output của cả 2 nhánh ở lớp áp chót
+       │
+       ▼
+  lớp cuối (sigmoid) → điểm dự đoán
+```
+
+- **Nhánh GMF (Generalized Matrix Factorization):** tính tích **element-wise**
+  (Hadamard) giữa vector embedding người dùng và item, rồi áp một phép biến
+  đổi tuyến tính có trọng số — đây là bản tổng quát hoá của Matrix
+  Factorization gốc (MF thuần chỉ là trường hợp đặc biệt khi trọng số này
+  đồng nhất, không học riêng).
+- **Nhánh MLP:** ghép nối (nối liền) 2 vector embedding thành một vector
+  dài hơn, rồi đưa qua nhiều lớp ẩn phi tuyến với activation ReLU — nhánh
+  này không giả định trước dạng tương tác, để mạng tự học từ dữ liệu.
+- **Hợp nhất (fusion):** thay vì đơn giản cộng kết quả 2 nhánh, NeuMF **ghép
+  nối** (concatenate) output ở lớp áp chót của cả 2 nhánh thành một vector
+  đặc trưng kết hợp, rồi đưa qua một lớp cuối (sigmoid, cho bài toán dự
+  đoán có/không tương tác dạng implicit feedback) để ra điểm dự đoán cuối
+  cùng. Cách hợp nhất này cho phép mô hình tự học **tỷ trọng đóng góp**
+  tương đối giữa "phần tuyến tính" (GMF) và "phần phi tuyến" (MLP) cho bài
+  toán cụ thể, thay vì cố định trước.
+
+## Huấn luyện: pairwise ranking loss với negative sampling
+
+Vì bài toán thường dùng implicit feedback (ví dụ chỉ biết người dùng đã
+tương tác hay chưa, không có rating tường minh), NeuMF huấn luyện bằng
+**negative sampling**: với mỗi tương tác thật đã quan sát (positive), lấy
+mẫu thêm một số item người dùng **chưa** tương tác (negative), rồi huấn
+luyện mô hình phân biệt được cặp positive có điểm dự đoán cao hơn cặp
+negative tương ứng.
+
+## Liên hệ lại với các bài trước
+
+- Đây là ví dụ mới nhất của một mẫu hình đã lặp lại nhiều lần trong track:
+  thay một phép biến đổi **tuyến tính đơn giản** bằng một **mạng nơ-ron học
+  phi tuyến** để tăng khả năng biểu diễn — cùng tinh thần với quan hệ giữa
+  [PCA và Autoencoder](22-autoencoder.mdx) (PCA là phép chiếu tuyến tính có
+  nghiệm đóng; Autoencoder tổng quát hoá bằng mạng nơ-ron phi tuyến).
+  Matrix Factorization (tích vô hướng, tuyến tính) → NeuMF (MLP, phi
+  tuyến) đi đúng con đường tương tự.
+- Nhánh MLP của NeuMF không phải kỹ thuật huấn luyện mới — vẫn dùng
+  [backpropagation](09-backpropagation.mdx) như mọi mạng nơ-ron feedforward
+  đã học từ bài [Perceptron](08-perceptron-va-mang-no-ron.mdx).
+- Việc "học hàm tương tác thay vì áp đặt công thức cố định" cũng là tinh
+  thần chung khi so Matrix Factorization với kiến trúc [AutoRec](81-autorec.mdx)
+  (dùng Autoencoder cho rating prediction) — một nhánh mở rộng song song
+  khác từ cùng gốc Matrix Factorization, khác kiến trúc nền tảng với
+  NeuMF (Autoencoder tái tạo trực tiếp thay vì MLP học tương tác giữa
+  2 embedding).
+
+## Nguồn tham khảo
+
+- [arXiv — Neural Collaborative Filtering](https://arxiv.org/abs/1708.05031) — paper gốc của He và cộng sự (2017), dùng cho vấn đề cụ thể (tích vô hướng của Matrix Factorization là hàm tuyến tính, giới hạn biểu diễn tương tác phức tạp) và giải pháp đề xuất (dùng MLP học hàm tương tác tổng quát thay vì áp đặt tích vô hướng).
+- [Dive into Deep Learning — Neural Collaborative Filtering for Personalized Ranking](http://d2l.ai/chapter_recommender-systems/neumf.html) — dùng cho chi tiết kiến trúc cụ thể: nhánh GMF (tích Hadamard + biến đổi tuyến tính), nhánh MLP (ghép nối embedding + nhiều lớp ReLU), cách hợp nhất 2 nhánh ở lớp áp chót, và huấn luyện bằng pairwise ranking loss với negative sampling.

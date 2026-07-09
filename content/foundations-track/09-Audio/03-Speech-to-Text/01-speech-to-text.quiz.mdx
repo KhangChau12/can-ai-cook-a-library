@@ -1,0 +1,43 @@
+---
+quiz_for: 01-speech-to-text
+---
+
+## Q1
+Vì sao speech-to-text có một khó khăn riêng so với các bài toán sequence-to-sequence khác (như dịch máy)?
+
+- [x] Độ dài input (số frame audio, có thể hàng trăm/giây) và output (số từ) chênh lệch rất lớn và không cố định, không có nhãn căn chỉnh frame-từ sẵn có
+- [ ] Speech-to-text không thể dùng Transformer
+- [ ] Speech-to-text chỉ hoạt động với tiếng Anh
+- [ ] Input và output luôn có độ dài bằng nhau
+
+> Với dịch máy, input/output đều là chuỗi từ/token, tốc độ gần nhau. Với speech-to-text, mô hình cần học cách "căn chỉnh" frame audio với từ mà không có thông tin căn chỉnh đó được cung cấp sẵn trong dữ liệu train.
+
+## Q2
+CTC (Connectionist Temporal Classification) giải quyết vấn đề căn chỉnh bằng cơ chế nào?
+
+- [x] Dự đoán một nhãn (ký tự hoặc "blank") tại MỖI FRAME, sau đó dùng quy tắc rút gọn (xoá lặp liên tiếp + xoá blank) để biến chuỗi thô thành văn bản cuối cùng
+- [ ] Yêu cầu con người gán nhãn thủ công cho từng frame trước khi huấn luyện
+- [ ] Chỉ hoạt động khi audio có đúng 1 giây
+- [ ] Bỏ qua hoàn toàn thông tin về frame, chỉ dùng văn bản
+
+> CTC loss tính tổng xác suất trên MỌI cách căn chỉnh có thể dẫn tới đúng văn bản mục tiêu — mô hình tự học ra cách căn chỉnh hợp lý nhất qua huấn luyện, không cần dữ liệu căn chỉnh thủ công.
+
+## Q3
+Kiến trúc encoder-decoder kiểu Whisper xử lý input và output như thế nào?
+
+- [x] Encoder nhận spectrogram/mel-spectrogram, mã hoá thành biểu diễn ẩn; decoder (autoregressive, giống LLM) sinh từng token văn bản, dùng cross-attention để "nhìn" vào audio liên quan nhất tại mỗi bước
+- [ ] Encoder nhận văn bản, decoder sinh ra audio
+- [ ] Cả encoder và decoder đều nhận trực tiếp waveform thô, không qua spectrogram
+- [ ] Không có cơ chế attention nào trong kiến trúc này
+
+> Đây là ứng dụng trực tiếp của Transformer đã học — decoder sinh token theo đúng cơ chế autoregressive/next-token prediction của LLM, chỉ khác input của encoder là spectrogram thay vì token văn bản.
+
+## Q4
+Vì sao kiến trúc encoder-decoder (Transformer) có thể "tra cứu" audio linh hoạt hơn CTC (dùng RNN)?
+
+- [x] Cross-attention cho phép decoder "nhìn" toàn bộ audio đã mã hoá tại mỗi bước sinh token, không bị giới hạn bởi cấu trúc tuần tự chặt như RNN
+- [ ] CTC không dùng bất kỳ cơ chế học nào
+- [ ] Encoder-decoder không cần huấn luyện, chỉ cần thiết lập thủ công
+- [ ] CTC nhanh hơn nhưng kém chính xác hơn trong mọi trường hợp
+
+> Cross-attention tận dụng self-attention/cross-attention đã học ở Transformer — decoder có thể "tra cứu" toàn bộ audio đã mã hoá, khác với CTC (RNN dự đoán tuần tự tại mỗi frame, cấu trúc tuần tự chặt hơn).

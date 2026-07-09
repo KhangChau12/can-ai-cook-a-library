@@ -1,0 +1,101 @@
+---
+title: Tokenization — Từ Cấp độ Từ tới Subword, Vì sao Byte Pair Encoding Hiệu quả
+track: foundations-track
+module: Sequence Model
+submodule: Tokenization
+order: 1
+status: stable
+prerequisites: ["01-rnn"]
+summary: Trước khi bất kỳ mô hình chuỗi nào (RNN, Transformer) xử lý được văn bản, văn bản phải được cắt thành các đơn vị rời rạc (token) trước — bước này gọi là tokenization. Tokenize theo TỪ (word-level) gặp 2 vấn đề nghiêm trọng: từ vựng khổng lồ (hàng trăm triệu tổ hợp n-gram có thể có trong tiếng Anh) và hoàn toàn bất lực trước từ chưa từng gặp (out-of-vocabulary). Sennrich và cộng sự (2015) giải quyết bằng cách mượn thuật toán nén Byte Pair Encoding (BPE): thay vì token là cả một từ, token là các SUBWORD (mảnh từ) học được bằng cách ghép dần các cặp ký tự xuất hiện thường xuyên nhất — cho phép biểu diễn cả những từ chưa từng thấy bằng tổ hợp subword đã học, với từ vựng cố định nhỏ hơn nhiều.
+last_touched_by_task: Bài mới (2026-07-06), mở sub-module 'Tokenization' hoàn toàn mới trong module Sequence Model — theo đề xuất trực tiếp của người vận hành ('các cách tokenize từ xưa đến nay, vì sao nó hiệu quả cũng nên có submodule riêng'). Đây là bước tiền xử lý bắt buộc mà mọi mô hình xử lý văn bản đã học (RNN, Transformer, BERT, GPT) đều ngầm giả định đã có sẵn, nhưng track chưa từng dạy trực tiếp. Nguồn: arxiv 1508.07909 (paper gốc Sennrich, Haddow, Birch 2015, 'Neural Machine Translation of Rare Words with Subword Units', xác nhận qua WebFetch abstract: vấn đề từ hiếm/chưa từng gặp trong NMT, giải pháp mượn thuật toán BPE, kết quả +1.1/+1.3 BLEU trên WMT 15) + D2L.ai (chapter_natural-language-processing-pretraining/subword-embedding.html, xác nhận qua WebFetch: số liệu cụ thể kích thước từ vựng n-gram, thuật toán BPE từng bước, ví dụ minh hoạ cụ thể fast_/tall_→faster_).
+---
+
+Mọi mô hình xử lý chuỗi đã học trong track — [RNN](12-recurrent-neural-network.mdx),
+[Transformer](15-transformer.mdx), [BERT](45-bert.mdx), GPT (bài
+[Pretraining](24-pretraining-llm.mdx)) — đều nhận **chuỗi token** làm
+input, không phải văn bản thô. Bước biến văn bản thô thành chuỗi token
+gọi là **tokenization** — một quyết định tiền xử lý quan trọng mà các bài
+trước chưa từng đi sâu. Bài này lấp đúng khoảng trống đó.
+
+## Vấn đề: tokenize theo từ gặp 2 hạn chế nghiêm trọng
+
+Cách tokenize trực giác nhất — tách văn bản thành **từng từ** (word-level
+tokenization, tách theo khoảng trắng/dấu câu) — gặp hai vấn đề cụ thể:
+
+1. **Từ vựng khổng lồ.** Số lượng từ khác nhau trong một ngôn ngữ là rất
+   lớn, và nếu tính cả các tổ hợp n-gram (cụm nhiều từ), con số này còn
+   lớn hơn nhiều — riêng tiếng Anh đã có khoảng **3×10⁸** (300 triệu) tổ
+   hợp 6-gram có thể có. Một từ vựng lớn như vậy đòi hỏi embedding matrix
+   khổng lồ (một vector embedding riêng cho mỗi từ trong từ vựng), tốn
+   bộ nhớ và làm chậm huấn luyện đáng kể.
+2. **Bất lực trước từ chưa từng gặp (out-of-vocabulary — OOV).** Nếu một
+   từ không có trong từ vựng đã xây dựng lúc huấn luyện (từ hiếm, từ
+   mới, tên riêng, lỗi chính tả), mô hình word-level hoàn toàn **không có
+   cách nào** biểu diễn từ đó — thường phải thay bằng một token đặc biệt
+   `<unk>` (unknown), mất hoàn toàn thông tin về từ gốc.
+
+## Giải pháp: tokenize theo subword bằng Byte Pair Encoding (BPE)
+
+**Sennrich và cộng sự (2015)**, trong bài báo "Neural Machine Translation
+of Rare Words with Subword Units", giải quyết cả hai vấn đề trên bằng
+cách mượn một thuật toán nén dữ liệu có sẵn — **Byte Pair Encoding
+(BPE)** — để tách văn bản thành các **subword** (mảnh từ) thay vì cả một
+từ nguyên vẹn. Ý tưởng cốt lõi: thay vì coi mỗi từ là một đơn vị không
+thể chia nhỏ, cho phép biểu diễn từ bằng cách **ghép nhiều mảnh nhỏ hơn**
+lại với nhau — mảnh nhỏ có thể là một ký tự đơn, hoặc một cụm ký tự xuất
+hiện thường xuyên.
+
+Thuật toán BPE hoạt động qua các bước lặp cụ thể:
+
+1. **Khởi tạo:** bắt đầu với từ vựng là từng **ký tự đơn** riêng lẻ (cộng
+   thêm một số ký hiệu đặc biệt — ví dụ ký hiệu đánh dấu ranh giới từ,
+   token `<unk>`).
+2. **Đếm tần suất cặp:** trên toàn bộ dữ liệu huấn luyện, tìm cặp **hai
+   ký hiệu liền kề** xuất hiện **thường xuyên nhất**.
+3. **Ghép (merge):** gộp cặp ký hiệu đó thành một ký hiệu mới duy nhất,
+   thêm vào từ vựng.
+4. **Lặp lại** bước 2-3 nhiều lần, cho tới khi đạt **kích thước từ vựng
+   mong muốn** (một hyperparameter tự chọn trước).
+
+Ví dụ minh hoạ cụ thể (đơn giản hoá): với các từ "fast_" và "tall_" (dấu
+`_` đánh dấu ranh giới từ) được biểu diễn ban đầu dưới dạng chuỗi ký tự
+tách rời, thuật toán lần lượt ghép: `(t, a) → ta`, rồi `(ta, l) → tal`,
+rồi `(tal, l) → tall`. Sau khi học được các mảnh ghép này, một từ **chưa
+từng xuất hiện** trong dữ liệu huấn luyện như "faster_" vẫn có thể được
+biểu diễn bằng tổ hợp các subword đã học (ví dụ tách thành "fast" +
+"er_") — giải quyết trực tiếp vấn đề out-of-vocabulary, vì gần như mọi từ
+mới đều có thể phân rã thành các mảnh subword quen thuộc, ngay cả khi
+chưa từng thấy nguyên cả từ đó.
+
+## Kết quả: cải thiện cụ thể trên dịch máy
+
+Sennrich và cộng sự công bố kết quả thực nghiệm cụ thể trên benchmark
+WMT 15: áp dụng BPE cải thiện **+1.1 điểm BLEU** cho dịch Anh-Đức và
+**+1.3 điểm BLEU** cho dịch Anh-Nga, so với phương pháp cơ sở dùng từ
+điển tra cứu truyền thống (dictionary backoff) khi gặp từ ngoài từ vựng.
+Nhóm tác giả cũng chỉ ra: các loại từ khác nhau có thể được dịch tốt hơn
+qua các cơ chế subword khác nhau — tên riêng thường dịch tốt qua sao chép
+trực tiếp ký tự, từ ghép qua phân rã thành các thành phần, từ mượn qua
+biến đổi ngữ âm — tất cả đều tận dụng được cấu trúc subword thay vì coi
+mỗi từ là một khối không thể chia.
+
+## Liên hệ lại với các bài trước
+
+- Tokenization là bước **tiền xử lý** đứng trước mọi mô hình đã học
+  trong track xử lý dữ liệu văn bản — [RNN](12-recurrent-neural-network.mdx)
+  chỉ nhận input đã là chuỗi token/embedding, không tự xử lý văn bản
+  thô. Bài này lấp đúng khoảng trống "input đến từ đâu" mà các bài trước
+  đều ngầm giả định đã có sẵn.
+- Kích thước từ vựng cố định do BPE tạo ra ảnh hưởng trực tiếp tới kích
+  thước embedding matrix ở lớp đầu vào của mọi mô hình — cùng nguyên lý
+  "đánh đổi kích thước và khả năng biểu diễn" đã gặp nhiều lần trong
+  track (ví dụ số chiều latent factor `k` ở [Matrix Factorization](43-collaborative-filtering-matrix-factorization.mdx)).
+- BPE hiện là kỹ thuật tokenize nền tảng cho hầu hết LLM hiện đại (GPT,
+  bài [Pretraining](24-pretraining-llm.mdx)) — một minh chứng cho thấy
+  một kỹ thuật ra đời cho bài toán cụ thể (dịch máy, 2015) có thể trở
+  thành công cụ nền tảng dùng rộng rãi cho cả một thế hệ mô hình sau này.
+
+## Nguồn tham khảo
+
+- [arXiv — Neural Machine Translation of Rare Words with Subword Units](https://arxiv.org/abs/1508.07909) — paper gốc của Sennrich, Haddow và Birch (2015), dùng cho vấn đề cụ thể (từ hiếm/chưa từng gặp trong dịch máy neural), giải pháp (mượn thuật toán BPE cho subword segmentation), và kết quả cụ thể (+1.1 BLEU Anh-Đức, +1.3 BLEU Anh-Nga trên WMT 15).
+- [Dive into Deep Learning — Subword Embedding](http://d2l.ai/chapter_natural-language-processing-pretraining/subword-embedding.html) — dùng cho số liệu cụ thể (khoảng 3×10⁸ tổ hợp 6-gram tiếng Anh), thuật toán BPE chi tiết từng bước, và ví dụ minh hoạ cụ thể (ghép ký tự fast_/tall_, phân rã từ mới faster_).

@@ -1,0 +1,53 @@
+---
+quiz_for: 02-ssl-audio
+---
+
+## Q1
+Self-supervised learning cho audio giải quyết vấn đề gì?
+
+- [ ] Audio không thể dùng mạng nơ-ron
+- [ ] Spectrogram không phải là feature tốt
+- [x] Dữ liệu audio gán nhãn rất đắt (hàng nghìn giờ phiên âm) — SSL học biểu diễn từ audio không nhãn, fine-tune nhẹ là dùng được
+- [ ] Audio cần GPU mạnh hơn ảnh
+
+> SSL cho audio học từ audio thô không nhãn (dễ thu thập từ YouTube/podcast). Sau đó fine-tune với 10 phút → 10 giờ dữ liệu có nhãn là đạt kết quả ASR tốt. Giảm chi phí gán nhãn từ hàng trăm nghìn đô xuống gần như 0.
+
+## Q2
+wav2vec 2.0 dùng training objective gì?
+
+- [ ] MSE loss
+- [x] Contrastive loss (NCE) — phân biệt target đúng với K distractors qua cosine similarity
+- [ ] Cross-entropy loss
+- [ ] Adversarial loss
+
+> wav2vec 2.0 mask latent features, học phân biệt quantized target đúng với các distractors từ time step khác. Loss = -log(sim(correct) / (sim(correct) + Σ sim(distractors))). Giống noise contrastive estimation (NCE).
+
+## Q3
+HuBERT khác wav2vec 2.0 ở điểm cốt lõi nào?
+
+- [ ] HuBERT dùng CNN thay Transformer
+- [ ] HuBERT không cần pretrain
+- [x] HuBERT thay quantization module bằng K-Means clustering + iterative refinement + cross-entropy loss (giống BERT)
+- [ ] HuBERT dùng supervised learning
+
+> wav2vec 2.0 dùng product quantizer học được + contrastive loss. HuBERT dùng K-Means clustering (cố định, offline) để tạo pseudo-labels, rồi masked prediction bằng cross-entropy. HuBERT có iterative refinement: nhiều vòng cluster→train→re-cluster.
+
+## Q4
+WavLM cải tiến HuBERT ở điểm nào?
+
+- [ ] WavLM dùng mạng sâu hơn
+- [ ] WavLM không cần clustering
+- [x] Thêm denoising (học tách speech khỏi noise) + gated relative position bias + multi-task training (ASR + speaker + diarization)
+- [ ] WavLM dùng CNN thay Transformer
+
+> WavLM thêm denoising task (phải tách speech khỏi background noise/overlapping speech), gated relative position bias trong Transformer attention, và multi-task training. Kết quả: SOTA trên cả ASR lẫn speaker recognition/diarization, không chỉ speech recognition.
+
+## Q5
+wav2vec 2.0 pretrain trên 960h LibriSpeech không nhãn, fine-tune 10 phút có nhãn → WER bao nhiêu?
+
+- [ ] WER 15.0 / 20.0
+- [ ] WER 10.0 / 12.0
+- [x] WER 4.8 / 8.2 (clean/other) — thấp hơn supervised từ đầu
+- [ ] WER 1.0 / 1.5
+
+> wav2vec 2.0 với chỉ 10 phút dữ liệu có nhãn đạt WER 4.8 (clean) và 8.2 (other) trên LibriSpeech. Với 100h fine-tune, WER 1.8/3.3 — SOTA tại thời điểm công bố. Đây là cột mốc quan trọng: SSL cho audio khả thi và hiệu quả.

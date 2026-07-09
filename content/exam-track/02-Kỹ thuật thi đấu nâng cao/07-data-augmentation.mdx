@@ -1,0 +1,99 @@
+---
+title: Data Augmentation — Nhân bản Dữ liệu Ảnh Có Chủ đích Để Giảm Overfitting
+track: exam-track
+module: Kỹ thuật thi đấu nâng cao
+order: 7
+status: stable
+prerequisites: ["01-transfer-learning-va-fine-tuning"]
+summary: Bài Transfer Learning đã nhắc: dataset competition càng nhỏ, rủi ro overfit khi fine-tune càng cao. Data augmentation là kỹ thuật trực tiếp giảm rủi ro đó — tạo thêm biến thể của ảnh gốc (lật, cắt, đổi màu) để mô hình thấy nhiều 'phiên bản' khác nhau của cùng nội dung, gần như luôn là chuẩn mực trong các giải thi đấu ảnh chiến thắng kể từ AlexNet (ImageNet 2012).
+last_touched_by_task: Viết mới 2026-07-06: lấp khoảng trống kỹ thuật thi đấu phổ biến chưa được nhắc trong exam-track (đã thử pseudo-labeling trước đó nhưng không tìm đủ nguồn whitelist chất lượng, xem CLAUDE.md mục 1.2). Nguồn: machinelearningmastery.com/best-practices-for-preparing-and-augmenting-image-data-for-convolutional-neural-networks (xác nhận qua WebFetch: các phép biến đổi cụ thể dùng bởi các model ILSVRC top đầu — flip, crop, multi-scale, PCA color perturbation của AlexNet, multi-crop khi test).
+---
+
+Bài [Transfer Learning & Fine-tuning](04-transfer-learning-va-fine-tuning.mdx)
+đã nhắc: dataset competition càng nhỏ, rủi ro overfit khi fine-tune một
+model pretrained càng cao — đó là lý do chọn full freezing thay vì mở hết
+layer. **Data augmentation** tấn công đúng nguyên nhân gốc của overfit
+(quá ít dữ liệu đa dạng) thay vì chỉ hạn chế phần model được phép học.
+
+## Vấn đề: dataset competition luôn nhỏ hơn nhiều so với thực tế cần
+
+Một model deep learning càng có nhiều tham số, càng cần nhiều dữ liệu đa
+dạng để học tổng quát thay vì "học thuộc lòng" từng ảnh train cụ thể. Hầu
+hết dataset competition chỉ có vài nghìn tới vài chục nghìn ảnh — quá ít
+so với các dataset pretrain gốc (ImageNet có hơn 1 triệu ảnh). Data
+augmentation giải quyết vấn đề này bằng cách **tạo thêm biến thể** của mỗi
+ảnh gốc ngay trong lúc huấn luyện, mà không cần thu thập thêm dữ liệu thật.
+
+## Các phép biến đổi cụ thể, đã chứng minh hiệu quả từ AlexNet
+
+Ngay từ AlexNet (2012, giải ImageNet Large Scale Visual Recognition
+Competition) — bài [AlexNet](../foundations-track/35-alexnet.mdx) đã học
+— nhóm tác giả áp dụng augmentation làm một phần không thể thiếu của quy
+trình huấn luyện, không phải một mẹo phụ:
+
+- **Lật ngang (horizontal flip):** phản chiếu ảnh trái-phải ngẫu nhiên.
+  Với hầu hết bài toán phân loại ảnh tự nhiên (không phải chữ viết, nơi
+  hướng có ý nghĩa), một con mèo bị lật ngang vẫn là con mèo.
+- **Cắt ngẫu nhiên (random cropping):** lấy một phần nhỏ hơn từ ảnh đã
+  resize, ở vị trí ngẫu nhiên mỗi lần — buộc mô hình học nhận diện đối
+  tượng dù nó không nằm chính giữa khung hình.
+- **Thay đổi tỷ lệ đa mức (multi-scale resizing):** lấy mẫu kích thước
+  ảnh ngẫu nhiên trong một khoảng (ví dụ 256-512 pixel) trước khi cắt,
+  giúp mô hình quen với việc đối tượng xuất hiện ở nhiều kích cỡ khác
+  nhau trong ảnh.
+- **Nhiễu màu (color jittering):** AlexNet cụ thể áp dụng biến đổi màu
+  dựa trên PCA (phân tích thành phần chính) trên toàn bộ giá trị pixel
+  RGB của tập train, cộng thêm nhiễu ngẫu nhiên theo đúng các "hướng màu
+  chính" đó — cùng với thay đổi độ sáng ngẫu nhiên và dịch chuyển kênh
+  RGB ngẫu nhiên.
+
+## Nguyên tắc bắt buộc: chỉ augment trên tập train
+
+Augmentation **chỉ** áp dụng cho dữ liệu **train** — không bao giờ augment
+tập validation hay test. Lý do: mục đích của augmentation là giúp model
+học tổng quát hơn từ dữ liệu train hạn chế; validation/test phải phản ánh
+đúng phân phối dữ liệu thật mà model sẽ gặp khi dự đoán, augment chúng chỉ
+làm sai lệch số liệu đánh giá, không mang lại lợi ích gì.
+
+Về mặt triển khai: các phép biến đổi này được áp dụng **ngay trong lúc
+huấn luyện** (in-memory, on-the-fly) — mỗi epoch, cùng một ảnh gốc có thể
+được biến đổi khác nhau mỗi lần model nhìn thấy nó, thay vì tạo sẵn và lưu
+cố định một tập ảnh đã augment. Cách này giúp model thấy được số lượng
+biến thể gần như vô hạn từ cùng một tập ảnh gốc hữu hạn.
+
+## Test-time augmentation: áp dụng ý tưởng ngược lại khi dự đoán
+
+Một kỹ thuật liên quan, áp dụng ở giai đoạn **dự đoán** (không phải huấn
+luyện): thay vì dự đoán trên đúng một phiên bản của ảnh test, tạo ra nhiều
+phiên bản biến đổi nhẹ của cùng ảnh đó (nhiều crop, nhiều scale khác
+nhau), lấy dự đoán trên **từng** phiên bản, rồi **lấy trung bình** các dự
+đoán đó lại thành kết quả cuối cùng. Đây gọi là **test-time augmentation
+(TTA)** — không vi phạm nguyên tắc "không augment test set" ở trên, vì
+label thật của test không hề bị dùng để tính toán gì cả; TTA chỉ tạo thêm
+góc nhìn đa dạng cho **input** khi suy luận, tương tự tinh thần
+[voting/averaging](08-model-ensembling.mdx) đã học — nhưng ensemble nhiều
+phiên bản của **cùng một** ảnh qua **cùng một** model, thay vì ensemble
+nhiều model khác nhau.
+
+## Áp dụng vào chiến lược thi đấu
+
+- Với bài toán ảnh, augmentation cơ bản (flip, crop, color jitter nhẹ)
+  gần như luôn nên bật mặc định — chi phí gần như bằng 0, rủi ro rất
+  thấp, lợi ích rõ ràng khi dataset competition nhỏ.
+- Cường độ augmentation cần tương xứng với đặc điểm bài toán: augmentation
+  quá mạnh (ví dụ xoay ảnh 90 độ cho bài toán mà hướng vật thể có ý nghĩa,
+  như phân loại chữ số viết tay) có thể tạo ra dữ liệu giả không còn đúng
+  với phân phối thật, gây hại nhiều hơn lợi.
+- Luôn kiểm chứng bằng cross-validation (đã học ở bài
+  [Baseline & Nâng cấp Mô hình](03-baseline-nang-cap-mo-hinh-va-chien-luoc-nop-bai.mdx))
+  — augmentation nào giúp ích cụ thể cho bài toán này phụ thuộc vào dữ
+  liệu thật, không có công thức cố định áp dụng mù quáng cho mọi
+  competition.
+- Test-time augmentation là một cách "ăn điểm miễn phí" phổ biến ở giai
+  đoạn cuối competition: chi phí thêm chỉ là thời gian suy luận (chạy dự
+  đoán nhiều lần), không cần huấn luyện lại gì, thường cho cải thiện nhỏ
+  nhưng ổn định trên điểm số cuối cùng.
+
+## Nguồn tham khảo
+
+- [Best Practices for Preparing and Augmenting Image Data for Convolutional Neural Networks (MachineLearningMastery)](https://machinelearningmastery.com/best-practices-for-preparing-and-augmenting-image-data-for-convolutional-neural-networks/) — dùng cho các phép augmentation cụ thể đã dùng bởi các model ILSVRC top đầu (flip ngang, random crop, multi-scale resizing), chi tiết PCA color perturbation + random brightness/RGB shift của AlexNet, nguyên tắc chỉ augment train không augment test, và kỹ thuật multi-crop/multi-scale khi đánh giá (nền tảng của test-time augmentation).

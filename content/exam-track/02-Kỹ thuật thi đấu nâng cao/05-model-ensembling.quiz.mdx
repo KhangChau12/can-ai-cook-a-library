@@ -1,0 +1,43 @@
+---
+quiz_for: 05-model-ensembling
+---
+
+## Q1
+Vì sao ensembling 10 bản sao gần như giống hệt nhau của cùng một model mang lại rất ít lợi ích?
+
+- [x] Vì các model quá giống nhau sẽ mắc chung gần như cùng một loại sai số, không có gì để "triệt tiêu" lẫn nhau khi kết hợp
+- [ ] Vì hệ thống platform giới hạn số lượng model có thể ensemble
+- [ ] Vì ensembling chỉ hoạt động với các model khác loại thuật toán hoàn toàn
+- [ ] Vì bản sao giống nhau luôn cho điểm số thấp hơn bản gốc
+
+> Điều kiện để ensembling hiệu quả là các model đủ khác nhau để có sai số không hoàn toàn tương quan — model càng giống nhau, sai số của chúng càng "trùng khớp", ensembling càng ít giá trị.
+
+## Q2
+Trong stacking, vì sao meta-model phải được huấn luyện trên "out-of-fold prediction" thay vì dự đoán của base model trên chính dữ liệu nó đã train?
+
+- [x] Vì dự đoán trên dữ liệu đã train sẽ "quá tốt một cách giả tạo", khiến meta-model học từ thông tin bị leakage thay vì khả năng kết hợp thật
+- [ ] Vì out-of-fold prediction luôn có độ chính xác cao hơn
+- [ ] Vì hệ thống chỉ hỗ trợ định dạng out-of-fold prediction
+- [ ] Vì base model không thể tạo dự đoán trên dữ liệu đã train
+
+> Nếu dùng dự đoán trên dữ liệu đã train, base model đã "thấy đáp án" khi train nên dự đoán đó không phản ánh đúng khả năng tổng quát hoá — meta-model sẽ bị đánh lừa bởi tín hiệu giả tạo này.
+
+## Q3
+Điểm khác biệt chính giữa blending và stacking là gì?
+
+- [x] Blending dùng dự đoán trên một holdout set cố định để train meta-model, còn stacking dùng out-of-fold prediction từ cross-validation
+- [ ] Blending chỉ áp dụng được cho bài toán regression, stacking chỉ áp dụng cho classification
+- [ ] Blending không cần base model, chỉ cần meta-model
+- [ ] Stacking luôn cho kết quả tệ hơn blending
+
+> Đây là phân biệt được cộng đồng Kaggle dùng phổ biến: stacking dựa trên out-of-fold prediction (toàn bộ dữ liệu train qua các fold), blending dựa trên dự đoán tại một holdout set tách riêng — đánh đổi giữa độ phức tạp triển khai và lượng dữ liệu sử dụng.
+
+## Q4
+Ở giai đoạn nào của một competition, ensembling thường được áp dụng hợp lý nhất?
+
+- [x] Giai đoạn cuối, sau khi đã có vài model tốt độc lập (khác kiến trúc hoặc khác checkpoint từ các lần train riêng biệt)
+- [ ] Ngay từ đầu, trước cả khi có baseline
+- [ ] Chỉ khi competition là dạng team, không áp dụng cho thi cá nhân
+- [ ] Chỉ khi dữ liệu là dạng bảng (tabular), không áp dụng cho ảnh/văn bản
+
+> Ensembling cần nhiều model tốt độc lập làm nguyên liệu đầu vào — hợp lý nhất khi đã đầu tư đủ thời gian xây dựng vài model đa dạng, thường ở giai đoạn cuối trước khi chốt submission.

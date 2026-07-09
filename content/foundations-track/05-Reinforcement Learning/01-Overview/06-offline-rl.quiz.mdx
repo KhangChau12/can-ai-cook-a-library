@@ -1,0 +1,53 @@
+---
+quiz_for: 06-offline-rl
+---
+
+## Q1
+Vấn đề cốt lõi khi áp dụng thuật toán off-policy RL thông thường (như SAC) vào offline setting là gì?
+
+- [ ] Dataset quá nhỏ để huấn luyện mạng nơ-ron
+- [ ] SAC không dùng replay buffer
+- [x] Distributional shift — policy chọn action không có trong dataset → Q-function overestimate giá trị → policy càng muốn chọn action lạ → thảm hoạ khi triển khai
+- [ ] Offline RL không dùng được với mạng nơ-ron sâu
+
+> Trong online RL, khi policy chọn action lạ, môi trường trả về reward thật → Q-function được điều chỉnh lại. Trong offline RL, không có phản hồi từ môi trường → lỗi overestimation tích luỹ và phóng đại. Đây là vấn đề trung tâm của offline RL.
+
+## Q2
+BCQ giải quyết distributional shift bằng cách nào?
+
+- [ ] Dùng mô hình môi trường để sinh thêm dữ liệu
+- [x] Ràng buộc policy chỉ được chọn action gần với action đã thấy trong dataset — dùng VAE học behavior policy rồi chỉ sample action từ VAE đó
+- [ ] Dùng reward function đặc biệt
+- [ ] Không dùng Q-function
+
+> BCQ huấn luyện VAE trên các cặp (s,a) trong dataset để học phân phối behavior policy. Khi chọn action, BCQ sinh N action từ VAE (đảm bảo gần với dữ liệu), thêm nhiễu nhỏ, rồi chọn action có Q cao nhất. An toàn nhưng conservative — stitching yếu.
+
+## Q3
+Khả năng "stitching" trong offline RL có nghĩa là gì?
+
+- [ ] Ghép nhiều mạng nơ-ron lại với nhau
+- [ ] Nối các state của dataset thành một trajectory dài hơn
+- [x] Khâu phần đầu của trajectory A với phần cuối của trajectory B để tạo policy tốt hơn cả hai — từ nhiều trajectory rời rạc không hoàn hảo
+- [ ] Hợp nhất nhiều dataset khác nhau
+
+> Stitching là khả năng kết hợp các đoạn tốt từ nhiều trajectory khác nhau thành một policy vượt trội. BCQ yếu ở stitching (vì quá bám behavior policy). CQL và IQL mạnh ở stitching.
+
+## Q4
+CQL (Conservative Q-Learning) tạo lower-bound cho Q-function bằng cơ chế nào?
+
+- [ ] Dùng VAE để sinh action an toàn
+- [x] Thêm regularization term: đẩy xuống Q của action OOD (ngoài dataset) và đẩy lên Q của action trong dataset
+- [ ] Không bao giờ tính Q cho action ngoài dataset
+- [ ] Dùng ensemble nhiều Q-network lấy min
+
+> CQL thêm vào Bellman loss: `α · [ E_{μ}[Q] - E_{π_β}[Q] ]`. Action OOD bị đẩy xuống, action trong dataset được đẩy lên. Kết quả: Q(s,a) là lower bound của giá trị thật → policy không muốn chọn action lạ.
+
+## Q5
+IQL tránh distributional shift khác BCQ và CQL ở điểm gì?
+
+- [ ] IQL dùng nhiều dữ liệu hơn
+- [ ] IQL chạy online trước rồi mới offline
+- [x] IQL không bao giờ hỏi Q(s',a') cho action không có trong dataset — dùng expectile regression để ước lượng V(s') mà không cần biết action nào dẫn tới nó
+- [ ] IQL bỏ hẳn Q-function chỉ dùng policy
+
+> IQL thay `max_{a'} Q(s',a')` bằng V(s') qua expectile regression. Với τ = 0.7, V xấp xỉ phân vị thứ 70 của Q — học từ các action đã có trong dataset. Hoàn toàn tránh OOD action. Ổn định nhất trong 3 phương pháp.

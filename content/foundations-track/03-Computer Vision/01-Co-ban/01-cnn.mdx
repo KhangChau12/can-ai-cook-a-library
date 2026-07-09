@@ -1,0 +1,155 @@
+---
+title: CNN — Vì sao cần mạng nơ-ron tích chập cho ảnh
+track: foundations-track
+module: Computer Vision
+submodule: Cơ bản
+order: 1
+status: stable
+prerequisites: ["02-backpropagation"]
+summary: Vì sao dùng thẳng MLP cho ảnh không thực tế, hai nguyên lý translation invariance + locality dẫn tới phép tích chập, và cách LeNet (LeCun, 1989-1998) rồi AlexNet (2012) biến ý tưởng đó thành hệ thống thực dùng được — bài mở đầu sub-module CV Cơ bản.
+last_touched_by_task: Viết lại theo triết lý nội dung mới (2026-07-06): thêm dòng lịch sử ý tưởng LeNet (LeCun, vấn đề nhận diện chữ số viết tay ATT Bell Labs) và AlexNet (2012, ImageNet, vì sao 1998-2012 CNN 'ngủ đông') — trước đó bài chỉ có nguyên lý convolution, không kể được ai giải quyết vấn đề gì. Thêm nguồn thứ 2 (cs231n) theo yêu cầu tối thiểu 2 nguồn cho bài dòng tiến hoá. Bài này giờ là bài mở đầu chính thức của sub-module 'Cơ bản' trong module Computer Vision, dẫn tới LeNet/AlexNet/VGG/ResNet/MobileNet/EfficientNet (chưa viết, xem CLAUDE.md mục 4).
+---
+
+Bài [Perceptron & MLP](08-perceptron-va-mang-no-ron.mdx) giới thiệu mạng
+nơ-ron nhiều lớp tổng quát — về lý thuyết, một MLP đủ lớn có thể xấp xỉ
+mọi hàm số, kể cả nhận diện ảnh. Nhưng thử áp dụng thẳng MLP cho ảnh sẽ
+lộ ra hai vấn đề nghiêm trọng, và cách giải quyết hai vấn đề đó dẫn tới
+kiến trúc gọi là **CNN** (Convolutional Neural Network — mạng nơ-ron tích
+chập). Đây là bài mở đầu cho một chuỗi kiến trúc CV sẽ học tiếp
+(LeNet → AlexNet → VGG → ResNet → các kiến trúc hiệu quả hơn) — bài này
+tập trung vào **nguyên lý** khiến convolution cần thiết, và **vì sao** ý
+tưởng đó phải chờ gần một thập kỷ mới thực sự tạo ra đột phá.
+
+## Vấn đề 1: MLP thẳng cho ảnh tốn quá nhiều tham số
+
+Một bức ảnh chỉ 1 triệu pixel (độ phân giải khá khiêm tốn), nếu đưa thẳng
+vào một lớp ẩn MLP với 1000 đơn vị (kết nối đầy đủ — mỗi input nối với
+mỗi đơn vị lớp ẩn), riêng lớp đầu tiên đã cần khoảng **một tỷ tham số**.
+Đây là con số không thực tế để huấn luyện với dữ liệu và phần cứng thông
+thường — không phải vấn đề "chậm", mà là **không khả thi**.
+
+## Vấn đề 2: MLP bỏ qua cấu trúc không gian của ảnh
+
+Ngoài số lượng tham số, MLP kết nối đầy đủ coi mỗi pixel là một feature
+độc lập, không có khái niệm "gần nhau" hay "vị trí" — trong khi bản chất
+ảnh có cấu trúc không gian rất quan trọng: các pixel gần nhau thường liên
+quan tới nhau (cùng thuộc một cạnh, một vùng màu), và một vật thể ở góc
+trên bên trái hay góc dưới bên phải của ảnh về cơ bản là "cùng một loại
+vật thể", chỉ khác vị trí. MLP thẳng không tận dụng được thông tin cấu
+trúc này — lãng phí một nguồn thông tin quan trọng.
+
+## Hai nguyên lý dẫn tới phép tích chập
+
+CNN giải quyết cả hai vấn đề bằng hai nguyên lý:
+
+**Bất biến theo phép tịnh tiến (translation invariance).** Một con vật ở
+góc trên ảnh nên được nhận diện dễ như khi nó ở góc dưới — cùng một bộ
+phát hiện đặc trưng (feature detector) nên áp dụng được ở **mọi vị trí**
+trong ảnh, thay vì học một bộ tham số hoàn toàn riêng cho từng vị trí.
+Đây là ý tưởng cốt lõi của **tích chập (convolution)**: dùng chung một bộ
+trọng số nhỏ (gọi là **kernel/filter**), trượt qua toàn bộ ảnh, áp dụng
+cùng một phép tính ở mọi vị trí — giảm số tham số từ hàng tỷ xuống còn
+hàng triệu (hoặc ít hơn), vì không cần học riêng tham số cho từng vị trí
+pixel.
+
+**Tính cục bộ (locality).** Để nhận biết điều gì đang xảy ra tại một vị
+trí cụ thể trong ảnh, thường không cần nhìn tới những pixel ở rất xa —
+thông tin liên quan chủ yếu nằm ở vùng lân cận gần đó. Vì vậy, kernel chỉ
+cần có kích thước nhỏ (ví dụ 3x3 hoặc 5x5 pixel), không cần kết nối với
+toàn bộ ảnh — giảm số tham số thêm nhiều bậc, từ hàng triệu xuống còn
+hàng trăm cho mỗi kernel.
+
+## Trực giác: một lớp tích chập hoạt động thế nào
+
+Một lớp tích chập (convolutional layer) trượt kernel qua từng vùng nhỏ
+của ảnh đầu vào, tại mỗi vị trí tính một phép nhân-cộng giữa giá trị pixel
+trong vùng đó với trọng số của kernel, cho ra một giá trị output duy nhất
+tại vị trí tương ứng.
+
+Ví dụ số cụ thể với kernel 2x2 `[[1, 0], [0, -1]]` (một kernel đơn giản
+có thể học được cách phát hiện thay đổi độ sáng theo đường chéo), áp dụng
+lên vùng ảnh 2x2 có giá trị pixel `[[5, 3], [2, 8]]`: phép nhân-cộng là
+`1*5 + 0*3 + 0*2 + (-1)*8 = 5 - 8 = -3` — một số duy nhất đại diện cho
+mức độ "khớp" giữa kernel này và vùng ảnh đó. Trượt kernel sang vùng tiếp
+theo (dịch qua phải hoặc xuống dưới 1 pixel), lặp lại phép tính tương tự
+với 4 giá trị pixel mới, cho ra giá trị output tiếp theo. Lặp lại cho tới
+khi kernel đã quét qua toàn bộ ảnh, kết quả là một **feature map** — bản
+đồ cho biết kernel đó "kích hoạt" mạnh (giá trị tuyệt đối lớn) ở đâu trong
+ảnh gốc (ví dụ kernel ở trên có thể học được cách phát hiện cạnh chéo,
+kernel khác với trọng số khác có thể phát hiện cạnh dọc hoặc cạnh ngang).
+
+Một mạng CNN thường xếp nhiều lớp tích chập nối tiếp nhau: lớp đầu học
+các đặc trưng đơn giản (cạnh, góc), lớp sau kết hợp các đặc trưng đơn
+giản đó thành đặc trưng phức tạp hơn (hình dạng, bộ phận của vật thể), và
+các lớp cuối cùng kết hợp thành khái niệm trừu tượng (toàn bộ vật thể) —
+tương tự cách các lớp ẩn trong MLP xây dựng biểu diễn phức tạp dần từ dữ
+liệu thô, chỉ khác cấu trúc kết nối cục bộ + chia sẻ trọng số thay vì kết
+nối đầy đủ.
+
+## Ý tưởng này không mới — vì sao phải tới 2012 mới bùng nổ?
+
+Convolution cho ảnh không phải ý tưởng của thập niên 2010. Yann LeCun,
+lúc đó là nhà nghiên cứu tại AT&T Bell Labs, đã xây dựng **LeNet** — kiến
+trúc CNN đầu tiên huấn luyện bằng backpropagation, ra đời từ 1989 và hoàn
+thiện trong bài báo năm 1998 ("Gradient-Based Learning Applied to
+Document Recognition"). Vấn đề LeNet giải quyết rất cụ thể, không trừu
+tượng: nhận diện chữ số viết tay trên phong bì thư (bưu điện Mỹ) và trên
+séc ngân hàng. LeNet-5 gồm 2 lớp tích chập (6 và 16 kernel 5×5, kích hoạt
+sigmoid) xen giữa các lớp pooling trung bình 2×2, rồi 3 lớp fully-connected
+(120, 84, 10 đơn vị output). Kết quả: tỷ lệ lỗi dưới 1% trên bộ chữ số
+viết tay — ngang bằng SVM, phương pháp mạnh nhất lúc đó. LeNet thành công
+tới mức được triển khai thực tế xử lý séc ngân hàng và một số máy ATM vẫn
+chạy đúng đoạn code LeCun và Léon Bottou viết từ những năm 1990 (theo
+D2L.ai, xem Nguồn tham khảo).
+
+Nếu LeNet đã chứng minh được nguyên lý này hoạt động và cho kết quả tốt
+từ 1998, vì sao CNN gần như "biến mất" khỏi computer vision trong hơn một
+thập kỷ sau đó? Hai giới hạn của thời điểm đó, không phải giới hạn của
+bản thân ý tưởng convolution:
+
+- **Dữ liệu:** LeNet huấn luyện tốt trên bộ chữ số viết tay — bài toán
+  hẹp, ít lớp (10 chữ số), vài chục nghìn ảnh. Không có dữ liệu quy mô
+  lớn, đa dạng (hàng triệu ảnh, hàng nghìn lớp) để chứng minh CNN mở rộng
+  được cho bài toán tổng quát hơn (nhận diện vật thể bất kỳ trong ảnh
+  đời thường).
+- **Phần cứng:** huấn luyện mạng sâu hơn LeNet-5 (nhiều lớp, nhiều kernel
+  hơn) trên CPU thời đó chậm tới mức không thực tế — cần GPU để tính song
+  song hàng loạt phép nhân-cộng convolution.
+
+Cả hai giới hạn được giải quyết gần như cùng lúc vào đầu thập niên 2010:
+bộ dữ liệu **ImageNet** (hàng triệu ảnh, 1000 lớp) ra đời, và GPU dùng
+cho huấn luyện deep learning trở nên khả thi về chi phí. Năm 2012,
+**AlexNet** (Alex Krizhevsky, Ilya Sutskever, Geoffrey Hinton) thắng cuộc
+thi ImageNet Large Scale Visual Recognition Challenge (ILSVRC) với tỷ lệ
+lỗi giảm gần một nửa so với phương pháp tốt nhất trước đó (không dùng
+deep learning) — một bước nhảy hiếm khi thấy trong một năm. Về kiến trúc,
+AlexNet vẫn là chính nguyên lý convolution của LeNet, chỉ sâu hơn (5 lớp
+tích chập + 3 lớp fully-connected) và thêm 2 ý tưởng kỹ thuật mới để huấn
+luyện mạng sâu hơn khả thi: dùng **ReLU** thay sigmoid (giảm vấn đề
+vanishing gradient khi mạng sâu hơn — xem lại [Backpropagation](09-backpropagation.mdx)),
+và **dropout** để chống overfitting khi số tham số tăng mạnh (xem
+[Regularization](10-regularization.mdx)). Điểm mấu chốt: AlexNet không
+phát minh lại convolution — nó chứng minh nguyên lý LeNet đã đúng vẫn mở
+rộng được lên quy mô lớn, một khi dữ liệu và phần cứng bắt kịp ý tưởng.
+Đây là khởi đầu của làn sóng CNN hiện đại (VGG, ResNet, và các kiến trúc
+tiếp theo trong sub-module này).
+
+## Liên hệ lại với các bài trước
+
+- CNN không phải một cơ chế học hoàn toàn khác — nó vẫn dùng
+  [backpropagation](09-backpropagation.mdx) để tính gradient và cập nhật
+  tham số (kernel) qua gradient descent, giống hệt MLP thông thường. Điểm
+  khác biệt duy nhất là **cấu trúc kết nối**: kết nối cục bộ + chia sẻ
+  trọng số qua toàn ảnh, thay vì kết nối đầy đủ giữa mọi input và mọi đơn
+  vị lớp ẩn như MLP.
+- Đây là một ví dụ cụ thể cho thấy: đưa **kiến thức nền về cấu trúc dữ
+  liệu** (ảnh có cấu trúc không gian, đặc trưng có tính bất biến vị trí)
+  vào thiết kế kiến trúc mô hình có thể giảm số tham số cần học đi nhiều
+  bậc, đồng thời cải thiện khả năng tổng quát hoá — không phải lúc nào
+  "mô hình tổng quát nhất" (MLP đầy đủ) cũng là lựa chọn thực tế tốt nhất.
+
+## Nguồn tham khảo
+
+- [Dive into Deep Learning — Why Convolutions](http://d2l.ai/chapter_convolutional-neural-networks/why-conv.html) — dùng làm nguồn chính cho ví dụ số tham số bùng nổ của MLP trên ảnh (khoảng 1 tỷ tham số cho ảnh 1 megapixel), và hai nguyên lý translation invariance + locality dẫn tới phép tích chập.
+- [Dive into Deep Learning — Convolutional Neural Networks (LeNet)](https://d2l.ai/chapter_convolutional-neural-networks/lenet.html) — dùng cho bối cảnh ra đời LeNet (LeCun tại AT&T Bell Labs, bài toán nhận diện chữ số viết tay), kiến trúc cụ thể (2 lớp conv 6/16 kernel 5×5 + pooling + 3 lớp fully-connected), tỷ lệ lỗi dưới 1%, và ứng dụng thực tế trong máy ATM.
+- [Stanford CS231n — Convolutional Neural Networks](https://cs231n.github.io/convolutional-networks/) — dùng đối chiếu vì sao AlexNet (2012) là bước ngoặt về quy mô (ImageNet, GPU) chứ không phải về nguyên lý convolution, và vai trò của ReLU/dropout trong việc huấn luyện mạng sâu hơn LeNet khả thi.

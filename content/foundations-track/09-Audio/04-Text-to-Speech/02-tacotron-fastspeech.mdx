@@ -1,0 +1,138 @@
+---
+title: Tacotron 2 & FastSpeech — Đào sâu Text-to-Spectrogram: Autoregressive vs Song song
+track: foundations-track
+module: Audio
+submodule: Text-to-Speech
+order: 2
+status: stable
+prerequisites: ["01-text-to-speech"]
+summary: Bài 32 giới thiệu Tacotron 2 và FastSpeech ở mức tổng quan. Bài này đào sâu kiến trúc cụ thể: Tacotron 2 dùng pre-net/post-net + stop token + teacher forcing để huấn luyện autoregressive ổn định, nhưng suy luận tuần tự chậm và dễ lỗi căn chỉnh (attention misalignment — lặp/bỏ từ). FastSpeech giải bằng Feed-Forward Transformer (self-attention + 1D CNN) + length regulator dựa trên duration predictor, sinh song song nhanh hơn 10 lần, đổi lại cần nguồn duration 'đúng' để huấn luyện (thường trích từ attention của Tacotron 2 đã train).
+last_touched_by_task: Bài mới (Task 115, 2026-07-07) — Phase 3 Audio, đào sâu Tacotron 2/FastSpeech (đã giới thiệu sơ ở bài 32) vào đúng submodule Text-to-Speech. Bài dòng tiến hoá: Tacotron 2 (autoregressive, ổn định nhưng chậm/dễ lỗi căn chỉnh) → FastSpeech (non-autoregressive, giải đúng 2 vấn đề đó bằng length regulator). Nguồn: arxiv (survey neural speech synthesis + Tacotron 2/FastSpeech gốc đã dùng ở bài 32, đào sâu chi tiết kiến trúc pre-net/post-net/stop token/length regulator).
+---
+
+Bài [Text-to-Speech](32-text-to-speech.mdx) giới thiệu Tacotron 2 và
+FastSpeech ở mức tổng quan cho giai đoạn text→spectrogram. Bài này đào
+sâu kiến trúc cụ thể của cả 2, và vì sao FastSpeech ra đời để giải đúng
+2 vấn đề thực tế của Tacotron 2.
+
+## Tacotron 2: kiến trúc pre-net/post-net + attention
+
+**Encoder.** Nhận chuỗi ký tự, qua vài lớp **CNN** (bắt pattern cục bộ
+giữa các ký tự gần nhau — tương tự n-gram) rồi **BLSTM** (Bidirectional
+LSTM, bài [63](63-bidirectional-rnn.mdx) — ngữ cảnh 2 chiều cho mỗi ký
+tự) → biểu diễn ẩn cho mỗi ký tự.
+
+**Decoder** (autoregressive, sinh từng frame mel-spectrogram):
+
+- **Pre-net**: một mạng nhỏ (2 lớp fully-connected) xử lý frame mel vừa
+  sinh ở bước trước, trước khi đưa vào LSTM chính. Vai trò: pre-net tạo
+  "nút thắt cổ chai" thông tin — buộc decoder không dựa dẫm quá nhiều vào
+  frame trước (dễ gây "trôi" lỗi tích luỹ), mà phải dựa nhiều hơn vào
+  attention context (thông tin từ encoder).
+- **LSTM + attention context**: LSTM chính kết hợp output pre-net với
+  **attention context** (tính từ **location-sensitive attention** — biến
+  thể attention có thêm thông tin vị trí đã attend ở bước trước, ép căn
+  chỉnh đơn điệu từ trái sang phải, tránh nhảy lung tung giữa các ký tự)
+  để dự đoán frame mel tiếp theo.
+- **Post-net**: sau khi decoder sinh xong toàn bộ chuỗi frame thô, một
+  mạng CNN riêng (post-net) tinh chỉnh lại **toàn bộ** spectrogram cùng
+  lúc (residual connection cộng vào output thô) — sửa các lỗi nhỏ mà
+  decoder tuần tự khó tối ưu triệt để (vì mỗi frame chỉ được quyết định
+  1 lần, không có cơ hội "nhìn lại" sau khi đã sinh các frame sau).
+- **Stop token**: tại mỗi bước, decoder còn dự đoán thêm 1 xác suất nhị
+  phân "đã xong chưa" — quyết định khi nào dừng sinh (không như dịch máy
+  có token `<EOS>` rời rạc, ở đây là xác suất liên tục, ngưỡng qua 0.5 là
+  dừng).
+
+**Teacher forcing khi huấn luyện.** Giống mọi decoder autoregressive
+(bài [73](73-seq2seq-encoder-decoder.mdx)), lúc huấn luyện decoder nhận
+**frame mel thật** (từ ground truth) ở mỗi bước làm input cho bước tiếp
+theo — không phải frame model tự sinh ra (có thể sai). Giúp huấn luyện ổn
+định, nhanh hội tụ, nhưng tạo **train-test mismatch**: lúc suy luận thật,
+decoder phải dùng chính frame mình vừa sinh (có thể lệch chuẩn) — nguồn
+gốc của lỗi tích luỹ khi suy luận.
+
+## Vấn đề của Tacotron 2: chậm và dễ lỗi căn chỉnh
+
+2 hạn chế thực tế:
+
+1. **Chậm**: decoder sinh **từng frame một**, tuần tự — với audio dài,
+   suy luận mất thời gian tỷ lệ thuận số frame, không tận dụng được
+   song song hoá của GPU.
+2. **Attention misalignment** (lỗi căn chỉnh attention): vì attention học
+   hoàn toàn tự do (chỉ ràng buộc nhẹ bởi location-sensitive), model đôi
+   khi "trôi" — lặp lại 1 đoạn audio, bỏ sót từ, hoặc dừng quá sớm/muộn.
+   Đây là lỗi *đặc thù* của attention tự do trong TTS autoregressive —
+   không xảy ra ở dịch máy (nơi lỗi 1 từ ít nghiêm trọng hơn nghe lặp/mất
+   âm).
+
+## FastSpeech: length regulator giải cả 2 vấn đề cùng lúc
+
+**Ý tưởng cốt lõi.** Thay vì để attention tự học căn chỉnh (dễ trôi),
+FastSpeech **áp đặt căn chỉnh tường minh**: dự đoán trước **mỗi ký tự/
+phoneme tương ứng bao nhiêu frame mel** (gọi là **duration**), rồi
+**"giãn" (expand)** biểu diễn ký tự theo đúng số frame đó — biến bài
+toán "học attention mềm" thành "học 1 số nguyên cho mỗi ký tự".
+
+**Kiến trúc — Feed-Forward Transformer (FFT).** Cả encoder và decoder
+của FastSpeech dùng khối **FFT**: self-attention (bắt ngữ cảnh toàn cục
+giữa các ký tự/frame, giống Transformer chuẩn) + **1D convolution** (bắt
+pattern cục bộ, thay vì feed-forward layer thuần của Transformer gốc —
+phù hợp hơn cho tín hiệu có tính cục bộ mạnh như audio).
+
+**Length regulator.** Thành phần trung tâm: nhận **duration** dự đoán
+cho mỗi ký tự (từ **duration predictor** — mạng CNN nhỏ riêng), rồi lặp
+lại (expand) biểu diễn ẩn của ký tự đó đúng số lần bằng duration. Ví dụ
+ký tự "a" có duration = 3 → biểu diễn "a" được lặp lại 3 lần liên tiếp
+trong chuỗi input cho decoder. Sau khi giãn, độ dài chuỗi input decoder
+đã **khớp chính xác** độ dài mel-spectrogram mục tiêu — decoder giờ chỉ
+cần ánh xạ 1-1, không cần attention học căn chỉnh nữa.
+
+**Huấn luyện duration predictor.** Vấn đề: dữ liệu training chỉ có cặp
+(text, audio) — không có nhãn "duration đúng" sẵn. FastSpeech giải bằng
+**trích xuất duration từ attention của 1 mô hình Tacotron-like đã huấn
+luyện trước** (dùng attention alignment làm giả-nhãn duration), rồi
+huấn luyện duration predictor bắt chước đúng phân bố đó. FastSpeech 2
+(bản cải tiến sau) bỏ bước phụ thuộc này bằng cách dùng công cụ căn chỉnh
+cưỡng bức (forced alignment) trực tiếp từ dữ liệu, đồng thời thêm dự
+đoán **pitch** và **energy** làm tín hiệu điều kiện bổ sung — kiểm soát
+ngữ điệu tốt hơn mà vẫn giữ tốc độ song song.
+
+**Kết quả.** FastSpeech loại bỏ hoàn toàn attention misalignment (vì
+không còn attention học tự do giữa text-audio) và sinh **nhanh hơn 10
+lần** so với Tacotron 2 (không tuần tự — toàn bộ mel-spectrogram được
+tính trong 1 lần forward pass song song).
+
+## Đánh đổi: linh hoạt vs tốc độ+ổn định
+
+| | Tacotron 2 | FastSpeech |
+|---|---|---|
+| Cơ chế | Autoregressive + attention tự do | Non-autoregressive + length regulator |
+| Tốc độ | Chậm (tuần tự) | Nhanh (song song, >10×) |
+| Lỗi căn chỉnh | Có (lặp/bỏ từ) | Không (duration áp đặt) |
+| Cần gì thêm | Không | Nguồn duration (từ model khác hoặc forced alignment) |
+| Kiểm soát ngữ điệu | Ngầm định qua attention | Tường minh (FastSpeech2: pitch/energy) |
+
+Đây là mẫu hình quen thuộc: model sau **áp đặt cấu trúc tường minh** (duration)
+để giải quyết sự bất ổn của cách học "ngầm" (attention tự do) — đánh đổi
+là cần thêm 1 nguồn giám sát (duration), nhưng đổi lại tốc độ và ổn định
+tăng mạnh.
+
+## Liên hệ lại với các bài trước
+
+- Location-sensitive attention của Tacotron 2 là biến thể của attention
+  đã học ở bài [14](14-attention.mdx) — thêm ràng buộc vị trí để phù hợp
+  bài toán căn chỉnh đơn điệu (khác dịch máy, nơi từ có thể đảo trật tự).
+- Length regulator của FastSpeech cùng tinh thần **non-autoregressive**
+  đã gặp ở diffusion models (bài [49](49-diffusion-models.mdx) sinh song
+  song mọi pixel, khác GAN tuần tự) — xu hướng chung trong DL hiện đại:
+  đánh đổi 1 bước huấn luyện phức tạp hơn để đổi lấy suy luận nhanh song
+  song.
+- Vấn đề train-test mismatch của teacher forcing giống hệt vấn đề đã
+  nhắc ở [Seq2seq](73-seq2seq-encoder-decoder.mdx) — cùng 1 đánh đổi lặp
+  lại ở mọi decoder autoregressive.
+
+## Nguồn tham khảo
+
+- [arXiv — Neural Speech Synthesis with Transformer Network (Li et al., 2018)](https://arxiv.org/abs/1809.08895) — dùng cho chi tiết kiến trúc Tacotron 2 kế thừa (pre-net/post-net, stop token prediction, location-sensitive attention) và so sánh với biến thể Transformer-based.
+- [arXiv — A Survey on Neural Speech Synthesis (Tan et al., 2021)](https://arxiv.org/abs/2106.15561) — dùng cho tổng quan kiến trúc FastSpeech (Feed-Forward Transformer kết hợp self-attention + 1D CNN, length regulator dựa trên duration predictor), vấn đề attention misalignment của mô hình autoregressive, và kết quả tốc độ (nhanh hơn 10 lần).

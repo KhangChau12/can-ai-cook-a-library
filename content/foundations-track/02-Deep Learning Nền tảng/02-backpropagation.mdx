@@ -1,0 +1,121 @@
+---
+title: Backpropagation — Cách huấn luyện mạng nơ-ron nhiều lớp
+track: foundations-track
+module: Deep Learning Nền tảng
+order: 2
+status: stable
+prerequisites: ["01-perceptron-va-mang-no-ron"]
+summary: Thuật toán tính gradient hiệu quả cho mạng nhiều lớp: forward pass tính output, backward pass lan truyền gradient ngược từ output về input bằng chain rule, tái sử dụng kết quả trung gian thay vì tính lại từ đầu.
+last_touched_by_task: Rà lại theo triết lý nội dung mới (2026-07-06): đọc kỹ, xác nhận bài đã đạt chuẩn (ví dụ số cụ thể cho chain rule, không 'vỏ rỗng') — backpropagation là 1 thuật toán/kỹ thuật đơn, không thuộc dạng 'dòng tiến hoá nhiều model' nên không bắt buộc thêm lịch sử theo mục 2.1. Đã thử tra D2L.ai tìm lịch sử (Rumelhart/Hinton/Williams) — xác nhận không có, giữ nguyên nội dung, chỉ nâng status.
+---
+
+Bài [Perceptron & Mạng nơ-ron nhiều lớp](08-perceptron-va-mang-no-ron.mdx)
+để lại một câu hỏi bỏ ngỏ: có công thức nghiệm đóng như
+[Linear Regression](02-linear-regression.mdx), cũng không thể chỉ đơn giản
+tính gradient trực tiếp như trước — mạng nhiều lớp có hàng nghìn, hàng
+triệu tham số xếp lồng nhau. **Backpropagation** (lan truyền ngược) là
+thuật toán giải quyết đúng bài toán này: tính gradient của loss theo mọi
+tham số trong mạng, một cách hiệu quả.
+
+## Forward pass: tính output trước
+
+Trước khi tính gradient, mạng cần chạy **forward pass** (lan truyền
+xuôi) — tính giá trị output theo đúng chiều dữ liệu đi qua: từ input, qua
+từng lớp ẩn, tới output cuối cùng, giống công thức đã thấy ở bài trước:
+
+```
+h1 = activation(W1 * x  + b1)
+h2 = activation(W2 * h1 + b2)
+y  = activation(W3 * h2 + b3)
+```
+
+Trong lúc chạy forward pass, mạng **lưu lại** mọi giá trị trung gian
+(`h1`, `h2`, và cả giá trị trước khi qua activation) — đây là chi tiết
+quan trọng, vì backward pass sẽ cần dùng lại chính những giá trị này.
+
+## Chain rule: nền tảng toán học của backpropagation
+
+Ý tưởng cốt lõi dựa trên một quy tắc đạo hàm quen thuộc — **chain rule**
+(quy tắc chuỗi/dây chuyền): nếu `y` là hàm của `u`, và `u` là hàm của `x`,
+thì đạo hàm của `y` theo `x` bằng tích hai đạo hàm thành phần:
+
+```
+dy/dx = (dy/du) * (du/dx)
+```
+
+Ví dụ số cụ thể để thấy quy tắc này hoạt động ra sao: cho `u = 2x` (nên
+`du/dx = 2`) và `y = u^2` (nên `dy/du = 2u`). Tại `x = 3`, ta có `u = 6`,
+nên `dy/du = 2*6 = 12`, và theo chain rule `dy/dx = 12 * 2 = 24`. Kiểm
+tra lại bằng cách viết `y` trực tiếp theo `x`: `y = (2x)^2 = 4x^2`, nên
+`dy/dx = 8x`, tại `x=3` cho `8*3 = 24` — khớp đúng kết quả tính qua chain
+rule. Điểm mấu chốt: chain rule cho phép tính `dy/dx` bằng cách nhân các
+đạo hàm **thành phần** (`dy/du` và `du/dx`), không cần viết `y` thành một
+công thức trực tiếp theo `x` rồi đạo hàm cả cục — với hàm đơn giản như
+trên viết trực tiếp vẫn dễ, nhưng một mạng nơ-ron nhiều lớp là một chuỗi
+hàm số lồng nhau dài hơn rất nhiều (output là hàm của lớp cuối, lớp cuối
+là hàm của lớp trước đó, ...), nơi viết công thức trực tiếp gần như bất
+khả thi — đây là lúc chain rule thực sự cần thiết: "truyền" đạo hàm qua
+từng lớp trung gian một, thay vì phải viết ra một công thức khổng lồ tính
+trực tiếp từ đầu tới cuối.
+
+## Backward pass: lan truyền gradient ngược từ output về input
+
+Đây là bước cho backpropagation cái tên của nó: thay vì tính gradient của
+từng tham số một cách độc lập (rất tốn kém khi có hàng triệu tham số),
+thuật toán đi **ngược chiều** so với forward pass — bắt đầu từ gradient
+của loss tại lớp output, rồi lần lượt tính gradient cho từng lớp trước đó,
+tái sử dụng kết quả đã tính ở lớp sau:
+
+```
+Tính gradient tại lớp output (so với loss)
+       ↓ dùng chain rule
+Tính gradient tại lớp ẩn cuối cùng (tái sử dụng gradient vừa tính)
+       ↓ dùng chain rule
+Tính gradient tại lớp ẩn trước đó (tái sử dụng gradient vừa tính)
+       ↓ ... tiếp tục cho tới lớp đầu tiên
+```
+
+Vì gradient của một lớp luôn được tính dựa trên gradient đã tính ở lớp
+ngay sau nó (không phải tính lại từ đầu mỗi lần), backpropagation tiết
+kiệm rất nhiều phép tính trùng lặp so với việc tính gradient của mỗi tham
+số một cách hoàn toàn độc lập — đây là lý do mạng có hàng triệu tham số
+vẫn huấn luyện được trong thời gian hợp lý.
+
+## Sau khi có gradient: quay lại gradient descent quen thuộc
+
+Sau khi backward pass hoàn tất, mỗi tham số trong mạng đã có gradient của
+nó đối với loss. Bước cập nhật tham số giống hệt công thức gradient
+descent đã học ở bài Linear Regression — chỉ khác là áp dụng đồng loạt
+cho hàng nghìn/triệu tham số thay vì chỉ `w` và `b`:
+
+```
+tham_so := tham_so - learning_rate * gradient_cua_tham_so
+```
+
+Lặp lại forward pass → backward pass → cập nhật tham số nhiều lần trên
+dữ liệu train (mỗi lượt qua toàn bộ dữ liệu gọi là một **epoch**) cho tới
+khi loss không giảm thêm đáng kể.
+
+## Đánh đổi: cần nhiều bộ nhớ hơn khi huấn luyện
+
+Vì backward pass cần dùng lại toàn bộ giá trị trung gian đã lưu ở forward
+pass, quá trình huấn luyện tốn nhiều bộ nhớ hơn đáng kể so với lúc chỉ
+dùng mạng để dự đoán (forward pass đơn thuần, không cần giữ lại giá trị
+trung gian sau khi dùng xong). Đây là lý do huấn luyện mạng lớn thường
+đòi hỏi phần cứng (đặc biệt là GPU với bộ nhớ lớn) mạnh hơn nhiều so với
+chỉ chạy dự đoán bằng mạng đã huấn luyện xong.
+
+## Liên hệ lại với các bài trước
+
+- Backpropagation không phải một thuật toán tối ưu hoá mới — nó chỉ là
+  cách **tính gradient hiệu quả** cho một mạng nhiều lớp. Bước cập nhật
+  tham số sau đó vẫn là gradient descent, giống hệt bài Linear Regression,
+  chỉ áp dụng cho nhiều tham số xếp lồng nhau hơn.
+- Đây là lý do bài [Perceptron & MLP](08-perceptron-va-mang-no-ron.mdx) nói
+  "thách thức thực tế nằm ở việc tìm ra đúng bộ trọng số" — backpropagation
+  chính là câu trả lời cho thách thức đó: một cách hệ thống để tính được
+  gradient cần thiết, dù mạng có bao nhiêu lớp đi nữa.
+
+## Nguồn tham khảo
+
+- [Dive into Deep Learning — Forward Propagation, Backward Propagation, and Computational Graphs](http://d2l.ai/chapter_multilayer-perceptrons/backprop.html) — dùng làm nguồn chính cho khái niệm forward pass (tính và lưu giá trị trung gian), chain rule làm nền tảng, backward pass (lan truyền gradient ngược, tái sử dụng giá trị trung gian để tránh tính lại), và đánh đổi bộ nhớ khi huấn luyện so với chỉ dự đoán.

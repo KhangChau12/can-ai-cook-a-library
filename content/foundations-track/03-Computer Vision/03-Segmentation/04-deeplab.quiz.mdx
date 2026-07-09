@@ -1,0 +1,43 @@
+---
+quiz_for: 04-deeplab
+---
+
+## Q1
+Vấn đề cụ thể mà atrous convolution của DeepLab giải quyết là gì?
+
+- [x] Convolution/pooling thông thường phải giảm độ phân giải feature map để mở rộng receptive field — atrous convolution mở rộng receptive field bằng cách chèn khoảng trống vào kernel, KHÔNG cần giảm độ phân giải
+- [ ] Convolution thông thường không thể học được qua backpropagation
+- [ ] CNN không thể xử lý ảnh có độ phân giải lớn hơn 256x256
+- [ ] Pooling luôn làm tăng số lượng tham số của mạng
+
+> Đây là điểm mấu chốt: atrous convolution tách biệt được 2 thứ trước đây luôn đi cùng nhau (mở rộng receptive field và giảm độ phân giải), cho phép có cả hai lợi ích cùng lúc.
+
+## Q2
+Atrous Spatial Pyramid Pooling (ASPP) giải quyết vấn đề gì?
+
+- [x] Vật thể trong cùng 1 ảnh có kích thước rất khác nhau — ASPP chạy song song nhiều nhánh atrous convolution với dilation rate khác nhau, mỗi nhánh nắm bắt 1 tỷ lệ ngữ cảnh khác nhau, rồi kết hợp lại
+- [ ] ASPP giải quyết vấn đề overfitting bằng cách thêm dropout
+- [ ] ASPP chỉ hoạt động với ảnh grayscale, không hoạt động với ảnh màu
+- [ ] ASPP thay thế hoàn toàn convolution bằng fully-connected layer
+
+> Mỗi nhánh với dilation rate khác nhau "nhìn" một tỷ lệ không gian khác nhau — dilation rate nhỏ cho chi tiết cục bộ, dilation rate lớn cho ngữ cảnh rộng — kết hợp lại nắm bắt được đa tỷ lệ cùng lúc.
+
+## Q3
+DeepLabv3+ cải tiến thêm gì so với DeepLabv3, và tại sao?
+
+- [x] Thêm 1 decoder nhẹ (lấy cảm hứng từ U-Net) để tinh chỉnh ranh giới sắc nét — vì ASPP giải quyết tốt ngữ cảnh đa tỷ lệ nhưng kết quả có thể chưa đủ sắc nét ở ranh giới vật thể
+- [ ] Loại bỏ hoàn toàn atrous convolution, chỉ dùng convolution thông thường
+- [ ] Tăng số lớp lên gấp 10 lần so với DeepLabv3
+- [ ] Chuyển từ bài toán segmentation sang bài toán classification
+
+> DeepLabv3+ hợp nhất 2 triết lý thiết kế: ASPP (giữ ngữ cảnh đa tỷ lệ) và encoder-decoder kiểu U-Net (giữ ranh giới sắc nét) — lấy ưu điểm của cả hai.
+
+## Q4
+Kết quả cụ thể của DeepLabv3+ trên các benchmark là gì?
+
+- [x] 89.0% trên PASCAL VOC 2012 test set và 82.1% trên Cityscapes test set, cả hai đều không cần bước hậu xử lý CRF bổ sung
+- [ ] DeepLabv3+ chỉ đạt kết quả tốt trên dữ liệu huấn luyện, không tổng quát hoá được sang tập test
+- [ ] DeepLabv3+ chỉ hoạt động được trên ảnh y tế, không hoạt động trên ảnh cảnh đường phố
+- [ ] Kết quả của DeepLabv3+ kém hơn hẳn phiên bản DeepLab đầu tiên
+
+> Đây là kết quả SOTA đạt được mà không cần CRF (conditional random field) hậu xử lý — khác với các phiên bản DeepLab đầu tiên từng cần thêm bước này để làm mượt ranh giới.

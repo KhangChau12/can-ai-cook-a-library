@@ -1,0 +1,60 @@
+---
+title: Audio Source Separation — Tách Âm Thanh Thành Các Nguồn Thành Phần
+track: foundations-track
+module: Audio
+order: 1
+status: stable
+prerequisites: ["01-bieu-dien-am-thanh"]
+summary: Tách một bản ghi âm hỗn hợp (nhiều người nói cùng lúc, nhạc + giọng hát) thành các track riêng. Bài này kể hai nhánh: speech separation (Conv-TasNet, time-domain mask) và music separation (Spleeter, Demucs, hybrid spectrogram+waveform).
+last_touched_by_task: Bài mới (2026-07-08): Phase 4.2 đào sâu Audio — Audio Source Separation. Nguồn: arxiv Conv-TasNet 1809.07454 + arxiv Demucs 1909.01108 + machinelearningmastery.com.
+submodule: Audio-Understanding
+---
+
+Audio source separation là bài toán tách một bản ghi âm hỗn hợp thành các
+nguồn âm thanh riêng biệt. Có hai nhánh chính:
+
+1. **Speech separation:** tách giọng nhiều người nói cùng lúc — cocktail
+   party problem. Ví dụ: 2 người nói cùng lúc → track giọng người A, track
+   giọng người B.
+2. **Music separation:** tách các nhạc cụ/bè từ bài hát — vocals, bass,
+   drums, piano. Ví dụ: bài hát → track giọng hát, track bass, track trống.
+
+## Vấn đề: cocktail party problem
+
+Con người có khả năng tập trung vào một giọng nói trong đám đông (hiệu ứng
+cocktail party). Nhưng với máy tính, đây là bài toán cực kỳ khó: hai người
+nói cùng lúc → tín hiệu audio trong cùng một khoảng thời gian là tổng của
+cả hai → không có cách nào tách riêng bằng xử lý tín hiệu tuyến tính.
+
+## Conv-TasNet — Time-domain Mask
+
+Conv-TasNet (Luo & Mesgarani 2019) giải quyết speech separation trong
+time-domain (không cần spectrogram), dùng fully convolutional architecture.
+
+### Kiến trúc
+
+1. **Encoder:** 1D convolution biến audio raw thành feature representation
+2. **Separation module:** stacked 1D dilated convolution blocks (temporal
+   convolution network — TCN) sinh ra mask cho từng nguồn
+3. **Decoder:** 1D transposed convolution tái tạo audio từ masked feature
+
+### SI-SNRi
+
+Metric đánh giá: SI-SNRi (Scale-Invariant Signal-to-Noise Ratio improvement)
+— đo mức độ cải thiện tỷ lệ tín hiệu/nhiễu sau khi tách. Conv-TasNet đạt
+15.3 dB trên WSJ0-2mix (2 speakers).
+
+## Spleeter và Demucs — Music Separation
+
+**Spleeter** (Deezer 2020): dùng U-Net trên spectrogram, sinh ra 5 stems
+(vocals, bass, drums, piano, other). Nhanh, dễ dùng, mã nguồn mở.
+
+**Demucs** (Défossez et al. 2019/2021): hybrid architecture — kết hợp
+time-domain (giống Conv-TasNet) và spectrogram domain (U-Net). State-of-
+the-art trong music separation.
+
+## Nguồn tham khảo
+
+- [arXiv — Conv-TasNet: Surpassing Ideal Time-Frequency Magnitude Masking for Speech Separation (Luo & Mesgarani, 2019)](https://arxiv.org/abs/1809.07454) — paper gốc Conv-TasNet, dùng cho time-domain mask, fully convolutional, SI-SNRi.
+- [arXiv — Hybrid Spectrogram and Waveform Source Separation (Défossez et al., 2019)](https://arxiv.org/abs/1909.01108) — paper gốc Demucs, dùng cho hybrid time-domain + spectrogram, U-Net architecture.
+- [machinelearningmastery.com — Overview of music source separation](https://machinelearningmastery.com/music-source-separation/) — dùng cho tổng quan cocktail party problem và NMF truyền thống.

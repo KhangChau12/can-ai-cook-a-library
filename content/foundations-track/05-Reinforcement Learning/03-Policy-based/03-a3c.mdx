@@ -1,0 +1,128 @@
+---
+title: A3C — Song song hoá Actor-Critic Bằng Nhiều Luồng Độc lập
+track: foundations-track
+module: Reinforcement Learning
+submodule: Policy-based
+order: 3
+status: stable
+prerequisites: ["01-policy-gradient"]
+summary: Actor-Critic chuẩn (đã học ở bài 19) chỉ chạy trên MỘT môi trường, nên các mẫu dữ liệu liên tiếp bị tương quan cao (trajectory này nối tiếp trajectory kia) — gây bất ổn khi huấn luyện. Mnih và cộng sự (2016) giải quyết bằng A3C: chạy NHIỀU actor-learner độc lập song song trên nhiều bản sao môi trường, mỗi luồng tự thu thập kinh nghiệm và cập nhật bất đồng bộ vào một bộ tham số chung — tự nhiên phá tương quan giữa các mẫu mà không cần replay buffer.
+last_touched_by_task: Viết mới 2026-07-06: lấp khoảng trống advantage function chưa được định nghĩa rõ ràng — bài 47 (PPO) đã dùng ký hiệu Â (advantage) nhưng chỉ nói 'liên quan chặt tới baseline' mà chưa định nghĩa công thức cụ thể. A3C (Mnih et al. 2016) là nơi thuật ngữ 'Advantage Actor-Critic' xuất hiện tường minh, đặt giữa bài 19 (Actor-Critic cơ bản) và 47 (PPO) theo đúng mốc thời gian 2016→2017. Nguồn: arxiv 1602.01783 (paper gốc) + lilianweng.github.io/posts/2018-04-08-policy-gradient (đã dùng cho bài 19/47, xác nhận qua WebFetch có phần A3C/A2C riêng). Cùng task, thêm liên hệ chéo với Dueling DQN (71, submodule Value-based) — cùng khái niệm advantage nhưng phát hiện độc lập bởi 2 nhóm tác giả khác nhau, áp dụng cho 2 mục đích khác nhau (kiến trúc mạng generalize tốt hơn vs giảm phương sai gradient policy).
+---
+
+Bài [Policy Gradient](19-policy-gradient.mdx) giới thiệu Actor-Critic:
+một critic ước lượng giá trị qua temporal difference, một actor dùng ước
+lượng đó để cập nhật policy — giảm phương sai so với REINFORCE thuần.
+Nhưng cách làm đó vẫn chạy trên **một** môi trường duy nhất, tuần tự từng
+bước một. Bài này giải thích cách **song song hoá** Actor-Critic để giải
+quyết một vấn đề khác: **tương quan giữa các mẫu huấn luyện**.
+
+## Vấn đề: các mẫu liên tiếp từ một môi trường tương quan cao
+
+Khi một agent tương tác với **một** môi trường theo thời gian, các cặp
+(state, action, reward) thu thập được ở các bước liên tiếp **tương quan
+chặt** với nhau — state ở bước `t+1` phụ thuộc trực tiếp vào state và
+action ở bước `t`. Với các thuật toán supervised đã học trong track, giả
+định ngầm luôn là các mẫu huấn luyện **độc lập và cùng phân phối** (i.i.d.)
+— tương quan cao giữa các mẫu liên tiếp vi phạm giả định này, khiến quá
+trình học kém ổn định hơn. Cách khắc phục quen thuộc trong RL dựa trên
+giá trị (như DQN) là dùng **replay buffer** (lưu lại kinh nghiệm cũ, lấy
+mẫu ngẫu nhiên từ đó) — nhưng cách này tốn bộ nhớ và chỉ áp dụng tự nhiên
+cho các phương pháp off-policy.
+
+## Giải pháp: nhiều actor-learner độc lập chạy song song
+
+**Mnih và cộng sự (2016)**, trong bài báo "Asynchronous Methods for Deep
+Reinforcement Learning", đề xuất một hướng khác hẳn: thay vì sửa vấn đề
+tương quan bằng cách lưu trữ và lấy mẫu lại (replay buffer), **loại bỏ
+tận gốc** nguồn gây tương quan — chạy nhiều **actor-learner** (mỗi luồng
+có bản sao riêng của mạng actor + critic) trên nhiều **bản sao độc lập**
+của môi trường, đồng thời:
+
+- Mỗi luồng tự thu thập trajectory riêng từ bản sao môi trường của nó,
+  hoàn toàn độc lập với các luồng khác.
+- Mỗi luồng tự tính gradient cục bộ dựa trên kinh nghiệm nó vừa thu thập.
+- Các gradient này được áp dụng **bất đồng bộ** (asynchronously) vào một
+  bộ tham số **chung** (global) — mỗi luồng "góp một chút" vào tham số
+  chung theo nhịp độ riêng của nó, không cần đợi các luồng khác.
+
+Vì mỗi luồng chạy độc lập trên một bản sao môi trường khác nhau tại một
+thời điểm khác nhau trong trajectory, các gradient thu được từ nhiều
+luồng tại cùng một thời điểm **không còn tương quan** với nhau — đạt
+hiệu ứng tương tự việc phá tương quan của replay buffer, nhưng không cần
+lưu trữ kinh nghiệm cũ.
+
+## Advantage: định nghĩa tường minh của "hành động này tốt hơn mức trung bình bao nhiêu"
+
+Tên đầy đủ của thuật toán — **Asynchronous *Advantage* Actor-Critic** —
+chỉ ra thành phần thứ hai: thay vì dùng trực tiếp giá trị ước lượng từ
+critic, A3C dùng **advantage function**:
+
+```
+A(s, a) = G - V(s)
+```
+
+Trong đó `G` là return quan sát được (hoặc ước lượng n-step), và `V(s)`
+là giá trị kỳ vọng của state đó theo critic. Advantage đo **chính xác**
+một hành động cụ thể tốt hơn hay kém hơn **mức trung bình kỳ vọng** tại
+state đó bao nhiêu — nếu `A(s,a) > 0`, hành động `a` tốt hơn trung bình
+(nên tăng xác suất chọn lại); nếu `A(s,a) < 0`, hành động đó kém hơn
+trung bình (nên giảm xác suất). Về bản chất, đây chính xác là công thức
+"trừ baseline" đã học ở bài 19 (`G - b`), với baseline `b` được chọn cụ
+thể là `V(s)` (giá trị ước lượng bởi critic) — A3C là nơi công thức này
+được đặt tên và dùng tường minh làm thành phần cốt lõi của thuật toán.
+
+## Kết quả: nhanh hơn, rẻ hơn, và ổn định hơn
+
+Mnih và cộng sự báo cáo biến thể tốt nhất (Asynchronous Advantage
+Actor-Critic) vượt qua kết quả hiện đại nhất trên các game Atari tại
+thời điểm đó, trong khi chỉ cần huấn luyện trên **một CPU đa nhân**
+(multi-core CPU) thay vì GPU, với thời gian huấn luyện chỉ bằng **một
+nửa** so với các phương pháp dựa trên GPU trước đó. Phương pháp cũng
+hoạt động tốt trên các tác vụ điều khiển liên tục (continuous control)
+và điều hướng mê cung 3D.
+
+## A2C: biến thể đồng bộ, đơn giản hoá thêm một bước
+
+Một biến thể phổ biến sau này là **A2C** (Advantage Actor-Critic, bỏ
+chữ "Asynchronous") — thay vì để mỗi luồng cập nhật tham số chung ngay
+khi nó xong (bất đồng bộ), A2C dùng một **bộ điều phối** (coordinator)
+đợi **tất cả** các actor song song hoàn thành trước khi mới cập nhật
+tham số chung một lần. Điều này đảm bảo mọi luồng luôn xuất phát từ
+**đúng cùng một** phiên bản policy (nhất quán hơn A3C, nơi các luồng có
+thể tạm thời dùng các phiên bản tham số hơi khác nhau do cập nhật bất
+đồng bộ), đồng thời tận dụng tốt hơn phần cứng GPU (có thể xử lý theo
+batch nhiều môi trường cùng lúc thay vì nhiều luồng CPU độc lập).
+
+## Liên hệ lại với các bài trước
+
+- A3C không thay đổi nguyên lý cốt lõi của Actor-Critic đã học ở bài
+  [Policy Gradient](19-policy-gradient.mdx) — vẫn có một actor và một
+  critic, vẫn dùng temporal difference để giảm phương sai. Đóng góp của
+  A3C hoàn toàn nằm ở **cách thu thập dữ liệu huấn luyện** (song song, đa
+  luồng) để giải quyết vấn đề tương quan mẫu, không phải một công thức
+  cập nhật mới.
+- Advantage function định nghĩa ở đây (`A = G - V(s)`) là công thức cụ
+  thể hoá của "baseline" đã học ở bài 19 — bài [PPO](47-ppo.mdx) dùng
+  chính khái niệm advantage này (ký hiệu `Â`) trong hàm mục tiêu clipped
+  surrogate, giờ đã có định nghĩa tường minh thay vì chỉ "liên quan chặt
+  tới baseline".
+- Ý tưởng "chạy song song nhiều bản sao môi trường để phá tương quan mẫu"
+  là một giải pháp khác hẳn hướng "lưu trữ và lấy mẫu lại" (replay buffer)
+  đã gặp ở [Q-learning/DQN](18-q-learning.mdx) — cùng mục tiêu (phá tương
+  quan mẫu huấn luyện) nhưng bằng cơ chế hoàn toàn khác.
+- Thú vị: khái niệm "advantage" cũng xuất hiện độc lập ở nhánh Value-based
+  cùng giai đoạn (2015-2016) — [Dueling DQN](71-double-dueling-dqn.mdx)
+  tách kiến trúc mạng Q-value thành nhánh Value `V(s)` + nhánh Advantage
+  `A(s,a)`, dùng đúng công thức tương tự nhưng cho một mục đích khác:
+  không phải để giảm phương sai gradient của policy (như A3C), mà để
+  kiến trúc mạng generalize tốt hơn qua các action có giá trị gần giống
+  nhau. Hai nhóm tác giả khác nhau, cùng thời điểm, cùng phát hiện ra ích
+  lợi của việc tách "giá trị trạng thái" khỏi "giá trị tương đối của
+  từng action" — nhưng áp dụng vào hai nhánh RL khác nhau (value-based
+  và policy-based).
+
+## Nguồn tham khảo
+
+- [arXiv — Asynchronous Methods for Deep Reinforcement Learning](https://arxiv.org/abs/1602.01783) — paper gốc của Mnih và cộng sự (2016), dùng cho vấn đề cụ thể (tương quan mẫu khi chạy trên một môi trường), kiến trúc nhiều actor-learner song song cập nhật bất đồng bộ vào tham số chung, và kết quả thực nghiệm (SOTA Atari trên CPU đa nhân, nhanh gấp đôi so với phương pháp GPU).
+- [Lil'Log — Policy Gradient Algorithms (Lilian Weng)](https://lilianweng.github.io/posts/2018-04-08-policy-gradient/) — dùng cho định nghĩa công thức advantage function (`A(s,a) = G - V(s)`), cơ chế cụ thể của kiến trúc đa luồng (mỗi luồng giữ bản sao cục bộ, gradient áp dụng bất đồng bộ vào tham số toàn cục), và mô tả biến thể đồng bộ A2C (coordinator đợi tất cả actor hoàn thành trước khi cập nhật).

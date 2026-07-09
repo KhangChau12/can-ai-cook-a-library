@@ -1,0 +1,50 @@
+---
+quiz_for: 07-hierarchical-rl
+---
+
+## Q1
+Hierarchical RL giải quyết vấn đề gì mà RL thông thường không giải quyết được?
+
+- [ ] Học policy cho môi trường liên tục
+- [x] Temporal abstraction và sparse reward — tổ chức policy thành nhiều cấp bậc, cấp cao lập kế hoạch dài hạn, cấp thấp thực thi chi tiết
+- [ ] Học từ demonstrations
+- [ ] Off-policy learning
+
+> RL thường học policy ở mức action từng bước — thất bại trong môi trường cần 1000+ bước để đạt reward duy nhất. HRL chia vấn đề: "đi tới cửa" (cấp cao) → "xoay bánh, tiến 2cm" (cấp thấp).
+
+## Q2
+Một option trong Options Framework gồm 3 thành phần nào?
+
+- [ ] State, action, reward
+- [x] Intra-option policy π_o, termination condition β_o, initiation set I_o
+- [ ] Encoder, decoder, goal
+- [ ] Manager, Worker, goal
+
+> Option = (π_o, β_o, I_o). π_o là policy nội bộ khi option chạy, β_o quyết định khi nào kết thúc, I_o là tập state option có thể bắt đầu. Ví dụ: "đi tới cửa" kết thúc khi cách cửa < 5cm.
+
+## Q3
+Trong FeUdal Networks, Worker nhận tín hiệu học từ đâu?
+
+- [ ] Từ reward thật của môi trường
+
+> Worker không nhìn thấy reward thật — nó nhận intrinsic reward dựa trên "độ gần với goal" từ Manager: -||g_t - (φ(s_{t+1}) - φ(s_t))||². Worker được thưởng khi state thay đổi đúng hướng goal. Manager là người duy nhất nhận reward thật.
+
+## Q4
+HIRO cải thiện FeUdal ở điểm nào?
+
+- [ ] HIRO dùng mạng nơ-ron sâu hơn
+- [ ] HIRO chạy nhanh hơn 10 lần
+- [ ] HIRO thêm một cấp policy nữa
+- [x] Goal relabeling — khi replay dữ liệu cũ, relabel goal cho phù hợp với Worker hiện tại, giải quyết non-stationarity giữa Manager và Worker
+
+> FeUdal dùng on-policy, mỗi lần Worker thay đổi là dữ liệu cũ không dùng được. HIRO relabel goal: thay goal cũ g_t bằng goal g'_t mà Worker hiện tại có thể đạt được từ state s_t → tái sử dụng dữ liệu cũ, học nhanh hơn nhiều.
+
+## Q5
+Lợi ích lớn nhất của temporal abstraction (học ở nhiều cấp thời gian) là gì?
+
+- [ ] Giảm số lượng tham số mô hình
+- [ ] Chạy được trên CPU thay vì GPU
+- [ ] Không cần reward function
+- [x] Tái sử dụng sub-policy (option/kỹ năng) giữa các nhiệm vụ khác nhau — "đi tới cửa" học một lần dùng nhiều nơi
+
+> Temporal abstraction cho phép tái sử dụng các kỹ năng (options/sub-policies) đã học. Một khi robot học được option "đi tới cửa", nó có thể dùng option đó trong bất kỳ phòng nào, kết hợp với option "mở cửa", "lấy đồ" → tạo ra hành vi phức tạp từ các kỹ năng cơ bản.

@@ -1,0 +1,43 @@
+---
+quiz_for: 03-thay-doi-kien-truc-them-bot-layer
+---
+
+## Q1
+Vì sao thêm layer trung gian mới ("head") vào model pretrained lại làm tăng nguy cơ overfit, đặc biệt khi dữ liệu competition ít?
+
+- [x] Vì mỗi layer thêm vào làm tăng số lượng tham số cần học, trong khi dữ liệu có hạn không đủ để học các tham số đó một cách tổng quát
+- [ ] Vì layer mới luôn có lỗi cú pháp khi khởi tạo
+- [ ] Vì layer mới làm chậm tốc độ suy luận (inference) của model
+- [ ] Vì thêm layer luôn khiến gradient biến mất hoàn toàn
+
+> Tăng số tham số mà không tăng tương ứng lượng dữ liệu train làm tăng "sức chứa" của model để ghi nhớ nhiễu thay vì học quy luật tổng quát — cần áp dụng regularization (dropout, theo dõi validation loss) để kiểm soát.
+
+## Q2
+Bài toán competition là regression (dự đoán một giá trị liên tục, dùng metric `rmse`). Head cuối cùng của model nên có cấu trúc nào?
+
+- [ ] 1 unit với hàm kích hoạt sigmoid
+- [ ] Nhiều unit với hàm kích hoạt softmax
+- [x] 1 unit, không dùng hàm kích hoạt (hoặc activation tuyến tính)
+- [ ] Giữ nguyên head phân loại của model pretrain gốc
+
+> Dùng sigmoid/softmax ở output cuối cho bài toán regression sẽ giới hạn sai khoảng giá trị đầu ra (ví dụ sigmoid giới hạn về [0,1]), khiến model không thể dự đoán đúng các giá trị ngoài khoảng đó.
+
+## Q3
+Model pretrain có kiến trúc rất sâu (hàng trăm triệu tham số) nhưng dataset competition chỉ có vài trăm mẫu. Cách tiếp cận nào hợp lý để giảm rủi ro overfit khi fine-tune?
+
+- [x] Cắt bỏ một số layer cuối của phần pretrain hoặc chọn một biến thể nhỏ hơn cùng họ kiến trúc, thay vì giữ nguyên toàn bộ kiến trúc lớn
+- [ ] Thêm càng nhiều layer mới càng tốt để tăng sức mạnh model
+- [ ] Tăng learning rate lên mức cao nhất để train nhanh hơn
+- [ ] Bỏ qua bước fine-tune, dùng thẳng model pretrain không chỉnh sửa gì
+
+> Giảm số tham số cần fine-tune (bằng cách cắt layer hoặc chọn biến thể nhỏ hơn) giúp giảm nguy cơ overfit khi dữ liệu quá ít so với sức chứa của kiến trúc gốc.
+
+## Q4
+Vì sao nên ưu tiên chọn một biến thể nhỏ hơn có sẵn của cùng họ kiến trúc, thay vì tự cắt thủ công các layer cuối của một model pretrain lớn?
+
+- [x] Vì biến thể nhỏ hơn đã được huấn luyện đúng cách với đúng kiến trúc đó, ổn định hơn so với việc "cắt xén" một model đã pretrain theo kiến trúc khác
+- [ ] Vì cắt thủ công luôn gây lỗi không thể sửa được
+- [ ] Vì biến thể nhỏ hơn luôn cho điểm số cao hơn biến thể lớn
+- [ ] Vì các họ kiến trúc phổ biến không bao giờ có nhiều hơn một kích thước
+
+> Model đã pretrain sẵn theo đúng kiến trúc nhỏ hơn học được các trọng số phù hợp với chính cấu trúc đó, trong khi cắt xén thủ công một model lớn có thể phá vỡ sự phối hợp giữa các layer đã được huấn luyện cùng nhau.

@@ -1,0 +1,43 @@
+---
+quiz_for: 03-wgan-stylegan
+---
+
+## Q1
+Vấn đề nào của JS divergence (dùng trong GAN gốc) mà WGAN giải quyết?
+
+- [ ] JS divergence bất đối xứng
+- [x] JS bão hoà (gradient = 0) khi 2 phân phối `p_g` và `p_data` không giao nhau — đúng lúc generator cần học nhiều nhất (đầu huấn luyện) thì tín hiệu biến mất
+- [ ] JS divergence tính chậm
+- [ ] JS không đảm bảo điểm cân bằng
+
+> Khi 2 phân phối cách xa (generator còn tệ), JSD = log 2 hằng số → gradient = 0 → generator không học. Wasserstein distance liên tục và có gradient khác 0 ngay cả khi phân phối không giao nhau → generator luôn có tín hiệu học. Đây là nguyên nhân sâu xa GAN gốc hay "không hội tụ đầu".
+
+## Q2
+WGAN dùng "critic" thay discriminator, và yêu cầu 1-Lipschitz. Kỹ thuật nào là chuẩn thực hành hiện đại để đảm bảo Lipschitz?
+
+- [ ] Dropout
+- [x] Gradient penalty `λ·E[(‖∇D(x̂)‖₂−1)²]` (WGAN-GP) — ép gradient norm gần 1
+- [ ] Weight clipping (WGAN gốc, nhưng gây underfitting)
+- [ ] Batch normalization
+
+> WGAN gốc dùng weight clipping (kẹp trọng số [-0.01,0.01]) — đơn giản nhưng underfitting + hành vi bệnh lý. WGAN-GP (Gulrajani 2017) thêm gradient penalty ép ‖∇D‖≈1 — ổn định hơn, là chuẩn hiện đại. λ thường = 10.
+
+## Q3
+StyleGAN cho phép kiểm soát độc lập thang độ (coarse/medium/fine) nhờ cơ chế nào?
+
+- [ ] 3 generator riêng cho 3 thang độ
+- [x] Mapping network `z→w` + inject `w` qua AdaIN ở mỗi lớp synthesis — lớp sâu = coarse (khuôn mặt/tư thế), lớp nông = fine (màu/ánh sáng)
+- [ ] 3 vector nhiễu z riêng biệt
+- [ ] Classifier chọn thang độ
+
+> Synthesis network bắt đầu từ hằng số học được, mỗi lớp tích chập inject `w` qua AdaIN (`σ(w)·norm(x)+μ(w)`). Vì lớp sâu chịu đặc điểm thô, lớp nông chịu chi tiết, inject `w` khác nhau ở các cấp khác nhau cho kiểm soát độc lập. Mapping `z→w` giúp w "disentangled" (các chiều độc lập hơn).
+
+## Q4
+AdaIN trong StyleGAN là gì, và vì sao quan trọng?
+
+- [ ] Loại normalization thay batch norm, ổn định huấn luyện
+- [x] Adaptive Instance Normalization — `σ(w)·((x−μ(x))/σ(x))+μ(w)`, dùng `w` quyết định scale/shift mỗi lớp, đây là cơ chế inject "style" vào synthesis
+- [ ] Hàm kích hoạt mới
+- [ ] Attention mechanism
+
+> AdaIN = chuẩn hoá instance (norm theo từng mẫu) rồi scale/shift bằng tham số từ `w`. Khác batch norm (thống kê batch), instance norm theo từng ảnh. `w` quyết định "phong cách" mỗi lớp qua scale/shift — đây chính là cách StyleGAN điều khiển ảnh sinh. Conditional normalization, cùng họ với batch norm nhưng tham số học được từ điều kiện.

@@ -1,0 +1,125 @@
+---
+title: Naive Bayes — Phân loại Nhanh Bằng Giả định Độc lập Có điều kiện
+track: foundations-track
+module: Nền tảng Toán & ML cổ điển
+order: 9
+status: stable
+prerequisites: ["01-xac-suat-thong-ke-co-ban", "03-logistic-regression"]
+summary: Áp dụng định lý Bayes (đã học ở bài 1) trực tiếp cho bài toán classification gặp một vấn đề tính toán: ước lượng xác suất đồng thời của mọi feature theo từng lớp đòi hỏi số tham số tăng theo cấp số nhân, dễ rơi vào curse of dimensionality. Naive Bayes giải quyết bằng một giả định đơn giản hoá táo bạo — coi mọi feature độc lập với nhau khi đã biết lớp — đổi lấy tốc độ cực nhanh và hoạt động tốt ngay cả với dữ liệu huấn luyện nhỏ, dù giả định đó hiếm khi đúng hoàn toàn trong thực tế.
+last_touched_by_task: Bài mới (2026-07-06), lấp khoảng trống trong module 'Nền tảng Toán & ML cổ điển' — track đã dạy định lý Bayes ở bài 01 (ví dụ xét nghiệm y tế) nhưng chưa có thuật toán classification áp dụng trực tiếp nguyên lý đó. Nguồn: scikit-learn (modules/naive_bayes.html, xác nhận qua WebFetch rất chi tiết: công thức Bayes theorem đầy đủ, giả định conditional independence, MAP estimation, vấn đề curse of dimensionality nếu không có giả định, các biến thể Gaussian/Multinomial/Bernoulli, và lưu ý predict_proba không đáng tin cậy dù classification vẫn tốt). Không thuộc dạng bài 'dòng tiến hoá nhiều model' (1 thuật toán đơn, không tiền thân cạnh tranh trực tiếp) nên 1 nguồn là đủ theo mục 2.5.
+---
+
+Bài [Xác suất & thống kê cơ bản](01-xac-suat-thong-ke-co-ban.mdx) giới
+thiệu định lý Bayes qua ví dụ xét nghiệm y tế — đảo chiều điều kiện để
+tính `P(bệnh | dương tính)` từ `P(dương tính | bệnh)`. **Naive Bayes** áp
+dụng chính xác nguyên lý đó cho bài toán **classification**: thay vì "có
+bệnh hay không", đây là bài toán tổng quát hơn — với một điểm dữ liệu có
+nhiều feature, lớp nào là hợp lý nhất?
+
+## Áp dụng Bayes cho classification: viết lại bài toán
+
+Với một điểm dữ liệu có các feature `x1, ..., xn`, mục tiêu là tìm lớp
+`y` có xác suất hậu nghiệm (posterior) lớn nhất, dựa trên định lý Bayes:
+
+```
+P(y | x1, ..., xn) = P(y) * P(x1, ..., xn | y) / P(x1, ..., xn)
+```
+
+Vì mẫu số `P(x1, ..., xn)` không phụ thuộc vào `y` (giống nhau cho mọi
+lớp đang so sánh), bài toán tìm lớp tốt nhất rút gọn thành:
+
+```
+ŷ = argmax_y  P(y) * P(x1, ..., xn | y)
+```
+
+`P(y)` là xác suất tiên nghiệm của lớp (ví dụ tỷ lệ email spam trong toàn
+bộ dữ liệu), còn `P(x1,...,xn | y)` là xác suất đồng thời của toàn bộ
+feature, biết trước lớp `y`.
+
+## Vấn đề: ước lượng xác suất đồng thời tốn kém theo cấp số nhân
+
+Đây chính là điểm mắc: ước lượng chính xác `P(x1, ..., xn | y)` — xác
+suất đồng thời của `n` feature — đòi hỏi nắm được mọi **tương tác** có
+thể có giữa các feature với nhau. Số lượng tham số cần ước lượng tăng
+theo cấp số nhân với số feature `n` (mỗi feature thêm vào nhân đôi hoặc
+nhiều hơn số tổ hợp cần xét) — đây chính là **curse of dimensionality**
+đã gặp ở bài [k-NN](05-k-nearest-neighbors.mdx), nhưng ở đây biểu hiện
+qua việc cần một lượng dữ liệu huấn luyện khổng lồ mới ước lượng đáng
+tin cậy được xác suất đồng thời đầy đủ.
+
+## Giải pháp: giả định "ngây thơ" — mọi feature độc lập khi đã biết lớp
+
+Naive Bayes giải quyết vấn đề đó bằng một giả định đơn giản hoá táo bạo,
+chính là nguồn gốc tên gọi "**naive**" (ngây thơ): coi mọi feature **độc
+lập có điều kiện** với nhau, khi đã biết lớp `y`:
+
+```
+P(xi | y, x1, ..., x(i-1), x(i+1), ..., xn) = P(xi | y)
+```
+
+Nói cách khác: biết rằng một email là spam, việc email đó chứa từ "khuyến
+mãi" được giả định **không ảnh hưởng** tới xác suất nó cũng chứa từ "miễn
+phí" — dù trong thực tế hai từ này thường xuất hiện cùng nhau. Giả định
+này gần như chắc chắn **không đúng hoàn toàn** trong thực tế (các feature
+thường có tương quan với nhau), nhưng nó đơn giản hoá bài toán đủ nhiều
+để mô hình hoạt động cực kỳ hiệu quả — và trong thực hành, Naive Bayes
+vẫn phân loại tốt dù giả định nền tảng của nó bị vi phạm.
+
+Với giả định độc lập đó, xác suất đồng thời tách thành tích của các xác
+suất riêng lẻ, đơn giản hơn nhiều:
+
+```
+P(y | x1, ..., xn) ∝ P(y) * ∏ P(xi | y)   (tích qua mọi i từ 1 đến n)
+```
+
+Điểm mấu chốt: mỗi `P(xi | y)` giờ chỉ là một phân phối xác suất **một
+chiều**, có thể ước lượng độc lập với các feature khác — giảm mạnh số
+lượng tham số cần học, giúp Naive Bayes hoạt động tốt ngay cả với **dữ
+liệu huấn luyện nhỏ**, và huấn luyện/dự đoán cực kỳ nhanh so với nhiều mô
+hình phức tạp hơn.
+
+## Các biến thể theo loại dữ liệu feature
+
+Tuỳ vào feature là loại dữ liệu gì, `P(xi | y)` được mô hình hoá bằng một
+phân phối xác suất khác nhau:
+
+- **Gaussian Naive Bayes:** giả định mỗi feature liên tục tuân theo phân
+  phối chuẩn (Gaussian) trong mỗi lớp — phù hợp dữ liệu số thông thường
+  (ví dụ đo lường vật lý).
+- **Multinomial Naive Bayes:** giả định feature là **số lần đếm** (ví dụ
+  số lần một từ xuất hiện trong văn bản) — dùng phổ biến nhất cho phân
+  loại văn bản (lọc spam, phân loại chủ đề) dựa trên tần suất từ.
+- **Bernoulli Naive Bayes:** giả định feature là **nhị phân** (có/không
+  xuất hiện) — khác Multinomial ở chỗ nó phạt rõ ràng cả việc một feature
+  **không xuất hiện**, không chỉ đếm số lần xuất hiện.
+
+## Lưu ý quan trọng: phân loại tốt, nhưng xác suất dự đoán không đáng tin cậy hoàn toàn
+
+Một điểm cần lưu ý khi dùng Naive Bayes trong thực tế: dù nhãn dự đoán
+(lớp nào được chọn) thường khá chính xác, giá trị **xác suất** cụ thể mà
+mô hình trả về (ví dụ "85% là spam") không nên được tin tưởng quá mức —
+vì giả định độc lập bị vi phạm trong thực tế thường làm lệch giá trị xác
+suất tuyệt đối, dù thứ tự xếp hạng giữa các lớp (lớp nào có xác suất cao
+nhất) vẫn thường đúng.
+
+## Liên hệ lại với các bài trước
+
+- Naive Bayes là ứng dụng trực tiếp của định lý Bayes đã học ở bài
+  [Xác suất & thống kê cơ bản](01-xac-suat-thong-ke-co-ban.mdx) — cùng
+  công thức đảo chiều điều kiện, chỉ khác quy mô bài toán (nhiều feature
+  thay vì 1 tín hiệu xét nghiệm đơn lẻ).
+- Giống [Logistic Regression](03-logistic-regression.mdx), Naive Bayes
+  cũng giải bài toán classification, nhưng theo hướng hoàn toàn khác:
+  Logistic Regression học trực tiếp một ranh giới quyết định qua tối ưu
+  hoá gradient descent, còn Naive Bayes ước lượng xác suất theo từng
+  feature riêng lẻ rồi áp dụng định lý Bayes — không cần gradient
+  descent, huấn luyện gần như tức thời.
+- Vấn đề curse of dimensionality mà Naive Bayes giải quyết bằng giả định
+  độc lập đã gặp trước đó ở bài [k-NN](05-k-nearest-neighbors.mdx) —
+  cùng một khó khăn cơ bản (số chiều lớn làm ước lượng khó khăn), nhưng
+  hai giải pháp hoàn toàn khác nhau (k-NN chịu ảnh hưởng tiêu cực từ số
+  chiều lớn; Naive Bayes né tránh vấn đề bằng giả định độc lập).
+
+## Nguồn tham khảo
+
+- [scikit-learn — Naive Bayes](https://scikit-learn.org/stable/modules/naive_bayes.html) — dùng làm nguồn chính cho công thức Bayes theorem áp dụng cho classification, giả định conditional independence và công thức MAP rút gọn, vấn đề curse of dimensionality nếu không có giả định độc lập, các biến thể Gaussian/Multinomial/Bernoulli Naive Bayes theo loại dữ liệu, và lưu ý về độ tin cậy của xác suất dự đoán.

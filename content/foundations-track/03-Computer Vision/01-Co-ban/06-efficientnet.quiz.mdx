@@ -1,0 +1,43 @@
+---
+quiz_for: 06-efficientnet
+---
+
+## Q1
+Vấn đề mà EfficientNet giải quyết là gì?
+
+- [x] Cách tăng quy mô CNN truyền thống (trước EfficientNet) thường chỉ tăng một trong ba chiều (sâu/rộng/phân giải) riêng lẻ, thiếu phương pháp cân bằng có hệ thống
+- [ ] CNN truyền thống không thể phân loại được ảnh có nhiều hơn 100 lớp
+- [ ] CNN truyền thống không dùng được backpropagation
+- [ ] CNN truyền thống chỉ hoạt động trên CPU, không hoạt động trên GPU
+
+> Trước EfficientNet, mở rộng quy mô mô hình thường chọn tăng độ sâu, hoặc độ rộng, hoặc độ phân giải ảnh — riêng lẻ theo trực giác, không có nguyên tắc cân bằng cả ba cùng lúc.
+
+## Q2
+Ý tưởng cốt lõi "compound scaling" của EfficientNet là gì?
+
+- [x] Dùng một hệ số hợp chất duy nhất để mở rộng đồng đều cả ba chiều (độ sâu, độ rộng, độ phân giải) cùng lúc theo tỷ lệ cân bằng
+- [ ] Chỉ tăng độ sâu, bỏ qua hoàn toàn độ rộng và độ phân giải
+- [ ] Giảm số lớp xuống còn 1 lớp duy nhất
+- [ ] Thay đổi hoàn toàn nguyên lý convolution bằng attention
+
+> Tan và Le (2019) đề xuất dùng 1 hệ số hợp chất để mở rộng cả 3 chiều đồng thời theo tỷ lệ đã xác định, thay vì tăng riêng lẻ từng chiều một cách tuỳ tiện.
+
+## Q3
+Kết quả cụ thể của EfficientNet-B7 trên ImageNet là gì?
+
+- [x] Đạt 84.3% top-1 accuracy, nhỏ hơn 8.4 lần và nhanh hơn 6.1 lần so với ConvNet tốt nhất trước đó có độ chính xác tương đương
+- [ ] Đạt độ chính xác thấp hơn tất cả các mô hình trước đó
+- [ ] Lớn hơn và chậm hơn các mô hình trước, dù chính xác hơn
+- [ ] Chỉ được thử nghiệm trên CIFAR-10, không thử trên ImageNet
+
+> Đây là kết quả hiếm gặp: EfficientNet-B7 đạt SOTA về độ chính xác (84.3% top-1) trong khi vừa nhỏ hơn vừa nhanh hơn đáng kể so với kiến trúc tốt nhất trước đó — khác với xu hướng "chính xác hơn thường đi kèm nặng hơn" của AlexNet→VGG→ResNet.
+
+## Q4
+EfficientNet là bài cuối cùng trong dòng tiến hoá nào của sub-module "Cơ bản"?
+
+- [x] LeNet → AlexNet → VGG → ResNet → MobileNet → EfficientNet, mỗi bước giải quyết đúng một hạn chế cụ thể của bước ngay trước nó
+- [ ] EfficientNet không liên quan gì tới các bài trước trong sub-module
+- [ ] EfficientNet là bài đầu tiên, không phải bài cuối
+- [ ] EfficientNet thay thế hoàn toàn tất cả các kiến trúc trước, các bài trước không còn giá trị
+
+> Đây là dòng tiến hoá đã hoạch định từ đầu cho sub-module "Cơ bản" — mỗi kiến trúc mới nhắm đúng vào hạn chế cụ thể của kiến trúc trước: LeNet (nguyên lý) → AlexNet (quy mô) → VGG (template thiết kế) → ResNet (degradation) → MobileNet (hiệu quả tính toán) → EfficientNet (mở rộng quy mô có hệ thống).

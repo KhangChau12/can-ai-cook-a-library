@@ -1,0 +1,43 @@
+---
+quiz_for: 01-rnn
+---
+
+## Q1
+Trong công thức `H_t = activation(X_t*W_xh + H_{t-1}*W_hh + b_h)`, `H_{t-1}` đóng vai trò gì?
+
+- [x] Hidden state từ bước trước — mang thông tin tích luỹ từ mọi bước thời gian trước đó
+- [ ] Input tại bước thời gian hiện tại
+- [ ] Trọng số của lớp output
+- [ ] Learning rate của bước cập nhật hiện tại
+
+> `H_{t-1}` là hidden state của bước trước — kết hợp với input hiện tại `X_t` để tạo ra hidden state mới `H_t`, vừa chứa thông tin mới vừa "kế thừa" ngữ cảnh tích luỹ từ trước.
+
+## Q2
+Vì sao RNN dùng CHUNG một bộ trọng số (W_xh, W_hh, b_h) cho mọi bước thời gian, thay vì học tham số riêng cho mỗi bước?
+
+- [x] Để số tham số không phụ thuộc vào độ dài chuỗi — cùng một bộ tham số xử lý được chuỗi 5 từ hay 500 từ
+- [ ] Vì đây là yêu cầu bắt buộc của backpropagation
+- [ ] Để tăng tốc độ tính toán gấp đôi
+- [ ] Vì chuỗi dài luôn có cùng nội dung với chuỗi ngắn
+
+> Đây là nguyên lý chia sẻ trọng số theo thời gian — giống chia sẻ trọng số theo không gian ở CNN (1 kernel dùng ở mọi vị trí ảnh) — giúp số tham số không bùng nổ theo độ dài chuỗi.
+
+## Q3
+Backpropagation through time (BPTT) khác gì so với backpropagation thông thường?
+
+- [x] Về bản chất toán học giống hệt, chỉ khác ở việc "trải phẳng" chuỗi thời gian ra thành một mạng nhiều lớp (mỗi bước thời gian = 1 lớp) rồi áp dụng chain rule
+- [ ] BPTT không dùng chain rule, dùng một công thức hoàn toàn khác
+- [ ] BPTT chỉ áp dụng được cho chuỗi có độ dài dưới 10
+- [ ] BPTT thay thế hoàn toàn gradient descent bằng một thuật toán khác
+
+> Gradient phải lan truyền ngược qua từng bước thời gian (từ cuối về đầu) vì hidden state ở bước t phụ thuộc bước t-1 — nhưng về bản chất vẫn là backpropagation + chain rule, chỉ áp dụng trên cấu trúc "trải theo thời gian".
+
+## Q4
+RNN thuần gặp khó khăn gì khi xử lý chuỗi rất dài?
+
+- [x] Thông tin từ những bước rất xa trong quá khứ dễ bị "pha loãng" hoặc mất hẳn khi truyền qua quá nhiều bước cập nhật liên tiếp
+- [ ] Không thể xử lý chuỗi dài hơn 1000 từ dưới bất kỳ hình thức nào
+- [ ] Tốn quá nhiều bộ nhớ để lưu input, không liên quan tới thông tin quá khứ
+- [ ] Chỉ xảy ra với dữ liệu ảnh, không xảy ra với văn bản
+
+> Đây là vấn đề nhớ phụ thuộc xa (long-term dependency) — ví dụ để hiểu đúng đại từ ở cuối đoạn văn dài, cần nhớ lại danh từ đã xuất hiện từ đầu đoạn. Vấn đề này (vanishing gradient theo thời gian) được giải quyết bởi LSTM/GRU ở bài tiếp theo.

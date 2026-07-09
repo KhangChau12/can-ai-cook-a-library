@@ -1,0 +1,165 @@
+---
+title: Actor-Critic — Thống nhất Value-based và Policy-based trong RL
+track: foundations-track
+module: Reinforcement Learning
+order: 3
+status: stable
+prerequisites: ["01-q-learning", "01-policy-gradient"]
+summary: Sự kết hợp giữa hai trường phái RL: Actor (policy) quyết định hành động, Critic (value function) đánh giá hành động đó. Giải thích vì sao cách này giảm variance so với REINFORCE thuần, và đây là nền tảng cho hầu hết thuật toán RL hiện đại (A3C, PPO, SAC).
+last_touched_by_task: Bài mới (2026-07-08): bài synthesis đầu tiên của module RL — cầu nối giữa Value-based (bài 18) và Policy-based (bài 19), nền tảng cho A3C/PPO/SAC (bài 77/47/78). Nguồn: Lilian Weng Policy Gradient Algorithms + machinelearningmastery.com actor-critic.
+submodule: Overview
+---
+
+Hai bài trước đã dạy hai trường phái RL riêng biệt:
+
+- [Q-learning (bài 18)](18-q-learning.mdx) — **value-based**: học Q-function
+  `Q(s,a)` rồi suy ra policy bằng cách chọn hành động có Q cao nhất. Output
+  là giá trị, không có policy tường minh.
+- [Policy Gradient (bài 19)](19-policy-gradient.mdx) — **policy-based**: học
+  trực tiếp policy `π(a|s)` mà không cần value function. Output là xác suất
+  hành động, không có ước lượng giá trị.
+
+Cả hai đều có nhược điểm riêng — và **Actor-Critic** ra đời để kết hợp ưu
+điểm của cả hai.
+
+## Vấn đề của REINFORCE: phương sai cao
+
+Thuật toán REINFORCE (bài 19) cập nhật policy theo công thức:
+
+```
+∇J(θ) = 𝔼[ G_t · ∇ log π_θ(a_t|s_t) ]
+```
+
+Trong đó `G_t = Σ r_k · γ^(k-t)` là **tổng reward tích luỹ từ bước t tới
+cuối episode** (Monte Carlo return). Vấn đề: `G_t` là một ước lượng **rất
+nhiễu** — nó phụ thuộc vào hàng loạt quyết định ngẫu nhiên sau bước t. Cùng
+một trạng thái `s_t` và hành động `a_t`, `G_t` có thể khác nhau rất nhiều
+giữa các lần chạy. Phương sai cao này khiến policy học chậm và không ổn
+định.
+
+REINFORCE cũng chỉ có thể học **cuối mỗi episode** (phải chờ tới khi kết
+thúc mới biết `G_t`), không học được trong tình huống **non-episodic**
+(môi trường chạy vô hạn) hoặc episode rất dài.
+
+## Ý tưởng Actor-Critic: đánh giá từng bước
+
+Thay vì chờ đến cuối episode để biết `G_t`, **Critic** học một value function
+để ước lượng ngay giá trị của trạng thái hiện tại. Policy (gọi là **Actor**)
+dùng ước lượng này để cập nhật ở mỗi bước, không phải chờ kết thúc.
+
+Cụ thể, Actor-Critic có hai mạng:
+
+```
+Trạng thái s
+    ↓
+┌─────────────┐    ┌─────────────┐
+│   Actor      │    │   Critic    │
+│  π_θ(a|s)    │    │  V_φ(s)    │
+│              │    │             │
+│ → hành động a│    │ → giá trị   │
+└─────────────┘    └─────────────┘
+```
+
+- **Actor** (diễn viên): học policy `π_θ(a|s)` — quyết định nên làm gì
+- **Critic** (nhà phê bình): học value function `V_φ(s)` — đánh giá trạng
+  thái hiện tại tốt đến đâu
+
+Critic đưa ra phản hồi cho từng bước: "hành động vừa rồi tốt hơn hay tệ hơn
+kỳ vọng?" — Actor dùng phản hồi này để điều chỉnh. Cả hai học đồng thời.
+
+## Advantage Actor-Critic: giảm variance hơn nữa
+
+Một cải tiến quan trọng: thay vì dùng trực tiếp `Q(s,a)` hay `V(s)` để cập
+nhật Actor, dùng **Advantage function**:
+
+```
+A(s,a) = Q(s,a) - V(s)
+```
+
+Advantage đo lợi thế tương đối: hành động `a` tại trạng thái `s` tốt hơn
+(tích cực) hay tệ hơn (tiêu cực) so với hành động trung bình tại trạng thái
+đó. Nếu `A > 0`, hành động đó trên trung bình — Actor được khuyến khích.
+Nếu `A < 0`, hành động dưới trung bình — Actor bị giảm xác suất.
+
+Trong thực tế, ước lượng `A(s,a)` thường được tính bằng **TD error**:
+
+```
+δ = r + γ · V(s') - V(s)
+```
+
+Vì `δ` là ước lượng không chệch của advantage (có thể chứng minh
+`𝔼[δ|s,a] = A(s,a)`), nên dùng luôn `δ` thay cho advantage trong cập nhật
+Actor. Điều này rất tiện: chỉ cần một mạng Critic `V(s)`, không cần thêm
+mạng Q riêng.
+
+**Cập nhật Actor** (dùng advantage):
+```
+θ ← θ + α · δ_t · ∇ log π_θ(a_t|s_t)
+```
+
+**Cập nhật Critic** (học value function bằng TD):
+```
+φ ← φ + β · δ_t · ∇ V_φ(s_t)
+```
+
+## So sánh ba trường phái
+
+| Tiêu chí | Value-based (Q-learning) | Policy-based (REINFORCE) | Actor-Critic |
+|----------|-------------------------|-------------------------|--------------|
+| Học policy | Gián tiếp (argmax Q) | Trực tiếp | Trực tiếp (Actor) |
+| Dùng value function | Có (Q) | Không | Có (Critic) |
+| Variance | Thấp (bootstrap) | Cao (MC return) | Trung bình (bootstrap) |
+| Bias | Cao (bootstrap) | Thấp (MC) | Trung bình |
+| Hành động liên tục | Không (cần argmax) | Được | Được |
+| Online learning (từng bước) | Được | Không (chờ episode) | Được |
+
+Actor-Critic nằm giữa hai thái cực: nó bootstrap (dùng ước lượng hiện tại
+để cập nhật — như value-based) nên variance thấp hơn REINFORCE, nhưng cũng
+có bias hơn (vì ước lượng của Critic chưa chính xác). Đánh đổi bias-variance
+này là cốt lõi của thiết kế thuật toán RL.
+
+## Actor-Critic trong thực tế
+
+Hầu hết thuật toán RL hiện đại đều dùng kiến trúc Actor-Critic:
+
+- **A3C/A2C** (bài 77): Advantage Actor-Critic với nhiều actor song song
+  (A3C bất đồng bộ, A2C đồng bộ) — mỗi actor có bản sao môi trường riêng,
+  cùng học một mạng trung tâm
+- **PPO** (bài 47): Actor-Critic với clipped surrogate objective — thay vì
+  cập nhật Actor trực tiếp bằng advantage, giới hạn mức thay đổi để tránh
+  phá huỷ policy
+- **SAC** (bài 78): Actor-Critic với mục tiêu maximum entropy — thêm entropy
+  regularization vào reward, Actor được khuyến khích explore
+- **DDPG/TD3** (bài 84): Actor-Critic cho không gian hành động liên tục,
+  dùng deterministic policy thay vì stochastic
+
+Điểm chung: tất cả đều có một mạng Actor (sinh hành động) và một hoặc nhiều
+mạng Critic (đánh giá hành động). Sự khác biệt nằm ở:
+- Cách tính advantage (TD error, n-step return, GAE)
+- Cơ chế ổn định (target network, clipped objective, entropy bonus)
+- Chiến lược lấy mẫu (on-policy vs off-policy, replay buffer)
+
+## Trực giác: một vũ công và một huấn luyện viên
+
+Hãy tưởng tượng Actor là một vũ công đang tập một điệu nhảy mới. Nếu không
+có Critic (REINFORCE), vũ công chỉ biết sau khi kết thúc toàn bộ bài nhảy
+liệu khán giả có vỗ tay không — và phải suy luận xem bước nào trong hàng
+trăm bước đã làm nên thành công đó. Phương sai cực cao.
+
+Critic là một huấn luyện viên đứng cạnh, sau mỗi bước nhảy đưa ra nhận xét:
+"bước này hơi chậm, lần sau nhanh hơn" hoặc "bước này đẹp, giữ nguyên".
+Vũ công (Actor) điều chỉnh ngay lập tức dựa trên phản hồi chi tiết từng
+bước, thay vì chờ đến cuối bài. Học nhanh hơn rất nhiều.
+
+Ngược lại, nếu chỉ có huấn luyện viên mà không có vũ công (value-based
+thuần), bạn chỉ biết "bước nhảy nào tốt" trong lý thuyết, nhưng không có
+ai thực sự nhảy để khám phá những bước mới. Actor-Critic là cả hai cùng
+học, cùng tiến bộ.
+
+## Nguồn tham khảo
+
+- [Lilian Weng — Policy Gradient Algorithms (2018)](https://lilianweng.github.io/posts/2018-04-08-policy-gradient/) — mục
+  Actor-Critic: công thức cập nhật, so sánh variance, liên hệ A3C/DDPG/SAC
+- [Machine Learning Mastery — Actor-Critic Methods](https://machinelearningmastery.com/) —
+  trực giác actor-critic qua analogy, so sánh value/policy/actor-critic
+  ở mức dễ hiểu

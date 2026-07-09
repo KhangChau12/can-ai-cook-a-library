@@ -1,0 +1,116 @@
+---
+title: TRPO & A2C — Hai Tiền đề Trực tiếp của PPO và A3C
+track: foundations-track
+module: Reinforcement Learning
+submodule: Policy-based
+order: 6
+status: stable
+prerequisites: ["02-ppo", "03-a3c"]
+summary: PPO (bài 47) và A3C (bài 77) đều nhắc 2 tiền đề mà trước đây chỉ nhắc tên: TRPO (Schulman 2015, ràng buộc KL divergence để cập nhật policy an toàn, PPO đơn giản hoá bằng clipped objective) và A2C (biến thể đồng bộ của A3C, bỏ bất đồng bộ để GPU-friendly và đơn giản hơn). Bài này lấp 2 tiền đề: TRPO giải thích vì sao 'trust region' quan trọng và vì sao PPO thay thế, A2C giải thích vì sao đôi khi đồng bộ tốt hơn bất đồng bộ.
+last_touched_by_task: Bài mới (Task 101, 2026-07-07) — Phase 1 RL, lấp 2 tiền đề bị nhắc tên mà chưa có bài: TRPO (bài 47 PPO nhắc 'TRPO ràng buộc KL phức tạp') + A2C (bài 77 A3C nhắc 'biến thể đồng bộ A2C'). TRPO và A2C không có quan hệ tiến hoá trực tiếp với nhau (TRPO về trust region, A2C về đồng bộ hoá) — gộp 1 bài vì cả 2 cùng đóng vai trò 'tiền đề của bài đã có', mỗi cái riêng quá ngắn cho 1 bài độc lập. 2 nguồn: arxiv 1502.05477 (TRPO) + 1602.01783 (A3C paper gốc, chứa cả A2C) theo tiền lệ 2 paper độc lập.
+---
+
+Hai bài trước đã nhắc 2 thuật toán quan trọng mà chưa từng dạy riêng —
+bài [PPO](47-ppo.mdx) mở đầu bằng "TRPO ràng buộc KL phức tạp, PPO đơn
+giản hoá"; bài [A3C](77-a3c.mdx) kết bằng "nhắc thêm biến thể đồng bộ
+A2C". Cả 2 đều là tiền đề lịch sử trực tiếp, bài này kể đủ 2.
+
+## TRPO: cập nhật policy an toàn bằng "vùng tin cậy"
+
+**Vấn đề TRPO giải quyết.** Policy gradient gốc (bài
+[19](19-policy-gradient.mdx)) cập nhật tham số `θ := θ + α·∇J` — kích
+thước bước cập nhật do learning rate `α` kiểm soát. Vấn đề: `α` khó chọn
+— quá nhỏ thì học chậm, quá lớn thì 1 bước cập nhật có thể **phá hỏng
+policy** (policy mới quá khác policy cũ, hành vi đột ngột thay đổi, mất
+hết những gì đã học). Không có cách tự nhiên để biết "bao nhiêu là quá
+lớn" vì độ nhạy thay đổi theo từng điểm trong không gian tham số.
+
+**Ý tưởng "vùng tin cậy" (trust region).** Thay vì điều khiển qua `α`
+(gián tiếp), TRPO ràng buộc trực tiếp **khoảng cách giữa policy mới và
+policy cũ** — đo bằng **KL divergence** `D_KL(π_θ_old ‖ π_θ)`. Cập nhật
+được phép tối đa hoá surrogate objective (cùng dạng PPO sẽ dùng sau),
+NHƯNG với điều kiện KL không vượt ngưỡng `δ`:
+
+```
+tối đa hoá  E[ (π_θ(a|s) / π_θ_old(a|s)) · A ]
+với điều kiện  E[ D_KL(π_θ_old ‖ π_θ) ] ≤ δ
+```
+
+`δ` nhỏ (thường 0.01) ép policy mới ở **trong vùng lân cận** của policy
+cũ — gọi là "trust region". TRPO chứng minh được tính chất **monotonic
+improvement**: trong vùng tin cậy, policy mới đảm bảo không tệ hơn policy
+cũ (theo lý thuyết xấp xỉ) — đây là đảm bảo mạnh hiếm có trong RL, giải
+đúng nỗi lo "1 bước cập nhật phá policy".
+
+**Vì sao phức tạp — và vì sao PPO thay thế.** Ràng buộc KL không dễ cài
+đặt trực tiếp. TRPO phải:
+
+1. Xấp xỉ KL bằng **Fisher information matrix** (ma trận thông tin Fisher)
+   — đạo hàm cấp 2 của KL.
+2. Giải bài toán tối ưu có ràng buộc bằng **conjugate gradient** (gradient
+   tự nhiên — bước đi theo hướng tính đến độ cong của không gian tham số).
+3. **Backtracking line search** để kiểm tra sau mỗi bước rằng KL thực sự
+   ≤ δ (xấp xỉ có thể sai), lùi lại nếu vượt.
+
+Toàn bộ pipeline phức tạp, khó cài đặt, chậm. **PPO** (Schulman 2017, bài
+[47](47-ppo.mdx)) phát hiện: thay vì ràng buộc KL cứng (phức tạp), chỉ
+cần **clip tỉ lệ** `r(θ) = π_θ/π_θ_old` vào khoảng `[1−ε, 1+ε]` — đơn
+giản hơn nhiều, không cần Fisher/conjugate gradient, nhưng vẫn giữ tinh
+thần "không cho policy đổi quá nhanh". PPO không có đảm bảo monotonic
+improvement chặt như TRPO, nhưng trong thực hành cho hiệu năng tương đương
+với chi phí đơn giản hơn nhiều — đó là lý do PPO trở thành thuật toán
+on-policy mặc định, còn TRPO ít dùng trực tiếp (chủ yếu có giá trị lịch
+thuyết + lý thuyết).
+
+## A2C: biến thể đồng bộ của A3C
+
+**A3C** (bài [77](77-a3c.mdx)) dùng **nhiều worker bất đồng bộ** — mỗi
+worker chạy environment riêng, cập nhật tham số chung bất kỳ lúc nào, không
+đợi nhau. Ưu điểm: tận dụng CPU đa nhân, phá tương quan mẫu. Nhưng bất đồng
+bộ có 2 vấn đề thực tế:
+
+- **Race condition gradient**: nhiều worker ghi đè lên cùng tham số chung
+  cùng lúc (Hogwild!), gradient có thể stale (worker tính gradient dựa
+  trên tham số cũ, nhưng tham số đã bị worker khác đổi giữa chừng).
+- **Không GPU-friendly**: cập nhật lẻ tẻ, không gộp batch lớn → GPU
+  (thích batch lớn để khai thác parallelism) không được tận dụng.
+
+**A2C (Advantage Actor-Critic, biến thể đồng bộ)** đơn giản hoá: tất cả
+worker chạy song song nhưng **đồng bộ** — chờ tất cả thu thập đủ
+experience, gộp thành 1 batch lớn, cập nhật 1 lần trên GPU, rồi mới cho
+worker chạy tiếp. Không còn race condition, batch lớn tận dụng GPU tốt
+hơn, cài đặt đơn giản hơn (không cần xử lý lock).
+
+Kết quả thực nghiệm: A2C thường **ngang hoặc tốt hơn A3C** trên nhiều
+benchmark, đặc biệt khi có GPU — chi phí bất đồng bộ không bù được hiệu
+suất từ batch lớn. A3C vẫn có giá trị khi chỉ có CPU đa nhân (không GPU),
+nhưng trong hạ tầng hiện đại (GPU phổ biến), A2C là mặc định.
+
+## Vì sao gộp TRPO và A2C vào 1 bài
+
+TRPO và A2C **không có quan hệ tiến hoá trực tiếp với nhau** (TRPO về
+trust region, A2C về đồng bộ hoá) — theo quy tắc mục 2.1, đáng lẽ tách
+bài. Nhưng cả 2 cùng một vai trò chung: **tiền đề lịch sử của thuật toán
+đã có bài riêng** (PPO, A3C), mỗi cái nếu tách riêng sẽ quá mỏng (TRPO
+chủ yếu để kể vì sao PPO ra đời, A2C chỉ là "A3C bỏ async"). Gộp thành 1
+bài "2 tiền đề" tránh 2 bài còng, đồng thời làm rõ cả 2 đều thuộc về
+"lịch sử Policy-based on-policy" — đúng mẫu hình đã dùng cho các bài
+"tiền đề" khác trong track.
+
+## Liên hệ lại với các bài trước
+
+- TRPO → PPO: dòng tiến hoá "đơn giản hoá" — TRPO ràng buộc KL cứng (chặt
+  nhưng phức tạp) → PPO clip tỉ lệ (lỏng hơn nhưng đơn giản, thực hành
+  đủ tốt). Cùng tác giả (Schulman), 2 năm liên tiếp — PPO rõ ràng là câu
+  trả lời "làm sao giữ ưu điểm trust region mà bỏ độ phức tạp".
+- A3C → A2C: dòng tiến hoá "đơn giản hoá" tương tự — bất đồng bộ (phức tạp,
+  race condition) → đồng bộ (đơn giản, GPU-friendly). Cùng paper gốc (Mnih
+  2016) đề xuất cả 2, thực hành hiện đại chọn A2C.
+- Hai dòng tiến hoá này minh chứng cho quan sát: trong RL, nhiều thuật toán
+  phức tạp về lý thuyết bị thay bởi phiên bản đơn giản hơn cho hiệu quả
+  tương đương — "đơn giản mà đủ dùng" thường thắng "chặt chẽ nhưng phức tạp".
+
+## Nguồn tham khảo
+
+- [arXiv — Trust Region Policy Optimization (Schulman, Levine, Moritz, Jordan, Abbeel, 2015)](https://arxiv.org/abs/1502.05477) — paper gốc TRPO, dùng cho vấn đề (cập nhật lớn phá policy, learning rate khó chọn), giải pháp (ràng buộc KL divergence `D_KL(π_old‖π)≤δ` tạo trust region, đảm bảo monotonic improvement), và lý do phức tạp (Fisher information matrix + conjugate gradient + backtracking line search) — chính là điểm PPO đơn giản hoá bằng clipped objective.
+- [arXiv — Asynchronous Methods for Deep Reinforcement Learning (Mnih et al., 2016)](https://arxiv.org/abs/1602.01783) — paper gốc A3C (đã dùng cho bài 77), dùng cho phần A2C: cùng paper đề xuất cả 2 biến thể, A2C bỏ bất đồng bộ (race condition, không GPU-friendly) để đồng bộ hoá (batch lớn, cập nhật 1 lần, tận dụng GPU).

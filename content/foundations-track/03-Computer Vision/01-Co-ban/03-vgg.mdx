@@ -1,0 +1,107 @@
+---
+title: VGG — Từ Thiết kế Thủ công tới Khối Kiến trúc Có hệ thống
+track: foundations-track
+module: Computer Vision
+submodule: Cơ bản
+order: 3
+status: stable
+prerequisites: ["02-alexnet"]
+summary: AlexNet chứng minh CNN sâu hoạt động tốt nhưng không để lại nguyên tắc thiết kế rõ ràng cho người sau. Simonyan và Zisserman (2014, Oxford VGG group) giải quyết đúng khoảng trống đó: khối (block) lặp lại gồm các kernel 3×3 nhỏ xếp chồng, chứng minh mạng sâu-hẹp thắng mạng nông-rộng — đạt hạng nhất định vị ảnh tại ImageNet 2014.
+last_touched_by_task: Bài mới (2026-07-06) tiếp nối trực tiếp AlexNet (35) trong sub-module CV 'Cơ bản' — lấp khoảng trống dòng tiến hoá LeNet→AlexNet→VGG→ResNet→MobileNet→EfficientNet đã hoạch định ở CLAUDE.md mục 2.1/4. Viết ngay sau khi hoàn tất mốc 44/44 bài stable, theo đúng mục 3 bước 6 AUTOPILOT.md (chuyển hướng lấp khoảng trống thay vì dừng). 2 nguồn: D2L.ai (VGG chapter, vấn đề cụ thể AlexNet thiếu template thiết kế) và arxiv (paper gốc Simonyan & Zisserman 2014, kết quả ImageNet 2014 cụ thể). Lưu ý tự sửa trong task: bản nháp đầu có ghi con số '138 triệu tham số' cho VGG-16 nhưng khi kiểm tra lại qua WebFetch, D2L.ai không xác nhận con số này — đã xoá số liệu cụ thể chưa xác nhận lúc đó. Cập nhật (2026-07-06, Task 88): thử lại qua WebSearch (không phải WebFetch D2L.ai) — con số 138 triệu tham số VGG-16 được xác nhận nhất quán qua nhiều nguồn arxiv độc lập trích dẫn, đây là con số kinh điển được biết rộng rãi trong cộng đồng ML (tương tự MNIST ~99%, theo đúng ngoại lệ mục 2.2) — thêm lại vào bài.
+---
+
+Bài [AlexNet](35-alexnet.mdx) kể câu chuyện: một kiến trúc CNN cụ thể
+(8 lớp, ReLU, dropout) chứng minh nguyên lý convolution của LeNet mở
+rộng được lên quy mô lớn. Nhưng AlexNet để lại một khoảng trống quan
+trọng mà bài này giải quyết: **làm sao thiết kế một CNN sâu hơn nữa một
+cách có hệ thống**, thay vì mỗi lần lại phải "thử và sai" từ đầu?
+
+## Vấn đề: AlexNet chứng minh được nguyên lý nhưng không để lại công thức thiết kế
+
+AlexNet đưa ra bằng chứng thực nghiệm mạnh mẽ rằng CNN sâu hoạt động
+tốt ở quy mô lớn — nhưng bản thân kiến trúc của nó là một tổ hợp các
+lựa chọn khá đặc thù (kích thước kernel khác nhau ở mỗi lớp, số lượng
+lớp cụ thể) không đi kèm một **nguyên tắc tổng quát** nào để người
+nghiên cứu sau có thể áp dụng khi muốn xây một mạng sâu hơn, cho một
+bài toán khác. Nói cách khác: AlexNet trả lời được câu hỏi "CNN sâu có
+hoạt động không?" nhưng chưa trả lời "nên thiết kế CNN sâu **như thế
+nào** một cách có hệ thống?".
+
+## Giải pháp: khối (block) lặp lại, xây từ kernel nhỏ
+
+**Simonyan và Zisserman (2014)**, thuộc nhóm nghiên cứu Visual Geometry
+Group tại Đại học Oxford, trong bài báo "Very Deep Convolutional Networks
+for Large-Scale Image Recognition", đề xuất **VGG** — giải quyết đúng
+khoảng trống đó bằng một ý tưởng thiết kế có thể lặp lại: thay vì phối
+hợp nhiều kích thước kernel khác nhau một cách thủ công như AlexNet, VGG
+xây dựng mạng từ các **khối (block)** giống hệt nhau về cấu trúc, mỗi
+khối gồm:
+
+- Vài lớp tích chập liên tiếp, **tất cả đều dùng kernel kích thước
+  3×3** (kernel nhỏ nhất có thể nắm bắt được khái niệm "trên/dưới/trái/
+  phải/giữa"), có padding để giữ nguyên kích thước không gian qua mỗi
+  lớp tích chập.
+- Một lớp max-pooling 2×2 ở cuối khối để giảm một nửa kích thước không
+  gian, đồng thời tăng gấp đôi số kênh đặc trưng ở khối tiếp theo.
+
+Xếp chồng nhiều khối như vậy liên tiếp, VGG tạo ra một **họ kiến trúc**
+(VGG-11, VGG-16, VGG-19 — số chỉ số lớp có trọng số) thay vì một kiến
+trúc đơn lẻ như AlexNet — người dùng chỉ cần chọn số khối muốn xếp,
+không phải tự thiết kế lại từ đầu mỗi lớp.
+
+## Vì sao nhiều kernel 3×3 tốt hơn một kernel lớn
+
+Điểm mấu chốt của VGG không chỉ là "xếp khối cho gọn" — đó là một phát
+hiện toán học cụ thể: xếp chồng **hai** lớp tích chập 3×3 liên tiếp cho
+một **receptive field** (vùng ảnh gốc mà một điểm output "nhìn thấy")
+tương đương với **một** lớp tích chập 5×5 duy nhất, còn **ba** lớp 3×3
+liên tiếp tương đương một lớp 7×7. Nhưng xếp nhiều lớp 3×3 nhỏ có hai lợi
+thế so với dùng thẳng một kernel lớn: (1) **ít tham số hơn** — ba lớp 3×3
+có tổng số tham số nhỏ hơn đáng kể so với một lớp 7×7 cho cùng receptive
+field, và (2) **nhiều phi tuyến hơn** — mỗi lớp tích chập đều đi kèm một
+lớp activation (ReLU), nên xếp nhiều lớp nhỏ nghĩa là mạng có nhiều điểm
+"bẻ cong phi tuyến" hơn, giúp mô hình học được các hàm phức tạp hơn với
+cùng receptive field.
+
+## Kết quả: mạng sâu-hẹp thắng mạng nông-rộng
+
+Simonyan và Zisserman thử nghiệm nhiều biến thể VGG với độ sâu khác nhau
+(từ 11 tới 19 lớp có trọng số) và cho thấy rõ ràng: tăng độ sâu (nhiều
+khối hơn, mỗi khối vẫn dùng kernel 3×3 nhỏ) cải thiện độ chính xác đáng
+kể so với các kiến trúc nông hơn nhưng "rộng" hơn (kernel lớn hơn, ít lớp
+hơn). Tại **ImageNet Large Scale Visual Recognition Challenge (ILSVRC)
+2014**, VGG đạt **hạng nhất** ở hạng mục định vị ảnh (localization) và
+**hạng nhì** ở hạng mục phân loại (classification) — một kết quả củng cố
+rõ ràng nguyên tắc "sâu và hẹp thắng nông và rộng" mà VGG đề xuất.
+
+## Đánh đổi: đơn giản nhưng nặng tham số
+
+VGG không phải không có cái giá phải trả. Vì các lớp fully-connected ở
+cuối mạng (tương tự cấu trúc của AlexNet) chiếm phần lớn số tham số của
+toàn bộ mô hình, các biến thể VGG có **số lượng tham số rất lớn** — biến
+thể phổ biến nhất, **VGG-16**, có khoảng **138 triệu tham số** (nặng hơn
+đáng kể so với AlexNet), dù về mặt ý tưởng thiết kế lại "gọn gàng" hơn.
+Đây chính là hạn chế cụ thể mà các kiến trúc tiếp theo trong sub-module
+này (ResNet và các kiến trúc hiệu quả hơn) sẽ giải quyết theo những
+hướng khác nhau.
+
+## Liên hệ lại với các bài trước
+
+- VGG không thay đổi nguyên lý convolution/translation invariance/
+  locality đã học ở bài [CNN](11-convolutional-neural-network.mdx) — nó
+  chỉ đề xuất một **công thức thiết kế có hệ thống** (khối lặp lại, luôn
+  dùng kernel 3×3) để áp dụng nguyên lý đó ở quy mô sâu hơn một cách nhất
+  quán, thay vì phối hợp thủ công như AlexNet.
+- Đây là mẫu hình quen thuộc đã gặp nhiều lần trong giáo trình: mỗi
+  kiến trúc mới nhắm đúng vào một hạn chế cụ thể của kiến trúc ngay
+  trước nó (AlexNet thiếu template thiết kế có hệ thống → VGG đề xuất
+  khối lặp lại), không phát minh lại nguyên lý từ đầu — giống cách Q-learning
+  → DQN hay R-CNN → Fast R-CNN → Faster R-CNN đã tiến hoá.
+- Vẫn huấn luyện bằng [backpropagation](09-backpropagation.mdx) như mọi
+  mạng nơ-ron khác — VGG chỉ thay đổi kiến trúc (số lớp, kích thước
+  kernel, cách tổ chức khối), không thay đổi cơ chế tối ưu hoá.
+
+## Nguồn tham khảo
+
+- [Dive into Deep Learning — Networks Using Blocks (VGG)](http://d2l.ai/chapter_convolutional-modern/vgg.html) — dùng cho vấn đề cụ thể AlexNet để lại (thiếu template thiết kế có hệ thống), ý tưởng khối lặp lại với kernel 3×3, và nguyên tắc "mạng sâu-hẹp thắng mạng nông".
+- [arXiv — Very Deep Convolutional Networks for Large-Scale Image Recognition](https://arxiv.org/abs/1409.1556) — paper gốc của Simonyan và Zisserman (2014, Oxford Visual Geometry Group), dùng cho số lớp cụ thể (16-19 lớp có trọng số) và kết quả ILSVRC 2014 (hạng nhất định vị ảnh, hạng nhì phân loại).

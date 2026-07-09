@@ -39,7 +39,8 @@
       "submodules": {
         "Value-based": "Thuật toán dựa trên giá trị: Q-learning, DQN và các biến thể (Double/Dueling, PER, Rainbow).",
         "Policy-based": "Thuật toán dựa trên chiến sách: Policy Gradient, Actor-Critic, PPO và off-policy cho action liên tục (DDPG/TD3/SAC).",
-        "Model-based": "Học mô hình môi trường để lập kế hoạch: Dyna-Q, AlphaZero (MCTS) và MuZero (latent dynamics)."
+        "Model-based": "Học mô hình môi trường để lập kế hoạch: Dyna-Q, AlphaZero (MCTS) và MuZero (latent dynamics).",
+        "Overview": "Nền tảng chung: Framework, MDP, Actor-Critic, Imitation Learning, Exploration, Offline RL, Hierarchical RL."
       }
     },
     "Dimensionality Reduction": {
@@ -50,7 +51,8 @@
       "description": "Mô hình sinh dữ liệu hình ảnh: 2 nhánh song song — sinh đối kháng (GAN family) và khuếch tán (Diffusion Models).",
       "submodules": {
         "GAN Family": "Mô hình sinh đối kháng: GAN gốc (Goodfellow 2014) → DCGAN (convolutional), giải quyết khó định nghĩa loss đo độ chân thực bằng discriminator học được.",
-        "Diffusion Models": "Mô hình sinh khuếch tán: DDPM (forward/reverse process) → DDIM (sample nhanh 10-50×) → classifier-free guidance + Latent Diffusion (Stable Diffusion) biến thành text-to-image thực tế."
+        "Diffusion Models": "Mô hình sinh khuếch tán: DDPM (forward/reverse process) → DDIM (sample nhanh 10-50×) → classifier-free guidance + Latent Diffusion (Stable Diffusion) biến thành text-to-image thực tế.",
+        "Overview": "Nền tảng chung: phân loại generative models, VAE, Flow-based models, VQ-VAE/VQ-GAN."
       }
     },
     "LLM": {
@@ -65,7 +67,9 @@
       "submodules": {
         "Biểu diễn âm thanh": "Nền tảng chung: waveform, STFT/spectrogram, mel-spectrogram, MFCC — cách đưa âm thanh vào mô hình ML.",
         "Speech-to-Text": "Nhận dạng giọng nói: CTC, encoder-decoder (Whisper), beam search decoding, đánh giá WER.",
-        "Text-to-Speech": "Tổng hợp giọng nói: text→spectrogram (Tacotron 2, FastSpeech) + vocoder (WaveNet, HiFi-GAN), đánh giá MOS."
+        "Text-to-Speech": "Tổng hợp giọng nói: text→spectrogram (Tacotron 2, FastSpeech) + vocoder (WaveNet, HiFi-GAN), đánh giá MOS.",
+        "Overview": "Giới thiệu chung: bài toán ML cho âm thanh, pipeline xử lý.",
+        "Audio-Understanding": "Phân tích âm thanh nâng cao: source separation và event detection."
       }
     },
     "Recommendation Systems": {

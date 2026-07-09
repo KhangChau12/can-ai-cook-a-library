@@ -1,0 +1,53 @@
+---
+quiz_for: 04-score-based-models
+---
+
+## Q1
+Score function trong score-based models là gì?
+
+- [ ] Giá trị kỳ vọng của log-probability
+- [x] Gradient của log-probability density: s(x) = ∇_x log p(x) — chỉ hướng để tăng xác suất tại mỗi điểm
+- [ ] Xác suất của điểm dữ liệu x
+- [ ] Tích phân của log-probability
+
+> Score function cho biết "đi hướng nào để lên vùng xác suất cao hơn" tại mỗi điểm x. Kết hợp với Langevin dynamics (gradient ascent + noise) cho phép sample từ phân phối mà không cần biết dạng chính xác của p(x).
+
+## Q2
+Vấn đề "manifold hypothesis" trong score-based models là gì?
+
+- [ ] Dữ liệu ảnh chiếm quá nhiều bộ nhớ
+- [ ] Mạng nơ-ron không đủ sâu để học score function
+- [x] Score function không xác định ở những điểm ngoài data manifold (p(x)=0 → log p(x) undefined) — hầu hết không gian ảnh là "nhiễu"
+- [ ] Langevin dynamics không hội tụ
+
+> Hầu hết các điểm trong không gian ảnh là nhiễu, không nằm trên data manifold. Ở đó p(x) ≈ 0 → log p(x) undefined → score function không có nghĩa. NCSN giải quyết bằng cách thêm nhiều mức noise — noise lớn mở rộng manifold, score function xác định ở mọi nơi.
+
+## Q3
+NCSN (Noise Conditional Score Network) dùng kỹ thuật gì để sample?
+
+- [ ] Reverse diffusion chain
+- [x] Annealed Langevin dynamics — bắt đầu từ noise lớn nhất, sample bằng Langevin, giảm dần noise, lặp lại
+- [ ] MCMC rejection sampling
+- [ ] Beam search
+
+> NCSN sample qua nhiều mức noise từ lớn đến nhỏ. Ở mỗi mức, chạy Langevin dynamics (gradient ascent theo score + noise) để tìm vùng xác suất. Giảm noise → tập trung gần manifold hơn. Đây là tiền đề trực tiếp của reverse process DDPM.
+
+## Q4
+Framework Score SDE (Song et al. 2020) thống nhất DDPM và NCSN bằng cách nào?
+
+- [ ] Chứng minh DDPM tốt hơn NCSN
+- [x] Coi cả hai là trường hợp đặc biệt của một SDE liên tục — DDPM = VP-SDE, NCSN = VE-SDE
+- [ ] Hợp nhất loss function của cả hai
+- [ ] Dùng chung kiến trúc mạng
+
+> Score SDE framework coi forward process là một SDE liên tục: dx = f(x,t)dt + g(t)dw. DDPM là VP-SDE (variance preserving, f = -½βx, g = √β). NCSN là VE-SDE (variance exploding, f = 0, g = √(dσ²/dt)). Reverse SDE dùng score function để sinh dữ liệu.
+
+## Q5
+Probability flow ODE mang lại lợi ích gì so với reverse SDE thuần?
+
+- [ ] Chất lượng ảnh cao hơn
+- [x] Sample nhanh hơn (ODE solver với ít bước hơn), tính exact likelihood, và biểu diễn latent tất định cho nội suy ngữ nghĩa
+- [ ] Không cần huấn luyện mạng score
+- [ ] Chạy được trên CPU
+
+> Probability flow ODE là phương trình ODE tương đương với reverse SDE (cùng phân phối biên). ODE có thể dùng solver với số bước nhỏ hơn SDE (nhanh hơn), cho phép tính exact likelihood (change of variable), và là tất định (nội suy ngữ nghĩa). DDIM là trường hợp đặc biệt của probability flow ODE.

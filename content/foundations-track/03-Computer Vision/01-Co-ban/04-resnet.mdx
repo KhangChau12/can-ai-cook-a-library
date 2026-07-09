@@ -1,0 +1,101 @@
+---
+title: ResNet — Skip Connection Giải quyết Vấn đề Degradation khi Mạng Quá Sâu
+track: foundations-track
+module: Computer Vision
+submodule: Cơ bản
+order: 4
+status: stable
+prerequisites: ["03-vgg"]
+summary: VGG chứng minh mạng sâu hơn thường tốt hơn, nhưng có giới hạn: mạng quá sâu gặp vấn đề degradation (không phải overfitting) — thêm lớp khiến training error tăng chứ không giảm. He và cộng sự (2015) giải quyết bằng skip connection: học phần dư (residual) thay vì học trực tiếp ánh xạ mong muốn, đảm bảo thêm lớp không bao giờ làm giảm khả năng biểu diễn — mạng 152 lớp đạt hạng nhất ILSVRC 2015.
+last_touched_by_task: Bài mới (2026-07-06) tiếp nối trực tiếp VGG (36) trong sub-module CV 'Cơ bản' — lấp khoảng trống dòng tiến hoá LeNet→AlexNet→VGG→ResNet→MobileNet→EfficientNet. 2 nguồn: arxiv (paper gốc He et al. 2015, xác nhận qua WebFetch trực tiếp abstract: 152 lớp, 3.57% error ImageNet, hạng nhất ILSVRC 2015) và D2L.ai (giải thích sâu về nested function classes và công thức residual mapping g(x)=f(x)-x, cũng xác nhận qua WebFetch trực tiếp). Không bịa số liệu — mọi con số lấy trực tiếp từ 2 nguồn đã đọc.
+---
+
+Bài [VGG](36-vgg.mdx) chứng minh nguyên tắc "mạng sâu hơn thường tốt
+hơn" bằng cách xếp chồng nhiều khối kernel 3×3. Câu hỏi tự nhiên tiếp
+theo: cứ xếp thêm khối mãi, mạng có tốt lên mãi không? Câu trả lời thực
+nghiệm là **không** — và lý do tại sao dẫn thẳng tới một trong những ý
+tưởng quan trọng nhất của computer vision hiện đại.
+
+## Vấn đề: degradation, không phải overfitting
+
+Về mặt lý thuyết, một mạng sâu hơn luôn có thể **ít nhất bằng** một mạng
+nông hơn: chỉ cần các lớp thêm vào học đúng **ánh xạ đơn vị** (identity
+function — output bằng chính input), phần còn lại của mạng hoạt động y
+hệt mạng nông hơn. Nói cách khác, về lý thuyết, tập hợp các hàm số một
+mạng sâu hơn có thể biểu diễn (gọi là **function class**) phải **chứa**
+tập hợp hàm số của mạng nông hơn — thêm lớp không bao giờ nên làm giảm
+khả năng biểu diễn.
+
+Nhưng trên thực tế, khi xếp chồng thêm nhiều lớp vào một mạng đã khá sâu
+(ví dụ kéo dài thêm VGG), các nhà nghiên cứu quan sát một hiện tượng
+ngược đời: **training error** (sai số ngay trên chính tập huấn luyện,
+không phải validation) bắt đầu **tăng lên** thay vì giảm khi thêm lớp.
+Đây gọi là vấn đề **degradation** (suy thoái) — và quan trọng là nó
+**khác hẳn overfitting**: overfitting là khi train error thấp nhưng
+validation error cao (mô hình học thuộc lòng dữ liệu train); degradation
+là khi ngay cả train error cũng tệ đi — mạng sâu hơn không học tốt bằng
+mạng nông hơn *ngay cả trên chính dữ liệu nó nhìn thấy khi train*, dù về
+lý thuyết nó hoàn toàn có khả năng làm được ít nhất tốt bằng.
+
+Gốc rễ vấn đề: nếu tập hợp hàm số của mạng mới **không** đảm bảo chứa
+tập hợp hàm số của mạng cũ (không "nested" - lồng ghép), thì không có gì
+đảm bảo mạng sâu hơn sẽ tìm được nghiệm tốt bằng hoặc hơn qua quá trình
+huấn luyện bằng gradient descent thông thường — trong thực tế, việc học
+đúng ánh xạ đơn vị qua nhiều lớp tích chập + activation phi tuyến xếp
+chồng hoá ra khó hơn nhiều so với suy nghĩ ban đầu.
+
+## Giải pháp: học phần dư, không học trực tiếp ánh xạ mong muốn
+
+**He, Zhang, Ren, và Sun (2015)**, trong bài báo "Deep Residual Learning
+for Image Recognition", đề xuất **ResNet** (Residual Network) để giải
+quyết đúng vấn đề degradation này bằng một thay đổi tưởng nhỏ nhưng có
+tác động lớn: thay vì để một khối các lớp học trực tiếp một ánh xạ mong
+muốn `f(x)`, ép khối đó học **phần dư** (residual) `g(x) = f(x) - x`,
+rồi cộng ngược lại input `x` để có output cuối `f(x) = g(x) + x`. Về mặt
+kiến trúc, điều này được hiện thực bằng một **skip connection** (kết nối
+tắt) — một đường dẫn cộng trực tiếp input vào output của khối, song song
+với đường đi qua các lớp tích chập thông thường.
+
+Lý do thay đổi nhỏ này giải quyết được vấn đề lớn: nếu ánh xạ tối ưu cho
+một khối thực sự **chính là ánh xạ đơn vị** (`f(x) = x`, tức khối đó
+"không cần làm gì thêm"), thì với công thức residual, khối chỉ cần học
+`g(x) = 0` — đẩy toàn bộ trọng số của khối về gần 0. Học một hàm hằng số
+0 dễ hơn nhiều so với việc ép một chuỗi lớp tích chập + phi tuyến phải tự
+"tìm ra" chính xác ánh xạ đơn vị từ đầu. Nhờ cấu trúc này, ResNet đảm bảo
+được đúng tính chất lý thuyết mong muốn ban đầu: tập hợp hàm số của một
+mạng có thêm khối residual luôn **chứa** tập hợp hàm số của mạng không có
+khối đó (nested function classes) — thêm lớp residual chỉ có thể giữ
+nguyên hoặc cải thiện khả năng biểu diễn, không bao giờ làm nó tệ đi.
+
+## Kết quả: mạng sâu chưa từng có tiền lệ
+
+Nhờ giải quyết được vấn đề degradation, ResNet cho phép huấn luyện những
+mạng sâu hơn nhiều so với bất kỳ kiến trúc nào trước đó. Tại **ILSVRC
+2015**, He và cộng sự công bố một mạng ResNet sâu **152 lớp** — gấp
+khoảng 8 lần độ sâu của VGG — đạt tỷ lệ lỗi chỉ **3.57%** trên tập test
+ImageNet, giành **hạng nhất** ở hạng mục phân loại. Nhóm tác giả còn thử
+nghiệm các mạng residual sâu tới 100-1000 lớp trên CIFAR-10, chứng minh
+kỹ thuật này mở rộng được lên độ sâu mà các kiến trúc trước hoàn toàn
+không thể huấn luyện ổn định.
+
+## Liên hệ lại với các bài trước
+
+- ResNet không thay đổi nguyên lý convolution đã học ở bài
+  [CNN](11-convolutional-neural-network.mdx) — nó giải quyết một vấn đề
+  hoàn toàn khác: không phải "cách trích xuất đặc trưng", mà là "làm sao
+  huấn luyện được một mạng rất sâu bằng gradient descent mà không bị
+  thoái hoá hiệu năng".
+- Đây là ví dụ tiếp theo cho mẫu hình đã gặp nhiều lần: mỗi kiến trúc
+  mới nhắm đúng vào hạn chế cụ thể của kiến trúc ngay trước nó — VGG
+  chứng minh sâu hơn thường tốt hơn nhưng không giải thích được tại sao
+  đôi khi sâu hơn lại tệ đi (degradation); ResNet giải quyết đúng câu hỏi
+  đó bằng skip connection.
+- Vẫn huấn luyện bằng [backpropagation](09-backpropagation.mdx) như mọi
+  mạng nơ-ron khác — skip connection chỉ thay đổi cấu trúc lan truyền
+  (thêm một đường cộng trực tiếp), không thay đổi cơ chế tính gradient
+  hay cập nhật tham số.
+
+## Nguồn tham khảo
+
+- [arXiv — Deep Residual Learning for Image Recognition](https://arxiv.org/abs/1512.03385) — paper gốc của He, Zhang, Ren, và Sun (2015), dùng cho vấn đề degradation cụ thể, giải pháp skip connection, và kết quả (mạng 152 lớp, 3.57% error ImageNet, hạng nhất ILSVRC 2015, thử nghiệm 100-1000 lớp trên CIFAR-10).
+- [Dive into Deep Learning — Residual Networks (ResNet)](http://d2l.ai/chapter_convolutional-modern/resnet.html) — dùng cho giải thích sâu về nested function classes (vì sao thêm lớp không đảm bảo cải thiện nếu function class không lồng ghép), công thức residual mapping cụ thể (`g(x) = f(x) - x`, output `f(x) = g(x) + x`), và trực giác vì sao học ánh xạ đơn vị qua residual dễ hơn học trực tiếp.

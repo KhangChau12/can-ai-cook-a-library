@@ -1,0 +1,164 @@
+---
+title: Speech-to-Text — Từ Spectrogram sang Chuỗi Văn bản
+track: foundations-track
+module: Audio
+submodule: Speech-to-Text
+order: 1
+status: stable
+prerequisites: ["01-bieu-dien-am-thanh", "02-transformer"]
+summary: Speech-to-text là bài toán sequence-to-sequence với một khó khăn riêng: độ dài input (số frame audio) và độ dài output (số token text) không khớp nhau và không có quan hệ cố định. CTC (loss `L=-log Σ P(π|x)` qua mọi alignment, tính bằng forward-backward) và kiến trúc encoder-decoder (Whisper — 680K giờ dữ liệu, multitask, zero-shot) là hai cách giải quyết vấn đề căn chỉnh này. Beam search + LM rescoring cải thiện suy luận, WER là chỉ số đánh giá chuẩn.
+last_touched_by_task: Cải thiện Task 111 (2026-07-07): Phase 3 Audio tiếp — bổ sung (1) công thức CTC loss đầy đủ `L=-log Σ_π P(π|x)` + thuật toán forward-backward, (2) beam search decoding với công thức score kết hợp CTC+LM `Σ log P_CTC + α·log P_LM + β|y|`, (3) WER `(S+D+I)/N`, (4) Whisper chi tiết cụ thể (680K giờ, multitask training, zero-shot transfer) thay vì chỉ nhắc tên. Bài cũ chỉ mô tả quy tắc rút gọn bằng lời, không có công thức/WER/beam search/Whisper cụ thể. Nguồn: WebSearch whitelist (arxiv) xác nhận công thức + Whisper paper. CTC gốc (Graves 2006) vẫn không có trên arxiv như đã xác nhận trước — không trích trực tiếp, chỉ dùng công thức đã xác nhận qua nguồn khác.
+---
+
+Bài [Biểu diễn Âm thanh](30-bieu-dien-am-thanh.mdx) giải quyết câu hỏi
+"đưa âm thanh vào mô hình bằng cách nào" (spectrogram/mel-spectrogram).
+**Speech-to-text** (nhận dạng giọng nói, hay ASR — Automatic Speech
+Recognition) là bài toán dùng biểu diễn đó làm input, sinh ra **văn bản**
+tương ứng làm output — nhưng có một khó khăn riêng không gặp ở các bài
+toán sequence-to-sequence đã học trước đó.
+
+## Vấn đề riêng: độ dài input và output không khớp, không cố định
+
+Với dịch máy (một ứng dụng kinh điển của Transformer, bài
+[Transformer](15-transformer.mdx)), một câu 5 từ tiếng Việt có thể dịch
+thành 5, 6, hay 7 từ tiếng Anh — độ dài đầu ra thay đổi, nhưng cả input
+và output đều là chuỗi **từ/token rời rạc**, tốc độ tương đối gần nhau.
+
+Với speech-to-text, input là một chuỗi **frame audio** rất dài (mỗi giây
+âm thanh có thể chia thành hàng trăm frame từ spectrogram), trong khi
+output chỉ là một câu văn bản ngắn — chênh lệch độ dài giữa input và
+output rất lớn và **không cố định** (người nói nhanh hay chậm tạo ra số
+frame khác nhau cho cùng một câu nói). Mô hình cần học cách "căn chỉnh"
+(align) — biết frame audio nào tương ứng với từ nào trong output — mà
+không có thông tin căn chỉnh đó được cung cấp sẵn trong dữ liệu train
+(chỉ có cặp audio + văn bản, không có nhãn "từ này ứng với đúng frame
+nào").
+
+## Cách tiếp cận 1: CTC (Connectionist Temporal Classification)
+
+**CTC** là một hàm loss được thiết kế riêng để giải quyết đúng vấn đề căn
+chỉnh này, mà không cần biết trước sự tương ứng frame-từ. Ý tưởng cốt
+lõi: cho mô hình (thường là RNN, bài [RNN](12-recurrent-neural-network.mdx))
+dự đoán một nhãn (ký tự hoặc "khoảng trống"/blank) tại **mỗi frame** input
+— tạo ra một chuỗi output có **cùng độ dài** với input. Sau đó, CTC định
+nghĩa một quy tắc "rút gọn" chuỗi thô đó thành văn bản cuối cùng: xoá các
+ký tự lặp liên tiếp và xoá nhãn "blank" — nhiều chuỗi thô khác nhau (khác
+nhau ở việc lặp bao nhiêu lần mỗi ký tự, hay xen bao nhiêu blank ở đâu) có
+thể rút gọn về cùng một câu văn bản.
+
+Nhờ cách đặt vấn đề này, CTC loss có thể tính tổng xác suất trên **mọi**
+cách căn chỉnh có thể dẫn tới đúng văn bản mục tiêu — mô hình tự học ra
+cách căn chỉnh hợp lý nhất qua quá trình huấn luyện, mà không cần dữ liệu
+căn chỉnh thủ công.
+
+**Ví dụ rút gọn.** Với chuỗi thô độ dài 8 (mỗi vị trí ứng 1 frame), nhiều
+cách căn chỉnh khác nhau đều rút gọn về cùng "abc": `aaa-bb-c-` (`-` là
+blank) và `a-abbcc-` đều → xoá lặp liên tiếp → xoá blank → `abc`. Đây là
+lý do quy tắc rút gọn cho phép cùng 1 câu output ứng với **rất nhiều**
+chuỗi thô khác nhau — CTC loss cộng xác suất của **tất cả** chúng.
+
+**Công thức loss.** Gọi `π` là 1 chuỗi thô (1 alignment, cùng độ dài
+input), `B(π)` là phép rút gọn (xoá lặp + xoá blank), `y` là văn bản mục
+tiêu. CTC loss là:
+
+```
+L_CTC = -log P(y|x) = -log Σ_{π ∈ B⁻¹(y)} P(π|x)
+```
+
+tức tổng xác suất trên **mọi** alignment `π` rút gọn đúng về `y`. Tính
+trực tiếp tổng này duyệt qua số alignment tăng theo cấp số mũ với độ dài
+— không khả thi. CTC dùng **thuật toán forward-backward** (kỹ thuật quy
+hoạch động, cùng họ với thuật toán Viterbi/Baum-Welch trong HMM cổ điển)
+để tính tổng này hiệu quả trong thời gian tuyến tính với độ dài chuỗi —
+xây 1 bảng động, mỗi ô là xác suất "đi tới đúng vị trí này trong `y` tại
+đúng frame này", tính truy hồi thay vì liệt kê từng alignment.
+
+**Beam search decoding.** Sau khi huấn luyện xong, để **suy luận** (sinh
+văn bản từ audio mới), cách đơn giản nhất — **greedy decoding** (mỗi
+frame lấy nhãn xác suất cao nhất, rồi rút gọn) — có thể bỏ lỡ lời giải
+tốt hơn (1 quyết định sai ở 1 frame không tự sửa được). **Beam search**
+giữ đồng thời `k` (beam width) chuỗi ứng viên tốt nhất tại mỗi bước thay
+vì chỉ 1, mở rộng dần theo thời gian, tính điểm kết hợp xác suất CTC với
+**language model** (LM) bên ngoài:
+
+```
+score(y) = Σ_t log P_CTC(y_t | x) + α · log P_LM(y_t | y_1:t-1) + β·|y|
+```
+
+`α` trọng số cho ngôn ngữ mô hình (ưu tiên câu "nghe hợp ngữ pháp" hơn),
+`β` phạt/thưởng theo độ dài (tránh beam search thiên vị câu quá ngắn).
+Beam search + LM rescoring là kỹ thuật chuẩn để cải thiện WER thực tế —
+CTC tự nó chỉ biết âm thanh, LM bù thêm tri thức ngôn ngữ (ví dụ phân biệt
+"tôi đi học" vs "tôi đi hok" nghe gần giống nhau về âm).
+
+**Đánh giá: Word Error Rate (WER).** Chỉ số chuẩn cho ASR — đo tỷ lệ lỗi
+giữa câu dự đoán và câu đúng, dựa trên 3 loại lỗi ở cấp độ từ: **thay thế**
+(Substitution — từ sai), **xoá** (Deletion — thiếu từ), **thêm** (Insertion
+— thừa từ), tính qua alignment tối ưu (edit distance):
+
+```
+WER = (S + D + I) / N
+```
+
+`N` là số từ trong câu đúng (reference). WER thấp hơn = tốt hơn (0% là
+hoàn hảo). WER là thước đo trực tiếp so sánh các hệ thống ASR khác nhau —
+tương tự vai trò của accuracy/F1 cho classification.
+
+## Cách tiếp cận 2: Encoder-Decoder (kiểu Whisper)
+
+Cách tiếp cận thứ hai, phổ biến ở các hệ thống hiện đại (như Whisper của
+OpenAI): dùng kiến trúc **encoder-decoder** dựa trên Transformer đã học,
+tương tự cách Transformer được dùng cho dịch máy:
+
+- **Encoder** nhận vào spectrogram/mel-spectrogram, mã hoá thành một biểu
+  diễn ẩn.
+- **Decoder** (autoregressive, giống decoder của LLM đã học ở bài
+  [Pretraining](24-pretraining-llm.mdx)) sinh ra từng token văn bản một,
+  mỗi token dựa vào biểu diễn từ encoder và các token đã sinh trước đó,
+  dùng cơ chế **cross-attention** để "nhìn" vào đúng phần audio liên quan
+  nhất tại mỗi bước sinh token.
+
+Khác với CTC (một hàm loss chuyên biệt gắn với kiến trúc RNN đơn giản),
+cách tiếp cận encoder-decoder tận dụng trực tiếp sức mạnh của
+self-attention/cross-attention đã học ở Transformer — decoder có thể
+"tra cứu" toàn bộ audio đã mã hoá tại mỗi bước sinh từ, không bị giới hạn
+bởi cấu trúc tuần tự chặt như RNN.
+
+**Whisper cụ thể (Radford et al., 2022, OpenAI).** Khác với các mô hình
+tự-giám-sát trước đó (wav2vec 2.0, HuBERT — pretrain không nhãn rồi
+fine-tune), Whisper huấn luyện **hoàn toàn supervised** trên **680.000
+giờ** dữ liệu audio-text thu thập từ web (đa ngôn ngữ, đa miền) — quy mô
+lớn bù cho nhãn "yếu" (weak supervision, không phải nhãn chuyên gia sạch
+tuyệt đối). Kiến trúc chuẩn encoder-decoder Transformer (encoder xử lý
+log-mel spectrogram, decoder autoregressive sinh token).
+
+Điểm đặc biệt: **multitask training** — cùng 1 mô hình học đồng thời
+nhiều tác vụ (nhận dạng giọng nói, dịch sang tiếng Anh, phát hiện hoạt
+động giọng nói, nhận dạng ngôn ngữ) bằng cách mã hoá tác vụ vào chuỗi
+token đặc biệt ở đầu output (giống cách GPT xử lý nhiều tác vụ qua
+prompt). Kết quả: Whisper có khả năng **zero-shot transfer** mạnh — chạy
+tốt trên nhiều benchmark ASR công khai **mà không cần fine-tune riêng**,
+nhờ quy mô + đa dạng dữ liệu huấn luyện, đúng tinh thần scaling đã học ở
+bài [Scaling Laws](25-scaling-laws.mdx).
+
+## Liên hệ lại với các bài trước
+
+- Speech-to-text là ví dụ cụ thể thứ hai (sau dịch máy đã nhắc ở bài
+  Transformer) cho bài toán sequence-to-sequence — nhưng với một thách
+  thức riêng (chênh lệch độ dài input/output cực lớn) đòi hỏi công cụ
+  chuyên biệt (CTC) hoặc kiến trúc đủ mạnh để tự học căn chỉnh
+  (cross-attention của Transformer).
+- Kiến trúc encoder-decoder kiểu Whisper tái sử dụng gần như nguyên vẹn
+  Transformer đã học, chỉ khác **input của encoder** (spectrogram thay vì
+  token văn bản) — decoder vẫn sinh token văn bản theo đúng cơ chế
+  autoregressive/next-token prediction đã học ở series LLM.
+- CTC dùng RNN đã học ở bài [RNN](12-recurrent-neural-network.mdx) làm
+  kiến trúc nền — một minh hoạ khác cho việc chọn kiến trúc phù hợp với
+  bản chất bài toán (dữ liệu tuần tự dài, cần dự đoán tại mỗi bước thời
+  gian) trước khi tính tới các kỹ thuật phức tạp hơn.
+
+## Nguồn tham khảo
+
+- [Multimodal Browser AI with Transformers.js for Images and Speech (MachineLearningMastery)](https://machinelearningmastery.com/multimodal-browser-ai-with-transformers-js-for-images-and-speech/) — dùng cho việc xác nhận Whisper dùng kiến trúc Transformer để chuyển đổi audio thành văn bản trong ứng dụng thực tế.
+- [arXiv — Robust Speech Recognition via Large-Scale Weak Supervision (Radford et al., 2022)](https://arxiv.org/abs/2212.04356) — paper gốc Whisper, dùng cho chi tiết cụ thể: huấn luyện supervised trên 680.000 giờ dữ liệu web đa ngôn ngữ (khác wav2vec2/HuBERT tự-giám-sát), kiến trúc encoder-decoder Transformer chuẩn, multitask training (ASR + dịch + phát hiện giọng nói + nhận dạng ngôn ngữ qua token đặc biệt), kết quả zero-shot transfer mạnh trên nhiều benchmark.
+- [arXiv — Comparison of Decoding Strategies for CTC Acoustic Models](https://arxiv.org/pdf/1708.04469) — dùng cho công thức CTC loss đầy đủ (`L=-log Σ_π P(π|x)`, forward-backward algorithm), và công thức beam search decoding kết hợp CTC + language model rescoring (`score(y)=Σ log P_CTC + α·log P_LM + β|y|`).

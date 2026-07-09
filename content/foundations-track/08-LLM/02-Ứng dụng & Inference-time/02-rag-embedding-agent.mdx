@@ -1,0 +1,168 @@
+---
+title: RAG, Embedding & Agent — Đưa LLM vào Sản phẩm thật
+track: foundations-track
+module: LLM
+submodule: Ứng dụng & Inference-time
+order: 2
+status: stable
+prerequisites: ["01-prompting-in-context-learning"]
+summary: Lewis và cộng sự (2020, NeurIPS) đề xuất RAG để giải quyết vấn đề cụ thể: LLM lưu kiến thức trong tham số nhưng khó truy cập/thao tác chính xác kiến thức đó cho tác vụ đòi hỏi kiến thức sâu — kết hợp bộ nhớ tham số hoá (LLM) với bộ nhớ phi tham số hoá (chỉ mục vector), đạt SOTA trên các tác vụ hỏi-đáp miền mở. Yao và cộng sự (2022) giải quyết giới hạn còn lại bằng ReAct: chain-of-thought thuần dễ hallucination, hành động thuần thiếu khả năng lập kế hoạch — xen kẽ suy luận và hành động giải quyết cả hai, đạt +34 điểm phần trăm trên ALFWorld.
+last_touched_by_task: Cải thiện thực chất (2026-07-06, task 44, đào sâu sub-module 'Ứng dụng & Inference-time'): tìm và xác nhận được paper gốc ReAct (Yao et al. 2022, arxiv 2210.03629) qua WebFetch abstract — trước đó phần Agent chỉ mô tả cơ chế ReAct chung chung (từ MachineLearningMastery) không có tên tác giả/vấn đề cụ thể mỗi cách tiếp cận đơn lẻ gặp phải. Bổ sung: vấn đề cụ thể (chain-of-thought thuần bị hallucination/lỗi lan truyền; hành động thuần thiếu khả năng lập kế hoạch), và kết quả thực nghiệm cụ thể (ALFWorld +34 điểm phần trăm, WebShop +10%, HotpotQA khắc phục hallucination qua truy vấn Wikipedia). Đã cân nhắc viết bài Multi-agent riêng nhưng nguồn hời hợt (MachineLearningMastery/AutoGen paper không đủ sâu theo chuẩn dòng tiến hoá) — chọn cải thiện bài đã có thay vì viết bài mới yếu. Giữ nguyên nội dung RAG/embedding cũ (đã đúng, có nguồn Lewis et al. từ trước).
+---
+
+Bài [Prompting & In-context Learning](28-prompting-in-context-learning.mdx)
+cho thấy cách khai thác LLM tốt hơn chỉ bằng cách viết prompt khéo léo.
+Nhưng có hai giới hạn mà riêng prompting không giải quyết được: (1) LLM chỉ
+"biết" những gì có trong dữ liệu pretraining — không biết thông tin riêng
+tư của bạn hay tin tức sau thời điểm huấn luyện; (2) LLM chỉ tạo ra văn
+bản — không tự làm được việc gì trong thế giới thực (tra cứu database,
+gọi API, thực thi code). **RAG** và **Agent** là hai kỹ thuật giải quyết
+từng giới hạn này.
+
+## Vấn đề đầu tiên: LLM không biết thông tin riêng/mới
+
+Kiến thức của một LLM bị "đóng băng" ở thời điểm pretraining (bài
+[Pretraining](24-pretraining-llm.mdx)) — nó không biết tài liệu nội bộ
+công ty bạn, không biết sự kiện xảy ra sau khi huấn luyện, và fine-tune
+lại toàn bộ mô hình mỗi khi có thông tin mới là quá tốn kém (bài
+[Fine-tuning](26-fine-tuning-instruction-tuning.mdx) đã nói fine-tuning
+không phải lựa chọn đầu tiên nên thử).
+
+## RAG: cho LLM "tra cứu" trước khi trả lời
+
+**Lewis và cộng sự (2020)**, trong bài báo "Retrieval-Augmented
+Generation for Knowledge-Intensive NLP Tasks" (NeurIPS 2020), đặt tên và
+hình thức hoá chính xác vấn đề này: một LLM lưu kiến thức dưới dạng
+**tham số hoá** (parametric memory — thông tin "nén" vào hàng tỷ trọng
+số qua pretraining), nhưng khả năng **truy cập chính xác** và **thao tác**
+đúng kiến thức đó cho các tác vụ đòi hỏi kiến thức sâu (ví dụ hỏi-đáp cần
+sự thật cụ thể) vẫn bị hạn chế — mô hình có thể "nhớ mang máng" nhưng khó
+trích xuất đúng chi tiết. Giải pháp của họ: kết hợp bộ nhớ tham số hoá đó
+với một **bộ nhớ phi tham số hoá** (non-parametric memory) — cụ thể là
+một chỉ mục vector dày đặc (dense vector index) trên kho văn bản lớn
+(ban đầu là Wikipedia) — để mô hình có thể tra cứu trực tiếp thay vì chỉ
+dựa vào những gì đã "nén" sẵn trong tham số. Cách tiếp cận này đạt kết
+quả **state-of-the-art** trên nhiều tác vụ hỏi-đáp miền mở (open-domain
+question answering) tại thời điểm công bố, vượt qua cả các mô hình
+seq2seq thuần và các kiến trúc truy xuất-trích xuất trước đó.
+
+**RAG (Retrieval-Augmented Generation)** — tên gọi bắt nguồn từ chính
+paper này — giải quyết vấn đề đã nêu bằng quy trình 3 bước: **retrieve**
+(tra cứu) → **augment** (bổ sung vào prompt) → **generate** (sinh câu
+trả lời):
+
+1. **Retrieve:** khi có câu hỏi, tìm trong một kho dữ liệu riêng (tài
+   liệu công ty, tin tức mới...) những đoạn văn bản **liên quan nhất**
+   tới câu hỏi đó.
+2. **Augment:** ghép các đoạn văn bản tìm được đó **vào prompt**, cùng
+   với câu hỏi gốc.
+3. **Generate:** đưa prompt đã bổ sung ngữ cảnh này cho LLM, để nó trả
+   lời dựa trên thông tin vừa được cung cấp — thay vì chỉ dựa vào kiến
+   thức có sẵn từ pretraining.
+
+Bước quan trọng nhất là "tìm đoạn văn bản liên quan nhất" — đây là nơi
+**embedding** và **vector search** vào cuộc.
+
+## Embedding: biến văn bản thành vector số mang ý nghĩa
+
+**Embedding** là một vector số thực biểu diễn **ý nghĩa ngữ nghĩa** của
+một đoạn văn bản — hai đoạn văn bản có ý nghĩa gần nhau sẽ có embedding
+**gần nhau** trong không gian vector (đo bằng khoảng cách, giống hệt
+khái niệm khoảng cách đã học ở bài [k-NN](05-k-nearest-neighbors.mdx)).
+Quy trình cụ thể cho RAG:
+
+- Toàn bộ kho dữ liệu riêng được cắt thành các đoạn nhỏ (chunk), mỗi đoạn
+  được chuyển thành một embedding bằng một mô hình embedding riêng, lưu
+  vào **vector database**.
+- Khi có câu hỏi mới, câu hỏi đó cũng được chuyển thành embedding bằng
+  đúng mô hình embedding đó.
+- Vector database tìm các đoạn dữ liệu có embedding **gần nhất** với
+  embedding của câu hỏi — đây chính xác là bài toán tìm hàng xóm gần
+  nhất đã học ở bài k-NN, chỉ khác không gian feature giờ là không gian
+  ngữ nghĩa của văn bản thay vì feature số thông thường.
+
+Vector search dựa trên độ tương đồng ngữ nghĩa có một giới hạn quan trọng
+cần biết: nó có thể "mờ" (lossy) với các sự thật cụ thể, số liệu chính
+xác, hay quan hệ chặt chẽ giữa các thực thể — hai đoạn văn bản nói về
+2 cầu thủ khác nhau chơi cho 2 đội khác nhau có thể có embedding rất gần
+nhau (vì cùng chủ đề bóng đá), khiến hệ thống dễ nhầm lẫn thông tin cụ
+thể dù ngữ cảnh chung là đúng.
+
+## Vấn đề thứ hai: LLM chỉ tạo văn bản, không tự hành động
+
+Ngay cả với RAG, LLM vẫn chỉ **trả lời câu hỏi** — nó không tự tra cứu
+cơ sở dữ liệu thời gian thực, không tự gọi API, không tự thực thi code.
+**Agent** là kiến trúc giải quyết đúng giới hạn này.
+
+## Agent: LLM làm "bộ não" ra quyết định, lặp vòng reasoning-acting-observing
+
+Một LLM agent dùng chính LLM làm **bộ máy suy luận trung tâm** để quyết
+định: cần làm gì tiếp theo, dùng công cụ (tool) nào, và diễn giải kết quả
+trả về từ công cụ đó. **Yao và cộng sự (2022)**, trong bài báo "ReAct:
+Synergizing Reasoning and Acting in Language Models", chỉ ra vấn đề cụ
+thể mà từng cách tiếp cận đơn lẻ trước đó gặp phải: **chain-of-thought
+thuần** (chỉ suy luận, không hành động — bài [28](28-prompting-in-context-learning.mdx))
+dễ bị **hallucination** (bịa thông tin) và lỗi lan truyền qua các bước
+suy luận, vì mọi thứ chỉ dựa vào kiến thức nội tại của mô hình, không có
+cách xác minh với thế giới thực; ngược lại, **hành động thuần** (chỉ gọi
+tool liên tục) thiếu khả năng suy luận để lập kế hoạch, theo dõi tiến độ,
+hay xử lý tình huống bất ngờ.
+
+Giải pháp của họ — **ReAct** (Reasoning + Acting) — xen kẽ cả hai: suy
+luận giúp mô hình lập kế hoạch, theo dõi và cập nhật kế hoạch khi cần, xử
+lý ngoại lệ; hành động cho phép mô hình kết nối với nguồn thông tin bên
+ngoài (cơ sở dữ liệu, môi trường) để xác thực và bổ sung thông tin, thay
+vì chỉ dựa vào kiến thức nội tại có thể sai lệch. Cơ chế cụ thể là vòng
+lặp:
+
+```
+Suy luận (reasoning) → Hành động (acting, gọi 1 tool cụ thể)
+  → Quan sát kết quả (observing) → lặp lại
+```
+
+cho tới khi hoàn thành nhiệm vụ. Ví dụ: được hỏi "thời tiết Hà Nội hôm nay
+thế nào?", agent suy luận rằng cần gọi một API thời tiết, thực hiện lệnh
+gọi đó (hành động), nhận kết quả trả về (quan sát), rồi dùng chính LLM để
+diễn giải kết quả đó thành câu trả lời tự nhiên cho người dùng.
+
+Kết quả thực nghiệm cụ thể: trên các tác vụ hỏi-đáp cần tra cứu (như
+HotpotQA), ReAct khắc phục được vấn đề hallucination bằng cách truy vấn
+trực tiếp Wikipedia thay vì chỉ "đoán" từ kiến thức nội tại; trên môi
+trường mô phỏng ALFWorld, ReAct vượt baseline **34 điểm phần trăm tuyệt
+đối** về tỷ lệ hoàn thành nhiệm vụ thành công; trên WebShop, cải thiện
+**10%** so với các phương pháp trước đó — đạt được với chỉ 1-2 ví dụ
+minh hoạ trong prompt (in-context learning, đã học ở bài 28).
+
+Ba thành phần cốt lõi của một hệ thống agent: **planning** (lập kế hoạch,
+chia nhỏ nhiệm vụ phức tạp thành các bước con), **tools** (công cụ cụ thể
+agent có thể gọi — API, database, model khác), và **memory** (bộ nhớ, lưu
+lại ngữ cảnh và kết quả các bước trước để dùng cho quyết định tiếp theo).
+
+## Liên hệ lại với các bài trước
+
+- RAG và Agent đều là cách **mở rộng khả năng** của một LLM đã huấn luyện
+  sẵn mà **không cần huấn luyện lại** — cùng tinh thần với
+  [Prompting](28-prompting-in-context-learning.mdx) (khai thác mô hình có
+  sẵn hiệu quả hơn), nhưng đi xa hơn: kết nối mô hình với dữ liệu và hành
+  động bên ngoài, không chỉ thay đổi cách hỏi.
+- Cơ chế tìm kiếm trong vector database dùng lại chính xác bài toán
+  "tìm điểm gần nhất theo khoảng cách" đã học ở bài
+  [k-NN](05-k-nearest-neighbors.mdx) — chỉ khác không gian feature là
+  không gian ngữ nghĩa (embedding) thay vì feature số trực tiếp.
+- Vòng lặp reasoning-acting-observing của agent có cấu trúc tương tự
+  (dù khác bản chất) vòng lặp agent-environment đã học ở
+  [RL Framework](16-reinforcement-learning-framework.mdx): quan sát trạng
+  thái hiện tại, quyết định hành động, nhận phản hồi, lặp lại — chỉ khác
+  "quyết định" ở đây do chính LLM suy luận bằng ngôn ngữ tự nhiên, không
+  phải một policy được huấn luyện bằng RL.
+
+Với bài này, series LLM (24-29: Pretraining → Scaling Laws → Fine-tuning
+→ RLHF → Prompting → RAG/Agent) hoàn thành trọn vẹn, đúng phạm vi "đầy đủ
++ ứng dụng thực chiến" đã xác nhận.
+
+## Nguồn tham khảo
+
+- [arXiv — Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks](https://arxiv.org/abs/2005.11401) — paper gốc của Lewis và cộng sự (2020, NeurIPS), dùng cho vấn đề cụ thể (giới hạn truy cập/thao tác kiến thức tham số hoá của LLM), giải pháp (kết hợp bộ nhớ tham số hoá + phi tham số hoá qua chỉ mục vector), và kết quả (SOTA trên hỏi-đáp miền mở).
+- [arXiv — ReAct: Synergizing Reasoning and Acting in Language Models](https://arxiv.org/abs/2210.03629) — paper gốc của Yao và cộng sự (2022), dùng cho vấn đề cụ thể (chain-of-thought thuần bị hallucination/lỗi lan truyền, hành động thuần thiếu khả năng lập kế hoạch), giải pháp (xen kẽ suy luận và hành động), và kết quả thực nghiệm (ALFWorld +34 điểm phần trăm, WebShop +10%, khắc phục hallucination trên HotpotQA qua truy vấn Wikipedia).
+- [Beyond Vector Search: Building a Deterministic 3-Tiered Graph-RAG System (MachineLearningMastery)](https://machinelearningmastery.com/beyond-vector-search-building-a-deterministic-3-tiered-graph-rag-system/) — dùng cho quy trình RAG cơ bản (retrieve-augment-generate), cơ chế embedding + vector database, và giới hạn thực tế của vector search thuần tuý với các sự thật/số liệu cụ thể.
+- [The Machine Learning Practitioner's Guide to Agentic AI Systems (MachineLearningMastery)](https://machinelearningmastery.com/the-machine-learning-practitioners-guide-to-agentic-ai-systems/) — dùng cho định nghĩa agentic AI và ba thành phần cốt lõi planning/tools/memory.

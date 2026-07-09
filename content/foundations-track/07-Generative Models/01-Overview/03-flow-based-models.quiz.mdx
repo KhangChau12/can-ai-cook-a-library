@@ -1,0 +1,53 @@
+---
+quiz_for: 03-flow-based-models
+---
+
+## Q1
+Flow-based Models khác VAE và GAN ở điểm đặc trưng nào?
+
+- [ ] Flow-based Models không dùng mạng nơ-ron
+- [ ] Flow-based Models chỉ sinh được ảnh đen trắng
+- [x] Flow-based Models có exact likelihood inference (tính chính xác log-likelihood) và sinh dữ liệu 1 pass forward
+- [ ] Flow-based Models dùng discriminator để phân biệt thật/giả
+
+> VAE chỉ tối ưu ELBO (lower bound), GAN không có likelihood. Flow-based Models dùng công thức đổi biến (change of variable) để tính exact likelihood, và sinh dữ liệu trong 1 lần forward (không cần nhiều bước như Diffusion).
+
+## Q2
+Điều kiện kỹ thuật khó nhất khi thiết kế một flow-based model là gì?
+
+- [ ] Mạng nơ-ron phải có ít nhất 100 layer
+- [ ] Cần dữ liệu có nhãn để huấn luyện
+- [x] Hàm biến đổi f phải khả nghịch và Jacobian phải tính được O(n) thay vì O(n³) — thường là ma trận đường chéo hoặc tam giác
+- [ ] Phải dùng CNN thay vì MLP
+
+> Jacobian của ma trận n×n tốn O(n³) để tính định thức. Flow-based Models giải quyết bằng coupling layer — Jacobian là ma trận đường chéo → định thức = tích các phần tử đường chéo, tính O(n).
+
+## Q3
+RealNVP cải tiến NICE ở điểm nào?
+
+- [ ] RealNVP dùng CNN thay MLP
+- [x] RealNVP dùng affine coupling (scale + shift) thay vì additive coupling (chỉ shift) — cho phép non-volume preserving, biểu diễn phân phối phức tạp hơn
+- [ ] RealNVP nhanh hơn 10 lần
+- [ ] RealNVP không cần permutation
+
+> NICE dùng additive coupling y₂ = x₂ + m(x₁) → det(J) = 1 (volume-preserving). RealNVP dùng affine coupling y₂ = x₂ ⊙ exp(s(x₁)) + t(x₁) → det(J) = exp(Σ s) ≠ 1, cho phép co giãn thể tích.
+
+## Q4
+Glow cải tiến RealNVP ở điểm chính nào?
+
+- [ ] Glow dùng nhiều coupling layer hơn
+- [ ] Glow dùng residual block thay vì coupling layer
+- [x] Glow thay permutation cố định bằng invertible 1×1 convolution — một phép biến đổi học được, tổng quát hơn
+- [ ] Glow bỏ hẳn coupling layer
+
+> RealNVP dùng permutation cố định (đảo thứ tự chiều) sau mỗi coupling layer. Glow thay bằng invertible 1×1 convolution với ma trận W học được — cho phép mixing các chiều linh hoạt hơn, log|det| = h·w·log|det(W)|.
+
+## Q5
+Flow-based Models có nhược điểm chính nào so với GAN và Diffusion?
+
+- [ ] Không thể sinh ảnh
+- [ ] Cần quá nhiều dữ liệu huấn luyện
+- [x] Kiến trúc phức tạp, không scale tốt lên ảnh độ phân giải cao, chất lượng ảnh thua GAN (độ sắc nét) và Diffusion (độ bao phủ)
+- [ ] Chỉ dùng được cho dữ liệu categorical
+
+> Flow-based Models có exact likelihood và sinh nhanh, nhưng đánh đổi: kiến trúc coupling layer phức tạp, Jacobian kích thước lớn khi ảnh độ phân giải cao, và chất lượng ảnh không bằng GAN (sắc nét) hay Diffusion (bao phủ).

@@ -1,0 +1,92 @@
+---
+title: GAN Family — Tổng Kết Dòng Tiến Hóa Từ GAN Gốc Đến StyleGAN
+track: foundations-track
+module: Generative Models
+submodule: GAN Family
+order: 5
+status: stable
+prerequisites: ["03-wgan-stylegan"]
+summary: Tổng kết dòng tiến hoá GAN từ 2014–2019: timeline, bảng so sánh 7 biến thể, decision tree chọn GAN variant, và các vấn đề mở (FID, mode collapse, training stability).
+last_touched_by_task: Bài synthesis (2026-07-08): Phase 3.5 — tổng kết toàn bộ dòng GAN Family sau 5 bài chi tiết. Nguồn: Lilian Weng 'From GAN to WGAN' + các bài 23/46/88/105/106 trong track.
+---
+
+GAN Family giờ có 5 bài chi tiết (23 GAN, 46 DCGAN, 88 WGAN/StyleGAN,
+105 Conditional GAN, 106 VQ-VAE/VQ-GAN) — từ GAN gốc (Goodfellow 2014)
+tới StyleGAN (Karras 2019) và VQ-GAN (Esser 2021). Bài này tổng kết toàn
+bộ dòng tiến hoá.
+
+## Timeline GAN (2014–2021)
+
+```
+2014 — GAN (Goodfellow): minimax, JS divergence, MLP
+2015 — DCGAN (Radford): convolutional architecture, BatchNorm, LeakyReLU
+2015 — cGAN (Mirza & Osindero): condition y vào G và D
+2016 — pix2pix (Isola): U-Net + PatchGAN, paired image translation
+2017 — WGAN (Arjovsky): Wasserstein distance, gradient clipping
+2017 — CycleGAN (Zhu): cycle-consistency, unpaired translation
+2017 — Progressive GAN (Karras): grow G/D gradually
+2018 — BigGAN (Brock): large scale GAN, SOTA ImageNet
+2018 — StyleGAN (Karras): style-based generator, AdaIN
+2019 — StyleGAN2 (Karras): bỏ artifact, path length regularity
+2021 — VQ-GAN (Esser): discrete codebook + discriminator + Transformer
+```
+
+## Bảng so sánh các GAN variants
+
+| Variant | Năm | Innovation chính | Loss function | Architecture |
+|---|---|---|---|---|
+| **GAN** | 2014 | Minimax, adversarial training | JS divergence | MLP |
+| **DCGAN** | 2015 | CNN cho GAN | JS divergence | Transposed conv + LeakyReLU |
+| **cGAN** | 2015 | Condition y | conditional JS | G(z,y) + D(x,y) |
+| **pix2pix** | 2017 | Image translation | cGAN + L1 | U-Net + PatchGAN |
+| **WGAN** | 2017 | Ổn định training | Wasserstein | Weight clipping/GP |
+| **CycleGAN** | 2017 | Unpaired translation | cGAN + cycle-consistency | 2G + 2D |
+| **StyleGAN** | 2019 | Style control | WGAN-GP | Mapping + AdaIN |
+| **VQ-GAN** | 2021 | Discrete latent | VQ + GAN + perceptual | Codebook + Transformer |
+
+## Decision tree
+
+```
+Bạn muốn làm gì với GAN?
+│
+├─ Sinh ảnh từ noise?
+│   ├─ Cần ổn định? → WGAN-GP
+│   └─ Cần kiểm soát style? → StyleGAN
+│
+├─ Sinh ảnh từ label/text?
+│   └─ cGAN / BigGAN (condition)
+│
+├─ Image-to-image translation?
+│   ├─ Có paired data? → pix2pix
+│   └─ Không có paired data? → CycleGAN
+│
+├─ Nén ảnh thành discrete code?
+│   └─ VQ-GAN (codebook + Transformer)
+│
+└─ Mới bắt đầu học GAN?
+    └─ DCGAN (baseline ổn định nhất)
+```
+
+## Các vấn đề mở
+
+1. **Mode collapse:** GAN vẫn có thể rơi vào mode collapse dù đã có nhiều
+   cải tiến. WGAN giảm nhưng không triệt để.
+2. **FID vs IS:** FID (Fréchet Inception Distance) là metric phổ biến nhất
+   nhưng vẫn chưa hoàn hảo (không đo được diversity thực sự).
+3. **Evaluation khó:** Không có likelihood → khó so sánh khách quan giữa
+   các model.
+4. **Stability:** Huấn luyện GAN vẫn là "nghệ thuật" — tuning hyperparameter
+   rất nhạy.
+
+## Liên hệ các bài trong GAN Family
+
+- [GAN (23)](23-gan.mdx): điểm khởi đầu, minimax, JS divergence
+- [DCGAN (46)](46-dcgan.mdx): CNN cho GAN, ổn định hơn
+- [WGAN & StyleGAN (88)](88-wgan-stylegan.mdx): 2 hướng nâng cấp — Wasserstein vs style control
+- [Conditional GAN (105)](105-conditional-gan.mdx): cGAN, pix2pix, CycleGAN
+- [VQ-VAE & VQ-GAN (106)](106-vq-vae-vq-gan.mdx): discrete codebook, nền tảng DALL-E/SD
+
+## Nguồn tham khảo
+
+- [Lilian Weng — From GAN to WGAN](https://lilianweng.github.io/posts/2017-08-20-gan/) — dùng cho tổng quan dòng tiến hoá GAN và bảng so sánh các variants.
+- Các bài 23, 46, 88, 105, 106 trong track — dùng cho chi tiết từng variant.

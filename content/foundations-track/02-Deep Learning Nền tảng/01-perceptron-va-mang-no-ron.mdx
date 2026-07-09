@@ -1,0 +1,122 @@
+---
+title: Perceptron & Mạng nơ-ron nhiều lớp
+track: foundations-track
+module: Deep Learning Nền tảng
+order: 1
+status: stable
+prerequisites: ["03-logistic-regression"]
+summary: McCulloch và Pitts (1943) đề xuất 'đơn vị ngưỡng' — mô hình neuron nhân tạo đầu tiên, nền móng cho sigmoid sau này. Đơn vị tính toán cơ bản nhất của deep learning, giới hạn tuyến tính của một perceptron đơn (ví dụ XOR), và vì sao cần xếp nhiều lớp + hàm kích hoạt phi tuyến để vượt qua giới hạn đó.
+last_touched_by_task: Viết lại theo triết lý nội dung mới (2026-07-06): thêm bối cảnh lịch sử — McCulloch và Pitts (1943) đề xuất 'đơn vị ngưỡng' (threshold unit), mô hình neuron nhân tạo đầu tiên, đặt nền móng cho khái niệm sigmoid sau này như một xấp xỉ mượt/khả vi của đơn vị ngưỡng — trước đó bài chỉ nói perceptron 'giống hệt logistic regression' mà không có gốc lịch sử nào. Xác nhận qua WebFetch trực tiếp D2L.ai (nguồn cũ của bài, đọc kỹ hơn phát hiện chi tiết chưa dùng). Giữ nguyên toàn bộ nội dung XOR/universal approximation cũ (đã đúng).
+---
+
+Sau 6 bài về ML cổ điển, đây là bài đầu tiên bước vào **deep learning**.
+Nhưng ý tưởng về một "neuron nhân tạo" không bắt đầu từ deep learning
+hiện đại — nó có gốc từ rất sớm: **McCulloch và Pitts (1943)** đề xuất
+mô hình neuron nhân tạo đầu tiên, gọi là **đơn vị ngưỡng** (threshold
+unit) — một mô hình đơn giản mô phỏng tế bào thần kinh sinh học: nhận
+input, và cho output là 0 hoặc 1 tuỳ theo tổng input có vượt qua một
+ngưỡng nào đó hay không. Ý tưởng này đặt nền móng cho khái niệm
+**sigmoid** đã học ở bài trước — sigmoid chính là một phiên bản "mượt"
+(smooth), khả vi (differentiable) của đơn vị ngưỡng gốc, cần thiết để
+có thể tính gradient và huấn luyện bằng backpropagation sau này.
+
+Tin tốt: đơn vị tính toán cơ bản nhất của mọi mạng nơ-ron hiện đại — gọi
+là **perceptron** — không phải khái niệm hoàn toàn mới hay xa lạ. Nó gần
+như giống hệt [Logistic Regression](03-logistic-regression.mdx) đã học,
+chỉ khác cách gọi tên và cách nó được dùng làm viên gạch xây dựng cho các
+cấu trúc lớn hơn.
+
+## Perceptron: về cơ bản là logistic regression
+
+Một perceptron nhận nhiều đầu vào `x1, ..., xd`, nhân mỗi đầu vào với một
+trọng số, cộng lại cùng bias, rồi đưa qua một hàm kích hoạt (activation
+function):
+
+```
+z = w1*x1 + w2*x2 + ... + wd*xd + b
+output = activation(z)
+```
+
+Nếu `activation` là hàm sigmoid, công thức này **chính xác là**
+`ŷ = sigmoid(w^T x + b)` đã gặp ở bài Logistic Regression. Điểm khác biệt
+không nằm ở công thức, mà ở cách tư duy: thay vì gọi đây là "một mô hình
+hoàn chỉnh", ta gọi nó là **một đơn vị tính toán** (neuron/perceptron) —
+viên gạch nhỏ nhất để ghép thành cấu trúc lớn hơn.
+
+## Giới hạn của một perceptron đơn: chỉ vẽ được ranh giới tuyến tính
+
+Một perceptron đơn (hay tương đương, logistic regression) chỉ có thể tạo
+ra ranh giới quyết định dạng **đường thẳng/mặt phẳng** — vì bản chất nó
+vẫn là `w^T x + b` trước khi qua activation. Có những bài toán rất đơn
+giản mà một perceptron đơn **không bao giờ giải được**, dù chọn `w, b` thế
+nào — ví dụ kinh điển là hàm logic XOR (input `(0,0)` và `(1,1)` cho output
+`0`; input `(0,1)` và `(1,0)` cho output `1`): không có đường thẳng nào
+tách được 2 nhóm này ra khỏi nhau trên mặt phẳng.
+
+Đây là giới hạn nghiêm trọng hơn nhiều so với giới hạn "giả định quan hệ
+tuyến tính" đã nói ở bài [Linear Regression](02-linear-regression.mdx) —
+XOR là ví dụ cho thấy có những cấu trúc dữ liệu rất đơn giản mà một mô
+hình tuyến tính đơn lẻ hoàn toàn bất lực, bất kể tối ưu bao lâu.
+
+## Vì sao chỉ xếp chồng nhiều lớp tuyến tính không giúp ích
+
+Trực giác đầu tiên để khắc phục: xếp nhiều perceptron thành nhiều lớp nối
+tiếp nhau. Nhưng có một cái bẫy toán học quan trọng: **nếu bỏ activation
+phi tuyến đi, xếp bao nhiêu lớp tuyến tính chồng lên nhau cũng chỉ tương
+đương với đúng một lớp tuyến tính duy nhất.** Một hàm affine (tuyến tính +
+hằng số) của một hàm affine vẫn luôn là một hàm affine — không có gì mới
+được thêm vào bằng cách xếp chồng nếu không có phi tuyến xen giữa.
+
+Đây là lý do **hàm kích hoạt phi tuyến** (nonlinear activation function)
+là thành phần bắt buộc, không phải tuỳ chọn, của mọi mạng nơ-ron nhiều
+lớp thật sự. Ba hàm phổ biến:
+
+- **ReLU** (`Rectified Linear Unit`): `activation(z) = max(0, z)` — đơn
+  giản, tính toán nhanh, là lựa chọn mặc định phổ biến nhất hiện nay trong
+  các lớp ẩn.
+- **Sigmoid:** `1 / (1 + exp(-z))` — nén về khoảng `(0, 1)`, hữu ích khi
+  cần diễn giải như xác suất (ví dụ ở lớp output cho bài toán phân loại
+  nhị phân), nhưng ít dùng ở các lớp ẩn giữa vì gây một số vấn đề khi tối
+  ưu (đạo hàm rất nhỏ ở 2 đầu, làm chậm quá trình học).
+- **Tanh:** tương tự sigmoid nhưng nén về khoảng `(-1, 1)`, đối xứng qua
+  gốc toạ độ.
+
+## Mạng nơ-ron nhiều lớp (multilayer perceptron)
+
+Khi xếp nhiều perceptron thành các **lớp** (layer), mỗi lớp nhận đầu ra
+của lớp trước làm đầu vào, và có activation phi tuyến xen giữa các lớp,
+ta có một **mạng nơ-ron nhiều lớp** (MLP — multilayer perceptron):
+
+```
+lớp ẩn 1:  h1 = activation(W1 * x  + b1)
+lớp ẩn 2:  h2 = activation(W2 * h1 + b2)
+output:    y  = activation(W3 * h2 + b3)
+```
+
+Các lớp nằm giữa input và output gọi là **lớp ẩn** (hidden layer) — vì
+giá trị của chúng không được quan sát trực tiếp trong dữ liệu, chỉ là kết
+quả trung gian mô hình tự học ra. Với đủ số lượng đơn vị trong lớp ẩn và
+activation phi tuyến phù hợp, một mạng chỉ với **một lớp ẩn duy nhất** đã
+có thể xấp xỉ được hầu như mọi hàm số (kết quả lý thuyết gọi là *universal
+approximation* — xấp xỉ vạn năng). Thách thức thực tế không nằm ở khả năng
+biểu diễn, mà ở việc **tìm ra đúng bộ trọng số** thông qua quá trình huấn
+luyện — chủ đề của bài tiếp theo (backpropagation).
+
+## Liên hệ lại với các bài trước
+
+- Perceptron không phải khái niệm mới — nó là logistic regression được
+  nhìn dưới một tên gọi khác, đóng vai trò là viên gạch xây dựng.
+- Giới hạn "chỉ vẽ được ranh giới tuyến tính" của perceptron đơn giống hệt
+  giới hạn của linear/logistic regression đã nói trước đó — nhưng ở đây
+  được minh hoạ cụ thể bằng bài toán XOR không thể giải được bằng bất kỳ
+  cách chọn `w, b` nào.
+- [Decision Tree](04-decision-tree.mdx) đã giải quyết giới hạn tuyến tính
+  theo một hướng hoàn toàn khác (rẽ nhánh dạng bậc thang thay vì tổ hợp
+  tuyến tính). Neural network giải quyết theo hướng khác nữa: xếp chồng
+  nhiều phép biến đổi tuyến tính + phi tuyến để tạo ra ranh giới quyết
+  định phức tạp tuỳ ý — hai hướng tiếp cận rất khác nhau cho cùng một giới
+  hạn gốc: mô hình tuyến tính đơn lẻ không đủ biểu diễn được mọi bài toán.
+
+## Nguồn tham khảo
+
+- [Dive into Deep Learning — Multilayer Perceptrons](http://d2l.ai/chapter_multilayer-perceptrons/mlp.html) — dùng cho bối cảnh lịch sử (McCulloch và Pitts, 1943, đơn vị ngưỡng — nền móng cho sigmoid), lý do một hàm affine của hàm affine vẫn là affine (vì sao cần activation phi tuyến), giới thiệu ReLU/sigmoid/tanh, khái niệm lớp ẩn, và universal approximation.

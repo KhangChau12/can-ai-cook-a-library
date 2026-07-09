@@ -1,0 +1,53 @@
+---
+quiz_for: 04-vq-vae-vq-gan
+---
+
+## Q1
+VQ-VAE khác VAE thường ở điểm cốt lõi nào?
+
+- [ ] VQ-VAE không dùng encoder-decoder
+- [ ] VQ-VAE dùng mạng sâu hơn
+- [x] VQ-VAE thay latent space liên tục (Gaussian) bằng discrete codebook — mỗi ảnh là chuỗi index vào từ điển vector học được
+- [ ] VQ-VAE dùng supervised learning
+
+> VAE dùng latent z ~ N(μ, σ²) (liên tục) → ảnh mờ. VQ-VAE dùng discrete codebook: encoder output z_e(x) → tìm vector codebook gần nhất e_k → z_q = e_k → mỗi ảnh là grid các index.
+
+## Q2
+VQ-VAE giải quyết vấn đề argmin không differentiable bằng cách nào?
+
+- [ ] Không dùng argmin
+- [ ] Dùng Gumbel-Softmax thay thế
+- [x] Straight-through estimator: forward dùng codebook thật, backward bỏ qua lượng tử hoá — gradient đi thẳng từ decoder sang encoder
+- [ ] Dùng reinforcement learning
+
+> Argmin là rời rạc → không thể gradient. Straight-through estimator: z_q = z_e + sg[z_q - z_e]. Forward: z_q = e_k. Backward: ∇L (đối với z_q) = ∇L (đối với z_e). Gradient "xuyên thẳng" qua lượng tử hoá.
+
+## Q3
+Loss function của VQ-VAE gồm ba thành phần nào?
+
+- [ ] Reconstruction, adversarial, perceptual
+- [ ] KL divergence, reconstruction, entropy
+- [x] Reconstruction loss + Codebook loss (||sg[z_e]-e||²) + Commitment loss (β·||z_e-sg[e]||²)
+- [ ] MSE, cross-entropy, hinge
+
+> Codebook loss kéo vector codebook gần encoder output. Commitment loss giữ encoder output gần codebook (β=0.25). Reconstruction loss tái tạo ảnh. Straight-through estimator cho phép 3 loss này hoạt động cùng nhau dù có argmin rời rạc.
+
+## Q4
+VQ-GAN cải thiện VQ-VAE ở điểm nào?
+
+- [ ] VQ-GAN dùng codebook lớn hơn
+- [ ] VQ-GAN dùng CNN sâu hơn
+- [x] Thêm discriminator (adversarial loss) + perceptual loss thay MSE — ảnh sắc nét hơn, chi tiết hơn
+- [ ] VQ-GAN không cần prior học riêng
+
+> VAE/VQ-VAE dùng MSE reconstruction → ảnh mờ. VQ-GAN thêm PatchGAN discriminator + perceptual loss (LPIPS) → ảnh sắc nét, chi tiết. Loss = L_recon + L_perceptual + L_VQ + λ·L_GAN.
+
+## Q5
+VQ-VAE và VQ-GAN là nền tảng cho những model nào?
+
+- [ ] YOLO và SSD
+- [ ] BERT và GPT
+- [x] DALL-E (VQ-GAN + Transformer prior) và Stable Diffusion/Latent Diffusion (VQ-GAN encoder-decoder nén ảnh vào latent space)
+- [ ] ResNet và EfficientNet
+
+> DALL-E dùng VQ-GAN encoder-decoder + Transformer prior (học phân phối discrete code). Stable Diffusion dùng VQ-GAN's encoder nén ảnh 256×256 → latent 32×32, chạy diffusion trong latent space, rồi decoder giải nén thành ảnh.

@@ -1,0 +1,195 @@
+---
+title: Distributional RL — Học Phân Phối Của Return Thay Vì Chỉ Kỳ Vọng
+track: foundations-track
+module: Reinforcement Learning
+submodule: Value-based
+order: 5
+status: stable
+prerequisites: ["04-rainbow-dqn"]
+summary: Q-learning (bài 18) và mọi biến thể DQN chỉ học kỳ vọng E[Q] — bỏ qua thông tin về phân phối của returns. Distributional RL học toàn bộ phân phối xác suất, cho phép học ổn định hơn, kiểm soát rủi ro, và kết quả cuối cùng vượt trội trên Atari. Bài này kể dòng tiến hoá từ C51 (atoms cố định) qua QR-DQN (quantile regression) tới IQN (continuous quantile function).
+last_touched_by_task: Bài mới (2026-07-08): Phase 2.4 đào sâu RL — Distributional RL, hoàn thiện dòng Value-based sau Rainbow. Nguồn: arXiv C51 1710.10044 + arXiv IQN 1806.06923 + lilianweng.github.io.
+---
+
+Toàn bộ các thuật toán Value-based từ đầu module tới giờ (bài 18 Q-learning,
+71 Double/Dueling, 82 PER, 83 Rainbow) đều học một **giá trị kỳ vọng duy
+nhất**: Q(s,a) = E[return | s,a] — con số trung bình của tổng reward tích
+luỹ nếu chọn action a ở state s. Cách này bỏ qua toàn bộ thông tin về
+**phân phối** của return.
+
+Ví dụ: hai action có cùng kỳ vọng return = 10, nhưng:
+- Action A: return luôn là 10 (không rủi ro)
+- Action B: return là 20 với xác suất 50%, và 0 với xác suất 50% (rủi ro)
+
+Q-learning thấy Q = 10 cho cả hai → không phân biệt được. Distributional
+RL thấy sự khác biệt: biết được action B có variance cao hơn.
+
+## Vấn đề: kỳ vọng bỏ mất thông tin quan trọng
+
+Học chỉ kỳ vọng có ba hạn chế:
+
+1. **Mất thông tin rủi ro:** không biết action nào ổn định, action nào
+   "được ăn cả, ngã về không".
+2. **Học kém ổn định hơn:** phân phối của returns có cấu trúc phong phú
+   (thường là đa mode, lệch) — ép về một con số duy nhất làm mất tín hiệu
+   học. Thực nghiệm cho thấy học phân phối giúp biểu diễn tốt hơn ngay cả
+   khi chỉ cần kỳ vọng ở cuối (vì quá trình học có thêm tín hiệu).
+3. **Không thể điều chỉnh theo khẩu vị rủi ro:** trong thực tế, có lúc
+   muốn safe (chọn action ít rủi ro), có lúc muốn risky (chấp nhận rủi ro
+   để đạt cao hơn).
+
+## Ý tưởng: học phân phối thay vì kỳ vọng
+
+Thay vì Q(s,a) = E[Z(s,a)], Distributional RL học toàn bộ **phân phối xác
+suất Z(s,a)** của return. Công thức Bellman được tổng quát hoá thành:
+
+```
+Z(s,a) := R(s,a) + γ · Z(s', a')
+```
+
+Không còn là phương trình trên số, mà là phương trình trên **phân phối** —
+bên trái và bên phải là các phân phối xác suất, không phải scalar. Phép
+cộng R + γ·Z' là tổng của biến ngẫu nhiên R và biến ngẫu nhiên γ·Z' (nhân
+scalar với phân phối).
+
+Học phân phối Z(s,a) thay vì Q(s,a) giúp:
+
+- **Giữ lại toàn bộ thông tin** về uncertainty của return
+- **Học ổn định hơn** — phân phối có cấu trúc (thường là đa mode) dễ học
+  hơn kỳ vọng bị nén
+- **Cho phép chọn action theo risk metric** — ví dụ chọn action có VaR
+  (Value at Risk) cao nhất thay vì kỳ vọng
+
+## C51 — Categorical DQN với 51 Atoms
+
+C51 (Bellemare, Dabney & Munos 2017, DeepMind) là thuật toán Distributional
+RL đầu tiên thành công, đạt SOTA trên Atari tại thời điểm công bố.
+
+### Cách hoạt động
+
+C51 tham số hoá phân phối Z(s,a) bằng một **categorical distribution**
+(phân phối rời rạc) với 51 "nguyên tử" (atoms) cố định:
+
+```
+Z(s,a) = Σ_i p_i(s,a) · atom_i
+```
+
+Trong đó:
+- `atom_i` là các giá trị cố định, cách đều nhau trong một khoảng [Vmin, Vmax]
+  (ví dụ 51 atoms từ -10 đến 10)
+- `p_i(s,a)` là xác suất tương ứng — đầu ra của mạng (softmax)
+
+Mạng nơ-ron có 51×|A| đầu ra thay vì |A| đầu ra như DQN thường. Với mỗi
+action, mạng dự đoán 51 xác suất.
+
+### Cập nhật — projection step
+
+Điểm phức tạp: khi cập nhật, target Z_target = r + γ·Z(s', a') có thể rơi
+vào giữa các atoms. C51 dùng một bước **projection**: phân phối target
+được chiếu lên lưới atom cố định trước khi tính KL divergence.
+
+Thuật toán cập nhật:
+
+```
+1. Tính Z_target = r + γ · Z(s', a')  (phân phối target)
+2. Chiếu Z_target lên lưới atom cố định → Z_projected
+3. Loss = KL(Z_projected || Z(s,a))  (minimize KL divergence)
+```
+
+### Giới hạn của C51
+
+- **Cần chọn [Vmin, Vmax] thủ công** — nếu chọn sai (VD return thật lớn hơn
+  Vmax), mất thông tin. Cần biết trước khoảng giá trị của return.
+- **Atoms cố định** — resolution giống nhau ở mọi nơi, dù một số vùng cần
+  precision cao hơn.
+- **Số atoms (51) là hyperparameter** — quá ít → mất chi tiết, quá nhiều →
+  tốn compute.
+
+## QR-DQN — Quantile Regression DQN
+
+QR-DQN (Dabney, Rowland, Bellemare & Munos 2018) giải quyết giới hạn của C51
+bằng cách **đổi trục**: thay vì cố định giá trị và học xác suất, QR-DQN
+cố định xác suất (quantile fractions) và học giá trị.
+
+### Cách hoạt động
+
+QR-DQN tham số hoá phân phối Z(s,a) bằng N **quantiles** (phân vị):
+
+```
+Z(s,a) ≈ Σ_i (1/N) · θ_i(s,a)
+```
+
+Trong đó:
+- `θ_i(s,a)` là giá trị của quantile thứ i (học được — đầu ra mạng)
+- Mỗi quantile có xác suất cố định 1/N
+- Phân phối được xấp xỉ bằng một tập các quantile cách đều về xác suất
+
+Loss function là **quantile Huber loss**:
+
+```
+ρ^κ_τ(δ) = |τ - 1(δ < 0)| · L_κ(δ)
+```
+
+Trong đó τ là quantile fraction, L_κ là Huber loss, δ = target - prediction.
+
+### Ưu điểm so với C51
+
+- **Không cần chọn [Vmin, Vmax]** — quantile tự điều chỉnh theo dữ liệu
+- **Phân phối linh hoạt hơn** — resolution tự động cao ở vùng có nhiều mass
+  xác suất
+- **Tối ưu Wasserstein distance** thay vì KL — ổn định hơn
+
+## IQN — Implicit Quantile Networks
+
+IQN (Dabney, Ostrovski, Silver & Munos 2018) mở rộng QR-DQN: thay vì cố
+định N quantile, IQN cho phép **sample bất kỳ quantile nào từ phân phối
+đều U([0,1])**.
+
+### Kiến trúc
+
+IQN dùng một mạng embedding để biến quantile fraction τ thành feature vector,
+rồi kết hợp với state feature:
+
+```
+ψ(τ) = φ(τ) ⊙ f(s)  (element-wise product)
+```
+
+Trong đó:
+- `f(s)` là feature của state s từ CNN/MLP
+- `φ(τ)` là embedding của quantile τ (dùng cosine: cos(i·π·τ) cho i = 1..n)
+- `ψ(τ)` là combined feature → dự đoán quantile value
+
+Khi train, IQN sample N quantiles τ_i ~ U([0,1]) và N' quantiles τ'_j cho
+target. Loss là quantile regression trên các cặp (τ_i, τ'_j).
+
+### Ưu điểm
+
+- **Continuous quantile function** — không cần chọn số lượng quantile cố định
+- **Risk-sensitive policy:** có thể distort phân phối quantile để ưu tiên
+  action an toàn (left-tail) hoặc mạo hiểm (right-tail)
+- **Sample hiệu quả hơn:** chỉ cần sample 8-32 quantiles mỗi lần update
+
+## So sánh 3 phương pháp
+
+| Phương pháp | Cố định | Học | Loss | Risk-sensitive? |
+|---|---|---|---|---|
+| **C51** | Giá trị atoms | Xác suất | KL | Không |
+| **QR-DQN** | Quantile fractions | Giá trị quantile | Huber-Wasserstein | Có (chọn τ) |
+| **IQN** | Không (sample τ) | Cả hai | Huber-Wasserstein | Có (distortion) |
+
+## Liên hệ lại với các bài trước
+
+- **Rainbow DQN (bài 83):** C51 là một trong 6 thành phần của Rainbow.
+  Rainbow ablation cho thấy C51 đóng góp nhiều thứ hai sau PER. Bài này
+  đào sâu C51 và các biến thể mới hơn (QR-DQN, IQN).
+- **Q-learning (bài 18):** từ scalar Q(s,a) → phân phối Z(s,a) là một bước
+  tổng quát hoá lớn. Công thức Bellman trên phân phối thay vì scalar.
+- **Distributional RL và Imitation Learning (bài 97):** GAIL cũng học phân
+  phối (occupancy measure) — cùng triết lý "học phân phối thay vì kỳ vọng"
+  nhưng ở context khác.
+
+## Nguồn tham khảo
+
+- [arXiv — A Distributional Perspective on Reinforcement Learning (Bellemare, Dabney & Munos, 2017)](https://arxiv.org/abs/1710.10044) — paper gốc C51, dùng cho categorical distribution với 51 atoms, projection step, và kết quả Atari SOTA.
+- [arXiv — Distributional Reinforcement Learning with Quantile Regression (Dabney et al., 2018)](https://arxiv.org/abs/1710.10044) — paper gốc QR-DQN, dùng cho quantile regression Huber loss và Wasserstein distance.
+- [arXiv — Implicit Quantile Networks for Distributional Reinforcement Learning (Dabney et al., 2018)](https://arxiv.org/abs/1806.06923) — paper gốc IQN, dùng cho continuous quantile function, embedding τ, và risk-sensitive policy.
+- [Lilian Weng — Exploration Strategies in DRL (section on distributional RL)](https://lilianweng.github.io/posts/2020-06-07-exploration-drl/) — dùng cho tổng quan dòng tiến hoá C51→QR-DQN→IQN và so sánh các phương pháp.

@@ -1,0 +1,57 @@
+---
+quiz_for: 06-elmo
+---
+
+## Q1
+Vấn đề cụ thể nào của word2vec và GloVe mà ELMo giải quyết?
+
+- [ ] Word2vec và GloVe không thể huấn luyện trên corpus lớn
+- [x] Word2vec và GloVe gán đúng một vector cố định cho mỗi từ, không phân biệt được các nghĩa khác nhau của cùng một từ tuỳ ngữ cảnh (polysemy)
+- [ ] Word2vec và GloVe chỉ hoạt động với tiếng Anh
+- [ ] Word2vec và GloVe không thể dùng làm input cho mạng nơ-ron
+
+> Ví dụ "crane" (con sếu vs cần cẩu) minh hoạ vấn đề polysemy: embedding
+> tĩnh gán đúng 1 vector cho mỗi từ bất kể ngữ cảnh, nên không phân biệt
+> được các nghĩa khác nhau. ELMo giải quyết bằng cách tính vector tuỳ
+> theo câu chứa từ đó, thay vì tra bảng cố định.
+
+## Q2
+Kiến trúc nào được ELMo dùng để sinh ra embedding phụ thuộc ngữ cảnh?
+
+- [ ] Transformer encoder với self-attention
+- [x] Character-level CNN kết hợp với biLSTM nhiều lớp đã pretrain như một mô hình ngôn ngữ
+- [ ] Decoder-only Transformer với causal mask
+- [ ] Mạng nơ-ron truyền thẳng (MLP) đơn giản trên one-hot vector
+
+> ELMo dùng CNN cấp ký tự xử lý input, sau đó đưa qua biLSTM nhiều lớp
+> (kỹ thuật RNN Family đã học, không phải Transformer). Đây là điểm khác
+> biệt quan trọng so với BERT/GPT — ý tưởng "embedding phụ thuộc ngữ
+> cảnh" ra đời trước và không gắn chặt với riêng kiến trúc Transformer.
+
+## Q3
+Theo nghiên cứu của Peters và cộng sự, vì sao ELMo kết hợp biểu diễn từ
+NHIỀU lớp của biLSTM thay vì chỉ dùng lớp cuối cùng?
+
+- [ ] Vì dùng nhiều lớp giúp giảm số tham số cần huấn luyện
+- [x] Vì các lớp khác nhau nắm bắt loại thông tin ngôn ngữ khác nhau (lớp thấp thiên cú pháp, lớp cao thiên ngữ nghĩa), và để mô hình downstream tự học cách kết hợp chúng mang lại hiệu quả tốt hơn
+- [ ] Vì chỉ dùng lớp cuối cùng sẽ vi phạm tính chất bidirectional
+- [ ] Vì dùng nhiều lớp là yêu cầu bắt buộc của character-level CNN
+
+> Nghiên cứu chỉ ra "phơi bày" các lớp nội bộ (thay vì chỉ dùng output
+> cuối) là yếu tố quan trọng giúp ELMo vượt trội — các lớp khác nhau nắm
+> bắt các khía cạnh ngôn ngữ khác nhau, và trọng số kết hợp được học
+> riêng cho từng tác vụ downstream.
+
+## Q4
+Hạn chế nào của ELMo mà BERT (bài 45) giải quyết tiếp theo?
+
+- [ ] ELMo không đạt được ngữ cảnh hai chiều, chỉ đọc một chiều như GPT
+- [x] ELMo đạt ngữ cảnh hai chiều nhưng vẫn cần thiết kế kiến trúc riêng cho từng tác vụ downstream, vì trọng số biLSTM bị đóng băng sau pretrain
+- [ ] ELMo không thể xử lý được từ hiếm/ngoài từ vựng
+- [ ] ELMo chỉ hoạt động với câu ngắn, không xử lý được văn bản dài
+
+> ELMo đã đạt ngữ cảnh hai chiều (ưu điểm mà GPT không có), nhưng vẫn đòi
+> hỏi xây kiến trúc riêng cho mỗi tác vụ downstream, dùng embedding ELMo
+> làm input bổ sung — không có kiến trúc chung áp dụng thẳng cho mọi bài
+> toán. BERT giải quyết nốt vấn đề này bằng kiến trúc task-agnostic (chỉ
+> cần fine-tune, không cần thiết kế lại).

@@ -1,0 +1,43 @@
+---
+quiz_for: 04-anchor-free-detection
+---
+
+## Q1
+3 hạn chế cụ thể của anchor box mà các phương pháp anchor-free giải quyết là gì?
+
+- [x] Cần thiết kế thủ công nhiều hyperparameter (số lượng/tỷ lệ/scale anchor), tính toán IoU tốn kém khi huấn luyện, và kết quả nhạy cảm với lựa chọn hyperparameter đó
+- [ ] Anchor box không thể dùng được với ảnh màu
+- [ ] Anchor box chỉ hoạt động với đúng 1 lớp vật thể duy nhất
+- [ ] Anchor box không thể huấn luyện bằng backpropagation
+
+> Đây là 3 vấn đề cụ thể mà cả FCOS và CenterNet nhắm tới giải quyết theo 2 cách tiếp cận khác nhau.
+
+## Q2
+FCOS dự đoán bounding box bằng cách nào tại mỗi pixel?
+
+- [x] Dự đoán 1 vector 4 chiều (khoảng cách tới 4 cạnh trái/phải/trên/dưới của bounding box) cộng 1 nhãn lớp, kèm nhánh "centerness" để lọc dự đoán kém chất lượng
+- [ ] Dự đoán trực tiếp toạ độ 4 góc của bounding box mà không cần thông tin gì khác
+- [ ] Chỉ dự đoán lớp của vật thể, không dự đoán vị trí
+- [ ] Dùng đúng công thức anchor box giống YOLO nhưng đổi tên gọi
+
+> Centerness giúp lọc bỏ các dự đoán từ vị trí xa tâm vật thể (thường kém chính xác hơn) trước bước NMS — bằng cách nhân điểm centerness với điểm tin cậy phân loại.
+
+## Q3
+CenterNet đơn giản hoá triệt để hơn FCOS bằng cách nào?
+
+- [x] Biểu diễn mỗi vật thể chỉ bằng đúng 1 điểm — tâm bounding box, dự đoán qua keypoint estimation, rồi hồi quy thêm kích thước — loại bỏ hoàn toàn nhu cầu Non-Maximum Suppression
+- [ ] CenterNet không dự đoán được kích thước vật thể, chỉ dự đoán vị trí
+- [ ] CenterNet dùng nhiều anchor box hơn FCOS để tăng độ chính xác
+- [ ] CenterNet chỉ hoạt động với vật thể hình tròn, không hoạt động với vật thể hình chữ nhật
+
+> Vì mỗi vật thể chỉ có đúng 1 điểm tâm (không có nhiều dự đoán chồng chéo), CenterNet không cần bước lọc trùng lặp phức tạp như NMS nữa.
+
+## Q4
+Cả FCOS và CenterNet minh hoạ cho nguyên tắc thiết kế nào đã lặp lại trong track?
+
+- [x] Đôi khi bước tiến quan trọng nhất là BỎ BỚT một thành phần thiết kế thủ công (ở đây là anchor box) thay vì thêm vào — giống cách SegFormer bỏ positional encoding, hay DPO bỏ hẳn bước RL khỏi RLHF
+- [ ] Luôn cần thêm nhiều thành phần phức tạp hơn để cải thiện hiệu năng
+- [ ] Anchor box là thành phần bắt buộc không thể thiếu trong mọi kiến trúc detection
+- [ ] FCOS và CenterNet không liên quan gì tới các nguyên tắc thiết kế đã học trước đó
+
+> Đây là mẫu hình quan trọng đã lặp lại nhiều lần: đơn giản hoá bằng cách loại bỏ đúng thành phần không cần thiết, thay vì luôn cố thêm vào để cải thiện.

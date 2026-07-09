@@ -1,0 +1,112 @@
+---
+title: Swin Transformer — Shifted Window Attention Giải quyết Độ phức tạp Bậc hai của ViT
+track: foundations-track
+module: Computer Vision
+submodule: Cơ bản
+order: 8
+status: stable
+prerequisites: ["07-vision-transformer"]
+summary: ViT áp dụng self-attention toàn cục giữa mọi patch — độ phức tạp tính toán tăng theo BÌNH PHƯƠNG số patch, khiến ảnh độ phân giải cao trở nên quá tốn kém, và ViT chỉ cho ra biểu diễn ở một tỷ lệ duy nhất (không phù hợp cho detection/segmentation vốn cần đặc trưng đa tỷ lệ). Liu và cộng sự (2021) giải quyết bằng Swin Transformer: giới hạn self-attention trong các cửa sổ cục bộ không chồng lấn (độ phức tạp tuyến tính), rồi DỊCH CHUYỂN (shift) cửa sổ ở lớp kế tiếp để các cửa sổ liền kề có thể trao đổi thông tin — đồng thời tạo cấu trúc phân cấp (hierarchical) sinh ra đặc trưng đa tỷ lệ, biến Swin thành backbone tổng quát dùng được cho cả classification, detection, và segmentation.
+last_touched_by_task: Bài mới (2026-07-06), theo yêu cầu người vận hành đào sâu tiếp Detection/Segmentation — Swin là bước trung gian quan trọng cần học TRƯỚC SegFormer, vì nó là backbone Transformer tổng quát đầu tiên giải quyết đúng hạn chế của ViT (độ phức tạp bậc hai + thiếu đa tỷ lệ) mà cả detection lẫn segmentation dựa trên Transformer đều cần. Nguồn: arxiv 2103.14030 (paper gốc Liu et al. 2021, xác nhận qua WebFetch abstract: vấn đề độ phức tạp bậc hai + thiếu đa tỷ lệ của ViT, giải pháp shifted window attention, kết quả cụ thể trên cả 3 tác vụ classification/detection/segmentation) + D2L.ai (chapter_attention-mechanisms-and-transformers/vision-transformer.html, xác nhận qua WebFetch: đoạn tóm tắt về Swin Transformer giải quyết đúng độ phức tạp bậc hai của self-attention khi ảnh có độ phân giải cao, và mở rộng khả năng ứng dụng Transformer ra ngoài classification).
+---
+
+Bài [Vision Transformer](55-vision-transformer.mdx) chứng minh Transformer
+thuần tuý có thể vượt trội CNN khi pretrain đủ lớn — nhưng ViT có hai hạn
+chế cụ thể khiến nó khó áp dụng trực tiếp cho các bài toán CV khác ngoài
+classification. Bài này kể cách một kiến trúc kế nhiệm giải quyết đúng
+hai hạn chế đó.
+
+## Vấn đề: độ phức tạp bậc hai, và thiếu đặc trưng đa tỷ lệ
+
+ViT áp dụng self-attention **toàn cục** — mỗi patch tính attention với
+**mọi** patch khác trong ảnh. Với `n` patch, số cặp tương tác cần tính là
+`n²` — độ phức tạp tính toán tăng theo **bình phương** số patch. Khi ảnh
+có độ phân giải càng cao (càng nhiều patch), chi phí này tăng rất nhanh,
+khiến ViT trở nên **quá tốn kém** để áp dụng trực tiếp cho ảnh độ phân
+giải cao (ví dụ ảnh y tế, ảnh vệ tinh) — một hạn chế chính D2L.ai xác
+nhận trực tiếp: "độ phức tạp bậc hai của self-attention khiến kiến trúc
+Transformer kém phù hợp với ảnh độ phân giải cao hơn".
+
+Vấn đề thứ hai: ViT chỉ sinh ra biểu diễn ở **một tỷ lệ không gian duy
+nhất** (kích thước patch cố định xuyên suốt mạng) — phù hợp cho
+classification (chỉ cần 1 nhãn cho cả ảnh), nhưng **không phù hợp** cho
+các tác vụ như object detection (bài [Object Detection](33-object-detection.mdx))
+hay segmentation (bài [Image Segmentation](34-image-segmentation.mdx)),
+vốn cần đặc trưng ở **nhiều tỷ lệ khác nhau** (đã học rõ ở bài
+[SSD](56-ssd.mdx) — vật thể kích thước khác nhau cần bản đồ đặc trưng ở
+độ phân giải khác nhau).
+
+## Giải pháp: shifted window attention + cấu trúc phân cấp
+
+**Liu và cộng sự (2021)**, trong bài báo "Swin Transformer: Hierarchical
+Vision Transformer using Shifted Windows", giải quyết cả hai vấn đề bằng
+hai ý tưởng kết hợp:
+
+### 1. Giới hạn attention trong cửa sổ cục bộ, không chồng lấn
+
+Thay vì tính self-attention giữa **mọi** patch trong ảnh, Swin Transformer
+chia ảnh thành các **cửa sổ (window)** cục bộ, không chồng lấn lên nhau,
+và chỉ tính self-attention **bên trong từng cửa sổ** — không tính giữa
+các patch ở hai cửa sổ khác nhau. Vì kích thước mỗi cửa sổ cố định (không
+phụ thuộc kích thước ảnh), độ phức tạp tính toán giờ tăng **tuyến tính**
+với số patch, thay vì bậc hai như ViT.
+
+### 2. Dịch chuyển cửa sổ ở lớp kế tiếp để trao đổi thông tin liên cửa sổ
+
+Nếu chỉ giới hạn attention trong cửa sổ cố định, các patch ở hai cửa sổ
+liền kề sẽ **không bao giờ** trao đổi thông tin với nhau — một hạn chế
+nghiêm trọng. Swin Transformer giải quyết bằng cách **dịch chuyển**
+(shift) vị trí ranh giới cửa sổ ở lớp kế tiếp (ví dụ dịch nửa kích thước
+cửa sổ theo cả hai chiều) — patch nào trước đó nằm ở biên hai cửa sổ khác
+nhau, giờ có thể rơi vào cùng một cửa sổ mới sau khi dịch chuyển, cho
+phép thông tin dần lan truyền qua toàn ảnh qua nhiều lớp liên tiếp, dù
+mỗi lớp riêng lẻ vẫn chỉ tính attention cục bộ.
+
+### 3. Cấu trúc phân cấp (hierarchical) sinh đặc trưng đa tỷ lệ
+
+Khác ViT (giữ nguyên một độ phân giải patch xuyên suốt), Swin Transformer
+**gộp dần các patch liền kề** qua các giai đoạn (stage) liên tiếp — giống
+tinh thần pooling của CNN — tạo ra một chuỗi bản đồ đặc trưng có độ phân
+giải **giảm dần** qua các giai đoạn. Kết quả: Swin Transformer tự nhiên
+sinh ra đặc trưng **đa tỷ lệ**, đúng loại thông tin mà detection/segmentation
+cần (giống vai trò các bản đồ đặc trưng đa tỷ lệ của SSD đã học), điều
+mà ViT gốc hoàn toàn không có.
+
+## Kết quả: một backbone tổng quát cho cả ba tác vụ CV chính
+
+Liu và cộng sự công bố kết quả trên cả ba tác vụ CV cơ bản đã học trong
+track — minh chứng Swin Transformer là một **backbone tổng quát**, không
+chỉ giới hạn ở classification như ViT:
+
+- **Classification (ImageNet-1K):** 87.3% top-1 accuracy.
+- **Object Detection (COCO):** 58.7 box AP, 51.1 mask AP (cả bounding
+  box lẫn instance mask, tương tự bài toán Mask R-CNN đã học).
+- **Semantic Segmentation (ADE20K):** 53.5 mIoU.
+
+Trên cả ba benchmark, Swin Transformer đều **vượt trội** đáng kể so với
+phương pháp SOTA trước đó tại thời điểm công bố (cải thiện cụ thể: +2.7
+box AP, +2.6 mask AP trên COCO, +3.2 mIoU trên ADE20K) — chứng minh
+Transformer, khi thiết kế đúng cách (giải quyết cả độ phức tạp tính toán
+lẫn nhu cầu đa tỷ lệ), có thể thay thế CNN làm backbone chuẩn cho hầu hết
+các tác vụ CV, không chỉ riêng classification.
+
+## Liên hệ lại với các bài trước
+
+- Swin Transformer giải quyết đúng 2 hạn chế cụ thể của
+  [ViT](55-vision-transformer.mdx) — độ phức tạp bậc hai và thiếu đa tỷ
+  lệ — đúng mẫu hình "model kế nhiệm giải quyết hạn chế cụ thể của model
+  trước" đã lặp lại xuyên suốt track (giống ResNet giải quyết degradation
+  của VGG, hay Fast R-CNN giải quyết tính toán lặp lại của R-CNN).
+- Cấu trúc phân cấp sinh đặc trưng đa tỷ lệ của Swin về tinh thần tương
+  tự cách [SSD](56-ssd.mdx) dùng nhiều bản đồ đặc trưng ở nhiều độ phân
+  giải — chỉ khác công cụ (self-attention theo cửa sổ thay vì convolution
+  xếp chồng).
+- Vì Swin cho ra đặc trưng đa tỷ lệ giống CNN, nó có thể **thay thế trực
+  tiếp** backbone CNN trong các kiến trúc detection/segmentation đã học
+  (ví dụ dùng Swin thay ResNet làm backbone cho Faster R-CNN hay Mask
+  R-CNN) — một minh chứng cho tính tổng quát của kiến trúc này.
+
+## Nguồn tham khảo
+
+- [arXiv — Swin Transformer: Hierarchical Vision Transformer using Shifted Windows](https://arxiv.org/abs/2103.14030) — paper gốc của Liu và cộng sự (2021), dùng cho vấn đề cụ thể (độ phức tạp bậc hai + thiếu đa tỷ lệ của ViT), giải pháp (shifted window attention + cấu trúc phân cấp), và kết quả trên cả 3 tác vụ (ImageNet 87.3%, COCO 58.7 box AP/51.1 mask AP, ADE20K 53.5 mIoU).
+- [Dive into Deep Learning — Transformers for Vision](http://d2l.ai/chapter_attention-mechanisms-and-transformers/vision-transformer.html) — dùng cho xác nhận hạn chế cụ thể của ViT (độ phức tạp bậc hai của self-attention với ảnh độ phân giải cao) và vai trò của Swin Transformer trong việc mở rộng khả năng ứng dụng Transformer ra ngoài classification.

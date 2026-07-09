@@ -1,0 +1,43 @@
+---
+quiz_for: 02-tacotron-fastspeech
+---
+
+## Q1
+Pre-net trong decoder Tacotron 2 có vai trò gì?
+
+- [ ] Tăng tốc độ suy luận
+- [x] Tạo "nút thắt cổ chai" thông tin từ frame trước, buộc decoder dựa nhiều hơn vào attention context thay vì dựa dẫm frame trước (giảm lỗi trôi tích luỹ)
+- [ ] Chuyển văn bản thành phoneme
+- [ ] Dự đoán stop token
+
+> Pre-net xử lý frame mel vừa sinh trước khi đưa vào LSTM chính, tạo bottleneck thông tin. Nếu decoder dựa quá nhiều vào frame trước (dễ dự đoán, ít thông tin mới), dễ gây lỗi trôi. Pre-net ép decoder phải dựa nhiều hơn vào attention context (thông tin thật từ encoder text).
+
+## Q2
+"Attention misalignment" ở Tacotron 2 là vấn đề gì, và FastSpeech giải bằng cách nào?
+
+- [ ] Vấn đề tốc độ; FastSpeech giải bằng GPU mạnh hơn
+- [x] Attention tự do học căn chỉnh dễ "trôi" (lặp/bỏ từ); FastSpeech áp đặt căn chỉnh tường minh qua duration predictor + length regulator, không còn attention tự do giữa text-audio
+- [ ] Vấn đề chất lượng âm thanh; FastSpeech giải bằng vocoder tốt hơn
+- [ ] Vấn đề overfitting; FastSpeech giải bằng regularization
+
+> Attention tự do (location-sensitive) vẫn có thể lặp lại đoạn, bỏ từ, dừng sai. FastSpeech dự đoán duration (số frame mỗi ký tự) rồi length regulator giãn biểu diễn ký tự đúng số frame đó — decoder ánh xạ 1-1, loại bỏ hoàn toàn attention học tự do giữa text-audio.
+
+## Q3
+FastSpeech cần "nguồn duration" để huấn luyện duration predictor. Nguồn đó lấy từ đâu (FastSpeech gốc)?
+
+- [ ] Nhãn duration do con người gán thủ công
+- [x] Trích xuất từ attention alignment của 1 mô hình Tacotron-like đã huấn luyện trước (dùng làm giả-nhãn duration)
+- [ ] Đếm số ký tự chia đều cho số frame
+- [ ] Không cần nguồn duration, model tự học từ đầu
+
+> Dữ liệu training chỉ có cặp (text, audio), không có nhãn duration sẵn. FastSpeech gốc trích duration từ attention của Tacotron-like đã train (attention alignment cho biết ký tự nào ứng bao nhiêu frame). FastSpeech 2 sau này dùng forced alignment trực tiếp, bỏ phụ thuộc vào model khác.
+
+## Q4
+Kiến trúc Feed-Forward Transformer (FFT) của FastSpeech khác Transformer gốc ở điểm nào?
+
+- [ ] FFT không dùng self-attention
+- [x] FFT thay feed-forward layer thuần bằng 1D convolution — bắt pattern cục bộ phù hợp hơn cho tín hiệu audio có tính cục bộ mạnh
+- [ ] FFT không có positional encoding
+- [ ] FFT chỉ dùng cho encoder, không dùng cho decoder
+
+> FFT = self-attention (ngữ cảnh toàn cục, giống Transformer chuẩn) + 1D CNN (thay feed-forward, bắt pattern cục bộ). Audio/mel-spectrogram có cấu trúc cục bộ mạnh (frame gần nhau tương quan) nên 1D CNN phù hợp hơn feed-forward thuần túy của Transformer gốc (thiết kế cho text).

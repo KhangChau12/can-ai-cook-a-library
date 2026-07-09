@@ -1,0 +1,43 @@
+---
+quiz_for: 02-lstm-gru
+---
+
+## Q1
+Vanishing gradient trong RNN thuần xảy ra vì lý do gì?
+
+- [x] Mỗi bước lan truyền ngược qua thời gian liên quan tới một phép NHÂN — nhân liên tiếp nhiều số nhỏ hơn 1 khiến gradient tiến dần về 0
+- [ ] Vì RNN không dùng activation function
+- [ ] Vì dữ liệu chuỗi luôn có nhiễu quá lớn
+- [ ] Vì learning rate luôn được đặt quá nhỏ
+
+> Backpropagation through time lan truyền ngược qua mọi bước thời gian ở giữa, mỗi bước liên quan tới một phép nhân (qua W_hh và đạo hàm activation) — nhân liên tiếp rất nhiều số nhỏ hơn 1 khiến gradient ở các bước xa gần như bằng 0.
+
+## Q2
+Điểm khác biệt cốt lõi giúp LSTM khắc phục vanishing gradient là gì?
+
+- [x] Cập nhật cell state bằng phép CỘNG có trọng số (không phải nhân liên tiếp như hidden state RNN thuần)
+- [ ] LSTM không dùng backpropagation
+- [ ] LSTM có ít tham số hơn RNN nên dễ huấn luyện hơn
+- [ ] LSTM chỉ xử lý được chuỗi ngắn dưới 10 bước
+
+> `C_t = forget_gate * C_{t-1} + input_gate * candidate_moi` — đây là phép cộng, không phải nhân liên tiếp, nên gradient có thể "chảy" qua nhiều bước thời gian mà không bị suy giảm theo cấp số nhân.
+
+## Q3
+Forget gate trong LSTM có vai trò gì?
+
+- [x] Quyết định giữ lại bao nhiêu thông tin từ cell state cũ (giá trị gần 1 = giữ nguyên, gần 0 = quên đi)
+- [ ] Quyết định output cuối cùng của toàn bộ mạng
+- [ ] Tính gradient cho bước cập nhật tham số
+- [ ] Chuyển đổi input thành mel-spectrogram
+
+> LSTM có 3 cổng: forget gate (giữ lại bao nhiêu thông tin cũ), input gate (thêm bao nhiêu thông tin mới), output gate (lấy bao nhiêu từ cell state để tạo hidden state hiện tại).
+
+## Q4
+GRU khác LSTM ở điểm nào?
+
+- [x] GRU chỉ có 2 cổng (reset và update) thay vì 3, và không tách riêng cell state khỏi hidden state
+- [ ] GRU không dùng cơ chế gating, chỉ dùng phép nhân thuần
+- [ ] GRU luôn cho kết quả tệ hơn LSTM trên mọi bài toán
+- [ ] GRU chỉ hoạt động với dữ liệu ảnh, không hoạt động với văn bản
+
+> GRU đạt hiệu quả tương tự LSTM với cấu trúc gọn hơn (2 cổng, 1 trạng thái duy nhất) — thường huấn luyện nhanh hơn (ít tham số hơn); lựa chọn giữa 2 kiến trúc thường mang tính thực nghiệm, không có quy tắc "luôn dùng cái nào tốt hơn".

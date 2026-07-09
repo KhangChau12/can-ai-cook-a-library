@@ -1,0 +1,117 @@
+---
+title: Whisper — Đào sâu Kiến trúc Multitask Decoding Qua Token Đặc biệt
+track: foundations-track
+module: Audio
+submodule: Speech-to-Text
+order: 2
+status: stable
+prerequisites: ["01-speech-to-text"]
+summary: Bài 31 giới thiệu Whisper ở mức tổng quan (680K giờ, multitask, zero-shot). Bài này đào sâu cơ chế cụ thể: input 80-channel log-mel spectrogram qua conv layer rồi encoder Transformer, decoder dùng chuỗi TOKEN ĐẶC BIỆT (<SOT>, ngôn ngữ, tác vụ, timestamp) để điều khiển 1 model làm nhiều việc — dịch/transcribe/nhận dạng ngôn ngữ/dự đoán timestamp — chỉ bằng cách đổi token đầu vào, không đổi kiến trúc.
+last_touched_by_task: Bài mới (Task 114, 2026-07-07) — Phase 3 Audio, đào sâu Whisper (đã giới thiệu sơ lược ở bài 31) vào đúng submodule Speech-to-Text mới tách. Trọng tâm: cơ chế token đặc biệt điều khiển multitask — khác các bài trước (CTC 1 tác vụ cố định), đây là ví dụ cụ thể 'điều khiển hành vi model qua input token' áp dụng cho audio. Nguồn: arxiv 2212.04356 (đã dùng ở bài 31, đào sâu thêm chi tiết kiến trúc/token) + xác nhận qua WebSearch whitelist về cấu trúc token cụ thể.
+---
+
+Bài [Speech-to-Text](31-speech-to-text.mdx) giới thiệu Whisper ở mức tổng
+quan: huấn luyện supervised quy mô lớn (680.000 giờ), kiến trúc
+encoder-decoder, multitask, zero-shot transfer mạnh. Bài này đào sâu
+**cơ chế cụ thể** khiến 1 model duy nhất làm được nhiều tác vụ khác nhau
+— chìa khoá nằm ở cách thiết kế **token đặc biệt** cho decoder.
+
+## Input: log-mel spectrogram cụ thể
+
+Whisper dùng đúng biểu diễn đã học ở bài [30](30-bieu-dien-am-thanh.mdx):
+**80-channel log-mel spectrogram**, tính bằng STFT với cửa sổ 25ms, hop
+10ms (đúng tham số chuẩn đã nêu ở bài 30). Spectrogram đi qua **2 lớp
+convolution** (giảm chiều thời gian, chuẩn hoá biên độ) trước khi vào
+encoder Transformer — bước tiền xử lý ngắn giúp encoder nhận input đã
+"làm mượt" một phần, không phải mel-spectrogram thô hoàn toàn.
+
+## Kiến trúc: encoder-decoder chuẩn, nhiều kích thước
+
+Whisper có nhiều biến thể kích thước — từ 39M tham số (tiny) tới 1550M
+(large), tương ứng số lớp encoder/decoder từ 4 tới 32. Cấu trúc mỗi khối:
+
+- **Encoder block**: self-attention + MLP (giống Transformer encoder
+  chuẩn, bài [15](15-transformer.mdx)).
+- **Decoder block**: giống encoder block nhưng thêm **cross-attention**
+  — decoder "nhìn" vào output encoder tại mỗi bước sinh token, đúng cơ
+  chế cross-attention đã học (kết nối trực tiếp bài 14/15).
+
+Không có gì đặc biệt về kiến trúc so với Transformer chuẩn — điểm khác
+biệt nằm hoàn toàn ở **cách dùng token đặc biệt** để điều khiển hành vi.
+
+## Multitask qua chuỗi token đặc biệt — cơ chế cốt lõi
+
+Đây là điểm Whisper khéo léo nhất: thay vì huấn luyện 4 mô hình riêng cho
+4 tác vụ (transcribe, dịch, nhận dạng ngôn ngữ, phát hiện hoạt động giọng
+nói), Whisper dùng **1 decoder duy nhất**, điều khiển bằng chuỗi token
+đặc biệt ở **đầu** chuỗi input decoder:
+
+```
+<SOT> <ngôn_ngữ> <tác_vụ> <no_timestamps?> [text tokens...]
+```
+
+- **`<SOT>`** (Start of Transcript): mở đầu, báo hiệu decoder bắt đầu.
+- **Token ngôn ngữ**: chỉ định ngôn ngữ audio input (99 ngôn ngữ) — hoặc
+  để model **tự dự đoán** (nhận dạng ngôn ngữ là 1 tác vụ được huấn
+  luyện).
+- **Token tác vụ**: `<transcribe>` (giữ nguyên ngôn ngữ gốc) hoặc
+  `<translate>` (dịch sang tiếng Anh) — cùng audio input, đổi token này
+  đổi hành vi hoàn toàn.
+- **Token timestamp**: nếu có, decoder còn dự đoán **thời điểm** mỗi đoạn
+  text xuất hiện trong audio (hữu ích cho phụ đề); nếu dùng
+  `<no_timestamps>`, chỉ sinh text thuần.
+
+Đây chính xác là cách **prompt engineering** (bài
+[28](28-prompting-in-context-learning.mdx)) hoạt động ở audio: không cần
+đổi tham số hay kiến trúc, chỉ đổi token điều kiện ở đầu chuỗi để đổi
+hành vi model — cùng tinh thần GPT-3 làm nhiều tác vụ qua prompt khác
+nhau, áp dụng cho encoder-decoder audio.
+
+**Cross-attention làm gì trong lúc decode.** Tại mỗi bước sinh token,
+decoder tính cross-attention giữa token đang sinh và toàn bộ output
+encoder — điểm attention cao tương ứng với đoạn audio decoder đang "chú
+ý" để sinh đúng token đó. Đây cũng là cơ sở cho **timestamp prediction**:
+theo dõi attention pattern qua thời gian cho biết đoạn audio nào tương
+ứng với đoạn text nào.
+
+## So sánh với CTC — 2 triết lý khác biệt
+
+Đối chiếu 2 cách tiếp cận đã học ở bài 31:
+
+| | CTC | Whisper (encoder-decoder) |
+|---|---|---|
+| Độ dài output | Cùng độ dài input (rồi rút gọn) | Tự do, autoregressive |
+| Kiến trúc nền | RNN đơn giản | Transformer đầy đủ |
+| Đa tác vụ | Không (1 model = 1 tác vụ) | Có (token đặc biệt) |
+| Cần LM riêng | Thường cần (beam search + LM) | Không cần thêm (decoder tự có ngữ cảnh ngôn ngữ) |
+| Huấn luyện | Nhãn audio-text thẳng | Nhãn audio-text + weak supervision quy mô lớn |
+
+CTC đơn giản hơn, nhanh hơn lúc suy luận (không autoregressive), nhưng
+giới hạn ở 1 tác vụ. Whisper phức tạp hơn nhưng linh hoạt — 1 model làm
+được cả transcribe, dịch, nhận dạng ngôn ngữ.
+
+## Liên hệ lại với các bài trước
+
+- Cơ chế token đặc biệt điều khiển tác vụ là **prompt engineering** áp
+  dụng cho audio — cùng nguyên lý bài [28](28-prompting-in-context-learning.mdx)
+  (đổi cách hỏi, không đổi tham số) nhưng token ở đây có cấu trúc cố
+  định (ngôn ngữ/tác vụ/timestamp), không tự do như prompt text.
+- Cross-attention của Whisper là đúng cơ chế đã học ở
+  [Attention](14-attention.mdx)/[Transformer](15-transformer.mdx) — decoder
+  audio "tra cứu" encoder giống decoder dịch máy tra cứu câu nguồn.
+- So sánh CTC vs encoder-decoder lặp lại mẫu hình "đơn giản+nhanh vs
+  linh hoạt+mạnh" đã gặp ở nhiều cặp kiến trúc khác trong track (ví dụ
+  one-stage vs two-stage detection bài 33/39).
+
+## Liên hệ với các bài tiếp theo
+
+Whisper xử lý chiều Speech-to-Text (input audio → ra text). Chiều ngược lại
+— Text-to-Speech (input text → ra audio) — được trình bày ở bài [TTS tổng
+quan](32-text-to-speech.mdx) (bài 32), [Tacotron 2 & FastSpeech](91-tacotron-fastspeech.mdx)
+(bài 91, sinh spectrogram từ text), và [HiFi-GAN](92-hifigan-neural-vocoder.mdx)
+(bài 92, neural vocoder biến spectrogram thành audio). Hai chiều STT và TTS
+cùng tạo thành vòng lặp hoàn chỉnh xử lý giọng nói.
+
+## Nguồn tham khảo
+
+- [arXiv — Robust Speech Recognition via Large-Scale Weak Supervision (Radford et al., 2022)](https://arxiv.org/abs/2212.04356) — paper gốc Whisper (đã dùng ở bài 31), đào sâu thêm ở bài này: input 80-channel log-mel qua 2 conv layer, kiến trúc encoder-decoder theo kích thước (39M-1550M, 4-32 layer), chuỗi token đặc biệt (`<SOT>`, ngôn ngữ, tác vụ transcribe/translate, timestamp) điều khiển multitask qua 1 decoder duy nhất, cross-attention làm cơ sở timestamp prediction.

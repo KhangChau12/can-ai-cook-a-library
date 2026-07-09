@@ -1,0 +1,147 @@
+---
+title: Collaborative Filtering & Matrix Factorization — Gợi ý Từ Hành vi Đám đông
+track: foundations-track
+module: Recommendation Systems
+order: 1
+status: stable
+prerequisites: ["05-k-nearest-neighbors", "07-k-means-clustering"]
+summary: Bài mở đầu module Recommendation Systems mới: collaborative filtering giải quyết bài toán gợi ý bằng cách khai thác 'trí tuệ đám đông' thay vì hiểu nội dung item, nhưng gặp vấn đề dữ liệu cực thưa. Simon Funk (2006, Netflix Prize) phổ biến Matrix Factorization — phân rã ma trận rating thành các latent factor chiều thấp — giải quyết đúng vấn đề đó, trở thành kỹ thuật nền tảng thắng giải Netflix Prize.
+last_touched_by_task: Bài mới (2026-07-06) mở đầu module Recommendation Systems — được đánh giá lại là khả thi hơn nhiều so với lúc xếp ưu tiên thấp ở đợt mở rộng lần 4 (mục 2.1), vì track giờ đã có sẵn nền tảng liên hệ tự nhiên: k-NN (bài 5), K-means (bài 7), và đặc biệt Embedding/vector search (bài 29, series LLM) — RAG dùng chính kỹ thuật tìm 'điểm gần nhất trong không gian ngữ nghĩa' mà recommendation systems dùng để tìm 'user/item gần nhau trong không gian sở thích'. Nguồn: D2L.ai chương Recommender Systems (xác nhận qua WebFetch trực tiếp 2 trang: recsys-intro.html cho vấn đề/explicit-implicit feedback, mf.html cho Matrix Factorization/công thức/lịch sử Netflix Prize/Simon Funk). Cập nhật (2026-07-06, Task 89): thêm liên kết sang bài 81 (AutoRec) mới viết.
+---
+
+Từ bài [k-NN](05-k-nearest-neighbors.mdx) và [K-means](07-k-means-clustering.mdx),
+track đã học cách đo **độ tương đồng** giữa các điểm dữ liệu. **Recommendation
+systems** (hệ thống gợi ý) là một trong những ứng dụng thực tế lớn nhất của
+chính ý tưởng "tìm những gì giống nhau" đó — nhưng áp dụng cho một bài toán
+cụ thể: dự đoán người dùng sẽ thích **item** nào (phim, sản phẩm, bài hát)
+trong hàng triệu lựa chọn, dựa trên lịch sử tương tác của chính họ và của
+những người dùng khác.
+
+## Vấn đề: quá nhiều lựa chọn, không thể tự tìm bằng tay
+
+Các nền tảng hiện đại (Netflix, YouTube, Amazon...) cung cấp một lượng item
+khổng lồ — vượt xa khả năng một người dùng tự duyệt qua hết để tìm thứ mình
+thích. Đây là vấn đề **quá tải thông tin** (information overload): không
+phải thiếu lựa chọn, mà thừa lựa chọn tới mức không ai tự tìm nổi thứ phù
+hợp nếu không có hệ thống lọc thông minh.
+
+Dữ liệu đầu vào cho bài toán này có hai dạng:
+
+- **Explicit feedback** (phản hồi tường minh): người dùng chủ động đánh giá
+  — sao trên IMDb, like/dislike trên YouTube. Ưu điểm: rõ ràng, đúng ý người
+  dùng. Nhược điểm: phần lớn người dùng không chịu đánh giá, nên dữ liệu này
+  rất thưa (sparse).
+- **Implicit feedback** (phản hồi ngầm định): suy ra từ hành vi — đã mua, đã
+  click, đã xem. Ưu điểm: có sẵn rất nhiều (không cần người dùng làm gì
+  thêm). Nhược điểm: nhiễu hơn nhiều — xem xong một bộ phim không nhất thiết
+  nghĩa là thích nó.
+
+## Collaborative Filtering: dùng "trí tuệ đám đông" thay vì hiểu nội dung item
+
+**Collaborative filtering** (lọc cộng tác) giải quyết bài toán gợi ý bằng
+một ý tưởng không cần hiểu **nội dung** của item (không cần biết bộ phim A
+thuộc thể loại gì, diễn viên là ai): nếu hai người dùng đã thích những item
+**giống nhau** trong quá khứ, họ có xu hướng thích những item giống nhau
+tiếp theo trong tương lai. Nói cách khác: khai thác "trí tuệ tập thể" của
+toàn bộ cộng đồng người dùng, thay vì phân tích đặc điểm riêng của từng item.
+
+Đây chính là lý do tên gọi "collaborative" — mọi người dùng trong hệ thống
+gián tiếp "hợp tác" giúp nhau tìm ra gợi ý tốt, dù không ai biết về sự tồn
+tại của người khác.
+
+## Vấn đề của Collaborative Filtering thuần: ma trận cực kỳ thưa
+
+Biểu diễn tự nhiên nhất cho bài toán này là một **ma trận rating** `R`, với
+mỗi hàng là một người dùng, mỗi cột là một item, và mỗi ô `R[u][i]` là đánh
+giá của người dùng `u` cho item `i` (nếu có). Vấn đề thực tế: với hàng triệu
+người dùng và hàng triệu item, mỗi người dùng chỉ tương tác với một phần cực
+nhỏ trong số đó — ma trận `R` gần như toàn ô trống (**cực kỳ thưa**, sparse).
+Cách so sánh trực tiếp "tìm người dùng giống nhau" bằng cách so từng hàng
+ma trận thưa này hoạt động kém khi phần lớn dữ liệu không có gì để so sánh.
+
+## Giải pháp: Matrix Factorization — nén ma trận thưa thành các latent factor chiều thấp
+
+**Matrix Factorization** (phân rã ma trận) giải quyết đúng vấn đề dữ liệu
+thưa đó bằng một ý tưởng có cùng tinh thần với PCA/Autoencoder đã học: thay
+vì làm việc trực tiếp trên ma trận `R` khổng lồ và thưa, **phân rã** nó
+thành tích của hai ma trận nhỏ hơn nhiều:
+
+```
+R  ≈  P × Q^T
+```
+
+Trong đó:
+- `P` (kích thước m×k, m = số người dùng): mỗi hàng là một vector **latent
+  factor** (yếu tố ẩn) của một người dùng — biểu diễn "sở thích" của người
+  đó dưới dạng `k` con số trừu tượng (k nhỏ hơn nhiều so với số item thật).
+- `Q` (kích thước n×k, n = số item): mỗi hàng là vector latent factor của
+  một item — biểu diễn "đặc điểm" của item đó dưới cùng `k` chiều với `P`.
+- Rating dự đoán giữa người dùng `u` và item `i` chỉ đơn giản là **tích vô
+  hướng** giữa 2 vector tương ứng: `R̂[u][i] = P[u] · Q[i]` (thường cộng
+  thêm bias riêng cho từng người dùng/item để xử lý xu hướng đánh giá cao/
+  thấp mang tính cá nhân).
+
+Các latent factor này **không được gán ý nghĩa thủ công** — mô hình tự học
+chúng qua dữ liệu. Nhưng về mặt trực giác, mỗi chiều trong `k` chiều đó có
+thể tương ứng với một đặc điểm ẩn nào đó (ví dụ một chiều có thể tương quan
+với "mức độ hài hước" của phim, dù không ai gán nhãn "hài hước" từ đầu) —
+người dùng thích thể loại đó sẽ có giá trị cao ở đúng chiều tương ứng trong
+`P`, và phim thuộc thể loại đó cũng có giá trị cao ở đúng chiều đó trong `Q`,
+khiến tích vô hướng giữa chúng lớn (dự đoán rating cao).
+
+## Huấn luyện: tối thiểu hoá sai số trên các ô đã biết
+
+Vì phần lớn ma trận `R` là ô trống, huấn luyện `P` và `Q` chỉ dựa trên
+những ô **đã có rating thật** — tối thiểu hoá sai số bình phương (giống
+squared error đã quen thuộc từ [Linear Regression](02-linear-regression.mdx))
+giữa rating thật và rating dự đoán, cộng thêm một số hạng **regularization**
+(đã học ở bài [Regularization](10-regularization.mdx)) để tránh overfitting
+khi `k` đủ lớn:
+
+```
+minimize:  sum_{(u,i) đã biết} (R[u][i] - P[u]·Q[i])^2  +  λ * (||P||^2 + ||Q||^2)
+```
+
+Sau khi huấn luyện xong, `P[u] · Q[i]` có thể được tính cho **mọi** cặp
+người dùng-item, kể cả những cặp chưa từng có rating thật — đây chính là cơ
+chế tạo ra gợi ý: xếp hạng mọi item theo rating dự đoán cho một người dùng
+cụ thể, rồi gợi ý những item có điểm dự đoán cao nhất mà người đó chưa từng
+tương tác.
+
+## Lịch sử: Netflix Prize và Simon Funk
+
+Matrix Factorization được phổ biến rộng rãi qua cuộc thi **Netflix Prize**
+(bắt đầu 2006) — cùng cuộc thi đã nhắc tới ở bài
+[Model Ensembling](../exam-track/08-model-ensembling.mdx) (exam-track) về
+kỹ thuật ensemble. **Simon Funk**, qua một bài blog nổi tiếng, giới thiệu ý
+tưởng cốt lõi của phân rã ma trận cho bài toán dự đoán rating — kỹ thuật
+này sau đó được đội chiến thắng cuộc thi phát triển và sử dụng rộng rãi
+trong lời giải cuối cùng của họ, theo đúng báo cáo kỹ thuật họ công bố.
+Đây là lý do Matrix Factorization thường được coi là kỹ thuật "kinh điển"
+nhất trong lịch sử recommendation systems hiện đại.
+
+## Liên hệ lại với các bài trước
+
+- Matrix Factorization cùng tinh thần với [PCA](21-pca.mdx): cả hai đều
+  nén một ma trận dữ liệu lớn thành các thành phần chiều thấp hơn nhiều —
+  khác biệt là PCA nén **một** ma trận dữ liệu đầy đủ để tìm hướng phương
+  sai lớn nhất, còn Matrix Factorization phân rã **một** ma trận **thưa**
+  thành tích của hai ma trận nhỏ hơn để dự đoán chính xác các ô còn thiếu.
+- Ý tưởng "ẩn/latent representation chiều thấp mang thông tin cốt lõi" đã
+  gặp ở [Autoencoder](22-autoencoder.mdx) (bottleneck `z`) — xem bài
+  [AutoRec](81-autorec.mdx) để hiểu cụ thể cách dùng chính kiến trúc
+  autoencoder để giải bài toán dự đoán rating, thay vì phân rã ma trận
+  tường minh.
+- Bài toán "tìm người dùng/item gần nhau trong không gian latent factor"
+  về bản chất là bài toán tìm hàng xóm gần nhất đã học ở [k-NN](05-k-nearest-neighbors.mdx)
+  — chỉ khác không gian feature là không gian latent tự học được, không phải
+  feature số cho sẵn. Đây cũng chính xác là kỹ thuật **vector search** đã
+  học ở bài [RAG, Embedding & Agent](29-rag-embedding-agent.mdx): RAG tìm
+  đoạn văn bản gần nhất trong không gian embedding ngữ nghĩa, còn
+  recommendation systems tìm item gần nhất trong không gian latent factor
+  sở thích — cùng một công cụ toán học, khác miền ứng dụng.
+
+## Nguồn tham khảo
+
+- [Dive into Deep Learning — Overview of Recommender Systems](http://d2l.ai/chapter_recommender-systems/recsys-intro.html) — dùng cho vấn đề cụ thể (information overload), phân biệt explicit vs implicit feedback, và nguyên lý cốt lõi của collaborative filtering (khai thác sở thích tương đồng giữa người dùng).
+- [Dive into Deep Learning — Matrix Factorization](http://d2l.ai/chapter_recommender-systems/mf.html) — dùng cho công thức phân rã ma trận `R ≈ P×Q^T`, hàm loss (squared error + L2 regularization), và lịch sử Netflix Prize (2006)/Simon Funk phổ biến kỹ thuật này.

@@ -1,0 +1,43 @@
+---
+quiz_for: 03-ssd
+---
+
+## Q1
+Vấn đề cụ thể của YOLO gốc mà SSD giải quyết là gì?
+
+- [x] YOLO chỉ dự đoán trên 1 bản đồ đặc trưng duy nhất, ở 1 độ phân giải cố định — khó vừa xử lý tốt vật thể nhỏ vừa xử lý tốt vật thể lớn cùng lúc
+- [ ] YOLO không thể chạy trên GPU, chỉ chạy được trên CPU
+- [ ] YOLO không có khái niệm bounding box
+- [ ] YOLO chỉ hoạt động với ảnh đen trắng, không hoạt động với ảnh màu
+
+> Một bản đồ đặc trưng ở 1 độ phân giải có receptive field cố định, phù hợp một khoảng kích thước vật thể nhất định — đây chính là hạn chế SSD nhắm tới giải quyết.
+
+## Q2
+SSD giải quyết vấn đề đó bằng cách nào?
+
+- [x] Kết hợp dự đoán từ NHIỀU bản đồ đặc trưng ở nhiều độ phân giải khác nhau trong cùng 1 mạng — bản đồ nông/độ phân giải cao cho vật thể nhỏ, bản đồ sâu/độ phân giải thấp cho vật thể lớn
+- [ ] Chạy YOLO nhiều lần với các kích thước ảnh đầu vào khác nhau rồi lấy trung bình kết quả
+- [ ] Thêm một bước đề xuất vùng riêng biệt trước khi phân loại, giống Faster R-CNN
+- [ ] Bỏ hoàn toàn khái niệm bounding box, chỉ dự đoán tâm vật thể
+
+> Đây chính là kiến trúc "multiscale feature map blocks" — mỗi tầng đặc trưng ở một độ phân giải khác nhau đều tham gia dự đoán, tất cả chạy song song trong 1 lần forward pass.
+
+## Q3
+Vì sao SSD vẫn được coi là kiến trúc one-stage, không phải quay lại two-stage như Faster R-CNN?
+
+- [x] SSD không có bước "đề xuất vùng" riêng biệt nào — vẫn dự đoán trực tiếp lớp và tọa độ cho mọi default box ở mọi độ phân giải trong đúng 1 lần chạy qua mạng
+- [ ] Vì SSD chạy chậm hơn Faster R-CNN nên được xếp vào nhóm khác
+- [ ] Vì SSD không dùng CNN, chỉ dùng RNN
+- [ ] Vì SSD chỉ dùng đúng 1 bản đồ đặc trưng, giống YOLO gốc
+
+> Điểm khác biệt với Faster R-CNN là không có Region Proposal Network tách biệt — SSD chỉ khác YOLO gốc ở việc tận dụng nhiều tầng đặc trưng thay vì 1 tầng, không thay đổi bản chất one-stage.
+
+## Q4
+Kết quả cụ thể của SSD so với YOLO và Faster R-CNN là gì?
+
+- [x] Với ảnh 300x300: 72.1% mAP tại 58 FPS (chính xác hơn YOLO); với ảnh 500x500: 75.1% mAP, vượt trội một số cấu hình Faster R-CNN — vừa nhanh vừa chính xác
+- [ ] SSD luôn chậm hơn cả YOLO và Faster R-CNN trong mọi trường hợp
+- [ ] SSD chỉ đạt được độ chính xác ngang bằng, không bao giờ vượt qua Faster R-CNN
+- [ ] SSD không thể đo được bằng chỉ số mAP
+
+> Đây là minh chứng cụ thể cho việc kiến trúc one-stage, thiết kế đúng cách (multi-scale), có thể thu hẹp đáng kể khoảng cách độ chính xác với two-stage mà không hy sinh tốc độ.

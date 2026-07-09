@@ -1,0 +1,53 @@
+---
+quiz_for: 02-transformer
+---
+
+## Q1
+Self-attention khác attention thông thường (học ở bài trước) ở điểm nào?
+
+- [x] Query, key, và value đều lấy từ CÙNG một chuỗi, thay vì query đến từ một nguồn khác (ví dụ bước giải mã) và key/value từ một chuỗi khác
+- [ ] Self-attention không dùng softmax
+- [ ] Self-attention chỉ hoạt động với 1 từ duy nhất
+- [ ] Self-attention không thể huấn luyện bằng backpropagation
+
+> Trong self-attention, mỗi từ trong câu đóng vai trò vừa là query (hỏi "tôi cần liên hệ với từ nào khác") vừa là key/value (trả lời "đây là đặc điểm của tôi") — cho phép mỗi vị trí liên hệ trực tiếp với mọi vị trí khác trong cùng một bước tính toán.
+
+## Q2
+Vì sao self-attention thuần cần thêm positional encoding?
+
+- [x] Vì self-attention chỉ dựa trên độ tương đồng giữa vector, nếu xáo trộn thứ tự từ trong câu, kết quả tính attention giữa từng cặp từ không đổi — self-attention "mù thứ tự"
+- [ ] Vì positional encoding giúp tăng tốc độ tính toán
+- [ ] Vì self-attention không thể xử lý câu có trên 10 từ
+- [ ] Vì RNN cũng cần positional encoding
+
+> "Mèo cắn chó" và "chó cắn mèo" chứa đúng những từ giống nhau, chỉ khác vị trí — self-attention thuần không phân biệt được, nên cần cộng thêm positional encoding (thường dùng hàm sin/cos) để "trộn" thông tin vị trí vào dữ liệu đầu vào.
+
+## Q3
+Multi-head attention giải quyết hạn chế gì của một phép tính self-attention đơn?
+
+- [x] Một phép tính self-attention chỉ học được MỘT kiểu quan hệ giữa các từ; multi-head chạy nhiều phép tính song song, mỗi đầu học một kiểu quan hệ khác nhau
+- [ ] Giảm số tham số của mô hình xuống một nửa
+- [ ] Loại bỏ hoàn toàn nhu cầu positional encoding
+- [ ] Chỉ dùng được cho bài toán dịch máy, không dùng được cho các tác vụ khác
+
+> Ngôn ngữ có nhiều loại quan hệ cùng lúc (ngữ pháp, ngữ nghĩa, khoảng cách...) — multi-head attention chạy nhiều "đầu" song song, mỗi đầu tự học tập trung vào một kiểu quan hệ khác nhau, rồi kết hợp kết quả.
+
+## Q4
+Vì sao Transformer huấn luyện nhanh hơn nhiều so với RNN/LSTM trên phần cứng hiện đại (GPU)?
+
+- [x] Vì mọi vị trí trong chuỗi được xử lý SONG SONG (không cần đợi xử lý xong bước trước như RNN), tận dụng tốt phép tính song song của GPU
+- [ ] Vì Transformer có ít tham số hơn RNN
+- [ ] Vì Transformer không cần backpropagation
+- [ ] Vì Transformer chỉ xử lý được câu ngắn
+
+> Không có bước nào xử lý tuần tự theo thời gian như RNN — mọi vị trí được xử lý song song, dù công thức attention có chi phí tính toán tăng theo bình phương độ dài chuỗi.
+
+## Q5
+Transformer (Vaswani và cộng sự, 2017) giải quyết đúng giới hạn nào còn tồn tại của attention kiểu Bahdanau (bài trước)?
+
+- [x] Attention kiểu Bahdanau vẫn cộng thêm vào kiến trúc encoder-decoder dùng RNN, nên vẫn giữ giới hạn tuần tự — không song song hoá được khi huấn luyện
+- [ ] Attention kiểu Bahdanau không dùng được cho dịch máy
+- [ ] Attention kiểu Bahdanau không có cơ chế Query/Key/Value
+- [ ] Attention kiểu Bahdanau chỉ hoạt động với ảnh, không hoạt động với văn bản
+
+> Bahdanau et al. (2015) thêm attention vào RNN encoder-decoder — vẫn phải xử lý tuần tự từng bước thời gian. Transformer (Vaswani et al., 2017, "Attention Is All You Need") bỏ hẳn RNN, chỉ dùng attention — cho phép xử lý song song hoàn toàn, đạt 28.4 BLEU trên WMT 2014 Anh-Đức chỉ với 3.5 ngày huấn luyện trên 8 GPU.

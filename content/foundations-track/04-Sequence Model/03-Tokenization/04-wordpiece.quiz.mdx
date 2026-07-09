@@ -1,0 +1,43 @@
+---
+quiz_for: 04-wordpiece
+---
+
+## Q1
+Điểm khác biệt cốt lõi giữa WordPiece và BPE là gì?
+
+- [x] BPE ghép cặp ký hiệu xuất hiện THƯỜNG XUYÊN NHẤT (tần suất thô); WordPiece ghép cặp giúp TĂNG KHẢ NĂNG (likelihood) của toàn bộ dữ liệu huấn luyện nhiều nhất — một tiêu chí thống kê tinh hơn
+- [ ] BPE chỉ hoạt động với tiếng Anh, WordPiece chỉ hoạt động với tiếng Nhật/Hàn
+- [ ] BPE là kiến trúc mạng nơ-ron, WordPiece là thuật toán nén dữ liệu không liên quan tới NLP
+- [ ] BPE và WordPiece hoàn toàn giống nhau, chỉ khác tên gọi
+
+> Cả hai đều lặp lại việc ghép cặp ký hiệu để xây từ vựng subword, nhưng tiêu chí chọn cặp nào để ghép ở mỗi bước là khác nhau — đây chính là điểm phân biệt duy nhất giữa 2 thuật toán.
+
+## Q2
+Hệ quả cụ thể của tiêu chí "tăng khả năng dữ liệu" mà WordPiece dùng là gì?
+
+- [x] WordPiece ưu tiên ghép các mảnh ký hiệu hay xuất hiện CÙNG NHAU một cách bất thường, ngay cả khi bản thân từng mảnh riêng lẻ không phổ biến lắm
+- [ ] WordPiece luôn ghép các mảnh xuất hiện nhiều nhất, giống hệt BPE
+- [ ] WordPiece không bao giờ ghép được quá 2 ký tự
+- [ ] WordPiece chỉ ghép các mảnh có độ dài bằng nhau
+
+> Đây gần với ý tưởng đo mức độ liên kết giữa 2 mảnh (chúng có xu hướng "đi cùng nhau" nhiều hơn kỳ vọng nếu độc lập), khác hẳn việc chỉ đếm tần suất cặp xuất hiện thô như BPE.
+
+## Q3
+Mô hình nào trong track đã học sử dụng WordPiece tokenization?
+
+- [x] BERT — dùng WordPiece tokenization embeddings làm một phần cách biểu diễn input trước khi vào Transformer encoder
+- [ ] GAN
+- [ ] K-means Clustering
+- [ ] PCA
+
+> BERT kế thừa WordPiece (có nguồn gốc từ bài toán phân đoạn từ tiếng Nhật/Hàn) để xử lý từ hiếm/chưa từng gặp hiệu quả hơn, cùng động cơ với mọi kỹ thuật subword khác đã học.
+
+## Q4
+WordPiece ban đầu được phát triển để giải quyết bài toán gì?
+
+- [x] Phân đoạn từ (word segmentation) cho tiếng Nhật/Hàn — những ngôn ngữ không có khoảng trắng phân tách từ rõ ràng như tiếng Anh
+- [ ] Nhận dạng giọng nói cho tiếng Anh
+- [ ] Phân loại ảnh y tế
+- [ ] Dịch máy giữa các ngôn ngữ lập trình
+
+> Đây là lý do WordPiece đặc biệt chú trọng tiêu chí thống kê tinh (likelihood) thay vì tần suất thô — với ngôn ngữ không có ranh giới từ rõ ràng, việc chọn đúng điểm cắt subword ảnh hưởng lớn hơn nhiều tới chất lượng downstream.

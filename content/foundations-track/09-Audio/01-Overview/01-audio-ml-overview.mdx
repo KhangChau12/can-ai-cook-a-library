@@ -1,0 +1,152 @@
+---
+title: Machine Learning cho Âm thanh — Giới thiệu và Phân loại bài toán
+track: foundations-track
+module: Audio
+order: 1
+status: stable
+prerequisites: ["02-autoencoder"]
+summary: Bài mở đầu module Audio — tổng quan về các bài toán ML trên dữ liệu âm thanh (phân loại âm thanh, ASR, TTS, speaker recognition, music analysis), pipeline xử lý từ waveform tới mô hình, và các thách thức đặc thù so với ảnh và văn bản.
+last_touched_by_task: Bài mới (2026-07-08): mở đầu module Audio — làm rõ bức tranh toàn cảnh trước khi đi vào từng kỹ thuật cụ thể (biểu diễn, STT, TTS). Nguồn: d2l.ai chapter introduction + machinelearningmastery.com audio overview.
+submodule: Overview
+---
+
+Cho tới nay, giáo trình đã dạy hai loại dữ liệu chính: **ảnh** (lưới 2D
+pixel — CNN, Computer Vision) và **văn bản** (chuỗi token rời rạc — RNN,
+Transformer, LLM). **Âm thanh** là modality thứ ba, với những đặc điểm
+riêng biệt — và bài này đặt bản đồ tư duy để bạn hiểu được bức tranh toàn
+cảnh trước khi đi vào từng kỹ thuật cụ thể.
+
+## Âm thanh khác ảnh và văn bản như thế nào?
+
+**So với ảnh:**
+- Ảnh có 2 chiều không gian (H×W) với cấu trúc cục bộ rõ — pixel gần nhau thường thuộc cùng vật thể. Âm thanh chỉ có 1 chiều thời gian — tín hiệu tại một thời điểm gần như vô nghĩa nếu không có ngữ cảnh trước/sau nó.
+- Ảnh có ranh giới rõ (ví dụ pixel 0-255). Âm thanh là tín hiệu liên tục —
+  không có "ranh giới" tự nhiên, việc phân đoạn (đâu là điểm bắt đầu một
+  từ) là bài toán khó.
+
+**So với văn bản:**
+- Văn bản là chuỗi token rời rạc — mỗi từ có ranh giới rõ (khoảng trắng
+  hoặc dấu câu). Âm thanh là chuỗi số thực liên tục — không có "từ" nào
+  được đánh dấu sẵn.
+- Văn bản có tần suất thấp hơn nhiều: 1 giây nói chuyện tương ứng ~10-15
+  chữ cái, nhưng cần 16.000+ mẫu âm thanh — tức là mô hình phải xử lý
+  chuỗi đầu vào dài hơn 1.000 lần.
+
+**Điểm chung duy nhất:** cả âm thanh và văn bản đều là dữ liệu **tuần tự**
+(sequential) — thứ tự theo thời gian là quan trọng. Đây là lý do RNN,
+LSTM, Transformer đều được dùng cho cả hai modality.
+
+## Các bài toán chính trong Audio ML
+
+Âm thanh có thể được phân loại theo hai trục: **đầu ra** (một nhãn, một
+chuỗi, hay một tín hiệu mới) và **nguồn âm** (tiếng nói, nhạc, tiếng động
+môi trường).
+
+**1. Phân loại âm thanh (Sound Classification)**
+Đầu ra: một nhãn duy nhất cho toàn bộ clip. Ví dụ:
+- Nhận dạng từ khoá (keyword spotting): "Hey Siri", "OK Google"
+- Phân loại tiếng động: tiếng chó sủa, tiếng mưa, tiếng xe cộ
+- Phân loại thể loại nhạc: pop, rock, jazz, classical
+- Đây là bài toán **đơn giản nhất** — thường dùng CNN trên spectrogram
+
+**2. Nhận dạng giọng nói tự động (ASR — Automatic Speech Recognition)**
+Đầu ra: một chuỗi văn bản từ một đoạn ghi âm giọng nói.
+- Ví dụ: "xin chào" → text "xin chào"
+- Kiến trúc phổ biến: CTC, encoder-decoder với attention, Whisper
+- Đây là bài toán **trung tâm** của audio ML — xem [bài 31](31-speech-to-text.mdx)
+
+**3. Tổng hợp giọng nói (TTS — Text-to-Speech)**
+Đầu vào: văn bản. Đầu ra: waveform âm thanh.
+- Ngược hoàn toàn với ASR
+- Hai giai đoạn: text → spectrogram (Tacotron 2, FastSpeech) → waveform
+  (vocoder như WaveNet, HiFi-GAN) — xem [bài 32](32-text-to-speech.mdx)
+
+**4. Nhận dạng người nói (Speaker Recognition)**
+Đầu ra: ai đang nói (xác thực hoặc định danh).
+- **Speaker verification:** "giọng này có đúng là người X không?" (1:1)
+- **Speaker identification:** "giọng này là ai trong danh sách N người?" (1:N)
+- Kỹ thuật: embedding giọng nói (d-vector, x-vector), so sánh cosine
+  similarity — giống ý tưởng face recognition nhưng trên giọng nói
+
+**5. Phân đoạn âm thanh (Audio Segmentation)**
+Chia một đoạn ghi âm dài thành các đoạn nhỏ hơn theo tiêu chí:
+- **Speaker diarization:** "ai nói lúc nào" trong một cuộc họp nhiều người
+- **Voice activity detection (VAD):** "lúc nào có tiếng nói, lúc nào im lặng"
+- **Music segmentation:** đâu là intro, verse, chorus
+
+**6. Sinh âm thanh (Audio Generation)**
+Tạo ra âm thanh mới — có thể là nhạc (MusicLM), tiếng nói (TTS), hoặc
+hiệu ứng âm thanh cho video. Đây là mảng đang phát triển nhanh nhờ diffusion
+models (DiffWave, AudioLDM) — xem [bài 49](49-diffusion-models.mdx) cho nền
+tảng diffusion.
+
+## Pipeline xử lý âm thanh điển hình
+
+Dù bài toán là gì, hầu hết pipeline đều có chung các bước:
+
+```
+Âm thanh thô → Tiền xử lý → Feature extraction → Mô hình → Hậu xử lý
+```
+
+**1. Tiền xử lý:**
+- Resample về sample rate chuẩn (thường 16kHz cho giọng nói)
+- Chuyển về mono nếu có nhiều kênh
+- Chuẩn hoá biên độ (volume)
+- Cắt/tỉa khoảng im lặng ở đầu/cuối
+
+**2. Feature extraction — chuyển âm thanh thô thành feature có cấu trúc:**
+- **Waveform:** giữ nguyên tín hiệu thô — dùng khi mô hình có thể tự học
+  feature (WaveNet, SincNet, wav2vec 2.0)
+- **Spectrogram:** biến đổi Fourier cửa sổ trượt (STFT) — biểu diễn tần
+  số theo thời gian, dùng cho CNN (coi spectrogram như ảnh 1 chiều)
+- **Mel-spectrogram:** spectrogram nén về thang mel (phi tuyến, mô phỏng
+  cảm nhận tần số của tai người) — feature phổ biến nhất cho ASR/TTS
+- **MFCC:** nén thêm mel-spectrogram bằng DCT — phổ biến cho ASR truyền
+  thống nhưng dần bị thay thế bởi mel-spectrogram thô trong DL
+
+Xem chi tiết ở [bài 30](30-bieu-dien-am-thanh.mdx).
+
+**3. Mô hình — tuỳ bài toán:**
+- CNN + spectrogram cho phân loại âm thanh
+- CTC/RNN-T cho ASR
+- Encoder-decoder + vocoder cho TTS
+- Transformer/ Whisper cho ASR hiện đại
+
+**4. Hậu xử lý:**
+- Với ASR: giải mã beam search, kết hợp language model
+- Với TTS: vocoder sinh waveform từ spectrogram
+- Với phân loại: ngưỡng quyết định, majority voting
+
+## Module Audio có gì?
+
+Module Audio được tổ chức thành 3 sub-module:
+
+**Sub-module: Biểu diễn âm thanh** (nền tảng cho mọi bài toán audio):
+- [Biểu diễn Âm thanh cho ML](30-bieu-dien-am-thanh.mdx) — waveform,
+  spectrogram, mel-spectrogram, MFCC, STFT
+
+**Sub-module: Speech-to-Text** (nghe và hiểu):
+- [Speech-to-Text](31-speech-to-text.mdx) — CTC loss, kiến trúc ASR,
+  encoder-decoder, WER
+- [Whisper](90-whisper.mdx) — đào sâu kiến trúc multitask decode của
+  OpenAI Whisper
+
+**Sub-module: Text-to-Speech** (nói từ văn bản):
+- [Text-to-Speech](32-text-to-speech.mdx) — pipeline 2 giai đoạn, WaveNet
+- [Tacotron 2 & FastSpeech](91-tacotron-fastspeech.mdx) — đào sâu sinh
+  spectrogram, autoregressive vs non-autoregressive
+- [HiFi-GAN](92-hifigan-neural-vocoder.mdx) — đào sâu neural vocoder,
+  kết nối GAN Family
+
+Với bản đồ tư duy này, bạn đã sẵn sàng đi vào [bài 30](30-bieu-dien-am-thanh.mdx)
+— hiểu cách biến âm thanh thô thành dữ liệu mà mạng nơ-ron có thể học.
+
+## Nguồn tham khảo
+
+- [d2l.ai Chapter 1: Introduction](https://d2l.ai/chapter_introduction/index.html) — wake word
+  recognition làm ví dụ mở đầu, giải thích vì sao âm thanh cần ML thay vì
+  quy tắc cứng
+- [Machine Learning Mastery — Introduction to Audio Data](https://machinelearningmastery.com/) —
+  tổng quan các bài toán audio ML và pipeline xử lý cơ bản
+- [librosa — Audio and Music Processing](https://librosa.org/) — thư viện Python
+  chuẩn cho feature extraction âm thanh, tài liệu tham khảo thực hành

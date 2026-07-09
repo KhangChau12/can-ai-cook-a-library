@@ -1,0 +1,98 @@
+---
+title: GloVe — Tận dụng Thống kê Đồng xuất hiện Toàn cục Thay vì Chỉ Ngữ cảnh Cục bộ
+track: foundations-track
+module: Sequence Model
+submodule: Tokenization
+order: 3
+status: stable
+prerequisites: ["02-word2vec"]
+summary: Word2vec (bài 65) học embedding chỉ từ các cửa sổ ngữ cảnh CỤC BỘ — mỗi lần huấn luyện chỉ nhìn một đoạn nhỏ văn bản, bỏ qua thống kê đồng xuất hiện trên TOÀN BỘ corpus mà lẽ ra có thể tận dụng được. Pennington, Socher và Manning (2014, Stanford) giải quyết bằng GloVe (Global Vectors): xây một ma trận đếm đồng xuất hiện toàn cục giữa mọi cặp từ trước, rồi học vector sao cho tích vô hướng giữa 2 vector xấp xỉ đúng logarit của số lần đồng xuất hiện đó — chuyển từ triết lý 'dự đoán' (predictive, như Skip-gram/CBOW) sang triết lý 'phân rã ma trận thống kê' (count-based/matrix factorization), dù cả hai vẫn cho ra embedding chất lượng tương đương.
+last_touched_by_task: Bài mới (2026-07-06), tiếp nối bài 65 (word2vec) trong nhánh Embedding của sub-module Tokenization — đúng gợi ý đã ghi ở CLAUDE.md mục 1.2 ('GloVe, đối chiếu trực tiếp với word2vec'). Lưu ý về nguồn: paper gốc GloVe (Pennington, Socher, Manning 2014, ACL) CHƯA TỪNG được đăng trên arxiv.org (khác các paper khác trong track) — chỉ có trên nlp.stanford.edu, domain không nằm trong whitelist. Do đó dùng D2L.ai (chapter_natural-language-processing-pretraining/glove.html, xác nhận qua WebFetch: vấn đề cụ thể Skip-gram bỏ qua thống kê đồng xuất hiện toàn corpus + cross-entropy loss không phù hợp cho corpus lớn, công thức loss weighted-squared-error chi tiết) + machinelearningmastery.com (xác nhận qua WebFetch: khung so sánh triết lý 'predictive vs. matrix factorization' giữa word2vec và GloVe, nhận định 2 phương pháp cho chất lượng tương đương) làm 2 nguồn — đây là bài 'dòng tiến hoá' (GloVe ra đời để giải quyết đúng hạn chế của word2vec) nên vẫn cần 2 nguồn theo mục 2.5, chỉ khác nguồn academic thay bằng nguồn giáo trình uy tín (D2L.ai) vì paper gốc không tiếp cận được qua whitelist.
+---
+
+Bài [word2vec](65-word2vec.mdx) học được embedding mang thông tin ngữ
+nghĩa — nhưng cách nó học có một hạn chế cụ thể mà bài này chỉ ra và giải
+quyết.
+
+## Vấn đề: Skip-gram/CBOW chỉ nhìn ngữ cảnh cục bộ, bỏ qua thống kê toàn cục
+
+Word2vec (cả Skip-gram lẫn CBOW) huấn luyện bằng cách trượt một **cửa sổ
+ngữ cảnh cố định** qua văn bản — tại mỗi bước huấn luyện, mô hình chỉ
+"nhìn thấy" một đoạn nhỏ cục bộ (center word + vài từ lân cận), rồi cập
+nhật trọng số dựa trên đúng đoạn nhỏ đó. Cách làm này bỏ lỡ một nguồn
+thông tin có sẵn: **thống kê đồng xuất hiện (co-occurrence) trên toàn bộ
+corpus** — ví dụ tần suất "đá" và "băng" xuất hiện gần nhau tính trên
+*toàn bộ* văn bản huấn luyện, không chỉ trong một cửa sổ cụ thể nào đó.
+
+Cụ thể hơn, hàm mất mát cross-entropy mà Skip-gram dùng (softmax trên
+toàn bộ từ vựng, đã học ở bài 65) có thêm một vấn đề thực tế: nó **không
+phải lựa chọn tốt cho corpus lớn**, và có xu hướng đặt trọng số quá cao
+cho các sự kiện hiếm (từ hiếm gặp) so với mức độ quan trọng thực sự của
+chúng.
+
+## Giải pháp: xây ma trận đồng xuất hiện toàn cục, rồi phân rã ma trận đó
+
+**Pennington, Socher và Manning (2014)** giải quyết cả hai vấn đề bằng
+**GloVe (Global Vectors for Word Representation)** — chuyển hẳn sang một
+triết lý khác: thay vì *dự đoán* từ ngữ cảnh cục bộ (như Skip-gram/CBOW),
+GloVe **đếm thống kê trước, rồi phân rã ma trận** (matrix factorization):
+
+1. **Xây ma trận đếm đồng xuất hiện toàn cục.** Trước khi huấn luyện,
+   quét toàn bộ corpus một lần để đếm: với mỗi cặp từ `(w_i, w_j)`, đếm
+   số lần `w_j` xuất hiện trong cửa sổ ngữ cảnh quanh `w_i` (ví dụ cửa sổ
+   ±10 từ), ký hiệu là `x_ij`. Kết quả là một ma trận vuông kích thước
+   `V × V` (`V` = kích thước từ vựng), chứa toàn bộ thống kê đồng xuất
+   hiện của cả corpus.
+2. **Học vector sao cho tích vô hướng khớp với log của số đếm.** GloVe
+   tối thiểu hoá hàm mất mát bình phương có trọng số:
+
+   ```
+   Σ_i Σ_j h(x_ij) · (u_j^T v_i + b_i + c_j − log(x_ij))²
+   ```
+
+   Nói cách khác: học 2 vector `u_j`, `v_i` (tương tự vector ngữ cảnh và
+   vector trung tâm của word2vec) cùng 2 hệ số bias `b_i, c_j`, sao cho
+   tích vô hướng `u_j^T v_i` (cộng thêm bias) xấp xỉ đúng **logarit** của
+   số lần đồng xuất hiện thực tế `x_ij` đã đếm được ở bước 1.
+3. **Hàm trọng số `h(x)`** đảm bảo các cặp từ **không bao giờ đồng xuất
+   hiện** (`x_ij = 0`) không đóng góp vào quá trình huấn luyện (tránh
+   `log(0)` không xác định), đồng thời giúp huấn luyện hiệu quả hơn về
+   mặt tính toán — chỉ cần xử lý các phần tử khác 0 của ma trận (ma trận
+   đồng xuất hiện thực tế rất thưa).
+
+Điểm khác biệt cốt lõi so với word2vec: GloVe **không hề "dự đoán" gì cả
+trong quá trình huấn luyện chính** — nó chỉ khớp (fit) trực tiếp vector
+với số liệu thống kê đã đếm sẵn từ trước. Đây là lý do GloVe được xếp vào
+nhóm phương pháp "count-based" (dựa trên đếm) đối lập với "predictive"
+(dựa trên dự đoán) của Skip-gram/CBOW.
+
+## Hai triết lý khác nhau, chất lượng tương đương
+
+Dù xuất phát từ hai triết lý khác hẳn nhau — word2vec dự đoán từ ngữ
+cảnh cục bộ, GloVe phân rã ma trận thống kê toàn cục — cả hai phương
+pháp trong thực tế cho ra embedding **chất lượng tương đương nhau**, và
+thường được dùng thay thế lẫn nhau tuỳ bài toán. Không có phương pháp
+nào áp đảo hoàn toàn phương pháp kia; lựa chọn thường phụ thuộc vào đặc
+điểm cụ thể của corpus và tài nguyên tính toán sẵn có (GloVe cần xây và
+lưu ma trận `V × V` trước, có thể tốn bộ nhớ với từ vựng rất lớn; word2vec
+xử lý dữ liệu theo luồng streaming, không cần lưu toàn bộ ma trận).
+
+## Liên hệ lại với các bài trước
+
+- Đối chiếu trực tiếp với [word2vec](65-word2vec.mdx): cùng mục tiêu
+  (học dense vector mang thông tin ngữ nghĩa từ văn bản không nhãn) nhưng
+  khác hẳn cách tiếp cận — cục bộ/dự đoán (word2vec) đối lập toàn
+  cục/thống kê (GloVe). Đây là một ví dụ rõ ràng cho thấy cùng một vấn đề
+  có thể có nhiều giải pháp hợp lý không loại trừ nhau.
+- Cả hai đều tạo ra **embedding tĩnh** (mỗi từ đúng 1 vector, không đổi
+  theo ngữ cảnh câu) — hạn chế chung mà [BERT](45-bert.mdx) và
+  contextual embedding của Transformer giải quyết sau này bằng
+  self-attention, như đã nhắc ở bài 65.
+- Vẫn tối ưu bằng gradient descent qua [backpropagation](09-backpropagation.mdx)
+  — GloVe chỉ thay đổi hàm mất mát và cách chuẩn bị dữ liệu đầu vào
+  (ma trận đếm sẵn), không thay đổi cơ chế tối ưu hoá nền tảng.
+
+## Nguồn tham khảo
+
+- [Dive into Deep Learning — Word Embedding with Global Vectors (GloVe)](http://d2l.ai/chapter_natural-language-processing-pretraining/glove.html) — dùng cho vấn đề cụ thể (Skip-gram bỏ qua thống kê đồng xuất hiện toàn corpus, cross-entropy loss không phù hợp cho corpus lớn), công thức loss weighted-squared-error chi tiết, và vai trò của hàm trọng số `h(x)`.
+- [Machine Learning Mastery — A Gentle Introduction to Word Embedding and Text Vectorization](https://machinelearningmastery.com/a-gentle-introduction-to-word-embedding-and-text-vectorization/) — dùng cho khung so sánh triết lý "predictive vs. matrix factorization" giữa word2vec và GloVe, và nhận định thực tế rằng hai phương pháp cho chất lượng embedding tương đương.

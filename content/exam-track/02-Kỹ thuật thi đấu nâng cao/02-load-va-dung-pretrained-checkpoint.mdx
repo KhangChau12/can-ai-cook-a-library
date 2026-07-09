@@ -1,0 +1,93 @@
+---
+title: Checkpoint — Lưu, Load & Dùng lại Trạng thái Model
+track: exam-track
+module: Kỹ thuật thi đấu nâng cao
+order: 2
+status: stable
+prerequisites: ["01-transfer-learning-va-fine-tuning"]
+summary: Checkpoint là gì, vì sao nên lưu checkpoint tốt nhất theo validation score thay vì checkpoint cuối cùng, và các tình huống thực chiến cần load lại checkpoint khi thi đấu (huấn luyện gián đoạn, thử nhiều nhánh, dùng checkpoint cho ensemble).
+last_touched_by_task: Rà lại dưới góc nhìn triết lý mới (2026-07-06): đọc kỹ, xác nhận bài đã đạt chuẩn đúng tiêu chí exam-track (mục 2.1 sườn A) — 3 tình huống thực chiến cụ thể (gián đoạn, thử nhiều nhánh, ensemble), lưu ý quan trọng về tương thích tiền xử lý khi load checkpoint ngoài. Không 'vỏ rỗng', không cần viết lại. Giữ nguyên nội dung, chỉ nâng status.
+---
+
+Bài [Transfer Learning & Fine-tuning](04-transfer-learning-va-fine-tuning.mdx)
+giả định bạn đã có sẵn một model pretrain để bắt đầu. Nhưng bản thân việc
+**lưu lại** và **load lại** trạng thái của một model — gọi là
+**checkpoint** — cũng là một kỹ năng thi đấu cần thành thạo, không chỉ là
+chi tiết kỹ thuật phụ. Quản lý checkpoint tốt quyết định bạn có tận dụng
+được thời gian train hạn chế trong lúc thi đấu hay không.
+
+## Checkpoint là gì
+
+Một checkpoint là một bản lưu trạng thái đầy đủ của model tại một thời
+điểm trong quá trình huấn luyện — về cơ bản là toàn bộ trọng số (weights)
+của mạng nơ-ron tại đúng thời điểm đó, đủ để khôi phục lại model và tiếp
+tục dùng nó (để train tiếp hoặc để dự đoán) mà không cần train lại từ đầu.
+
+Checkpoint khác với việc chỉ lưu kiến trúc model — kiến trúc chỉ mô tả
+"model có cấu trúc thế nào" (bao nhiêu layer, mỗi layer bao nhiêu unit),
+còn checkpoint lưu **giá trị cụ thể** của mọi tham số đã học được. Hai
+model cùng kiến trúc nhưng load hai checkpoint khác nhau sẽ đưa ra dự
+đoán khác nhau.
+
+## Vì sao nên lưu checkpoint "tốt nhất", không phải checkpoint cuối cùng
+
+Sai lầm phổ biến khi mới thi đấu: chỉ lưu checkpoint sau khi huấn luyện
+xong toàn bộ số epoch đã định. Vấn đề: loss trên tập train gần như luôn
+tiếp tục giảm khi train thêm epoch, nhưng điểm số trên validation set
+(khả năng tổng quát hoá thật) thường **không giảm đều** — nó có thể đạt
+đỉnh ở một epoch giữa chừng rồi đi ngang hoặc tệ đi (dấu hiệu bắt đầu
+overfit), trong khi train loss vẫn tiếp tục giảm.
+
+Thực hành đúng: sau **mỗi epoch** (hoặc mỗi N bước huấn luyện), đánh giá
+model trên validation set, và chỉ lưu đè lên checkpoint hiện tại nếu điểm
+validation lần này **tốt hơn** checkpoint đã lưu trước đó. Kết quả cuối
+cùng bạn có được là checkpoint tại đúng thời điểm model tổng quát hoá tốt
+nhất, không phải checkpoint cuối cùng, cũng có thể đã overfit nếu train
+quá lâu.
+
+## Ba tình huống thi đấu thực tế cần dùng checkpoint
+
+**1. Huấn luyện bị gián đoạn giữa chừng.** Máy tính/notebook bị crash,
+hết thời gian phiên làm việc (ví dụ giới hạn thời gian của Colab/Kaggle
+Notebook), hoặc bạn cần dừng lại để làm việc khác — nếu có lưu checkpoint
+định kỳ, bạn tiếp tục train từ checkpoint gần nhất thay vì mất trắng toàn
+bộ thời gian đã huấn luyện. Đây là lý do luôn nên bật chế độ lưu checkpoint
+tự động (mỗi epoch hoặc mỗi N phút) khi huấn luyện bất kỳ mô hình deep
+learning nào trong thi đấu, không đợi tới lúc gặp sự cố mới hối tiếc.
+
+**2. Thử nhiều hướng tiếp cận rồi quay lại hướng tốt nhất.** Khi thử
+nghiệm nhiều biến thể (khác kiến trúc, khác cách xử lý dữ liệu), lưu
+checkpoint riêng cho mỗi nhánh thử nghiệm cho phép bạn **so sánh trực
+tiếp** mà không cần train lại từ đầu mỗi lần muốn đối chiếu, và quay lại
+đúng nhánh tốt nhất bất cứ lúc nào — quan trọng khi thời gian tính toán là
+tài nguyên hữu hạn trong lúc thi đấu.
+
+**3. Dùng nhiều checkpoint cùng lúc cho ensemble.** Thay vì chỉ giữ lại
+checkpoint tốt nhất và bỏ hết phần còn lại, một kỹ thuật hiệu quả là giữ
+lại vài checkpoint tốt nhất từ **các epoch khác nhau** hoặc **các lần
+train độc lập khác nhau** (khác random seed khởi tạo), rồi kết hợp dự
+đoán của chúng lại — đây chính là nguyên liệu đầu vào cho kỹ thuật
+ensembling (bài [Model Ensembling](08-model-ensembling.mdx) sẽ nói chi
+tiết cách kết hợp).
+
+## Checkpoint và quyết định fine-tuning tiếp theo
+
+Quay lại bài trước: khi bạn quyết định fine-tune một model pretrain,
+"model pretrain" thực chất chính là một checkpoint — checkpoint đó được
+tạo ra bởi một quá trình huấn luyện khác (thường trên dataset lớn hơn
+nhiều, tốn nhiều tài nguyên hơn nhiều so với những gì bạn có thể tự làm
+trong thời gian thi đấu). Hiểu checkpoint là gì giúp bài toán "làm sao
+tận dụng model đã học sẵn" trở nên rõ ràng về mặt kỹ thuật: tải đúng file
+checkpoint, khớp đúng kiến trúc, rồi tiếp tục huấn luyện theo chiến lược
+freeze/fine-tune đã chọn.
+
+Một lưu ý quan trọng khi load checkpoint pretrain từ nguồn bên ngoài: luôn
+kiểm tra checkpoint đó được train trên dữ liệu và tiền xử lý **tương thích**
+với bài toán của bạn (ví dụ cùng cách chuẩn hoá ảnh đầu vào) — load nhầm
+checkpoint không khớp tiền xử lý gốc khiến model hoạt động rất kém dù bản
+thân checkpoint không có lỗi gì, vì đầu vào model nhận được đã "trông
+khác" so với những gì nó được huấn luyện để hiểu.
+
+## Nguồn tham khảo
+
+- [Dive into Deep Learning — Fine-Tuning](https://d2l.ai/chapter_computer-vision/fine-tuning.html) — dùng cho nguyên tắc chọn checkpoint dựa trên hiệu năng validation (test) thay vì chỉ dựa vào checkpoint cuối cùng của quá trình train, và khái niệm dùng lại tham số đã huấn luyện (source model) làm điểm khởi đầu cho model mới.

@@ -1,0 +1,43 @@
+---
+quiz_for: 09-naive-bayes
+---
+
+## Q1
+Vấn đề cụ thể mà Naive Bayes giải quyết khi áp dụng định lý Bayes cho classification là gì?
+
+- [x] Ước lượng chính xác xác suất đồng thời P(x1,...,xn|y) của mọi feature đòi hỏi số tham số tăng theo cấp số nhân, dẫn tới curse of dimensionality
+- [ ] Định lý Bayes không thể áp dụng được cho bài toán có nhiều hơn 2 lớp
+- [ ] Định lý Bayes chỉ hoạt động với dữ liệu liên tục, không hoạt động với dữ liệu rời rạc
+- [ ] Định lý Bayes yêu cầu phải biết trước chính xác nhãn của mọi điểm dữ liệu test
+
+> Đây là vấn đề tính toán thực tế: nắm được mọi tương tác giữa n feature đòi hỏi ước lượng số tham số tăng theo cấp số nhân với n, cần lượng dữ liệu huấn luyện khổng lồ.
+
+## Q2
+Giả định "ngây thơ" (naive) của Naive Bayes là gì?
+
+- [x] Mọi feature độc lập có điều kiện với nhau khi đã biết lớp y — P(xi | y, các feature khác) = P(xi | y)
+- [ ] Mọi lớp trong bài toán có xác suất tiên nghiệm bằng nhau
+- [ ] Dữ liệu huấn luyện và dữ liệu test luôn có cùng phân phối
+- [ ] Mọi feature đều là số liên tục, không có feature rời rạc
+
+> Giả định này thường không đúng hoàn toàn trong thực tế (feature thường tương quan với nhau) nhưng đơn giản hoá bài toán đủ nhiều để mô hình vẫn hoạt động tốt trong thực hành.
+
+## Q3
+Vì sao giả định độc lập giúp Naive Bayes hoạt động tốt với dữ liệu huấn luyện nhỏ?
+
+- [x] Mỗi P(xi|y) trở thành một phân phối xác suất một chiều, có thể ước lượng độc lập với các feature khác — giảm mạnh số lượng tham số cần học so với ước lượng xác suất đồng thời đầy đủ
+- [ ] Vì Naive Bayes bỏ qua hoàn toàn dữ liệu huấn luyện, chỉ dùng kiến thức có sẵn
+- [ ] Vì Naive Bayes chỉ cần đúng 1 điểm dữ liệu huấn luyện duy nhất
+- [ ] Vì giả định độc lập giúp tăng gấp đôi lượng dữ liệu huấn luyện một cách tự động
+
+> Đây chính là cơ chế giải quyết curse of dimensionality — tách bài toán ước lượng nhiều chiều phức tạp thành nhiều bài toán ước lượng một chiều đơn giản.
+
+## Q4
+Lưu ý quan trọng khi dùng Naive Bayes trong thực tế là gì?
+
+- [x] Nhãn dự đoán (lớp được chọn) thường khá chính xác, nhưng giá trị xác suất cụ thể trả về (predict_proba) không nên được tin tưởng quá mức vì giả định độc lập bị vi phạm làm lệch giá trị xác suất tuyệt đối
+- [ ] Naive Bayes không bao giờ đưa ra dự đoán sai, luôn đạt 100% độ chính xác
+- [ ] Naive Bayes chỉ hoạt động được nếu số feature nhỏ hơn 3
+- [ ] Naive Bayes không thể dùng cho bài toán phân loại văn bản
+
+> Đây là lưu ý thực tế quan trọng — thứ tự xếp hạng giữa các lớp (lớp nào có xác suất cao nhất) vẫn thường đúng, nhưng giá trị xác suất tuyệt đối có thể không phản ánh đúng độ tin cậy thật.

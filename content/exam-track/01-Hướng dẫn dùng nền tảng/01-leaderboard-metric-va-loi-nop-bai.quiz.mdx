@@ -1,0 +1,123 @@
+---
+quiz_for: 01-leaderboard-metric-va-loi-nop-bai
+---
+
+## Q1
+Một competition 4-phase đã kết thúc (qua cả public_test và private_test). Tab "Final" trên leaderboard hiển thị điểm số nào cho một đội đã nộp bài hợp lệ ở cả 2 giai đoạn?
+
+- [ ] Chỉ điểm private_test, vì đó là điểm "thật" cuối cùng
+- [ ] Chỉ điểm public_test, vì đó là điểm được thấy trong suốt competition
+- [x] Trung bình cộng của điểm public_test tốt nhất và điểm private_test tốt nhất
+- [ ] Điểm cao nhất trong 2 giai đoạn, chọn giá trị lớn hơn
+
+> Tab Final tính trung bình cộng 2 giai đoạn — đây là lý do không nên chỉ tối ưu cho public leaderboard, vì điểm private đóng góp ngang bằng vào kết quả cuối cùng.
+
+## Q2
+Vì sao overfitting vào public leaderboard là một rủi ro thực sự?
+
+- [ ] Vì platform giới hạn số lần xem public leaderboard
+- [x] Vì liên tục chỉnh model theo điểm public (không có validation riêng) khiến model học cả nhiễu đặc trưng của bộ public, dẫn tới tụt hạng khi private test (dữ liệu chưa từng thấy) được tính
+- [ ] Vì public leaderboard không phản ánh đúng scoring metric của competition
+- [ ] Vì public test set luôn nhỏ hơn private test set
+
+> Đây chính là bài học cốt lõi của "leaderboard shakeup" — điểm cao trên public không đảm bảo điểm cao trên private nếu quá trình chọn model dựa hoàn toàn vào phản hồi từ public set.
+
+## Q3
+Competition dạng "3-phase" khác "4-phase" ở điểm nào?
+
+- [x] 3-phase không có giai đoạn private_test riêng — chỉ có registration và public_test
+- [ ] 3-phase không có leaderboard
+- [ ] 3-phase chỉ dành cho thi cá nhân, không có team
+- [ ] 3-phase giới hạn số lần nộp bài ít hơn 4-phase
+
+> Competition 3-phase dừng lại sau public_test, không có private_test_start/private_test_end và không có tab Final.
+
+## Q4
+Với confusion matrix TP=40, FP=10, FN=20, TN=30 (trên 100 điểm dữ liệu), giá trị `precision` là bao nhiêu?
+
+- [ ] 0.60
+- [x] 0.80
+- [ ] 0.67
+- [ ] 0.70
+
+> precision = TP / (TP + FP) = 40 / (40 + 10) = 0.80 — trong số các lần mô hình dự đoán dương, 80% là đúng.
+
+## Q5
+Một competition dùng metric `mae` để chấm điểm. Đội A đạt điểm 12.5, đội B đạt điểm 8.2. Đội nào đang xếp hạng cao hơn?
+
+- [ ] Đội A, vì điểm cao hơn luôn tốt hơn
+- [x] Đội B, vì `mae` thuộc nhóm càng thấp càng tốt
+- [ ] Không thể xác định nếu không biết thêm thông tin
+- [ ] Cả hai ngang nhau vì mae không dùng để xếp hạng
+
+> `mae` và `rmse` thuộc nhóm "càng thấp càng tốt" — leaderboard sắp xếp tăng dần, khác với `f1_score`/`accuracy`/`precision`/`recall` (càng cao càng tốt). Đội B có mae thấp hơn nên xếp hạng cao hơn.
+
+## Q6
+Vì sao `f1_score` dùng trung bình điều hoà (harmonic mean) thay vì trung bình cộng giữa precision và recall?
+
+- [x] Vì trung bình điều hoà bị kéo xuống thấp nếu một trong hai giá trị rất thấp, trong khi trung bình cộng có thể "che" giá trị thấp bằng giá trị cao
+- [ ] Vì trung bình điều hoà tính toán nhanh hơn trung bình cộng
+- [ ] Vì platform chỉ hỗ trợ trung bình điều hoà, không hỗ trợ trung bình cộng
+- [ ] Vì trung bình điều hoà luôn cho kết quả cao hơn trung bình cộng
+
+> Ví dụ cực đoan: precision=1.0, recall=0.01 → trung bình cộng = 0.505 (nhìn có vẻ ổn), nhưng f1_score chỉ khoảng 0.02 — phản ánh đúng thực tế mô hình gần như bỏ sót toàn bộ ca dương thật.
+
+## Q7
+Một competition có dữ liệu mất cân bằng nặng (95% thuộc lớp âm) và dùng metric `accuracy`. Vì sao đây là tín hiệu cần cẩn trọng?
+
+- [x] Vì một mô hình luôn đoán lớp âm vẫn đạt accuracy 95% mà không học được gì hữu ích
+- [ ] Vì accuracy không áp dụng được cho dữ liệu mất cân bằng
+- [ ] Vì platform sẽ tự động loại bỏ competition dùng accuracy với dữ liệu mất cân bằng
+- [ ] Vì accuracy chỉ tính được khi dữ liệu cân bằng hoàn hảo
+
+> Với dữ liệu mất cân bằng, accuracy cao không tự động nghĩa là mô hình tốt — cần kiểm tra phân phối target trước (bước EDA) và cân nhắc nhìn thêm precision/recall/f1_score để đánh giá đúng thực chất.
+
+## Q8
+File CSV nộp lên platform cần đúng 2 cột nào?
+
+- [ ] `index` và `label`
+- [x] `id` và `prediction`
+- [ ] `ID` và `pred`
+- [ ] Tuỳ theo competition, không có quy chuẩn cố định
+
+> Hệ thống chấm điểm luôn cần đúng tên cột `id` và `prediction` — đặt tên khác dù "đúng ý nghĩa" (ID, pred, label...) vẫn khiến hệ thống không nhận diện được, submission bị đánh dấu `invalid`.
+
+## Q9
+Chuẩn hoá (standardize) một feature bằng cách tính mean/std trên TOÀN BỘ dữ liệu (gồm cả test) trước khi tách train/test là ví dụ của lỗi gì?
+
+- [x] Train-test contamination — một dạng data leakage
+- [ ] Target leakage
+- [ ] Overfit vào public test set
+- [ ] Sai format CSV
+
+> Train-test contamination xảy ra khi tham số xử lý dữ liệu (mean, std, danh sách category...) được tính từ TOÀN BỘ dữ liệu thay vì chỉ từ tập train — khiến mô hình vô tình "biết trước" thông tin thống kê của tập test.
+
+## Q10
+Feature "đã được kê đơn thuốc điều trị biến chứng" khi dự đoán "bệnh nhân có bị biến chứng hay không" là ví dụ kinh điển của lỗi gì?
+
+- [ ] Train-test contamination
+- [x] Target leakage
+- [ ] Sai format CSV
+- [ ] Overfit vào public test set
+
+> Target leakage xảy ra khi một feature chứa thông tin gần như trực tiếp suy ra được target nhưng thông tin đó chỉ tồn tại SAU thời điểm cần dự đoán thực tế — feature này "lộ đáp án ngược" mà mô hình thực tế sẽ không có sẵn khi dự đoán.
+
+## Q11
+Bạn nên dùng công cụ nào để đánh giá cải tiến mô hình, thay vì chỉ nhìn điểm public leaderboard?
+
+- [ ] So sánh trực giác giữa các lần nộp
+- [x] Cross-validation trên tập train, tách riêng khỏi public test
+- [ ] Đợi tới khi private_test mở ra rồi mới đánh giá
+- [ ] Tăng dần độ phức tạp mô hình cho tới khi public leaderboard không tăng nữa
+
+> Cross-validation cho một ước lượng ổn định hơn về khả năng tổng quát hoá của model, không phụ thuộc vào đặc thù riêng của bộ public test — đây là cách tránh rơi vào bẫy overfit leaderboard.
+
+## Q12
+Vì sao liên tục chỉnh model chỉ để "canh" điểm public leaderboard nhích lên được xem là một dạng leakage theo nghĩa rộng?
+
+- [x] Vì bạn đang "rò rỉ" thông tin từ public test set vào quá trình chọn model, thông qua chính hành vi lặp đi lặp lại của mình — dù không đụng trực tiếp vào dữ liệu
+- [ ] Vì public test set và private test set dùng chung một tập dữ liệu
+- [ ] Vì platform tự động chia sẻ dữ liệu public cho các đội khác
+- [ ] Vì đây là hành vi vi phạm điều khoản sử dụng platform
+
+> Không có validation set riêng để đối chiếu, việc liên tục chỉnh sửa theo phản hồi từ public leaderboard khiến model học cả nhiễu đặc trưng riêng của bộ public — điểm ảo cao trên public, tụt khi private test set (dữ liệu chưa từng nhận phản hồi) được tính.

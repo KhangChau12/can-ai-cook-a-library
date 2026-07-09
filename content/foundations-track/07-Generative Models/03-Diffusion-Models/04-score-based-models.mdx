@@ -1,0 +1,191 @@
+---
+title: Score-based Models — Sinh Dữ Liệu Bằng Gradient Của Log-Probability
+track: foundations-track
+module: Generative Models
+submodule: Diffusion Models
+order: 4
+status: stable
+prerequisites: ["01-diffusion-models"]
+summary: DDPM (bài 49) có discrete timesteps và forward process Gaussian. Score-based Models (Song & Ermon 2019) tiếp cận từ góc nhìn khác: học score function (gradient của log probability) và dùng Langevin dynamics để sample. Song et al. 2020 thống nhất DDPM và score matching vào một framework duy nhất — continuous-time SDE — cho phép ODE sampling (nhanh hơn) và exact likelihood.
+last_touched_by_task: Bài mới (2026-07-08): Phase 3.2 đào sâu Generative Models — Score-based/SDE Models, cầu nối toán học giữa DDPM và score matching. Nguồn: arxiv NCSN 1907.05600 + arxiv Score SDE 2011.13456 + lilianweng.github.io.
+---
+
+Bài [DDPM](49-diffusion-models.mdx) trình bày diffusion models như một quá
+trình 2 chiều rời rạc: forward thêm nhiễu qua T bước, reverse học khử nhiễu.
+Kiến trúc này hoạt động tốt nhưng có hai hạn chế về mặt lý thuyết:
+
+1. **T bước rời rạc** — cần chọn T (thường 1000), không liên tục.
+2. **Forward process cụ thể** — chỉ dùng Gaussian, không tổng quát.
+
+Song & Ermon (2019, Stanford) và Song et al. (2020, Stanford/Google/OpenAI)
+giải quyết bằng cách nhìn diffusion từ góc nhìn **score-based** — học
+gradient của log-probability thay vì dự đoán nhiễu — và thống nhất mọi
+phương pháp sinh (DDPM, score matching, flow) vào một framework duy nhất:
+**Stochastic Differential Equation (SDE)**.
+
+## Tại sao cần góc nhìn score-based?
+
+DDPM dự đoán ε (nhiễu) và dùng MSE loss. Câu hỏi: dự đoán nhiễu để làm gì?
+
+Về mặt toán học, dự đoán nhiễu tương đương với **ước lượng score function**
+của dữ liệu — gradient của log-probability density:
+
+```
+∇_x log p(x) ≈ -ε_θ(x_t, t) / σ_t
+```
+
+Nghĩa là: mạng ε_θ không chỉ "dự đoán nhiễu" — nó đang học hướng (gradient)
+để đi từ vùng ít xác suất lên vùng nhiều xác suất. Góc nhìn này mở ra khả
+năng tổng quát hoá: không chỉ Gaussian, không chỉ discrete steps.
+
+## NCSN — Score Matching + Langevin Dynamics
+
+NCSN (Song & Ermon 2019) — Noise Conditional Score Network — là score-based
+model đầu tiên hoạt động thành công với ảnh.
+
+### Score function
+
+Score function của một phân phối p(x) là gradient của log-density:
+
+```
+s(x) = ∇_x log p(x)
+```
+
+Score function chỉ cho biết "hướng đi để tăng xác suất" tại mỗi điểm x.
+Nếu biết score function ở mọi điểm, ta có thể sample từ p(x) bằng
+**Langevin dynamics**:
+
+```
+x_{t+1} = x_t + ε · s(x_t) + √(2ε) · z_t
+```
+
+Trong đó z_t ~ N(0, I) là nhiễu ngẫu nhiên. Công thức này kết hợp:
+- **Gradient ascent** theo score function: x_t + ε·s(x_t) — đi lên vùng
+  xác suất cao hơn
+- **Nhiễu:** √(2ε)·z_t — tránh rơi vào local mode
+
+### Vấn đề: manifold hypothesis
+
+Score function không xác định trên những điểm nằm ngoài data manifold (vì
+p(x) = 0 → log p(x) undefined). Đây là vấn đề cốt lõi: hầu hết các điểm
+trong không gian ảnh là "ảnh nhiễu" không nằm trên manifold, score function
+không có ý nghĩa ở đó.
+
+### Giải pháp: nhiều mức noise
+
+NCSN giải quyết bằng cách thêm nhiều mức Gaussian noise khác nhau:
+
+```
+p_σ(x̃ | x) = N(x̃; x, σ²I)  với σ₁ > σ₂ > ... > σ_L
+```
+
+Với noise lớn, data được "làm mờ" — manifold bị mở rộng — score function
+xác định ở mọi nơi. Với noise nhỏ, score function chính xác gần manifold.
+
+NCSN huấn luyện **L mạng score riêng** (thực tế là 1 mạng có conditioning
+theo noise level σ):
+
+```
+s_θ(x, σ) ≈ ∇_x log p_σ(x)
+```
+
+### Annealed Langevin dynamics
+
+Khi sample, NCSN dùng **annealed Langevin dynamics** — bắt đầu từ noise
+lớn nhất, chạy Langevin dynamics để tìm vùng có xác suất, giảm dần noise,
+lặp lại:
+
+```
+σ = σ₁ (lớn nhất)
+for i = 1..L:
+  for t = 1..T:
+    x = x + ε_i · s_θ(x, σ_i) + √(2ε_i) · z
+  σ = σ_{i+1}
+```
+
+Đây là tiền đề trực tiếp của reverse process trong DDPM.
+
+## Score SDE — Thống nhất mọi phương pháp
+
+Song et al. (2020) — "Score-Based Generative Modeling through Stochastic
+Differential Equations" — đưa ra bước tổng quát hoá quan trọng: thay vì
+rời rạc hoá diffusion (DDPM: T bước, NCSN: L noise levels), coi toàn bộ
+quá trình là một **SDE liên tục**.
+
+### Forward SDE
+
+Dữ liệu bị phá huỷ dần bởi nhiễu, được mô tả bởi một SDE:
+
+```
+dx = f(x, t) dt + g(t) dw
+```
+
+Trong đó:
+- f(x, t) — drift coefficient (xu hướng trung tâm)
+- g(t) — diffusion coefficient (cường độ nhiễu)
+- dw — Wiener process (Brownian motion)
+
+### Reverse SDE
+
+Quá trình reverse (sinh dữ liệu) cũng là một SDE, phụ thuộc vào score function:
+
+```
+dx = [f(x, t) - g(t)² · ∇_x log p_t(x)] dt + g(t) dw̄
+```
+
+Trong đó ∇_x log p_t(x) là score function tại thời điểm t — được ước lượng
+bởi mạng nơ-ron s_θ(x, t). Công thức này gọi là **reverse SDE**.
+
+### Ba trường hợp cụ thể
+
+Framework SDE thống nhất 3 phương pháp trước đó:
+
+| Phương pháp | f(x, t) | g(t) | Tên SDE |
+|---|---|---|---|
+| **DDPM** | -½β(t)x | √β(t) | VP-SDE (Variance Preserving) |
+| **NCSN** | 0 | √(dσ²/dt) | VE-SDE (Variance Exploding) |
+| **sub-VP-SDE** | -½β(t)x | √β(t)·(1 - e^{-2∫β ds}) | — |
+
+DDPM hoá ra là một trường hợp đặc biệt của SDE framework (VP-SDE). NCSN
+cũng vậy (VE-SDE). Cả hai đều được thống nhất dưới cùng một lý thuyết.
+
+### Probability Flow ODE
+
+Một kết quả quan trọng: reverse SDE có một **phương trình ODE tương đương**
+(probability flow ODE) mà không làm thay đổi phân phối biên:
+
+```
+dx/dt = f(x, t) - ½ g(t)² · ∇_x log p_t(x)
+```
+
+ODE này:
+- **Nhanh hơn SDE:** có thể dùng ODE solver với số bước nhỏ hơn
+- **Tính exact likelihood:** ODE cho phép tính log-likelihood chính xác
+  qua công thức change of variable (giống flow-based models bài 103)
+- **Biểu diễn latent:** cho một latent z cố định, ODE tạo ra ảnh duy nhất
+  (tất định) — cho phép nội suy ngữ nghĩa
+
+## So sánh DDPM, NCSN và Score SDE
+
+| Phương pháp | Góc nhìn | Time steps | Forward | Sample method |
+|---|---|---|---|---|
+| **DDPM** | Dự đoán ε | Rời rạc (T) | Gaussian | Reverse chain |
+| **NCSN** | Score matching | Rời rạc (L) | Multi-noise | Langevin |
+| **Score SDE** | SDE liên tục | Liên tục | Bất kỳ SDE | Reverse SDE/ODE |
+
+## Liên hệ lại với các bài trước
+
+- **DDPM (bài 49):** được thống nhất là VP-SDE trong framework SDE. Công
+  thức loss L_simple = E[||ε - ε_θ||²] tương đương với score matching.
+- **DDIM (bài 70):** DDIM là trường hợp đặc biệt của probability flow ODE
+  (η=0 → ODE, tất định). DDIM sinh nhanh bằng cách giải ODE với ít bước.
+- **Flow-based Models (bài 103):** probability flow ODE kết nối diffusion
+  với normalizing flows — cho phép tính exact likelihood qua ODE.
+- **VAE (bài 94):** SDE framework cũng có thể xem như một hierarchical VAE
+  với infinite latent variables.
+
+## Nguồn tham khảo
+
+- [arXiv — Generative Modeling by Estimating Gradients of the Data Distribution (Song & Ermon, 2019)](https://arxiv.org/abs/1907.05600) — paper gốc NCSN, dùng cho score matching, noise-conditional score networks, annealed Langevin dynamics, và manifold hypothesis.
+- [arXiv — Score-Based Generative Modeling through Stochastic Differential Equations (Song et al., 2020)](https://arxiv.org/abs/2011.13456) — paper gốc Score SDE, dùng cho unified SDE framework, VE/VP-SDE, probability flow ODE, và exact likelihood.
+- [Lilian Weng — What are Diffusion Models?](https://lilianweng.github.io/posts/2021-07-11-diffusion-models/) — dùng cho tổng quan kết nối DDPM, score matching, và SDE framework.

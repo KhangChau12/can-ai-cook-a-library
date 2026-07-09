@@ -1,0 +1,53 @@
+---
+quiz_for: 04-resnet
+---
+
+## Q1
+Vấn đề "degradation" mà ResNet giải quyết khác với overfitting ở điểm nào?
+
+- [x] Degradation là khi training error TĂNG khi thêm lớp (tệ ngay cả trên dữ liệu train); overfitting là khi train error thấp nhưng validation error cao
+- [ ] Degradation và overfitting là cùng một hiện tượng, chỉ khác tên gọi
+- [ ] Degradation chỉ xảy ra khi dữ liệu quá ít, overfitting chỉ xảy ra khi dữ liệu quá nhiều
+- [ ] Degradation là vấn đề của CNN, overfitting là vấn đề của RNN
+
+> Về lý thuyết, mạng sâu hơn luôn có thể ít nhất bằng mạng nông hơn (chỉ cần học đúng ánh xạ đơn vị). Degradation là khi thực tế training error lại tăng khi thêm lớp — khác hẳn overfitting, nơi vấn đề nằm ở khoảng cách train/validation, không phải bản thân train error.
+
+## Q2
+Công thức residual mapping của ResNet là gì?
+
+- [x] Thay vì học trực tiếp f(x), khối học g(x) = f(x) - x, rồi cộng lại input: output = g(x) + x
+- [ ] Thay input bằng 0 trước khi đưa vào mạng
+- [ ] Xoá hoàn toàn các lớp tích chập, chỉ giữ lại input
+- [ ] Nhân input với một hằng số cố định trước khi qua mạng
+
+> Skip connection cộng trực tiếp input x vào output của khối các lớp tích chập — nếu ánh xạ tối ưu là identity (f(x)=x), khối chỉ cần học g(x)=0, dễ hơn nhiều so với tự học chính xác ánh xạ đơn vị từ đầu.
+
+## Q3
+Vì sao học g(x) = 0 dễ hơn học trực tiếp ánh xạ đơn vị f(x) = x qua các lớp tích chập + phi tuyến?
+
+- [x] Đẩy toàn bộ trọng số về gần 0 (một hằng số) dễ hơn nhiều so với việc ép một chuỗi lớp phi tuyến phải "tìm ra" chính xác phép biến đổi đồng nhất
+- [ ] Vì g(x) = 0 không cần backpropagation
+- [ ] Vì trọng số 0 luôn cho gradient lớn nhất
+- [ ] Không có sự khác biệt nào về độ khó giữa hai cách học
+
+> Học một hàm hằng số 0 (đơn giản là giữ trọng số nhỏ/gần 0) dễ hơn việc một chuỗi lớp tích chập + activation phi tuyến phải tự tìm ra đúng công thức để tái tạo lại chính xác input ở output.
+
+## Q4
+Kết quả của ResNet tại ILSVRC 2015 là gì?
+
+- [x] Mạng 152 lớp (gấp khoảng 8 lần độ sâu VGG) đạt 3.57% error trên ImageNet, giành hạng nhất phân loại
+- [ ] Mạng chỉ 8 lớp, ít hơn hẳn AlexNet
+- [ ] Không tham gia ILSVRC 2015, chỉ thử nghiệm trên CIFAR-10
+- [ ] Đạt kết quả kém hơn VGG dù sâu hơn nhiều
+
+> He và cộng sự (2015) công bố mạng ResNet 152 lớp — gấp khoảng 8 lần độ sâu VGG — đạt 3.57% error trên tập test ImageNet, giành hạng nhất ILSVRC 2015 phân loại, và còn thử nghiệm mạng sâu tới 100-1000 lớp trên CIFAR-10.
+
+## Q5
+"Nested function classes" (tính lồng ghép của tập hợp hàm số) đảm bảo điều gì khi thêm lớp vào mạng?
+
+- [x] Nếu tập hợp hàm mạng mới CHỨA tập hợp hàm mạng cũ, thêm lớp chỉ có thể giữ nguyên hoặc cải thiện khả năng biểu diễn, không bao giờ làm tệ đi
+- [ ] Mạng luôn tự động overfitting khi có tính lồng ghép
+- [ ] Tính lồng ghép chỉ áp dụng cho mạng có dưới 10 lớp
+- [ ] Không liên quan gì tới vấn đề degradation
+
+> D2L.ai nhấn mạnh: chỉ khi tập hợp hàm lớn hơn CHỨA tập hợp hàm nhỏ hơn mới đảm bảo tăng số lớp thực sự tăng khả năng biểu diễn. Skip connection của ResNet đảm bảo đúng tính chất này vì lớp mới luôn có thể "giữ nguyên" input (học g(x)=0).

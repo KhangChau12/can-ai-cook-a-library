@@ -1,0 +1,104 @@
+---
+title: Hyperparameter Tuning — Tìm cấu hình tốt nhất một cách có hệ thống
+track: exam-track
+module: Kỹ thuật thi đấu nâng cao
+order: 4
+status: stable
+prerequisites: ["03-baseline-nang-cap-mo-hinh-va-chien-luoc-nop-bai"]
+summary: Phân biệt hyperparameter với tham số model học được, ba chiến lược tìm kiếm phổ biến (grid search, random search, bayesian optimization), và cách tinh chỉnh không lãng phí thời gian/lượt nộp bài.
+last_touched_by_task: Rà lại dưới góc nhìn triết lý mới (2026-07-06): đọc kỹ, xác nhận bài đã đạt chuẩn đúng tiêu chí exam-track (mục 2.1 sườn A) — ví dụ số cụ thể (625 tổ hợp grid search), 3 chiến lược rõ ràng với ưu/nhược điểm, nguyên tắc thực dụng theo tình huống thời gian, và nhắc lại đúng nguyên tắc tune trên cross-validation không phải public leaderboard. Không 'vỏ rỗng', không cần viết lại. Giữ nguyên nội dung, chỉ nâng status.
+---
+
+Các bài trước đã nhắc tới vài hyperparameter cụ thể — learning rate ở bài
+[Transfer Learning](04-transfer-learning-va-fine-tuning.mdx), `n_estimators`
+và learning rate của gradient boosting ở bài
+[Baseline & Nâng cấp Mô hình](03-baseline-nang-cap-mo-hinh-va-chien-luoc-nop-bai.mdx).
+Bài này tổng hợp lại thành một kỹ năng riêng: **tìm cấu hình hyperparameter
+tốt một cách có hệ thống**, thay vì thử ngẫu nhiên dựa trên cảm tính.
+
+## Hyperparameter khác gì với tham số model học được
+
+Đây là điểm dễ nhầm nhất khi mới thi đấu. **Tham số model** (weights,
+bias của mạng nơ-ron; giá trị chia của mỗi node trong decision tree) là
+những giá trị model **tự học được** từ dữ liệu train, thông qua quá trình
+tối ưu hoá (gradient descent, thuật toán xây cây...). **Hyperparameter**
+là những giá trị bạn phải **chọn trước** khi bắt đầu huấn luyện — model
+không tự học ra chúng, chúng điều khiển *cách* model học.
+
+Vài ví dụ hyperparameter phổ biến:
+
+- **Deep learning:** learning rate, batch size, số epoch, kiến trúc (số
+  layer, số unit mỗi layer), tỷ lệ dropout.
+- **Gradient boosting** (đã nhắc ở bài 03): `n_estimators`, learning rate,
+  độ sâu cây tối đa, tỷ lệ lấy mẫu dòng/cột.
+
+Chọn sai hyperparameter có thể khiến một kiến trúc/thuật toán vốn dĩ tốt
+cho kết quả rất tệ — không phải vì thuật toán sai, mà vì cách nó học bị
+cấu hình sai (ví dụ learning rate quá lớn khiến quá trình học phân kỳ
+thay vì hội tụ).
+
+## Ba chiến lược tìm kiếm hyperparameter
+
+**Grid search (tìm kiếm lưới):** liệt kê trước một tập giá trị cụ thể cho
+mỗi hyperparameter, rồi thử **toàn bộ tổ hợp** có thể giữa chúng. Ví dụ
+với `C ∈ {1, 10, 100, 1000}` và `gamma ∈ {0.001, 0.0001}`, grid search
+thử đủ cả 8 tổ hợp. Ưu điểm: đảm bảo không bỏ sót tổ hợp nào trong không
+gian đã định nghĩa. Nhược điểm: số tổ hợp tăng theo cấp số nhân khi thêm
+hyperparameter — 4 hyperparameter với 5 giá trị mỗi cái đã là 625 tổ hợp,
+mỗi tổ hợp lại cần train + đánh giá cross-validation riêng, rất tốn thời
+gian tính toán khi thi đấu có deadline.
+
+**Random search (tìm kiếm ngẫu nhiên):** thay vì thử hết mọi tổ hợp, chọn
+ngẫu nhiên một số lượng tổ hợp nhất định (`n_iter`) từ không gian
+hyperparameter (có thể là khoảng giá trị liên tục, không cần liệt kê rời
+rạc trước). Hai lợi thế cụ thể so với grid search:
+
+- **Ngân sách tính toán độc lập với số lượng hyperparameter** — bạn quyết
+  định thử bao nhiêu tổ hợp (`n_iter`) mà không phụ thuộc vào việc có bao
+  nhiêu hyperparameter hay mỗi cái có bao nhiêu giá trị khả dĩ.
+- **Không lãng phí khi có hyperparameter ít ảnh hưởng.** Nếu một trong
+  các hyperparameter gần như không ảnh hưởng tới kết quả, grid search vẫn
+  lãng phí thời gian thử đủ mọi giá trị của nó; random search không có
+  vấn đề này vì không cố "quét đều" từng chiều một cách máy móc.
+
+**Bayesian optimization (tối ưu hoá Bayes):** thông minh hơn cả hai cách
+trên — dùng kết quả của các lần thử trước để **dự đoán** vùng nào trong
+không gian hyperparameter có khả năng cho kết quả tốt hơn, rồi ưu tiên
+thử ở vùng đó trong lần tiếp theo (đánh đổi giữa "khai thác" vùng đã biết
+tốt và "khám phá" vùng chưa thử). Hiệu quả hơn random search khi số lần
+thử bị giới hạn chặt (mỗi lần thử tốn nhiều thời gian, ví dụ train một
+mạng nơ-ron sâu mất hàng giờ), nhưng bản thân thuật toán tìm kiếm cũng
+phức tạp hơn để triển khai đúng.
+
+## Chọn chiến lược nào khi thi đấu có giới hạn thời gian
+
+Nguyên tắc thực dụng, không phải lúc nào cũng cần chiến lược phức tạp
+nhất:
+
+- **Ít hyperparameter (1-2), mỗi lần train nhanh** (ví dụ gradient
+  boosting trên dữ liệu bảng vừa phải) → grid search đủ dùng, đơn giản để
+  triển khai và diễn giải kết quả.
+- **Nhiều hyperparameter, mỗi lần train vẫn tương đối nhanh** → random
+  search, hiệu quả hơn nhiều so với grid search mà không cần công cụ phức
+  tạp.
+- **Mỗi lần train rất tốn thời gian** (mạng nơ-ron sâu, dataset lớn) →
+  cân nhắc bayesian optimization nếu có thư viện hỗ trợ sẵn (nhiều thư
+  viện phổ biến đã đóng gói sẵn thuật toán này), vì mỗi lần thử "lãng phí"
+  đắt hơn nhiều so với chi phí tính toán thêm của bản thân thuật toán tìm
+  kiếm.
+
+## Luôn tune trên cross-validation, không phải public leaderboard
+
+Nhắc lại nguyên tắc xuyên suốt track: mọi vòng tune hyperparameter phải
+đánh giá bằng **cross-validation trên tập train**, không phải bằng cách
+nộp từng cấu hình lên platform để xem điểm public. Dùng public leaderboard
+làm công cụ tune hyperparameter chính là dạng overfit vào public test set
+nghiêm trọng nhất — bạn đang "học" trực tiếp từ phản hồi của chính bộ dữ
+liệu sẽ dùng để đánh giá, với tốc độ thử nhiều tổ hợp còn nhanh hơn cả
+việc chỉnh sửa model thông thường. Chỉ nộp lên platform để xác nhận cấu
+hình tốt nhất đã chọn qua cross-validation, không dùng lượt nộp để "dò"
+hyperparameter.
+
+## Nguồn tham khảo
+
+- [scikit-learn — Tuning the hyper-parameters of an estimator](https://scikit-learn.org/stable/modules/grid_search.html) — dùng cho định nghĩa và cơ chế grid search (thử toàn bộ tổ hợp trong lưới đã định nghĩa) và randomized search (lấy mẫu ngẫu nhiên với ngân sách `n_iter` độc lập số chiều), cùng hai lợi thế cụ thể của randomized search so với grid search.

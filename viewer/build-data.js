@@ -62,17 +62,34 @@ function parseQuiz(body) {
   return questions;
 }
 
+// Đọc đệ quy tất cả .mdx files trong thư mục (hỗ trợ cấu trúc module/submodule mới)
+function getAllMdxFilesRecursive(dir) {
+  const result = [];
+  if (!fs.existsSync(dir)) return result;
+  const entries = fs.readdirSync(dir, { withFileTypes: true });
+  for (const entry of entries) {
+    if (entry.name.startsWith('.')) continue; // skip hidden
+    const fullPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      result.push(...getAllMdxFilesRecursive(fullPath));
+    } else if (entry.isFile() && entry.name.endsWith('.mdx')) {
+      result.push(fullPath);
+    }
+  }
+  return result;
+}
+
 function loadTrack(track) {
   const dir = path.join(CONTENT_DIR, track);
   if (!fs.existsSync(dir)) return { index: null, pages: [] };
-  const allFiles = fs.readdirSync(dir).filter((f) => f.endsWith('.mdx'));
+  const allFiles = getAllMdxFilesRecursive(dir);
   const quizFiles = allFiles.filter((f) => f.endsWith('.quiz.mdx'));
   const contentFiles = allFiles.filter((f) => !f.endsWith('.quiz.mdx'));
 
   // Map slug bài -> danh sách câu hỏi, đọc từ frontmatter `quiz_for: <slug>`
   const quizzesBySlug = {};
-  for (const file of quizFiles) {
-    const raw = fs.readFileSync(path.join(dir, file), 'utf8');
+  for (const fullPath of quizFiles) {
+    const raw = fs.readFileSync(fullPath, 'utf8');
     const { meta, body } = parseFrontmatter(raw);
     if (!meta.quiz_for) continue;
     quizzesBySlug[meta.quiz_for] = parseQuiz(body);
@@ -80,13 +97,14 @@ function loadTrack(track) {
 
   let index = null;
   const pages = [];
-  for (const file of contentFiles) {
-    const raw = fs.readFileSync(path.join(dir, file), 'utf8');
+  for (const fullPath of contentFiles) {
+    const raw = fs.readFileSync(fullPath, 'utf8');
     const { meta, body } = parseFrontmatter(raw);
-    const slug = file.replace(/\.mdx$/, '');
-    const entry = { file, ...meta, body };
+    const fileName = path.basename(fullPath);
+    const slug = fileName.replace(/\.mdx$/, '');
+    const entry = { file: fileName, track, ...meta, body };
     if (quizzesBySlug[slug]) entry.quiz = quizzesBySlug[slug];
-    if (file === '_index.mdx') {
+    if (fileName === '_index.mdx') {
       index = entry;
     } else {
       pages.push(entry);

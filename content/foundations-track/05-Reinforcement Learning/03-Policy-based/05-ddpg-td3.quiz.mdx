@@ -1,0 +1,43 @@
+---
+quiz_for: 05-ddpg-td3
+---
+
+## Q1
+Vì sao DQN gốc không áp dụng được trực tiếp cho action liên tục?
+
+- [ ] Mạng nơ-ron không xử lý được output liên tục
+- [x] Không thể tính `max_{a'} Q(s', a')` khi action vô hạn — không duyệt hết được
+- [ ] Replay buffer không hoạt động với action liên tục
+- [ ] Target network không ổn định với action liên tục
+
+> DQN lấy target = `r + γ·max Q(s',a')`, phép max duyệt qua tất cả action. Action rời rạc hữu hạn → duyệt được. Action liên tục vô hạn → không duyệt được. DDPG giải bằng deterministic policy `μ_θ(s)` cung cấp trực tiếp action tốt nhất thay vì max.
+
+## Q2
+DDPG dùng deterministic policy `μ_θ(s)→a` thay vì stochastic `π(a|s)`. Lợi ích chính trên action liên tục là gì?
+
+- [ ] Deterministic luôn cho hiệu năng cao hơn stochastic
+- [x] Đơn giản hơn — chỉ cần output 1 vector liên tục thay vì parametrise cả phân phối xác suất trên không gian liên tục
+- [ ] Deterministic cho phép tính reward chính xác hơn
+- [ ] Deterministic không cần exploration
+
+> Parametrise phân phối `π(a|s)` trên không gian liên tục phức tạp (mean + variance cho Gaussian, v.v.). Deterministic chỉ cần output 1 action. Trade-off: mất exploration tự nhiên (phải thêm nhiễu ngoài — đây chính là điểm SAC sửa bằng stochastic + entropy). Gradient của deterministic policy cũng có dạng đơn giản model-free (Silver 2014).
+
+## Q3
+TD3 dùng twin critics lấy `min(Q_1, Q_2)`. Vấn đề nào của DDPG mà kỹ thuật này nhắm tới?
+
+- [ ] Actor cập nhật quá chậm
+- [ ] Target network không được copy đủ thường xuyên
+- [x] Overestimation bias bị khuếch đại qua vòng actor-critic (critic overestimate → actor bám action ảo → critic lại học dựa trên action ảo → Q phồng)
+- [ ] Replay buffer quá nhỏ
+
+> Giống Double DQN nhưng cơ chế khác: ở actor-critic, overestimate của critic khuếch đại qua actor bám theo → vòng phản hồi tích cực. 2 critic độc lập ít khi overestimate cùng lúc → min triệt phần dương ảo, cắt đứt vòng khuếch đại. Actor chỉ bám 1 critic (Q_1) tránh cộng hưởng.
+
+## Q4
+Target policy smoothing thêm nhiễu clipped vào target action. Mục đích thực sự là gì?
+
+- [ ] Tăng exploration trong khi huấn luyện
+- [ ] Làm action đa dạng hơn để tránh overfit
+- [x] Triệt "đỉnh giả" của Q-function — ép critic đánh giá lân cận action thay vì đúng điểm đỉnh, tin giá trị trung bình vùng hơn 1 điểm mỏng manh (regularization)
+- [ ] Giảm variance của gradient
+
+> Q-function xấp xỉ có đỉnh giả (action có Q ảo cao do nhiễu ước lượng). Actor dễ bám đỉnh giả. Thêm nhiễu nhỏ vào target action bắt critic đánh giá lân cận → phẳng đỉnh giả → actor học action tốt trên 1 vùng. Đây là regularization (giống dropout), không phải exploration (nhiễu chỉ ở target tính loss, không phải action thực thi).

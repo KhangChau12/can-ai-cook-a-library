@@ -1,0 +1,72 @@
+---
+title: WordPiece — Tiêu chí Ghép Dựa trên Khả năng, Không Chỉ Tần suất
+track: foundations-track
+module: Sequence Model
+submodule: Tokenization
+order: 4
+status: stable
+prerequisites: ["01-tokenization-word-to-subword"]
+summary: BPE (bài 64) ghép cặp ký hiệu THƯỜNG XUYÊN NHẤT ở mỗi bước — một tiêu chí đơn giản nhưng không phải cách duy nhất hợp lý. WordPiece, kỹ thuật tokenize dùng trong BERT, thay tiêu chí đó bằng một câu hỏi khác: cặp nào khi ghép lại giúp TĂNG KHẢ NĂNG (likelihood) của toàn bộ dữ liệu huấn luyện nhiều nhất? Khác biệt tưởng nhỏ nhưng có hệ quả cụ thể: WordPiece ưu tiên ghép các mảnh hay xuất hiện CÙNG NHAU dù bản thân từng mảnh không phổ biến, thay vì chỉ nhìn tần suất cặp thô như BPE.
+last_touched_by_task: Bài mới (2026-07-06), tiếp nối bài 64 (BPE) trong nhánh Segmentation của sub-module Tokenization. Lưu ý về nguồn (đã hỏi ý kiến người vận hành trước khi viết): WebFetch trên arxiv.org (paper GNMT gốc 1609.08144 giới thiệu wordpieces, và paper BERT 1810.04805) chỉ trả về abstract, không có chi tiết thuật toán cụ thể — hạn chế cố hữu của WebFetch với PDF trên arxiv. Paper gốc mô tả thuật toán WordPiece (Schuster & Nakajima 2012) không có trên arxiv và không nằm trong whitelist. Dùng lilianweng.github.io (bài 'Generalized Language Models', xác nhận qua WebFetch: BERT dùng WordPiece tokenization embeddings, nguồn gốc từ bài toán phân đoạn tiếng Nhật/Hàn) làm nguồn chính cho bối cảnh + vai trò của WordPiece; phần công thức tiêu chí ghép (likelihood-based, đối lập frequency-based của BPE) trình bày ở mức khái niệm định tính (không có công thức số cụ thể được xác nhận qua WebFetch từ nguồn whitelist) để tránh khẳng định quá mức những gì chưa xác thực được trực tiếp. Vì đây là bài ngắn hơn thường lệ (được người vận hành đồng ý viết dù nguồn hạn chế hơn chuẩn 2-nguồn-chi-tiết thường áp dụng), chỉ dùng 1 nguồn chính + đối chiếu khái niệm với bài 64 đã có nguồn D2L.ai riêng.
+---
+
+Bài [Tokenization/BPE](64-tokenization-word-to-subword.mdx) đã giới
+thiệu ý tưởng cắt văn bản thành **subword**. Nhưng BPE không phải thuật
+toán subword duy nhất — **WordPiece**, kỹ thuật tokenize được dùng trong
+[BERT](45-bert.mdx), giải quyết cùng bài toán (từ vựng khổng lồ +
+out-of-vocabulary) bằng một **tiêu chí ghép khác** BPE, dù ý tưởng tổng
+thể (ghép dần các mảnh nhỏ thành mảnh lớn hơn) là giống nhau.
+
+## Nhắc lại: BPE ghép theo tần suất thô
+
+Bài 64 đã học: BPE ở mỗi bước tìm cặp ký hiệu liền kề **xuất hiện thường
+xuyên nhất** trong dữ liệu, rồi ghép chúng thành một ký hiệu mới. Tiêu
+chí này đơn giản, dễ cài đặt — nhưng chỉ nhìn vào **tần suất thô** của
+cặp, không quan tâm gì tới việc ghép cặp đó có thực sự "đáng giá" hay
+không xét trên toàn bộ mô hình ngôn ngữ.
+
+## WordPiece: ghép theo tiêu chí "tăng khả năng của dữ liệu"
+
+**WordPiece** (kỹ thuật tokenize dùng để huấn luyện BERT) áp dụng đúng
+sơ đồ chung của các thuật toán subword — bắt đầu từ ký tự đơn, lặp lại
+việc ghép cặp ký hiệu liền kề để tạo từ vựng subword cố định — nhưng thay
+tiêu chí chọn cặp ghép ở mỗi bước: thay vì hỏi "cặp nào **xuất hiện nhiều
+nhất**?" (như BPE), WordPiece hỏi "cặp nào, khi được ghép vào từ vựng,
+làm **tăng khả năng (likelihood)** của toàn bộ dữ liệu huấn luyện **nhiều
+nhất**?".
+
+Hệ quả cụ thể của sự khác biệt này: WordPiece có xu hướng ưu tiên ghép
+các mảnh ký hiệu **hay xuất hiện cùng nhau một cách bất thường** — tức
+là hai mảnh riêng lẻ có thể không phổ biến lắm, nhưng khi đứng cạnh nhau
+thì xuất hiện thường xuyên hơn nhiều so với kỳ vọng nếu chúng độc lập.
+Đây là một tiêu chí "thống kê" tinh hơn tần suất thô: nó gần với ý tưởng
+đo **mức độ liên kết** giữa hai mảnh, thay vì chỉ đếm xem cặp đó xuất
+hiện bao nhiêu lần.
+
+## Vì sao BERT chọn WordPiece thay vì BPE nguyên bản
+
+WordPiece có nguồn gốc từ bài toán phân đoạn từ trong tiếng Nhật/Hàn —
+những ngôn ngữ không có khoảng trắng phân tách từ rõ ràng như tiếng Anh,
+nơi việc chọn đúng ranh giới subword có ảnh hưởng lớn hơn tới chất lượng
+mô hình downstream. BERT kế thừa kỹ thuật này cho tiếng Anh (và các ngôn
+ngữ khác nó hỗ trợ), dùng **WordPiece tokenization embeddings** làm một
+phần của cách biểu diễn input — tách từ hiếm thành các subword nhỏ hơn
+để mô hình xử lý hiệu quả hơn với từ chưa từng gặp, đúng động cơ chung
+của mọi kỹ thuật subword đã học ở bài 64.
+
+## Liên hệ lại với các bài trước
+
+- Cùng giải quyết đúng 2 vấn đề đã nêu ở bài [BPE](64-tokenization-word-to-subword.mdx)
+  (từ vựng khổng lồ + out-of-vocabulary) — WordPiece và BPE là hai câu
+  trả lời khác nhau cho cùng một câu hỏi "làm sao chọn đúng các subword
+  để ghép", tương tự cách [word2vec và GloVe](66-glove.mdx) là hai câu
+  trả lời khác nhau cho câu hỏi "làm sao biến token thành vector".
+- [BERT](45-bert.mdx) dùng WordPiece làm bước tiền xử lý đầu tiên trước
+  khi token đi qua embedding layer rồi vào Transformer encoder — một
+  minh chứng cụ thể cho thấy lựa chọn tokenizer không phải chi tiết vặt
+  vãnh mà là một quyết định kiến trúc thực sự ảnh hưởng tới chất lượng
+  mô hình cuối cùng.
+
+## Nguồn tham khảo
+
+- [Lil'Log — Generalized Language Models](https://lilianweng.github.io/posts/2019-01-31-lm/) — dùng cho việc xác nhận BERT dùng WordPiece tokenization embeddings, nguồn gốc kỹ thuật này từ bài toán phân đoạn từ tiếng Nhật/Hàn, và vai trò chung của subword tokenization trong việc xử lý từ hiếm/chưa từng gặp.

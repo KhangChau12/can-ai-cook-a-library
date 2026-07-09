@@ -1,0 +1,148 @@
+---
+title: RLHF & Alignment — Dùng Reinforcement Learning để LLM 'hợp ý' con người hơn
+track: foundations-track
+module: LLM
+submodule: Huấn luyện & Alignment
+order: 4
+status: stable
+prerequisites: ["03-fine-tuning-instruction-tuning", "01-reinforcement-learning-framework", "02-markov-decision-process", "01-q-learning", "01-policy-gradient", "02-ppo"]
+summary: Instruction tuning dạy mô hình làm theo hướng dẫn, nhưng không dạy nó câu trả lời nào 'hay hơn' theo con người. Ouyang và cộng sự (2022, InstructGPT) giải quyết bằng quy trình 3 bước (SFT → reward model → RL/PPO): mô hình 1.3B đã align vượt qua GPT-3 175B base trên đánh giá con người. DPO sau này đơn giản hoá RLHF bằng cách bỏ hẳn bước RL.
+last_touched_by_task: Cải thiện thực chất (2026-07-06, task 42, trong lúc đào sâu sub-module 'Huấn luyện & Alignment'): tìm và xác nhận được paper gốc InstructGPT (Ouyang et al. 2022, arxiv 2203.02155) qua WebFetch trực tiếp abstract — trước đó bài chỉ trích số liệu 1.3B/175B từ MachineLearningMastery, không có tên tác giả/paper gốc (đã ghi rõ lý do ở task trước: nguồn cũ không ghi rõ tên tác giả). Giờ đã bổ sung: tên tác giả cụ thể (Ouyang và cộng sự), vấn đề chính xác paper nêu (scaling không tự động cải thiện việc làm theo ý định), và quy trình 3 bước cụ thể (SFT → reward model → RL/PPO) khớp đúng với khung RLHF đã mô tả trong bài — đồng thời thêm liên kết `prerequisites` sang bài 47 (PPO) mới viết, vì bước 3 của InstructGPT chính xác là PPO. Giữ nguyên nguồn MachineLearningMastery cũ cho phần DPO/so sánh nhiều mô hình cùng lúc (RLHF truyền thống) — vẫn đúng và hữu ích. Cập nhật (2026-07-06, Task 83): thêm liên kết sang bài 79 (DPO) mới viết — bài đó giải thích chi tiết phép toán cụ thể (Bradley-Terry, reward reparameterization) mà đoạn DPO ở đây chỉ mô tả khái niệm.
+---
+
+Bài [Fine-tuning & Instruction Tuning](26-fine-tuning-instruction-tuning.mdx)
+dạy mô hình **làm theo hướng dẫn** thay vì chỉ hoàn thành văn bản. Nhưng
+còn một vấn đề tinh tế hơn: giữa nhiều câu trả lời đều "đúng hướng dẫn",
+làm sao mô hình biết câu nào **con người thích hơn** — hữu ích hơn, an
+toàn hơn, tự nhiên hơn? Instruction tuning (supervised học từ ví dụ đúng/
+sai rõ ràng) không tự nhiên xử lý được loại đánh giá **so sánh, tinh tế**
+này. Đây là lúc quay lại dùng chính framework Reinforcement Learning đã
+học ở [bài 16-19](16-reinforcement-learning-framework.mdx).
+
+## Vấn đề: không có "đáp án đúng" duy nhất, chỉ có "tốt hơn"
+
+Với nhiều câu hỏi (đặc biệt câu hỏi mở, sáng tạo, hoặc nhạy cảm), không có
+một câu trả lời "đúng tuyệt đối" duy nhất để làm nhãn huấn luyện — nhưng
+con người vẫn có thể **so sánh** hai câu trả lời và nói câu nào tốt hơn,
+dù khó viết ra một công thức toán học chính xác cho "tốt" nghĩa là gì.
+Đây chính xác là tình huống RL được thiết kế để xử lý: học tối ưu một đại
+lượng (reward) khi ta không cần biết công thức chính xác của nó, chỉ cần
+có tín hiệu phản hồi.
+
+## RLHF: dùng con người để định nghĩa reward, rồi dùng RL để tối ưu
+
+**RLHF (Reinforcement Learning from Human Feedback)** ghép hai bước lại
+với nhau, dùng lại đúng framework đã học ở bài
+[RL Framework](16-reinforcement-learning-framework.mdx) và
+[MDP](17-markov-decision-process.mdx):
+
+1. **Huấn luyện reward model.** Cho mô hình sinh nhiều câu trả lời khác
+   nhau cho cùng một câu hỏi, con người xếp hạng (câu nào tốt hơn câu
+   nào). Từ dữ liệu xếp hạng này, huấn luyện một mô hình riêng — **reward
+   model** — học cách chấm điểm bất kỳ câu trả lời nào, sao cho điểm số
+   đó khớp với xu hướng đánh giá của con người. Đây là bước biến "sở
+   thích của con người" (khó viết thành công thức) thành một **hàm reward
+   `R`** cụ thể mà thuật toán RL có thể tối ưu — đúng vai trò `R(s, a)`
+   trong định nghĩa MDP đã học.
+2. **Tối ưu policy bằng RL.** Coi chính LLM (sau khi đã instruction-tuned)
+   là **policy** `π` — với mỗi câu hỏi (state), nó tạo ra câu trả lời
+   (action). Dùng thuật toán RL (kiểu policy gradient, cùng họ với bài
+   [Policy Gradient](19-policy-gradient.mdx) đã học) để tinh chỉnh tham số
+   của policy này, sao cho nó tạo ra câu trả lời được reward model chấm
+   điểm cao hơn.
+
+Nói ngắn gọn: RLHF không giới thiệu khái niệm RL mới — nó áp dụng nguyên
+vẹn framework agent/environment/reward/policy đã học, chỉ khác nguồn gốc
+của reward: thay vì reward có sẵn tự nhiên trong game hay môi trường mô
+phỏng, reward ở đây **được học** từ chính đánh giá của con người.
+
+## Bằng chứng cụ thể: InstructGPT và quy trình 3 bước
+
+RLHF không phải một cải tiến lý thuyết suông — **Ouyang và cộng sự
+(2022)**, trong bài báo "Training language models to follow instructions
+with human feedback" (giới thiệu **InstructGPT** của OpenAI), là minh
+chứng cụ thể cho hiệu quả của nó. Vấn đề họ chỉ ra: việc mở rộng quy mô
+mô hình (scaling — bài [Scaling Laws](25-scaling-laws.mdx)) **không tự
+động** khiến mô hình làm theo đúng ý định người dùng tốt hơn — mô hình
+lớn vẫn có thể sinh ra nội dung không trung thực, độc hại, hoặc đơn giản
+là không hữu ích, dù về mặt kỹ thuật "hoàn thành văn bản" rất trôi chảy.
+
+Quy trình InstructGPT gồm đúng 3 bước, khớp hoàn toàn với khung RLHF vừa
+mô tả ở trên:
+
+1. **Supervised Fine-Tuning (SFT):** fine-tune mô hình trên các cặp
+   (câu lệnh, câu trả lời mẫu) do con người viết — chính là instruction
+   tuning đã học ở bài [26](26-fine-tuning-instruction-tuning.mdx).
+2. **Huấn luyện reward model:** thu thập xếp hạng của con người trên
+   nhiều câu trả lời khác nhau, huấn luyện một reward model học cách
+   chấm điểm khớp với xu hướng đánh giá đó.
+3. **Tối ưu bằng RL:** dùng RL (PPO — xem bài
+   [PPO](47-ppo.mdx) để hiểu cơ chế cụ thể) để tiếp tục tinh chỉnh mô
+   hình sau bước SFT, tối đa hoá điểm số từ reward model.
+
+Kết quả cụ thể: một mô hình chỉ **1.3 tỷ tham số** đã qua đủ 3 bước trên
+được người đánh giá **ưa thích hơn** một mô hình GPT-3 gốc **175 tỷ tham
+số** (lớn hơn hơn 100 lần) chưa qua RLHF — đồng thời cải thiện tính
+trung thực và giảm nội dung độc hại, trong khi hiệu năng trên các bộ
+dữ liệu NLP công khai gần như không đổi. Kết quả này cho thấy: với cùng
+một kiến trúc nền tảng (Transformer đã học ở bài 15), việc dạy mô hình
+"hợp ý con người hơn" qua RLHF có thể quan trọng hơn nhiều so với việc
+tăng quy mô tham số thuần tuý — một điểm đối lập thú vị với bài
+[Scaling Laws](25-scaling-laws.mdx) (to hơn thường tốt hơn), cho thấy
+alignment là một trục cải thiện **độc lập** với quy mô, không thể thay
+thế bằng cách chỉ tăng kích thước mô hình.
+
+## Vì sao cách làm truyền thống phức tạp
+
+Huấn luyện RLHF theo đúng công thức RL đầy đủ (dùng thuật toán như PPO —
+một biến thể tinh vi hơn của policy gradient) đòi hỏi duy trì **nhiều mô
+hình cùng lúc** trong quá trình huấn luyện (policy đang tối ưu, một bản
+policy tham chiếu để so sánh, reward model, và một mô hình value ước
+lượng) — phức tạp, tốn nhiều compute, và huấn luyện RL nói chung dễ bất
+ổn định hơn supervised learning thuần tuý (đã gặp vấn đề tương tự ở tính
+biến thiên cao — high variance — của policy gradient tại bài 19).
+
+## DPO: đơn giản hoá RLHF bằng cách bỏ hẳn bước RL
+
+**DPO (Direct Preference Optimization)** là một cách tiếp cận mới hơn,
+đơn giản hoá đáng kể: thay vì huấn luyện reward model riêng rồi chạy RL,
+DPO chứng minh được rằng có thể **tối ưu trực tiếp** trên chính dữ liệu
+xếp hạng (câu trả lời được chọn vs câu trả lời bị loại cho cùng một câu
+hỏi) bằng một hàm loss dạng supervised learning thông thường — không cần
+huấn luyện policy bằng RL, không cần duy trì nhiều bản mô hình cùng lúc.
+Theo thực nghiệm được ghi nhận, DPO có thể đạt hiệu năng tương đương hoặc
+tốt hơn RLHF truyền thống (dùng PPO) với chi phí compute thấp hơn đáng kể
+và huấn luyện ổn định hơn — đây là lý do DPO trở thành lựa chọn phổ biến
+hơn trong thực hành gần đây, dù RLHF truyền thống vẫn có chỗ đứng khi cần
+độ linh hoạt cao hơn. Xem bài [DPO](79-dpo.mdx) để hiểu chính xác phép
+biến đổi toán học giúp loại bỏ được reward model riêng.
+
+## Alignment: mục tiêu chung của cả RLHF và DPO
+
+**Alignment** (căn chỉnh) là tên gọi chung cho mục tiêu của bước này:
+làm cho hành vi của mô hình **khớp** với giá trị và mong muốn của con
+người — không chỉ "đúng cú pháp hướng dẫn" (instruction tuning) mà còn
+"đúng tinh thần" (hữu ích, trung thực, an toàn, từ chối yêu cầu không phù
+hợp). Cả RLHF và DPO đều là kỹ thuật cụ thể để đạt alignment, khác nhau ở
+cách tối ưu (RL đầy đủ vs supervised trực tiếp trên dữ liệu preference),
+không khác nhau ở mục tiêu cuối cùng.
+
+## Liên hệ lại với các bài trước
+
+- Đây là ví dụ ứng dụng thực tế rõ ràng nhất trong toàn giáo trình cho
+  thấy vì sao cần học RL như một nhánh riêng (bài 16-19): reward model +
+  policy optimization ở đây dùng lại chính xác các khái niệm `state`,
+  `action`, `reward`, `policy` đã định nghĩa ở [MDP](17-markov-decision-process.mdx),
+  chỉ khác "environment" giờ là chính bài toán sinh văn bản, và "reward"
+  được học từ con người thay vì có sẵn.
+- DPO là một minh hoạ đẹp cho nguyên tắc đã lặp lại nhiều lần trong giáo
+  trình: một bài toán tưởng chừng cần thuật toán phức tạp (RL đầy đủ) đôi
+  khi có thể giải bằng công cụ đơn giản hơn (supervised learning) nếu tìm
+  đúng cách công thức hoá lại vấn đề — tương tự cách Ensemble Methods dùng
+  lại nguyên vẹn Decision Tree, hay Autoencoder tuyến tính hội tụ về PCA.
+
+## Nguồn tham khảo
+
+- [arXiv — Training language models to follow instructions with human feedback](https://arxiv.org/abs/2203.02155) — paper gốc InstructGPT của Ouyang và cộng sự (2022, OpenAI), dùng cho vấn đề cụ thể (mở rộng quy mô không tự động cải thiện việc làm theo ý định người dùng), quy trình 3 bước (Supervised Fine-Tuning → reward model → RL), và kết quả (mô hình 1.3B được ưa thích hơn GPT-3 175B, cải thiện tính trung thực/giảm độc hại).
+- [The Machine Learning Practitioner's Guide to Fine-Tuning Language Models (MachineLearningMastery)](https://machinelearningmastery.com/the-machine-learning-practitioners-guide-to-fine-tuning-language-models/) — dùng cho cơ chế RLHF truyền thống (nhiều mô hình cùng lúc: policy, reference, reward, value), và DPO như cách đơn giản hoá đạt hiệu năng tương đương/tốt hơn với ít compute hơn.
+- [CS229 Lecture Notes — Part XIII: Reinforcement Learning and Control (Andrew Ng)](https://cs229.stanford.edu/notes2020fall/notes2020fall/cs229-notes12.pdf) — nguồn nền tảng cho định nghĩa reward function `R(s,a)` và policy `π` đã dùng lại ở bài [MDP](17-markov-decision-process.mdx)/[Q-learning](18-q-learning.mdx)/[Policy Gradient](19-policy-gradient.mdx), áp dụng lại nguyên vẹn ở đây cho bài toán alignment.

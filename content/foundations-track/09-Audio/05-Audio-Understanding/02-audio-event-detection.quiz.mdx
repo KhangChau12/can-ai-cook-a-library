@@ -1,0 +1,33 @@
+---
+quiz_for: 02-audio-event-detection
+---
+
+## Q1
+Audio Event Detection (AED) khác ASR ở điểm gì?
+
+- [ ] AED dùng model khác
+- [x] AED nhận diện âm thanh môi trường (tiếng chó sủa, còi xe, mưa) thay vì giọng nói — và có thể multi-label (nhiều âm thanh cùng lúc)
+- [ ] AED không cần deep learning
+- [ ] AED dễ hơn ASR
+
+> ASR chỉ xử lý giọng nói, AED nhận diện mọi loại âm thanh môi trường. Một video đường phố có thể có nhiều âm thanh cùng lúc → multi-label classification.
+
+## Q2
+AudioSet là gì?
+
+- [ ] Một model pretrained cho AED
+- [ ] Một thư viện xử lý audio
+- [x] Dataset chuẩn cho AED: 632 lớp, 2.1M clips từ YouTube, multi-label
+- [ ] Một metric đánh giá AED
+
+> AudioSet (Google 2017) là dataset lớn nhất cho AED. 632 lớp sự kiện, 2.1M video clips từ YouTube, mỗi clip có thể có nhiều nhãn.
+
+## Q3
+PANNs khác YAMNet ở điểm gì?
+
+- [ ] PANNs không dùng mạng nơ-ron
+- [x] PANNs dùng CNN lớn hơn (ResNet-style, CNN14) + transfer learning — feature học từ AudioSet fine-tune sang tác vụ khác
+- [ ] PANNs nhanh hơn YAMNet
+- [ ] PANNs không cần pretrain
+
+> YAMNet dùng MobileNet nhẹ, chạy real-time. PANNs dùng CNN14/CNN10 (ResNet-style) mạnh hơn, có transfer learning — pretrain trên AudioSet rồi fine-tune.

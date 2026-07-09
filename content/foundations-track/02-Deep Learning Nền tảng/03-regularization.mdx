@@ -1,0 +1,131 @@
+---
+title: Regularization — Kiểm soát Overfitting khi Mạng nơ-ron ngày càng sâu
+track: foundations-track
+module: Deep Learning Nền tảng
+order: 3
+status: stable
+prerequisites: ["02-backpropagation"]
+summary: Weight decay (L2), dropout, và early stopping — ba kỹ thuật cụ thể để chống overfitting. Dropout có dòng tiến hoá ý tưởng rõ ràng: Bishop (1995) chứng minh thêm nhiễu vào input tương đương regularization, Srivastava và cộng sự (2014) mở rộng ý tưởng đó cho các lớp nội bộ của mạng, tạo ra dropout hiện đại.
+last_touched_by_task: Viết lại theo triết lý nội dung mới (2026-07-06): thêm dòng tiến hoá ý tưởng cho dropout — Bishop (1995, thêm nhiễu Gaussian vào input tương đương Tikhonov regularization) → Srivastava, Hinton, Krizhevsky, Sutskever, Salakhutdinov (2014, mở rộng ý tưởng noise-as-regularization sang các lớp nội bộ, không chỉ input) — trước đó bài chỉ mô tả cơ chế dropout mà không có gốc ý tưởng/tác giả nào. Xác nhận qua WebFetch trực tiếp D2L.ai (nguồn cũ của bài, đọc kỹ hơn phát hiện chi tiết chưa dùng).
+---
+
+Bài [Decision Tree](04-decision-tree.mdx) và
+[k-Nearest Neighbors](05-k-nearest-neighbors.mdx) đã nhắc tới overfitting
+(cây quá sâu, `k` quá nhỏ) và cách chống bằng cách giới hạn độ phức tạp mô
+hình (`max_depth`, chọn `k` hợp lý). Nhưng từ bài
+[Perceptron & MLP](08-perceptron-va-mang-no-ron.mdx) và
+[Backpropagation](09-backpropagation.mdx), chúng ta bước sang một họ mô
+hình có **số lượng tham số lớn hơn rất nhiều** — và các kiến trúc sắp học
+tiếp (CNN, RNN...) còn nhiều tham số hơn nữa. Bài này lấp đúng khoảng
+trống đó: ba kỹ thuật cụ thể để kiểm soát overfitting khi huấn luyện mạng
+nơ-ron.
+
+## Vì sao mạng nơ-ron đặc biệt dễ overfit
+
+Một mạng nơ-ron với hàng triệu tham số có đủ "sức chứa" (capacity) để ghi
+nhớ gần như nguyên văn toàn bộ tập train — kể cả nhiễu và những đặc điểm
+ngẫu nhiên không mang tính quy luật chung. Khi đó, loss trên tập train
+tiếp tục giảm, nhưng mô hình không còn học được quy luật tổng quát để áp
+dụng cho dữ liệu mới — đúng định nghĩa overfitting đã gặp ở Decision Tree,
+nhưng ở quy mô nghiêm trọng hơn nhiều vì số tham số lớn hơn rất nhiều bậc.
+
+## Weight decay (L2 regularization): phạt trọng số lớn
+
+Ý tưởng: cộng thêm vào hàm loss gốc một **hạng phạt** tỷ lệ với độ lớn
+(bình phương) của các trọng số:
+
+```
+Loss_mới = Loss_gốc + λ * sum(w_i^2)    -- tổng bình phương mọi trọng số w
+```
+
+`λ` (lambda) là một hyperparameter kiểm soát mức độ phạt: `λ` lớn buộc mô
+hình ưu tiên trọng số nhỏ hơn (mô hình "đơn giản" hơn), `λ = 0` quay lại
+đúng loss gốc (không phạt gì).
+
+Trực giác: trong toàn bộ hàm số có thể biểu diễn được, hàm đơn giản nhất
+là hàm luôn trả về 0 với mọi input (tương ứng mọi trọng số đều bằng 0).
+Phạt trọng số lớn nghĩa là ưu tiên các hàm số **gần với sự đơn giản đó**
+hơn, trừ khi dữ liệu thực sự cần trọng số lớn để khớp tốt — hạn chế mô
+hình "vẽ" ra những đường cong phức tạp bất thường chỉ để khớp đúng từng
+điểm nhiễu trong tập train. Về mặt cập nhật tham số qua gradient descent
+(bài [Linear Regression](02-linear-regression.mdx)), thêm hạng phạt này
+khiến mỗi bước cập nhật đều "co" trọng số về gần 0 một chút, trước khi áp
+dụng bước cập nhật thông thường từ gradient của loss gốc — đây là lý do
+kỹ thuật này còn được gọi là "weight decay" (suy giảm trọng số).
+
+## Dropout: ngẫu nhiên "tắt" một phần mạng khi train
+
+Ý tưởng dropout không xuất hiện đột ngột — nó có gốc từ một quan sát toán
+học sớm hơn: **Bishop (1995)** chứng minh rằng huấn luyện một mô hình
+tuyến tính với **nhiễu Gaussian được thêm vào input** có tác dụng tương
+đương về mặt toán học với một kỹ thuật regularization tiêu chuẩn (Tikhonov
+regularization) — nói cách khác, "làm nhiễu dữ liệu khi train" và "phạt
+độ phức tạp mô hình" là hai cách nhìn khác nhau của cùng một hiệu ứng.
+
+**Srivastava, Hinton, Krizhevsky, Sutskever, và Salakhutdinov (2014)** mở
+rộng ý tưởng đó theo một hướng thông minh: thay vì chỉ thêm nhiễu vào
+**input** (như Bishop), họ áp dụng nguyên tắc tương tự cho **các lớp nội
+bộ** của mạng nơ-ron nhiều lớp — đây chính là dropout hiện đại. Cơ chế cụ
+thể: ở mỗi bước train, với một xác suất `p` cho trước, **ngẫu nhiên tắt**
+(đặt về 0) một số đơn vị ở lớp ẩn — mỗi lần train một minibatch khác, một
+tập hợp đơn vị bị tắt khác nhau. Các đơn vị còn "sống" được nhân thêm hệ
+số `1/(1-p)` để giữ giá trị kỳ vọng không đổi.
+
+Trực giác: nếu một đơn vị lớp ẩn cụ thể có thể bị tắt bất kỳ lúc nào, mạng
+không thể "phụ thuộc quá mức" vào riêng một đơn vị hay một tổ hợp cố định
+các đơn vị để đưa ra dự đoán đúng — nó buộc phải học các biểu diễn **dư
+thừa** (nhiều đơn vị khác nhau cùng học được thông tin hữu ích tương tự),
+làm mạng ổn định và tổng quát hoá tốt hơn, tương tự tinh thần "đa dạng hoá"
+đã gặp ở bagging/Random Forest (bài
+[Ensemble Methods](20-ensemble-methods.mdx)) — dù cơ chế cụ thể khác hẳn.
+
+Điểm quan trọng cần nhớ: **dropout chỉ bật lúc train, luôn tắt lúc dự
+đoán/test** — khi dùng mô hình đã huấn luyện xong để dự đoán trên dữ liệu
+thật, mọi đơn vị đều hoạt động bình thường, không có gì bị tắt ngẫu nhiên
+nữa.
+
+## Early stopping: dừng đúng lúc dựa trên validation loss
+
+Kỹ thuật đơn giản nhất, không cần sửa gì trong kiến trúc mô hình hay hàm
+loss: trong lúc train, theo dõi loss trên một **validation set** riêng
+(tách khỏi train, xem bài
+[Baseline, Nâng cấp Mô hình & Chiến lược Nộp bài](../exam-track/03-baseline-nang-cap-mo-hinh-va-chien-luoc-nop-bai.mdx))
+sau mỗi epoch, song song với loss trên chính tập train.
+
+Hiện tượng thường gặp: loss trên tập train tiếp tục giảm đều theo mỗi
+epoch, nhưng loss trên validation set giảm một đoạn rồi bắt đầu **tăng
+trở lại** — đây chính xác là thời điểm mô hình bắt đầu overfit (học thuộc
+lòng nhiễu riêng của tập train thay vì quy luật chung). **Early stopping**
+đơn giản là: dừng huấn luyện tại (hoặc ngay sau) thời điểm validation loss
+chạm đáy, thay vì tiếp tục train cho tới khi train loss gần bằng 0.
+
+## Ba kỹ thuật, không loại trừ lẫn nhau
+
+Khác với việc phải chọn 1 trong nhiều lựa chọn, ba kỹ thuật trên thường
+được **dùng kết hợp** trong cùng một lần huấn luyện mạng nơ-ron thực tế:
+weight decay và dropout tác động trong lúc mạng đang học (thay đổi cách
+tính loss/forward pass), còn early stopping tác động ở quyết định "khi nào
+dừng" — không xung đột với hai kỹ thuật kia.
+
+## Liên hệ lại với các bài trước
+
+- Đây không phải khái niệm hoàn toàn mới — nó là phiên bản cụ thể hơn cho
+  mạng nơ-ron của chính vấn đề overfitting đã gặp ở
+  [Decision Tree](04-decision-tree.mdx) (`max_depth`, pruning) và
+  [k-NN](05-k-nearest-neighbors.mdx) (chọn `k`) — chỉ khác công cụ kiểm
+  soát độ phức tạp mô hình.
+- Weight decay áp dụng trực tiếp lên bước gradient descent đã học ở bài
+  [Linear Regression](02-linear-regression.mdx) và cách tính gradient qua
+  [Backpropagation](09-backpropagation.mdx) — không thay đổi cơ chế tối
+  ưu hoá, chỉ thay đổi hàm loss được tối ưu.
+- Từ bài tiếp theo ([CNN](11-convolutional-neural-network.mdx)) trở đi,
+  các kiến trúc mạng nơ-ron ngày càng có nhiều tham số hơn — ba kỹ thuật
+  học ở đây là công cụ nền tảng sẽ quay lại ngầm định trong thực hành huấn
+  luyện mọi kiến trúc sau này, dù không phải lúc nào cũng nhắc lại tường
+  minh.
+
+## Nguồn tham khảo
+
+- [Dive into Deep Learning — Weight Decay](http://d2l.ai/chapter_linear-regression/weight-decay.html) — dùng làm nguồn chính cho công thức L2 regularization (hạng phạt tỷ lệ bình phương trọng số), vai trò hyperparameter `λ`, và trực giác "hàm đơn giản nhất là hàm luôn trả 0".
+- [Dive into Deep Learning — Dropout](http://d2l.ai/chapter_multilayer-perceptrons/dropout.html) — dùng cho cơ chế dropout (tắt ngẫu nhiên đơn vị với xác suất `p`, hệ số chuẩn hoá `1/(1-p)`), khác biệt hành vi train/test, và bối cảnh lịch sử: Bishop (1995, nhiễu Gaussian vào input tương đương Tikhonov regularization) và Srivastava et al. (2014, mở rộng ý tưởng noise-as-regularization sang các lớp nội bộ).
+- [Dive into Deep Learning — Generalization in Deep Learning](http://d2l.ai/chapter_multilayer-perceptrons/generalization-deep-learning.html) — dùng cho lập luận vì sao mạng nơ-ron nhiều tham số đặc biệt dễ overfit, và early stopping dựa trên theo dõi validation loss.

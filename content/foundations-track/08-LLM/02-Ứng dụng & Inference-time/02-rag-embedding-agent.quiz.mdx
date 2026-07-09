@@ -1,0 +1,53 @@
+---
+quiz_for: 02-rag-embedding-agent
+---
+
+## Q1
+RAG (Retrieval-Augmented Generation) giải quyết giới hạn nào của LLM?
+
+- [x] LLM chỉ "biết" những gì có trong dữ liệu pretraining — không biết thông tin riêng tư/mới, và fine-tune lại toàn bộ mô hình mỗi khi có thông tin mới quá tốn kém
+- [ ] LLM không thể sinh ra văn bản dài hơn 100 từ
+- [ ] LLM không thể chạy trên GPU
+- [ ] LLM không hỗ trợ ngôn ngữ tiếng Việt
+
+> Kiến thức LLM bị "đóng băng" ở thời điểm pretraining — RAG cho phép "tra cứu" thông tin riêng/mới bằng cách bổ sung vào prompt trước khi sinh câu trả lời, thay vì phải huấn luyện lại.
+
+## Q2
+Trong quy trình RAG, bước "retrieve" (tra cứu) dựa vào cơ chế nào để tìm đoạn văn bản liên quan nhất?
+
+- [x] Embedding (vector số biểu diễn ý nghĩa ngữ nghĩa) + vector search tìm đoạn có embedding gần nhất với embedding của câu hỏi — chính là bài toán tìm hàng xóm gần nhất đã học ở k-NN
+- [ ] So khớp chính xác từng ký tự (string matching)
+- [ ] Chọn ngẫu nhiên một đoạn văn bản bất kỳ trong kho dữ liệu
+- [ ] Dùng gradient descent để tìm đoạn liên quan
+
+> Cả câu hỏi và các đoạn dữ liệu đều được chuyển thành embedding — vector database tìm các đoạn có embedding gần nhất, đúng bài toán "tìm hàng xóm gần nhất theo khoảng cách" đã học ở bài k-NN, chỉ khác không gian là không gian ngữ nghĩa.
+
+## Q3
+Giới hạn thực tế của vector search dựa trên độ tương đồng ngữ nghĩa là gì?
+
+- [x] Có thể "mờ" (lossy) với các sự thật/số liệu cụ thể — hai đoạn văn bản nói về 2 thực thể khác nhau nhưng cùng chủ đề có thể có embedding rất gần nhau, gây nhầm lẫn
+- [ ] Không thể tìm được bất kỳ đoạn văn bản nào liên quan
+- [ ] Chỉ hoạt động với dữ liệu tiếng Anh
+- [ ] Luôn trả về chính xác 100% thông tin mà không có sai sót
+
+> Vector search dựa trên độ tương đồng ngữ nghĩa (cùng chủ đề) có thể nhầm lẫn thông tin cụ thể (ví dụ 2 cầu thủ chơi cho 2 đội khác nhau) dù ngữ cảnh chung là đúng — đây là hạn chế cần biết khi thiết kế hệ thống RAG.
+
+## Q4
+Mẫu hình ReAct (Reasoning + Acting) trong LLM agent hoạt động theo vòng lặp nào?
+
+- [x] Suy luận (reasoning) → Hành động (gọi 1 tool cụ thể) → Quan sát kết quả (observing) → lặp lại cho tới khi hoàn thành nhiệm vụ
+- [ ] Chỉ gọi tool một lần duy nhất rồi dừng, không lặp lại
+- [ ] Huấn luyện lại toàn bộ mô hình sau mỗi lần gọi tool
+- [ ] Bỏ qua bước suy luận, chỉ hành động ngẫu nhiên
+
+> Agent dùng LLM làm bộ máy suy luận trung tâm để quyết định cần làm gì tiếp theo, dùng tool nào, và diễn giải kết quả trả về — vòng lặp reasoning-acting-observing lặp lại cho tới khi hoàn thành nhiệm vụ, có cấu trúc tương tự vòng lặp agent-environment đã học ở RL Framework.
+
+## Q5
+Lewis và cộng sự (2020) mô tả vấn đề gì của LLM mà RAG giải quyết?
+
+- [x] LLM lưu kiến thức dưới dạng tham số hoá (nén vào trọng số qua pretraining), nhưng khả năng truy cập chính xác/thao tác kiến thức đó cho tác vụ đòi hỏi kiến thức sâu vẫn bị hạn chế
+- [ ] LLM không thể lưu bất kỳ kiến thức nào
+- [ ] LLM chỉ hoạt động được với văn bản tiếng Anh
+- [ ] Vấn đề duy nhất là tốc độ suy luận (inference) quá chậm
+
+> Paper gốc "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks" (NeurIPS 2020) chỉ ra: mô hình "nhớ mang máng" nhờ tham số hoá nhưng khó trích xuất đúng chi tiết — giải pháp là kết hợp thêm bộ nhớ phi tham số hoá (chỉ mục vector) để tra cứu trực tiếp, đạt SOTA trên hỏi-đáp miền mở.

@@ -1,0 +1,43 @@
+---
+quiz_for: 02-word2vec
+---
+
+## Q1
+Vấn đề cụ thể của one-hot vector khi biểu diễn từ là gì?
+
+- [x] Cosine similarity giữa hai one-hot vector bất kỳ luôn bằng 0 — one-hot không hề phản ánh mức độ liên quan ngữ nghĩa giữa các từ, dù chúng gần nghĩa (như "vua"/"nữ hoàng") hay không liên quan gì
+- [ ] One-hot vector không thể lưu trữ được trong máy tính
+- [ ] One-hot vector chỉ hoạt động với tiếng Anh
+- [ ] One-hot vector yêu cầu phải có nhãn thủ công mới tạo được
+
+> One-hot coi mọi từ là hoàn toàn độc lập, "cách đều nhau" tuyệt đối trong không gian vector — vector của "vua" và "nữ hoàng" có độ tương tự (cosine similarity = 0) y hệt như vector của "vua" và "cái ghế".
+
+## Q2
+Word2vec giải quyết vấn đề đó bằng cách nào?
+
+- [x] Học vector số dày (dense vector) cho mỗi từ từ chính văn bản không nhãn — các từ xuất hiện trong ngữ cảnh tương tự sẽ có vector gần nhau, qua 2 kiến trúc self-supervised Skip-gram và CBOW
+- [ ] Tăng kích thước one-hot vector lên gấp đôi
+- [ ] Gán thủ công độ tương tự ngữ nghĩa cho từng cặp từ trong từ điển
+- [ ] Dịch mọi từ sang một ngôn ngữ trung gian trước khi biểu diễn
+
+> Đây là học self-supervised — không cần nhãn thủ công, vì chính vị trí các từ đứng cạnh nhau trong văn bản đã cung cấp đủ tín hiệu huấn luyện.
+
+## Q3
+Skip-gram và CBOW khác nhau như thế nào?
+
+- [x] Skip-gram: cho từ trung tâm, đoán các từ ngữ cảnh xung quanh. CBOW: cho các từ ngữ cảnh xung quanh (lấy trung bình), đoán từ trung tâm — hai hướng dự đoán đối xứng ngược nhau
+- [ ] Skip-gram dùng cho tiếng Anh, CBOW dùng cho các ngôn ngữ khác
+- [ ] Skip-gram là kiến trúc CNN, CBOW là kiến trúc RNN
+- [ ] Skip-gram và CBOW là hai tên gọi khác nhau của cùng một kiến trúc
+
+> Cả hai đều dùng softmax để tính xác suất, chỉ khác chiều dự đoán: Skip-gram là "1 từ → nhiều từ ngữ cảnh", CBOW là "nhiều từ ngữ cảnh → 1 từ trung tâm".
+
+## Q4
+Vì sao word embedding tĩnh của word2vec (mỗi từ đúng 1 vector) khác với contextual embedding của BERT/Transformer?
+
+- [x] Word2vec gán CÙNG MỘT vector cho một từ bất kể ngữ cảnh câu (ví dụ "bank" trong "river bank" và "bank account" có cùng vector) — trong khi BERT/Transformer tính vector khác nhau tuỳ câu cụ thể, qua self-attention
+- [ ] Word2vec không thể huấn luyện được bằng gradient descent, còn BERT thì có thể
+- [ ] Word2vec chỉ hoạt động với câu ngắn, BERT hoạt động với câu dài
+- [ ] Không có sự khác biệt nào — word2vec và BERT dùng chung một cơ chế embedding
+
+> Đây chính là hạn chế lịch sử quan trọng mà contextual embedding (BERT, Transformer) giải quyết sau này — word2vec là bước đệm quan trọng nhưng vector của nó không thay đổi theo ngữ cảnh câu.

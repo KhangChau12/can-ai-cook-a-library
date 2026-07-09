@@ -1,0 +1,108 @@
+---
+title: Bidirectional RNN/LSTM/GRU — Dùng Cả Ngữ cảnh Tương lai, Không Chỉ Quá khứ
+track: foundations-track
+module: Sequence Model
+submodule: RNN Family
+order: 3
+status: stable
+prerequisites: ["02-lstm-gru"]
+summary: RNN/LSTM/GRU (đã học) chỉ xử lý chuỗi theo một chiều — mỗi bước chỉ 'biết' những gì đã xảy ra TRƯỚC nó, không biết gì về những gì sẽ tới SAU. Với nhiều tác vụ (gán nhãn từ loại, điền từ khuyết trong câu), ngữ cảnh phía sau cũng quan trọng không kém ngữ cảnh phía trước. 'Bidirectional' không phải một kiến trúc cell mới mà là một CÁCH BỌC tổng quát áp dụng được cho cả ba (Bidirectional RNN, Bidirectional LSTM, Bidirectional GRU đều tồn tại) — chạy hai mạng độc lập theo hai chiều ngược nhau trên cùng một chuỗi, rồi ghép (concatenate) hidden state của cả hai lại. Đổi lại: không dùng được cho các tác vụ cần dự đoán ngay lập tức (real-time) hay sinh văn bản tuần tự, vì cần biết trước toàn bộ chuỗi trước khi xử lý.
+last_touched_by_task: Bài mới (2026-07-06), theo yêu cầu người vận hành đào sâu thêm sub-module 'RNN Family' (nhận xét: RNN/LSTM/GRU 'vẫn còn nhiều điều để nói, về bidirection, các cải tiến và nhiều thứ khác') — đây là bài đầu tiên đào sâu theo hướng đó. Người vận hành xác nhận thêm ngay sau khi bài được viết: 'bi là 1 ý tưởng có thể dùng chung cho gru, lstm, rnn hết' — đã sửa lại toàn bộ bài để nhấn mạnh đây là kỹ thuật WRAPPER tổng quát cho mọi loại cell hồi quy (không riêng RNN), thay vì đóng khung hẹp chỉ nói về RNN như bản nháp đầu. Nguồn: D2L.ai (chapter_recurrent-modern/bi-rnn.html, xác nhận qua WebFetch: vấn đề cụ thể ngữ cảnh tương lai qua ví dụ điền từ khuyết 'I am ___', kiến trúc 2 mạng độc lập chạy ngược chiều rồi ghép hidden state, và lưu ý quan trọng về chi phí huấn luyện + KHÔNG dùng được cho autoregressive language modeling). Không thuộc dạng 'dòng tiến hoá nhiều model' (là 1 kỹ thuật mở rộng kiến trúc áp dụng chung, không phải model kế nhiệm giải quyết hạn chế lịch sử của model trước) nên 1 nguồn là đủ theo mục 2.5. Đã thử tìm nguồn thứ 2 (cs231n) — xác nhận KHÔNG có nội dung bidirectional RNN.
+---
+
+Bài [RNN](12-recurrent-neural-network.mdx) và [LSTM/GRU](13-lstm-gru.mdx)
+xử lý chuỗi theo đúng một chiều — từ đầu tới cuối. Bài này kể cách một
+kỹ thuật đơn giản mở rộng cả ba kiến trúc đó để tận dụng thêm một nguồn
+thông tin mà cách xử lý một chiều bỏ lỡ hoàn toàn.
+
+Điểm quan trọng cần làm rõ ngay từ đầu: **"bidirectional" không phải một
+kiến trúc recurrent mới** — nó là một **cách bọc** (wrapper) áp dụng được
+cho **bất kỳ** loại cell hồi quy nào đã học. Có Bidirectional RNN,
+Bidirectional LSTM, và Bidirectional GRU — cả ba đều dùng đúng một
+nguyên lý được mô tả dưới đây, chỉ khác loại cell cụ thể chạy bên trong
+mỗi chiều (RNN cell, LSTM cell, hay GRU cell). Vì nguyên lý là chung, bài
+này dùng "RNN" làm tên gọi ngắn gọn, nhưng mọi điều nói ở đây áp dụng
+y hệt nếu thay bằng LSTM hay GRU.
+
+## Vấn đề: RNN một chiều chỉ "biết" quá khứ, không biết gì về tương lai
+
+Hidden state của RNN/LSTM/GRU tại bước `t` chỉ được tính từ input tại
+bước `t` và hidden state của bước `t-1` — nghĩa là nó chỉ tổng hợp được
+thông tin từ các bước **trước đó** trong chuỗi, hoàn toàn không có cách
+nào "nhìn thấy" các bước **sau** nó.
+
+Với nhiều tác vụ, điều này là một hạn chế thực sự. Ví dụ minh hoạ: để
+điền đúng từ còn thiếu trong câu "Tôi đang ___", câu trả lời hợp lý khác
+hẳn nhau tuỳ theo phần **tiếp theo** của câu — "Tôi đang ___ vì tôi
+mệt" (có thể là "nghỉ ngơi") khác hẳn "Tôi đang ___ và tôi có thể ăn cả
+nửa con lợn" (có thể là "đói"). Nếu mô hình chỉ xử lý một chiều (chỉ thấy
+"Tôi đang" mà chưa thấy phần sau), nó không có đủ thông tin để chọn đúng
+từ. Các tác vụ khác cũng cần cùng loại thông tin hai chiều: gán nhãn từ
+loại (part-of-speech tagging — từ loại một từ đôi khi phụ thuộc cả từ
+đứng trước lẫn đứng sau nó).
+
+## Giải pháp: chạy hai mạng độc lập theo hai chiều ngược nhau
+
+**Bidirectional** giải quyết vấn đề này bằng một ý tưởng đơn giản và
+**tổng quát cho mọi loại cell**: chạy **hai** mạng hồi quy hoàn toàn độc
+lập trên cùng một chuỗi input, nhưng theo hai chiều ngược nhau — hai
+mạng này có thể là hai RNN cell (Bidirectional RNN), hai LSTM cell
+(Bidirectional LSTM), hoặc hai GRU cell (Bidirectional GRU), tuỳ vào cell
+nào đã dùng cho bài toán:
+
+- **Mạng xuôi (forward):** xử lý chuỗi từ đầu tới cuối như bình thường,
+  sinh ra hidden state xuôi `H_t→` tại mỗi bước — tổng hợp thông tin từ
+  các bước **trước** bước `t`.
+- **Mạng ngược (backward):** xử lý **cùng** chuỗi đó nhưng theo chiều
+  **ngược lại** — từ cuối về đầu, sinh ra hidden state ngược `H_t←` tại
+  mỗi bước — tổng hợp thông tin từ các bước **sau** bước `t`.
+
+Tại mỗi bước thời gian, hai hidden state này được **ghép nối**
+(concatenate) lại thành một vector duy nhất, gấp đôi kích thước so với
+hidden state của một mạng một chiều thông thường — vector kết hợp này
+giờ mang thông tin từ **cả hai phía** của bước `t`, dùng làm input cho
+lớp output phía sau. Vì cơ chế ghép nối này không phụ thuộc vào chi tiết
+bên trong của cell (RNN/LSTM/GRU đều chỉ là "hộp đen" nhận input + hidden
+state trước, trả về hidden state mới), kỹ thuật bidirectional áp dụng
+được y hệt cho cả ba, không cần điều chỉnh gì thêm.
+
+## Đánh đổi: không dùng được cho dự đoán thời gian thực hoặc sinh văn bản tuần tự
+
+Bidirectional RNN có hai giới hạn cụ thể quan trọng cần lưu ý:
+
+1. **Chi phí huấn luyện cao hơn** — vì gradient phải lan truyền qua cả
+   hai chuỗi lan truyền ngược (backpropagation through time) theo cả hai
+   chiều, tốn thời gian và bộ nhớ nhiều hơn đáng kể so với RNN một chiều.
+2. **Không thể dùng cho các tác vụ cần dự đoán ngay lập tức hoặc sinh
+   tuần tự.** Để tính được hidden state ngược tại bước `t`, mô hình cần
+   biết **toàn bộ** phần chuỗi phía sau bước đó — điều này hoàn toàn
+   **không khả thi** với các tác vụ như dự đoán thời gian thực (chưa có
+   dữ liệu tương lai để xử lý) hay next-token prediction kiểu GPT (đã học
+   ở bài [Pretraining](24-pretraining-llm.mdx) — về bản chất, việc dự
+   đoán token tiếp theo đòi hỏi mô hình **không được phép** nhìn thấy
+   phần chuỗi phía sau, ngược hẳn với mục đích của bidirectional RNN).
+
+Vì vậy, bidirectional RNN phù hợp nhất cho các tác vụ **encoding** (mã
+hoá toàn bộ chuỗi đã có sẵn để phục vụ một dự đoán, ví dụ gán nhãn từ
+loại, nhận dạng thực thể) — không phù hợp cho các tác vụ **sinh tuần
+tự** nơi tương lai chưa tồn tại tại thời điểm dự đoán.
+
+## Liên hệ lại với các bài trước
+
+- Đây chính là bản tiền thân đơn giản hơn nhiều cho ý tưởng "ngữ cảnh hai
+  chiều" mà [BERT](45-bert.mdx) sau này áp dụng ở quy mô lớn hơn nhiều —
+  chỉ khác công cụ: bidirectional RNN dùng hai RNN chạy ngược chiều nhau,
+  còn BERT dùng self-attention của Transformer encoder (không có causal
+  mask) để đạt ngữ cảnh hai chiều mà không cần hai mạng riêng biệt.
+- Giới hạn "không dùng được cho sinh tuần tự" của bidirectional RNN chính
+  là lý do sâu xa khiến [GPT](24-pretraining-llm.mdx) phải dùng **causal
+  mask** (chỉ nhìn về quá khứ) thay vì attention hai chiều đầy đủ — cùng
+  một đánh đổi cơ bản (ngữ cảnh hai chiều >< khả năng sinh tuần tự) xuất
+  hiện lặp lại ở cả hai công cụ khác nhau (RNN và Transformer).
+- Vẫn huấn luyện bằng [backpropagation](09-backpropagation.mdx) (cụ thể
+  là BPTT đã học ở bài RNN) — bidirectional chỉ thay đổi **kiến trúc**
+  (chạy 2 mạng thay vì 1), không thay đổi cơ chế tối ưu hoá nền tảng.
+
+## Nguồn tham khảo
+
+- [Dive into Deep Learning — Bidirectional Recurrent Neural Networks](http://d2l.ai/chapter_recurrent-modern/bi-rnn.html) — dùng cho vấn đề cụ thể (ngữ cảnh tương lai quan trọng cho một số tác vụ, minh hoạ qua ví dụ điền từ khuyết), kiến trúc (2 RNN độc lập chạy ngược chiều, ghép nối hidden state), và lưu ý quan trọng (chi phí huấn luyện cao, không phù hợp cho dự đoán thời gian thực hay autoregressive language modeling).

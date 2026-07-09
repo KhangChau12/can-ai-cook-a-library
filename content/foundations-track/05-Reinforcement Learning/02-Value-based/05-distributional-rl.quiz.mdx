@@ -1,0 +1,53 @@
+---
+quiz_for: 05-distributional-rl
+---
+
+## Q1
+Distributional RL khác Q-learning truyền thống ở điểm gì?
+
+- [ ] Distributional RL dùng mạng nơ-ron sâu hơn
+- [ ] Distributional RL học policy trực tiếp thay vì Q-function
+- [x] Distributional RL học toàn bộ phân phối xác suất của return Z(s,a) thay vì chỉ kỳ vọng E[Z] = Q(s,a)
+- [ ] Distributional RL không dùng Bellman equation
+
+> Q-learning học scalar Q(s,a) = E[return | s,a] — bỏ qua thông tin về phân phối. Distributional RL học phân phối Z(s,a), giữ lại toàn bộ thông tin về variance, skewness, multimodality của return.
+
+## Q2
+C51 tham số hoá phân phối Z(s,a) như thế nào?
+
+- [ ] Dùng phân phối Gaussian với mean và variance
+- [ ] Dùng phân phối Poisson
+- [x] Dùng categorical distribution với 51 atoms cố định, mỗi atom có xác suất học được (softmax)
+- [ ] Dùng 51 quantile có xác suất bằng nhau
+
+> C51 cố định 51 giá trị atoms cách đều trong [Vmin, Vmax], mạng học 51 xác suất tương ứng (softmax). Khi cập nhật, target phân phối được chiếu lên lưới atom cố định trước khi tính KL divergence.
+
+## Q3
+QR-DQN cải thiện C51 ở điểm nào?
+
+- [ ] QR-DQN dùng 100 atoms thay vì 51
+- [x] QR-DQN không cần chọn [Vmin, Vmax] thủ công — quantile tự điều chỉnh theo dữ liệu, tối ưu Wasserstein distance
+- [ ] QR-DQN nhanh hơn gấp đôi
+- [ ] QR-DQN dùng được cho continuous action
+
+> C51 cần chọn khoảng [Vmin, Vmax] — nếu chọn sai, mất thông tin. QR-DQN đổi trục: cố định xác suất (quantile fractions), học giá trị quantile. Không cần biết trước khoảng giá trị, quantile tự điều chỉnh.
+
+## Q4
+IQN khác QR-DQN ở điểm cốt lõi nào?
+
+- [ ] IQN dùng nhiều quantile hơn
+- [ ] IQN không dùng neural network
+- [x] IQN cho phép sample bất kỳ quantile nào từ U([0,1]) thay vì cố định N quantile — có continuous quantile function và risk-sensitive policy
+- [ ] IQN dùng CNN thay vì MLP
+
+> QR-DQN cố định N quantile fractions (ví dụ 32 fractions cách đều). IQN sample τ ~ U([0,1]) và dùng embedding network φ(τ) để biến τ thành feature → continuous quantile function. Cho phép distort phân phối để ưu tiên safe/risky actions.
+
+## Q5
+Distributional RL cho phép điều gì mà Q-learning không làm được?
+
+- [ ] Học policy từ demonstrations
+- [ ] Dùng được cho môi trường 3D
+- [x] Chọn action theo khẩu vị rủi ro — chọn action có VaR (Value at Risk) cao nhất thay vì kỳ vọng, hoặc distort phân phối để ưu tiên safe/risky actions
+- [ ] Học nhanh hơn gấp 10 lần
+
+> Vì biết toàn bộ phân phối, ta có thể chọn action dựa trên các metric khác ngoài kỳ vọng: VaR (an toàn), CVaR (cực kỳ an toàn), right-tail (mạo hiểm). IQN hỗ trợ trực tiếp risk-sensitive policy qua quantile distortion.

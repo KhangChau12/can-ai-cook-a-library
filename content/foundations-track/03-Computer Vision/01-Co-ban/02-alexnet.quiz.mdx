@@ -1,0 +1,43 @@
+---
+quiz_for: 02-alexnet
+---
+
+## Q1
+Trước năm 2012, các đội thi ILSVRC hàng đầu chủ yếu dùng phương pháp nào?
+
+- [ ] CNN sâu tương tự AlexNet nhưng huấn luyện trên CPU
+- [x] Trích xuất đặc trưng thủ công (hand-crafted features) kết hợp mô hình classification cổ điển
+- [ ] LeNet nguyên bản mở rộng quy mô lớn hơn
+- [ ] Transformer áp dụng cho ảnh
+
+> Trước 2012, computer vision quy mô lớn chủ yếu dựa vào đặc trưng thiết kế thủ công (như SIFT, HOG) đưa vào các mô hình cổ điển — đội á quân 2011 đạt tỷ lệ lỗi top-5 khoảng 26% bằng cách này. AlexNet là công trình đầu tiên phổ biến rộng rãi việc thay thế cách tiếp cận đó bằng CNN.
+
+## Q2
+Điểm khác biệt cốt lõi giữa AlexNet và LeNet là gì?
+
+- [ ] AlexNet dùng một nguyên lý hoàn toàn khác convolution
+- [x] AlexNet vẫn dùng đúng nguyên lý convolution của LeNet, nhưng sâu hơn và thêm ReLU + dropout để huấn luyện khả thi ở quy mô lớn
+- [ ] AlexNet bỏ hoàn toàn các lớp fully-connected mà LeNet có
+- [ ] AlexNet không cần dữ liệu huấn luyện lớn như LeNet
+
+> AlexNet không phát minh lại convolution — nó chứng minh nguyên lý LeNet đã đúng vẫn mở rộng được lên quy mô lớn (ImageNet), nhờ kiến trúc sâu hơn (8 lớp) và hai cải tiến kỹ thuật: ReLU và dropout.
+
+## Q3
+Vì sao AlexNet dùng ReLU thay vì sigmoid như LeNet?
+
+- [x] Sigmoid có đạo hàm rất nhỏ ở hai đầu (bão hoà), gây vanishing gradient nghiêm trọng hơn khi mạng sâu hơn nhiều so với LeNet
+- [ ] ReLU giúp giảm số tham số của mạng
+- [ ] Sigmoid không thể dùng cho bài toán phân loại nhiều lớp
+- [ ] ReLU chỉ hoạt động được với ảnh màu, sigmoid chỉ hoạt động với ảnh xám
+
+> Sigmoid bão hoà ở hai đầu khiến gradient gần như bằng 0 khi lan truyền qua nhiều lớp — với mạng sâu gấp nhiều lần LeNet, đây là vấn đề nghiêm trọng. ReLU có đạo hàm bằng 1 với input dương, giúp gradient lan truyền ổn định hơn.
+
+## Q4
+Theo bài học rút ra từ câu chuyện LeNet → AlexNet, một ý tưởng đúng có thể "nằm im" lâu vì lý do gì?
+
+- [x] Điều kiện xung quanh (dữ liệu quy mô lớn, phần cứng, kỹ thuật huấn luyện bổ trợ) chưa đủ chín muồi, không phải vì bản thân ý tưởng sai
+- [ ] Ý tưởng đó thực ra sai và chỉ đúng ngẫu nhiên sau này
+- [ ] Chỉ cần đổi tên gọi là ý tưởng sẽ được chấp nhận
+- [ ] Không có bài học nào rút ra được từ trường hợp này
+
+> Convolution đã đúng từ thời LeNet (1998) — nhưng phải chờ tới khi ImageNet (dữ liệu) và GPU (phần cứng) sẵn sàng, cùng với ReLU/dropout giải quyết đúng 2 vấn đề kỹ thuật phát sinh khi mạng sâu hơn, ý tưởng đó mới thực sự bùng nổ vào 2012.

@@ -1,0 +1,43 @@
+---
+quiz_for: 01-diffusion-models
+---
+
+## Q1
+Vấn đề cụ thể của GAN/DCGAN mà Diffusion Model giải quyết là gì?
+
+- [x] Huấn luyện đối kháng 2 mạng thường bất ổn định (dao động, khó hội tụ) và dễ mode collapse (generator chỉ học tạo ra 1 số ít kiểu dữ liệu thay vì đa dạng)
+- [ ] GAN không thể sinh ra ảnh có độ phân giải cao hơn 64x64
+- [ ] GAN chỉ hoạt động được với dữ liệu văn bản, không hoạt động với ảnh
+- [ ] GAN không có discriminator, chỉ có generator
+
+> Đây là 2 vấn đề thực tế nổi tiếng của GAN — huấn luyện đối kháng giữa 2 mạng dễ dao động không hội tụ, và generator có thể "học lười" chỉ tạo vài kiểu dữ liệu thay vì bao trùm toàn bộ phân phối thật.
+
+## Q2
+Diffusion Model giải quyết vấn đề đó bằng cách nào?
+
+- [x] Bỏ hẳn cơ chế đối kháng, thay bằng quy trình cố định 2 chiều: forward process thêm nhiễu Gaussian dần (không cần học), reverse process học cách khử nhiễu dần để tái tạo dữ liệu
+- [ ] Dùng 3 mạng nơ-ron thay vì 2 để tăng độ ổn định
+- [ ] Loại bỏ hoàn toàn nhu cầu dùng mạng nơ-ron, chỉ dùng công thức toán học thuần tuý
+- [ ] Huấn luyện generator và discriminator đồng thời nhưng với learning rate khác nhau
+
+> Chỉ có reverse process cần huấn luyện (một mạng, một mục tiêu rõ ràng: dự đoán nhiễu đã thêm) — forward process là quy trình toán học cố định, biết trước công thức, không cần học.
+
+## Q3
+Cải tiến "reparameterization" quan trọng trong Diffusion Model là gì?
+
+- [x] Thay vì dự đoán trực tiếp ảnh đã khử nhiễu, mạng được huấn luyện để dự đoán chính lượng nhiễu (ε) đã được thêm vào ở mỗi bước — giúp đơn giản hoá việc huấn luyện
+- [ ] Thay đổi kiến trúc mạng từ CNN sang RNN
+- [ ] Loại bỏ hoàn toàn khái niệm nhiễu Gaussian, dùng nhiễu đều thay thế
+- [ ] Tăng số bước T lên vô hạn để đạt chất lượng tốt nhất
+
+> Dự đoán lượng nhiễu ε thay vì giá trị ảnh trực tiếp cho phép dùng một hàm loss rút gọn, đơn giản hơn nhưng thực nghiệm cho kết quả tốt hơn công thức lý thuyết đầy đủ.
+
+## Q4
+Đánh đổi cụ thể của Diffusion Model so với GAN là gì?
+
+- [x] Sinh một mẫu dữ liệu mới chậm hơn nhiều vì phải lặp qua nhiều bước khử nhiễu (T có thể hàng trăm/nghìn bước), trong khi GAN chỉ cần 1 lần forward pass qua generator
+- [ ] Diffusion Model không thể đạt chất lượng ảnh tốt như GAN
+- [ ] Diffusion Model cần nhiều dữ liệu huấn luyện hơn GAN hàng nghìn lần
+- [ ] Diffusion Model không thể huấn luyện bằng backpropagation
+
+> Đây chính là cái giá phải trả để đổi lấy sự ổn định huấn luyện và tránh mode collapse — nghiên cứu sau này tập trung nhiều vào rút ngắn số bước cần thiết mà không mất chất lượng.

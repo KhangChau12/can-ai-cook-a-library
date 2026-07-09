@@ -1,0 +1,63 @@
+---
+quiz_for: 01-image-segmentation
+---
+
+## Q1
+Image segmentation khác object detection ở mức độ chi tiết nào?
+
+- [x] Segmentation gán nhãn cho TỪNG PIXEL, trong khi object detection chỉ dùng bounding box (khung chữ nhật thô, bao gồm cả phần nền không thuộc vật thể)
+- [ ] Segmentation không dùng CNN, object detection có dùng CNN
+- [ ] Segmentation chỉ hoạt động với ảnh xám, object detection chỉ hoạt động với ảnh màu
+- [ ] Cả hai hoàn toàn giống nhau, chỉ khác tên gọi
+
+> Bounding box luôn là hình chữ nhật thô, có thể bao gồm phần nền không thuộc vật thể (ví dụ mèo cong người); segmentation gán nhãn chính xác tới từng pixel, biết rõ ranh giới thật của vật thể.
+
+## Q2
+Semantic segmentation có phân biệt được 2 vật thể cùng lớp (ví dụ 2 con mèo trong cùng 1 ảnh) không?
+
+- [x] Không — semantic segmentation chỉ gán nhãn lớp "mèo" cho mọi pixel thuộc mèo, không phân biệt đây là mèo thứ nhất hay thứ hai
+- [ ] Có, đây chính là định nghĩa của semantic segmentation
+- [ ] Semantic segmentation không thể xử lý ảnh có nhiều hơn 1 vật thể
+- [ ] Chỉ phân biệt được nếu 2 con mèo có màu lông khác nhau
+
+> Đây chính là điểm phân biệt semantic segmentation với instance segmentation — semantic segmentation chỉ trả lời "pixel này thuộc lớp gì", không trả lời "pixel này thuộc cá thể nào".
+
+## Q3
+Instance segmentation kết hợp những khả năng nào?
+
+- [x] Vừa gán nhãn lớp ở mức pixel (như semantic segmentation), vừa phân biệt từng cá thể riêng lẻ cùng lớp (như đếm/định vị ở object detection)
+- [ ] Chỉ gán nhãn lớp cho cả ảnh, giống classification
+- [ ] Chỉ vẽ bounding box, không cần thông tin pixel
+- [ ] Không liên quan gì tới object detection hay semantic segmentation
+
+> Instance segmentation là bài toán khó hơn semantic segmentation, kết hợp tinh thần định vị/đếm vật thể của object detection với độ chi tiết pixel của semantic segmentation — biết chính xác pixel nào thuộc "mèo #1" khác với "mèo #2".
+
+## Q4
+Vì sao dữ liệu huấn luyện cho segmentation tốn công gán nhãn hơn nhiều so với classification hay object detection?
+
+- [x] Vì cần nhãn ở mức TỪNG PIXEL trong ảnh, trong khi classification chỉ cần 1 nhãn/ảnh và object detection chỉ cần vẽ khung chữ nhật thô
+- [ ] Vì segmentation cần nhiều ảnh train hơn 100 lần so với classification
+- [ ] Vì segmentation không thể dùng chung dataset với object detection
+- [ ] Vì mỗi ảnh segmentation phải được chụp bằng camera đặc biệt
+
+> Đây là lý do dữ liệu segmentation chất lượng cao thường khan hiếm hơn, và các bộ dữ liệu chuẩn cho segmentation thường có quy mô nhỏ hơn nhiều so với bộ dữ liệu classification thông thường.
+
+## Q5
+FCN (Fully Convolutional Network) giải quyết vấn đề gì của CNN classification thuần?
+
+- [x] Lớp fully-connected của CNN classification "làm phẳng" đặc trưng thành 1 vector, phá vỡ tương ứng không gian pixel — FCN thay bằng 1x1 convolution + transposed convolution để giữ và khôi phục tương ứng đó
+- [ ] CNN classification không dùng được backpropagation, FCN thì có
+- [ ] FCN loại bỏ hoàn toàn nhu cầu dùng CNN
+- [ ] FCN chỉ hoạt động với ảnh có 1 lớp duy nhất
+
+> CNN classification kết thúc bằng fully-connected layer để ra 1 nhãn cho cả ảnh — thông tin vị trí pixel bị phá vỡ. FCN (Long, Shelhamer, Darrell, 2015) thay lớp đó bằng 1x1 convolution (đổi số kênh thành số lớp) và transposed convolution (upsample về đúng kích thước ảnh gốc), khôi phục tương ứng một-một mức pixel.
+
+## Q6
+U-Net bổ sung gì cho FCN để giải quyết vấn đề dữ liệu y tế khan hiếm nhãn?
+
+- [x] Kiến trúc encoder-decoder đối xứng + skip connection nối trực tiếp các lớp tương ứng, mang thông tin chi tiết không gian từ encoder thẳng sang decoder
+- [ ] U-Net bỏ hoàn toàn ý tưởng convolution của FCN
+- [ ] U-Net chỉ hoạt động khi có hàng triệu ảnh train
+- [ ] U-Net thay CNN bằng RNN để xử lý ảnh
+
+> Ronneberger, Fischer, và Brox (2015) đề xuất U-Net với skip connection nối encoder-decoder — giữ thông tin chi tiết không gian mà FCN thuần dễ mất qua các lớp pooling, giúp huấn luyện hiệu quả từ rất ít ảnh có nhãn (quan trọng cho dữ liệu y tế, nơi gán nhãn cần chuyên gia).

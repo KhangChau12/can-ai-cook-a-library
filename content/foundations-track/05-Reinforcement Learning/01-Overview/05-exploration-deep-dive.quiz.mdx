@@ -1,0 +1,53 @@
+---
+quiz_for: 05-exploration-deep-dive
+---
+
+## Q1
+Tại sao ε-greedy thất bại trong môi trường sparse reward như Montezuma's Revenge?
+
+- [ ] Vì ε-greedy chỉ dùng được cho bandit, không dùng được cho RL
+- [ ] Vì ε quá nhỏ nên agent không bao giờ exploration
+- [x] Vì xác suất tình cờ làm đúng 1000+ bước liên tục là ~ε¹⁰⁰⁰ ≈ 0 — agent không bao giờ gặp reward để học
+- [ ] Vì ε-greedy không dùng được với mạng nơ-ron
+
+> Sparse reward là môi trường mà reward chỉ xuất hiện sau rất nhiều bước đúng liên tiếp. Với ε-greedy, agent phải "tình cờ" làm đúng để gặp reward — xác suất giảm theo cấp số nhân với độ dài quỹ đạo. Kết quả: agent không bao giờ gặp reward → không học được gì.
+
+## Q2
+Công thức UCB (Upper Confidence Bound) có dạng `a_t = argmax_a [Q(a) + c · √(ln t / N(a))]`. Thành phần `c · √(ln t / N(a))` có tác dụng gì?
+
+- [ ] Làm cho Q(a) hội tụ nhanh hơn
+- [x] Là bonus exploration — lớn khi action a ít được thử (N(a) nhỏ), giảm dần khi đã thử nhiều
+- [ ] Là penalty cho action quá thường xuyên được chọn
+- [ ] Là weighted average giữa Q và phần thưởng tức thời
+
+> Bonus exploration UCB tự động cân bằng: action chưa thử/nhỏ N(a) có bonus lớn → được ưu tiên chọn; action đã thử nhiều và biết là kém có bonus nhỏ → không được chọn. UCB tất định, không có random.
+
+## Q3
+Vấn đề "noisy TV problem" của ICM là gì?
+
+- [ ] ICM chỉ hoạt động với đầu vào là TV signal
+- [x] Nếu môi trường có nguồn nhiễu ngẫu nhiên, forward model không bao giờ dự đoán đúng → intrinsic reward luôn cao → agent bị mắc kẹt ở nguồn nhiễu
+- [ ] ICM không dùng được với GPU
+- [ ] ICM bị nhiễu do camera rung
+
+> ICM dùng prediction error của forward model làm intrinsic reward. Nếu có nguồn nhiễu ngẫu nhiên (TV kênh trắng), forward model không thể dự đoán state tiếp theo → prediction error luôn cao → intrinsic reward luôn cao → agent bị "mê hoặc" bởi nguồn nhiễu.
+
+## Q4
+RND giải quyết noisy TV problem bằng cách nào?
+
+- [ ] Dùng nhiều mạng nơ-ron hơn ICM
+- [ ] Bỏ intrinsic reward khi có nhiễu
+- [x] Dùng target network cố định — dự đoán feature của observation hiện tại thay vì dự đoán state tương lai — nên không bị ảnh hưởng bởi động lực học ngẫu nhiên
+- [ ] Dùng LSTM để nhớ các state đã thấy
+
+> RND thay đổi nguồn "sự mới lạ": thay vì dự đoán state tương lai (phụ thuộc vào động lực học ngẫu nhiên), RND dự đoán đầu ra của một target network cố định trên observation hiện tại. Mỗi observation cụ thể có một target cố định → predictor có thể học được → sai số giảm → không bị mắc kẹt.
+
+## Q5
+Phương pháp exploration nào dùng Bayesian (duy trì phân phối xác suất thay vì ước lượng điểm duy nhất)?
+
+- [ ] UCB
+- [ ] ICM
+- [x] Thompson sampling
+- [ ] RND
+
+> Thompson sampling duy trì phân phối xác suất trên Q(a) (ví dụ Beta distribution), sample từ phân phối đó, và chọn action có sample cao nhất. Khác với UCB (tất định, dùng bonus công thức), Thompson sampling stochastic và tự nhiên cân bằng exploration/exploitation qua variance của phân phối.

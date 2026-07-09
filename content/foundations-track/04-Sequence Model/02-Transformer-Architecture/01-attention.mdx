@@ -1,0 +1,110 @@
+---
+title: Attention — Cơ chế học cách 'chú ý' có chọn lọc
+track: foundations-track
+module: Sequence Model
+submodule: Transformer Architecture
+order: 1
+status: stable
+prerequisites: ["05-seq2seq"]
+summary: Bahdanau và cộng sự (2015) giải quyết vấn đề cụ thể của seq2seq cổ điển (quên phần đầu câu dài vì nén hết vào 1 vector ngữ cảnh cố định) bằng attention — cho phép decoder 'nhìn lại' toàn bộ encoder tại mỗi bước, hình thức hoá sau này qua framework Query/Key/Value.
+last_touched_by_task: Viết lại theo triết lý nội dung mới (2026-07-06): thêm lịch sử ý tưởng cụ thể (Bahdanau, Cho, Bengio 2015, paper 'Neural Machine Translation by Jointly Learning to Align and Translate', bối cảnh cụ thể là encoder-decoder seq2seq cho dịch máy chứ không phải RNN/LSTM tổng quát) — trước đó bài chỉ có ví dụ minh hoạ chung 'dịch câu tiếng Việt sang tiếng Anh', không có tên/năm/paper gốc cụ thể. Thêm nguồn thứ 2 (Lil'Log 'Attention? Attention!'). Cập nhật lại (2026-07-06, cùng task viết bài 73 Seq2seq): đổi prerequisites từ 13-lstm-gru sang 73-seq2seq-encoder-decoder vì seq2seq/encoder-decoder giờ được dạy như 1 bài riêng thay vì chỉ nhắc trong bối cảnh của bài này — sửa 2 đoạn mở đầu để liên hệ trực tiếp thay vì giải thích lại kiến trúc seq2seq từ đầu.
+---
+
+Bài [Seq2seq (Encoder-Decoder)](73-seq2seq-encoder-decoder.mdx) giải quyết
+bài toán ánh xạ chuỗi-sang-chuỗi độ dài khác nhau, nhưng để lại một giới
+hạn cấu trúc chưa xử lý: toàn bộ thông tin của câu nguồn — dù dài hay
+ngắn — đều phải được nén vào **một** vector ngữ cảnh cố định (hidden state
+cuối của encoder), trước khi decoder dùng nó để sinh toàn bộ câu đích. Với
+chuỗi rất dài, việc nén toàn bộ ngữ cảnh vào một vector cố định là một
+**bottleneck** (nút thắt cổ chai). **Attention** (cơ chế chú ý) giải quyết
+bottleneck này bằng một ý tưởng khác hẳn.
+
+## Bối cảnh cụ thể: vấn đề "quên đầu câu" của seq2seq
+
+**Bahdanau, Cho, và Bengio (2015)**, trong bài báo "Neural Machine
+Translation by Jointly Learning to Align and Translate", chỉ ra vấn đề
+cụ thể của kiến trúc seq2seq (encoder-decoder) phổ biến cho dịch máy đầu
+những năm 2010: nén toàn bộ câu nguồn (có thể rất dài) vào một vector cố
+định duy nhất khiến mô hình "thường xuyên quên phần đầu câu" khi đã xử lý
+xong toàn bộ câu — đúng đặc điểm bottleneck mà LSTM/GRU (dùng làm cell hồi
+quy bên trong encoder/decoder) chỉ giảm nhẹ chứ không loại bỏ hoàn toàn.
+
+Hình dung cụ thể hơn: dịch một câu tiếng Việt dài sang tiếng Anh — toàn
+bộ câu nguồn phải được "đọc" xong và nén vào đúng một hidden state cuối
+cùng, rồi từ đúng vector đó, mô hình phải sinh ra toàn bộ câu đích. Từ
+đầu câu dịch có thể cần thông tin ở đầu câu gốc, từ cuối câu dịch có thể
+cần thông tin ở cuối câu gốc, nhưng cả hai đều phải "chen chúc" trong
+cùng một vector cố định — càng dài câu, vấn đề càng nghiêm trọng.
+
+## Ý tưởng attention: đừng nén hết, hãy "nhìn lại" khi cần
+
+Giải pháp của Bahdanau và cộng sự: thay vì decoder chỉ dùng một hidden
+state cuối cùng của encoder, tạo thêm một **kết nối tắt** giữa decoder
+và **toàn bộ** chuỗi hidden state của encoder (không chỉ hidden state
+cuối). Tại **mỗi bước** sinh ra từ tiếp theo, decoder tự tính toán xem
+nên "chú ý" (tập trung) vào phần nào của câu nguồn — nhìn lại toàn bộ
+input gốc, không chỉ dựa vào một vector nén sẵn. Mức độ chú ý vào từng
+phần khác nhau tuỳ theo bước hiện tại đang cần dịch từ nào.
+
+## Framework Query / Key / Value
+
+Cơ chế attention nguyên bản của Bahdanau et al. dùng một mạng feed-forward
+nhỏ để tính điểm "căn chỉnh" (alignment score) giữa trạng thái decoder và
+từng trạng thái encoder. Cách hình thức hoá phổ biến hiện nay tổng quát
+hoá ý tưởng đó qua ba thành phần:
+
+- **Query (truy vấn):** đại diện cho "mình đang cần tìm thông tin gì" tại
+  bước hiện tại.
+- **Key (khoá):** đại diện cho "mỗi phần của input có đặc điểm gì" — dùng
+  để so khớp với query.
+- **Value (giá trị):** thông tin thực sự sẽ được lấy ra, ứng với mỗi vị
+  trí trong input.
+
+Quy trình tính attention:
+
+1. **Tính điểm tương thích** giữa query và từng key (scoring function) —
+   cách phổ biến là tích vô hướng (dot product) giữa hai vector, đo mức
+   độ "khớp" giữa cái đang cần tìm và đặc điểm của từng vị trí.
+2. **Chuẩn hoá bằng softmax** — đưa các điểm số vừa tính về dạng một phân
+   phối xác suất (tổng bằng 1, mọi giá trị không âm) — đây là **attention
+   weight** (trọng số chú ý) cho từng vị trí.
+3. **Tổng hợp có trọng số** — nhân mỗi value với attention weight tương
+   ứng rồi cộng lại, cho ra output cuối cùng: một tổ hợp có trọng số của
+   toàn bộ value, "nghiêng" nhiều về những vị trí có attention weight cao.
+
+Điểm mấu chốt: **attention weight không cố định** — nó được tính lại tại
+mỗi bước, tuỳ theo query hiện tại là gì. Một bước có thể "chú ý" mạnh vào
+đầu chuỗi input, bước khác có thể chú ý vào giữa hoặc cuối — hoàn toàn
+linh hoạt, không bị ép vào một cách nén duy nhất như hidden state cố định
+của RNN/LSTM.
+
+## Vì sao đây là một bước tiến so với gating
+
+Cơ chế gate ở LSTM/GRU (đã học ở bài trước) cũng là một dạng "trọng số
+kiểm soát luồng thông tin" — nhưng gate hoạt động **cục bộ theo thời
+gian** (chỉ so sánh trạng thái hiện tại với trạng thái ngay trước đó).
+Attention tổng quát hoá ý tưởng này: trọng số được tính so với **toàn bộ**
+chuỗi input cùng lúc, không giới hạn ở bước liền kề — mô hình có thể "nhảy
+cóc" chú ý trực tiếp tới một vị trí ở rất xa nếu query cho thấy nó liên
+quan, mà không phải truyền thông tin tuần tự qua từng bước ở giữa.
+
+## Liên hệ lại với các bài trước
+
+- Attention giải quyết bottleneck bằng cách bỏ hẳn yêu cầu "nén mọi thứ
+  vào một vector cố định" — khác hẳn hướng tiếp cận của LSTM/GRU (cải
+  thiện khả năng giữ thông tin trong cùng một hidden state, nhưng vẫn giữ
+  cấu trúc một vector cố định).
+- Về mặt toán học, attention vẫn được huấn luyện bằng
+  [backpropagation](09-backpropagation.mdx) như mọi thành phần khác trong
+  mạng nơ-ron — softmax và phép nhân trong công thức attention đều khả vi
+  (differentiable), nên gradient vẫn lan truyền ngược bình thường qua toàn
+  bộ cơ chế này.
+- Bài tiếp theo (Transformer) sẽ dùng chính framework Query/Key/Value này
+  làm thành phần xây dựng cốt lõi, không cần thêm khái niệm attention nào
+  mới — chỉ là cách áp dụng ở quy mô lớn hơn và kết hợp thêm vài kỹ thuật
+  khác.
+
+## Nguồn tham khảo
+
+- [Dive into Deep Learning — Attention Scoring Functions](http://d2l.ai/chapter_attention-mechanisms-and-transformers/attention-scoring-functions.html) — dùng cho framework Query/Key/Value, quy trình tính attention weight (scoring function + softmax), và lý do cơ chế này cho phép mô hình linh hoạt tập trung vào các phần khác nhau của input thay vì nén cố định.
+- [Lil'Log — Attention? Attention!](https://lilianweng.github.io/posts/2018-06-24-attention/) — dùng cho bối cảnh lịch sử cụ thể: Bahdanau, Cho, và Bengio (2015) đề xuất attention trong bài báo "Neural Machine Translation by Jointly Learning to Align and Translate" để giải quyết vấn đề seq2seq cổ điển quên phần đầu câu dài, và cơ chế nguyên bản dùng mạng feed-forward tính điểm căn chỉnh (alignment score) giữa decoder và từng trạng thái encoder.

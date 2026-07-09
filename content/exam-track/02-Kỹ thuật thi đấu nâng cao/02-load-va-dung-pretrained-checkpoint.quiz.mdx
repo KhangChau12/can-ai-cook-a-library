@@ -1,0 +1,43 @@
+---
+quiz_for: 02-load-va-dung-pretrained-checkpoint
+---
+
+## Q1
+Checkpoint khác với việc chỉ lưu kiến trúc model ở điểm nào?
+
+- [x] Checkpoint lưu giá trị cụ thể của mọi tham số đã học được, không chỉ mô tả cấu trúc model có bao nhiêu layer/unit
+- [ ] Checkpoint chỉ dùng được cho model chưa từng huấn luyện
+- [ ] Checkpoint không thể dùng để tiếp tục huấn luyện, chỉ dùng để dự đoán
+- [ ] Kiến trúc và checkpoint luôn là một, không có sự khác biệt
+
+> Kiến trúc mô tả cấu trúc (số layer, số unit), còn checkpoint lưu giá trị trọng số cụ thể — hai model cùng kiến trúc nhưng load checkpoint khác nhau sẽ cho kết quả dự đoán khác nhau.
+
+## Q2
+Vì sao nên lưu checkpoint dựa trên điểm validation tốt nhất, thay vì chỉ lưu checkpoint sau epoch cuối cùng?
+
+- [x] Vì train loss thường tiếp tục giảm dù validation score đã đạt đỉnh và bắt đầu đi ngang/tệ đi — dấu hiệu overfit nếu train quá lâu
+- [ ] Vì checkpoint epoch cuối luôn có dung lượng file lớn hơn
+- [ ] Vì hệ thống chỉ cho phép lưu đúng một checkpoint mỗi lần train
+- [ ] Vì checkpoint epoch cuối không tương thích với việc load lại
+
+> Nếu chỉ lưu checkpoint cuối, bạn có thể đang giữ lại một model đã overfit, dù có một checkpoint ở epoch sớm hơn tổng quát hoá tốt hơn nhiều.
+
+## Q3
+Trong lúc thi đấu, notebook của bạn bị crash giữa quá trình huấn luyện một mạng nơ-ron mất nhiều giờ. Việc gì lẽ ra nên chuẩn bị trước để không mất trắng thời gian đã train?
+
+- [x] Bật chế độ lưu checkpoint định kỳ (mỗi epoch hoặc mỗi N phút) trong lúc huấn luyện
+- [ ] Tăng số epoch huấn luyện lên để có nhiều dữ liệu train hơn
+- [ ] Giảm learning rate xuống mức thấp nhất có thể
+- [ ] Không cần chuẩn bị gì, vì hệ thống luôn tự phục hồi sau crash
+
+> Lưu checkpoint định kỳ cho phép tiếp tục train từ checkpoint gần nhất thay vì phải train lại từ đầu sau sự cố — nên bật ngay từ đầu, không đợi tới lúc gặp sự cố.
+
+## Q4
+Bạn load một checkpoint pretrain từ nguồn bên ngoài nhưng kết quả rất kém dù checkpoint được báo cáo là hoạt động tốt. Nguyên nhân có khả năng cao nhất là gì?
+
+- [x] Tiền xử lý dữ liệu đầu vào (ví dụ cách chuẩn hoá ảnh) không khớp với cách checkpoint đó được huấn luyện ban đầu
+- [ ] Checkpoint luôn hoạt động kém khi dùng cho bài toán khác bài toán gốc
+- [ ] File checkpoint đã hết hạn sử dụng sau một thời gian
+- [ ] Checkpoint chỉ hoạt động đúng trên đúng phần cứng đã dùng để train
+
+> Model nhận đầu vào đã qua tiền xử lý "trông khác" so với những gì nó được huấn luyện để hiểu — đây là lỗi phổ biến khi load checkpoint pretrain mà không kiểm tra khớp tiền xử lý gốc.

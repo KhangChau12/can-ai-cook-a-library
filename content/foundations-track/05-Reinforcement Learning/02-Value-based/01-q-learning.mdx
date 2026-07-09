@@ -1,0 +1,196 @@
+---
+title: Q-learning — Học Q-function tối ưu qua thử-sai
+track: foundations-track
+module: Reinforcement Learning
+submodule: Value-based
+order: 1
+status: stable
+prerequisites: ["02-markov-decision-process"]
+summary: Phương trình Bellman biểu diễn đệ quy giá trị tối ưu, Q-learning ước lượng dần Q-function tối ưu qua trải nghiệm thực tế — và giới hạn cụ thể (bảng Q không scale được khi state space lớn/liên tục) dẫn tới DQN (Mnih et al., 2013→2015): dùng CNN xấp xỉ Q-function, chơi Atari trực tiếp từ pixel thô, với 2 kỹ thuật ổn định cốt lõi experience replay và target network.
+last_touched_by_task: Cải thiện Task 96 (2026-07-07): bổ sung phần 'Hai kỹ thuật ổn định DQN' — bản DQN 2013 trước đó chỉ nói 'dùng CNN xấp xỉ Q' mà bỏ qua vì sao huấn luyện không ổn định và 2 kỹ thuật cốt lõi của bản DQN 2015 Nature (experience replay phá tương quan thời gian, target network giải moving target), hàm loss MSE dạng gần supervised — khoảng trống lớn nhất agent chỉ ra. Nguồn: WebSearch whitelist (arxiv/d2l.ai/lilianweng) xác nhận DQN 2015 Nature human-level control 29/49 game. Giữ nguyên phần Q-table/Bellman/TD error/epsilon-greedy cũ (đã đúng).
+---
+
+Bài [MDP](17-markov-decision-process.mdx) định nghĩa `Q^π(s, a)` — giá trị
+kỳ vọng khi thực hiện action `a` tại state `s` rồi tuân theo policy `π`
+sau đó. **Q-learning** là thuật toán cụ thể để **học** ra Q-function tối
+ưu `Q*` chỉ từ trải nghiệm thực tế (thử action, quan sát reward và state
+tiếp theo), mà không cần biết trước xác suất chuyển trạng thái `T(s,a,s')`
+của environment.
+
+## Phương trình Bellman: giá trị tối ưu có thể viết đệ quy
+
+Ý tưởng cốt lõi: giá trị tối ưu của việc ở state `s`, thực hiện action `a`,
+bằng đúng **reward ngay lập tức** cộng với **giá trị tối ưu chiết khấu**
+của state tiếp theo (giả sử từ đó trở đi luôn hành động tối ưu):
+
+```
+Q*(s, a) = R(s, a) + γ * max_{a'} Q*(s', a')
+```
+
+Đây gọi là **phương trình Bellman** — nó biểu diễn Q-function tối ưu dưới
+dạng **đệ quy**: giá trị tối ưu của bước hiện tại phụ thuộc vào giá trị
+tối ưu (giả định) của bước tiếp theo. Nếu biết chính xác `Q*` cho mọi
+cặp `(s, a)`, phương trình này luôn đúng — Q-learning tận dụng chính tính
+chất này để **dần dần ước lượng** ra `Q*`.
+
+## Công thức cập nhật Q-learning
+
+Q-learning duy trì một bảng ước lượng `Q(s, a)` (khởi tạo tuỳ ý, thường là
+0), và sau mỗi lần agent thực hiện action `a` tại state `s`, quan sát được
+reward `r` và state tiếp theo `s'`, cập nhật ước lượng theo:
+
+```
+Q(s, a) := Q(s, a) + α * ( r + γ * max_{a'} Q(s', a') - Q(s, a) )
+```
+
+Trong đó `α` (alpha) là **learning rate** — giống hệt vai trò của nó ở
+gradient descent (bài [Linear Regression](02-linear-regression.mdx), nơi
+ký hiệu là `η`): kiểm soát mỗi lần cập nhật thay đổi ước lượng bao nhiêu.
+Tài liệu RL theo quy ước dùng `α` cho learning rate thay vì `η` — cùng
+một vai trò, chỉ khác ký hiệu quen dùng trong từng nhánh tài liệu.
+
+Phần trong ngoặc, `r + γ*max_{a'}Q(s',a') - Q(s,a)`, gọi là **TD error**
+(temporal difference error — sai số chênh lệch thời gian): chênh lệch
+giữa "ước lượng mới, dựa trên trải nghiệm vừa quan sát được" và "ước lượng
+cũ đang có". Nếu TD error dương, ước lượng cũ đang **thấp** hơn thực tế —
+cập nhật sẽ tăng `Q(s,a)` lên; nếu âm, cập nhật sẽ giảm xuống. Qua rất
+nhiều lần lặp (thử nhiều action ở nhiều state), ước lượng `Q(s,a)` dần hội
+tụ về đúng `Q*(s,a)`.
+
+## Vì sao không cần biết trước T(s,a,s')
+
+Điểm đặc biệt của Q-learning: công thức cập nhật chỉ cần **một lần trải
+nghiệm thực tế** `(s, a, r, s')` — không cần biết trước xác suất chuyển
+trạng thái `T` của environment (điều mà trong thực tế thường không biết
+trước, ví dụ không ai biết trước chính xác xác suất một nước cờ dẫn tới
+kết quả nào). Đây gọi là một thuật toán **model-free** (không cần mô hình
+hoá trước environment) — agent chỉ cần tương tác và quan sát, không cần
+hiểu cơ chế nội tại của environment.
+
+## Chọn action lúc học: đừng chỉ dùng action tốt nhất hiện tại
+
+Trong lúc học, nếu agent luôn chọn action có `Q(s,a)` ước lượng cao nhất
+tại mỗi state (thuần exploitation), nó có thể mắc kẹt ở một action "tưởng
+là tốt nhất" chỉ vì thử ít, trong khi một action khác thực sự tốt hơn
+chưa từng được thử đủ nhiều lần để có ước lượng chính xác. Thực hành phổ
+biến là chiến lược **epsilon-greedy**: phần lớn thời gian chọn action có
+`Q` ước lượng cao nhất (exploitation), nhưng với một xác suất nhỏ `ε`
+(epsilon), chọn ngẫu nhiên một action bất kỳ (exploration) — đúng đánh đổi
+exploration/exploitation đã nhắc ở bài
+[RL Framework](16-reinforcement-learning-framework.mdx).
+
+## Giới hạn của Q-table: không scale được cho state space lớn
+
+Cách trình bày ở trên ngầm giả định `Q(s, a)` được lưu dưới dạng một
+**bảng** (Q-table) — một hàng cho mỗi state, một cột cho mỗi action, mỗi
+ô là một con số. Cách này hoạt động tốt khi số lượng state hữu hạn và
+không quá lớn (ví dụ vài trăm ô trên bàn cờ), nhưng hoàn toàn **không khả
+thi** khi state space lớn hoặc liên tục — ví dụ nếu state là ảnh màn hình
+của một trò chơi điện tử (hàng triệu tổ hợp giá trị pixel có thể xảy ra),
+không thể tạo một bảng đủ lớn để lưu hết mọi state, và hầu hết state sẽ
+chỉ được quan sát đúng 1 lần (không đủ dữ liệu để ước lượng chính xác).
+
+**Mnih và cộng sự (2013)**, trong bài báo "Playing Atari with Deep
+Reinforcement Learning", giải quyết đúng giới hạn này bằng **DQN** (Deep
+Q-Network): thay vì lưu `Q(s, a)` dưới dạng bảng, dùng một **mạng nơ-ron
+tích chập** (CNN, xem lại bài [CNN](11-convolutional-neural-network.mdx))
+để **xấp xỉ** hàm `Q(s, a)` — nhận trực tiếp pixel thô của màn hình game
+làm input, học cách dự đoán giá trị Q cho từng action khả thi. Vì mạng
+nơ-ron có thể tổng quát hoá từ các state đã thấy sang các state tương tự
+chưa từng gặp (khác hẳn bảng, nơi mỗi state hoàn toàn tách biệt), DQN xử
+lý được state space khổng lồ mà Q-table không thể. Kết quả: DQN vượt qua
+tất cả phương pháp trước đó trên 6 game Atari đã thử nghiệm, và vượt qua
+trình độ con người trên 3 trong số đó — chỉ học từ pixel thô, không cần
+bất kỳ đặc trưng thiết kế thủ công nào cho từng game cụ thể.
+
+Điểm mấu chốt: DQN không thay đổi nguyên lý cốt lõi của Q-learning (vẫn
+là phương trình Bellman, vẫn là TD error để cập nhật) — nó chỉ thay
+**cách biểu diễn** Q-function từ bảng tra cứu rời rạc sang một hàm xấp xỉ
+liên tục học được, đúng mẫu hình "ý tưởng cũ + công cụ mới giải quyết
+giới hạn về quy mô" đã gặp nhiều lần trong giáo trình (ví dụ AlexNet mở
+rộng quy mô nguyên lý CNN của LeNet).
+
+## Hai kỹ thuật ổn định DQN: experience replay và target network
+
+Bản DQN 2013 kể trên hoạt động, nhưng huấn luyện **rất không ổn định** —
+mạng nơ-ron sâu xấp xỉ Q-function dễ divergent (Q-value bùng nổ lên vô
+hạn, policy sụp đổ). Nguyên nhân cốt lõi có 2 vấn đề cụ thể, và **bản
+DQN hoàn chỉnh** — Mnih và cộng sự (2015), bài báo "Human-level control
+through deep reinforcement learning" đăng trên tạp chí *Nature* — giải
+quyết mỗi vấn đề bằng một kỹ thuật riêng:
+
+**Vấn đề 1: tương quan thời gian giữa các mẫu liên tiếp.** Khi agent
+tương tác liên tục, các transition `(s, a, r, s')` quan sát được sát nhau
+theo thời gian rất tương quan — chúng gần như cùng một tình huống, chỉ
+sai khác vài khung hình. Nếu huấn luyện mạng nơ-ron lần lượt trên từng
+mẫu theo thứ tự thời gian, gradient cập nhật liên tục "đẩy" theo cùng
+một hướng, gây dao động mạnh thay vì hội tụ (giống như chỉ học một loại
+ví dụ rồi chuyển sang loại khác, không trộn lẫn).
+
+**Giải pháp — experience replay:** agent lưu mọi transition vào một
+**bộ đệm trải nghiệm** (replay buffer) `D`; thay vì cập nhật trên mẫu vừa
+quan sát, ta **lấy mẫu ngẫu nhiên** một mini-batch từ `D`. Việc trộn ngẫu
+nhiên phá vỡ tương quan thời gian — các mẫu trong cùng 1 mini-batch giờ
+đến từ nhiều thời điểm khác nhau, gần độc lập với nhau (gần thoả mãn giả
+định i.i.d. mà stochastic gradient descent cần). Thêm nữa, mỗi trải
+nghiệm có thể được dùng nhiều lần (sample efficiency cao hơn), thay vì
+dùng đúng 1 lần rồi vứt.
+
+**Vấn đề 2: "đuổi mục tiêu di động" (moving target).** Trong công thức
+cập nhật Q-learning, TD target là `r + γ·max_{a'} Q(s', a')`. Khi Q-function
+là mạng nơ-ron có tham số `θ`, mỗi lần cập nhật `θ` thay đổi, **chính
+target cũng thay đổi theo** — ta đang đuổi một mục tiêu vừa chạy vừa nhảy.
+Sự tương phản với supervised learning là rõ ràng: ở Linear Regression
+(bài [02](02-linear-regression.mdx)) nhãn `y` cố định, chỉ dự đoán `ŷ`
+thay đổi; ở đây cả target lẫn dự đoán đều lệ thuộc vào cùng `θ`, tạo
+vòng phản hồi khiến Q-value dễ tự khuếch đại và bùng nổ.
+
+**Giải pháp — target network:** duy trì **một bản sao riêng** của mạng
+Q, gọi là target network, có tham số `θ⁻` — dùng riêng để **tính TD
+target**, không cập nhật bằng gradient. Mỗi `C` bước (ví dụ 10.000),
+`θ⁻` được gán bằng `θ` hiện tại (copy trọng số, không phải gradient
+descent). Giữa 2 lần copy, target `r + γ·max_{a'} Q(s', a'; θ⁻)` **cố
+định** trong một khoảng thời gian đủ dài, nên mạng chính `θ` đuổi theo
+một mục tiêu đứng yên — ổn định hơn nhiều. Hàm loss lúc này trở thành
+dạng gần supervised regression:
+
+```
+L(θ) = E[ ( r + γ * max_{a'} Q(s', a'; θ⁻) - Q(s, a; θ) )² ]
+```
+
+Đúng dạng mean-squared error quen thuộc (với TD error đóng vai trò
+residual), khác biệt duy nhất là "nhãn" (target) **không cố định vĩnh
+viễn** mà cập nhật từng `C` bước — đây là lý do DQN được coi là "Q-learning
+gần như supervised" về mặt huấn luyện.
+
+Với 2 kỹ thuật này, bản DQN 2015 *Nature* đạt trình độ **ngang con người
+trên 29/49 game Atari** (cùng kiến trúc, cùng hyperparameter cho mọi
+game — không tinh chỉnh riêng) — một bước ngoặt chứng minh deep RL có
+thể hoạt động tổng quát, không chỉ trên vài game được chọn. Hai kỹ thuật
+này sau này trở thành **thành phần tiêu chuẩn** của gần như mọi biến thể
+DQN: bài [Double/Dueling DQN](71-double-dueling-dqn.mdx) thêm sửa lỗi
+overestimation và tách Value/Advantage, nhưng vẫn giữ nguyên replay
+buffer + target network; các biến thể sau như [Prioritized Experience
+Replay](82-prioritized-experience-replay.mdx) (bài 82) chỉ đổi *cách lấy
+mẫu* từ uniform sang ưu tiên theo TD error, không bỏ replay buffer. Cuối
+cùng, [Rainbow DQN](83-rainbow-dqn.mdx) (bài 83) tổng hợp 6 cải tiến độc
+lập (Double/Dueling/PER/multi-step/C51/Noisy Nets) thành một agent duy
+nhất — hoàn thiện dòng tiến hoá Value-based.
+
+## Liên hệ lại với các bài trước
+
+- TD error trong Q-learning đóng vai trò tương tự **gradient của loss**
+  trong các mô hình trước — đều là tín hiệu "sai bao nhiêu, theo hướng
+  nào" dùng để cập nhật tham số/ước lượng. Khác biệt: gradient descent
+  cập nhật dựa trên nhãn đúng có sẵn, còn Q-learning cập nhật dựa trên
+  reward quan sát được qua tương tác.
+- Q-learning là ví dụ cụ thể đầu tiên cho thấy "học" trong RL nghĩa là gì
+  theo đúng định nghĩa toán học ở bài MDP: dần ước lượng ra Q-function tối
+  ưu, từ đó suy ra policy tối ưu (tại mỗi state, chọn action có `Q*` cao
+  nhất).
+
+## Nguồn tham khảo
+
+- [CS229 Lecture Notes — Part XIII: Reinforcement Learning and Control (Andrew Ng)](https://cs229.stanford.edu/notes2020fall/notes2020fall/cs229-notes12.pdf) — dùng cho phương trình Bellman biểu diễn Q-function tối ưu dạng đệ quy, và công thức cập nhật Q-learning dựa trên TD error.
+- [arXiv — Playing Atari with Deep Reinforcement Learning](https://arxiv.org/abs/1312.5602) — paper gốc DQN của Mnih và cộng sự (2013), dùng cho vấn đề cụ thể (Q-table không scale được cho input cảm biến chiều cao như pixel màn hình), giải pháp (CNN xấp xỉ Q-function, huấn luyện bằng biến thể Q-learning), và kết quả (vượt các phương pháp trước đó trên 6 game Atari, vượt con người trên 3 game).
+- [arXiv — Human-level control through deep reinforcement learning (Mnih et al., 2015, Nature)](https://arxiv.org/abs/1312.5602) — bản DQN hoàn chỉnh đăng Nature, dùng cho 2 kỹ thuật ổn định cốt lõi (experience replay phá tương quan thời gian giữa các mẫu liên tiếp, target network giải bài toán "đuổi mục tiêu di động" khi cả target lẫn dự đoán cùng phụ thuộc θ) và kết quả đạt ngang con người trên 29/49 game Atari với cùng kiến trúc/hyperparameter.

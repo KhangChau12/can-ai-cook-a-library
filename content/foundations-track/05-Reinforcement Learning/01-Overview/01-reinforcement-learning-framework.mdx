@@ -1,0 +1,120 @@
+---
+title: Reinforcement Learning — Framework Agent/Environment/Reward
+track: foundations-track
+module: Reinforcement Learning
+order: 1
+status: stable
+prerequisites: []
+summary: Nhánh học máy thứ ba, khác hẳn supervised và unsupervised: agent học qua thử-sai bằng tín hiệu reward, không có nhãn đúng-sai có sẵn. Giới thiệu từ vựng cơ bản: agent, environment, state, action, reward, policy, episode.
+last_touched_by_task: Rà lại theo triết lý nội dung mới (2026-07-06, task 13): đọc kỹ, xác nhận bài đã đạt chuẩn (giải thích rõ vì sao RL khác 2 nhánh kia, exploration/exploitation, không 'vỏ rỗng') — đây là bài giới thiệu framework/khái niệm nền tảng, không có tiền thân cạnh tranh trực tiếp nên không thuộc dạng 'dòng tiến hoá nhiều model' theo mục 2.1. Giữ nguyên nội dung, chỉ nâng status.
+submodule: Overview
+---
+
+Toàn bộ giáo trình từ đầu tới giờ thuộc hai nhánh: **supervised learning**
+(có nhãn đúng sẵn — linear/logistic regression, decision tree, k-NN, CNN,
+RNN...) và **unsupervised learning** (không có nhãn, tự tìm cấu trúc —
+k-means). **Reinforcement Learning** (RL — học tăng cường) là nhánh thứ
+ba, khác biệt căn bản với cả hai: không có "câu trả lời đúng" nào được
+cho sẵn để mô hình bắt chước theo — thay vào đó, mô hình học bằng cách
+**thử và nhận phản hồi**, giống cách một đứa trẻ học đi xe đạp: không ai
+đưa "công thức đúng để giữ thăng bằng", chỉ có trải nghiệm ngã và không
+ngã lặp đi lặp lại.
+
+## Vì sao RL không phải supervised hay unsupervised
+
+Ở supervised learning, mỗi input `x` luôn có sẵn nhãn đúng `y` — mô hình
+học cách dự đoán `y` từ `x`, và biết chính xác mình sai bao nhiêu ở mỗi
+lần dự đoán (qua hàm loss). RL không có cấu trúc đó: không ai nói cho
+agent biết "đáp án đúng" ở mỗi bước — agent chỉ nhận được một tín hiệu số
+gọi là **reward** (phần thưởng), cho biết hành động vừa thực hiện tốt hay
+tệ, và phải tự học qua nhiều lần thử để tối đa hoá tổng reward nhận được
+theo thời gian, không phải để khớp đúng một nhãn cho sẵn ngay lập tức.
+
+## Vòng lặp tương tác: agent và environment
+
+RL hình thức hoá bài toán qua một vòng lặp tương tác liên tục giữa hai
+thực thể:
+
+- **Agent:** thực thể ra quyết định — ví dụ một chương trình chơi cờ,
+  robot điều khiển, hay hệ thống gợi ý sản phẩm.
+- **Environment (môi trường):** mọi thứ bên ngoài agent mà agent tương
+  tác cùng — bàn cờ, thế giới vật lý, hệ thống người dùng.
+
+Tại mỗi bước thời gian:
+
+```
+1. Agent quan sát trạng thái hiện tại của environment (state, S_t)
+2. Agent chọn một hành động (action, A_t) dựa trên state đó
+3. Environment chuyển sang trạng thái mới (S_{t+1}) và trả về một
+   reward (R_{t+1}) cho hành động vừa rồi
+4. Lặp lại từ bước 1 với state mới
+```
+
+Chuỗi các bước này, từ lúc bắt đầu tới khi kết thúc (ví dụ ván cờ kết
+thúc, robot hoàn thành nhiệm vụ hoặc thất bại), gọi là một **episode**.
+
+## Từ vựng cơ bản
+
+- **State (trạng thái):** mô tả đầy đủ tình huống hiện tại mà agent quan
+  sát được (ví dụ vị trí các quân cờ trên bàn).
+- **Action (hành động):** lựa chọn agent có thể thực hiện tại một state
+  (ví dụ nước đi khả thi).
+- **Reward (phần thưởng):** một con số environment trả về sau mỗi hành
+  động, đo mức độ "tốt" của hành động đó tại thời điểm đó — reward của một
+  bước đơn lẻ không nhất thiết phản ánh đúng giá trị dài hạn (một nước đi
+  hy sinh quân trong cờ vua có thể có reward tức thời âm nhưng dẫn tới
+  chiến thắng).
+- **Policy (chính sách), ký hiệu `π`:** chiến lược của agent — một hàm
+  ánh xạ từ state sang action (hoặc phân phối xác suất trên các action).
+  Đây chính là "thứ cần học" trong RL — mục tiêu cuối cùng là tìm ra policy
+  tốt nhất, tối đa hoá tổng reward tích luỹ qua toàn bộ episode.
+- **Episode:** một lượt tương tác hoàn chỉnh từ trạng thái bắt đầu tới
+  trạng thái kết thúc.
+
+## Đánh đổi cốt lõi: exploration vs exploitation
+
+Một vấn đề đặc trưng chỉ RL mới có (không tồn tại ở supervised/unsupervised):
+agent phải cân bằng giữa **exploration** (thử những hành động chưa biết
+rõ kết quả, để khám phá xem có cách nào tốt hơn không) và **exploitation**
+(dùng lại hành động đã biết là tốt, để tối đa hoá reward ngay bây giờ).
+Nếu chỉ khai thác (exploitation) những gì đã biết, agent có thể bỏ lỡ một
+chiến lược tốt hơn chưa từng thử; nếu chỉ khám phá (exploration) liên tục,
+agent lãng phí reward vào những hành động đã biết là kém. Cân bằng hai
+thứ này là một chủ đề trung tâm xuyên suốt các thuật toán RL cụ thể sẽ học
+ở các bài sau — từ cách đơn giản nhất (ε-greedy trong bài 18 Q-learning) tới các kỹ thuật có cấu trúc hơn như UCB, Thompson sampling, và curiosity-driven exploration (bài 18.5 Exploration trong RL).
+
+## Liên hệ lại với các bài trước
+
+- RL không dùng lại trực tiếp bất kỳ mô hình cụ thể nào đã học (linear
+  regression, CNN, RNN...) — nhưng các thuật toán RL cụ thể (bài sau) vẫn
+  thường **dùng một mạng nơ-ron** (có thể là MLP, CNN nếu input là hình
+  ảnh...) làm công cụ để biểu diễn policy hoặc ước lượng giá trị — nghĩa
+  là kiến thức về mạng nơ-ron và backpropagation đã học vẫn là nền tảng
+  cần thiết, chỉ khác ở cách dùng nó (không tối thiểu hoá loss so với nhãn
+  có sẵn, mà tối đa hoá reward kỳ vọng).
+- Khái niệm "học từ dữ liệu quan sát được để suy ra quy luật ẩn" (đã nhắc
+  từ bài [Xác suất & thống kê](01-xac-suat-thong-ke-co-ban.mdx)) vẫn đúng
+  ở RL, chỉ khác nguồn dữ liệu: thay vì có sẵn tập dữ liệu train cố định,
+  agent tự tạo ra dữ liệu của chính nó qua quá trình tương tác với
+  environment.
+
+## Bản đồ module RL
+
+Module này gồm 3 trường phái thuật toán chính, tất cả đều xây dựng trên nền
+framework RL và MDP (bài 16-17):
+
+1. **Value-based** (học giá trị → suy ra policy): [Q-learning](18-q-learning.mdx)
+   → [Double/Dueling DQN](71-double-dueling-dqn.mdx) → [Prioritized Experience
+   Replay](82-prioritized-experience-replay.mdx) → [Rainbow DQN](83-rainbow-dqn.mdx).
+2. **Policy-based** (học trực tiếp policy): [Policy Gradient](19-policy-gradient.mdx)
+   → [TRPO/A2C](85-trpo-a2c.mdx) → [A3C](77-a3c.mdx) → [PPO](47-ppo.mdx)
+   → [DDPG/TD3](84-ddpg-td3.mdx) → [SAC](78-sac.mdx).
+3. **Model-based** (học mô hình môi trường để lập kế hoạch): [Model-based RL tổng
+   quan](86-model-based-rl.mdx) → [AlphaGo/AlphaZero](87-alphago-alphazero.mdx).
+
+Bài [Actor-Critic](96-actor-critic.mdx) là cầu nối tổng hợp giữa Value-based
+và Policy-based, nền tảng cho hầu hết thuật toán RL hiện đại.
+
+## Nguồn tham khảo
+
+- [CS229 Lecture Notes — Part XIII: Reinforcement Learning and Control (Andrew Ng)](https://cs229.stanford.edu/notes2020fall/notes2020fall/cs229-notes12.pdf) — dùng làm nguồn chính cho khái niệm policy như một ánh xạ từ state sang action, vòng lặp tương tác agent-environment (agent chọn action, environment trả về observation và reward), và framework MDP sẽ là chủ đề bài tiếp theo.

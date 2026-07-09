@@ -1,0 +1,53 @@
+---
+quiz_for: 04-imitation-learning
+---
+
+## Q1
+Tại sao Behavioral Cloning (BC) thường thất bại khi agent tự chạy trong môi trường mới?
+
+- [ ] Vì mạng nơ-ron không đủ lớn để học từ dữ liệu chuyên gia
+- [x] Vì lỗi nhỏ tích luỹ dần (compounding error) — agent rơi vào state chưa thấy trong training và không biết xử lý
+- [ ] Vì BC không dùng được mạng nơ-ron sâu
+- [ ] Vì BC cần quá nhiều dữ liệu chuyên gia để train
+
+> BC coi imitation learning như supervised learning — mỗi state là một điểm dữ liệu độc lập. Nhưng trong thực tế, lỗi nhỏ ở bước t dẫn tới state lạ ở bước t+1, và lỗi tích luỹ theo cấp số nhân (O(T²)). Đây là vấn đề distribution shift (covariate shift) — phân phối state khi tự chạy khác hẳn phân phối state trong training.
+
+## Q2
+Khác biệt lớn nhất giữa DAgger và Behavioral Cloning là gì?
+
+- [ ] DAgger dùng mạng nơ-ron sâu hơn BC
+- [ ] DAgger không cần dữ liệu chuyên gia
+- [x] DAgger chạy policy hiện tại, ghi lại state agent gặp, rồi hỏi chuyên gia action đúng ở các state đó — thay vì chỉ học từ một tập demo cố định
+- [ ] DAgger nhanh hơn BC vì không cần train lại
+
+> DAgger giải quyết distribution shift bằng cách online iterative: chạy policy → ghi state → hỏi chuyên gia → thêm vào dataset → train lại. Điều này đảm bảo dataset luôn chứa các state agent thực sự gặp, không chỉ state chuyên gia gặp. Đánh đổi: cần chuyên gia online (tốn kém).
+
+## Q3
+GAIL (Generative Adversarial Imitation Learning) khác DAgger ở điểm cốt lõi nào?
+
+- [ ] GAIL dùng nhiều mạng nơ-ron hơn DAgger
+- [ ] GAIL không cần dữ liệu chuyên gia
+- [ ] GAIL chạy nhanh hơn DAgger
+- [x] GAIL không cần chuyên gia online — chỉ cần một tập minh chứng cố định, dùng discriminator học phân phối state-action của chuyên gia
+
+> GAIL mượn kiến trúc GAN: generator (policy) sinh action, discriminator phân biệt cặp (state, action) của chuyên gia vs agent. Khi discriminator không phân biệt được, policy đã bắt chước thành công phân phối chuyên gia. Đánh đổi: huấn luyện đối kháng bất ổn định (giống GAN).
+
+## Q4
+Trong Imitation Learning, phương pháp nào có đảm bảo lý thuyết mạnh nhất về sai số tích luỹ?
+
+- [ ] Behavioral Cloning — vì supervised learning có cơ sở toán học vững chắc
+- [x] DAgger — vì regret O(T) thay vì O(T²) của BC
+- [ ] GAIL — vì adversarial training hội tụ nhanh
+- [ ] Cả ba đều có đảm bảo lý thuyết như nhau
+
+> DAgger được chứng minh có regret tuyến tính O(T) — nghĩa là tổng sai số tăng tuyến tính theo thời gian, không tích luỹ bậc hai như BC (O(T²)). Đây là điểm mạnh lý thuyết quan trọng nhất của DAgger, bù lại chi phí phải có chuyên gia online.
+
+## Q5
+Ý tưởng "học từ minh chứng trước, rồi fine-tune bằng RL" được gọi là gì?
+
+- [ ] Behavioral Cloning
+- [ ] Inverse Reinforcement Learning
+- [x] RL từ Demonstration (RLfD)
+- [ ] Multi-task RL
+
+> RLfD (Reinforcement Learning from Demonstration) kết hợp ưu điểm của cả Imitation Learning (khởi đầu nhanh từ minh chứng) và RL thuần (tối ưu hoá tiếp). Đây là cách thường dùng trong thực tế: pretrain policy bằng BC, sau đó fine-tune bằng PPO/SAC.

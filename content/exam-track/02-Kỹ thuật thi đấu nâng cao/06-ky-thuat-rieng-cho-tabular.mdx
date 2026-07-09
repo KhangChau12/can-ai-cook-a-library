@@ -1,0 +1,118 @@
+---
+title: Kỹ thuật riêng cho Dữ liệu Tabular — Target Encoding & Feature Interaction
+track: exam-track
+module: Kỹ thuật thi đấu nâng cao
+order: 6
+status: stable
+prerequisites: ["03-baseline-nang-cap-mo-hinh-va-chien-luoc-nop-bai", "04-hyperparameter-tuning"]
+summary: Hai kỹ thuật feature engineering nâng cao riêng cho dữ liệu dạng bảng: target encoding cho category có nhiều giá trị (high cardinality) và cách tránh leakage khi dùng nó, cùng feature interaction — tạo feature mới từ tổ hợp nhiều cột thay vì chỉ xử lý từng cột riêng lẻ.
+last_touched_by_task: Rà lại dưới góc nhìn triết lý mới (2026-07-06): đọc kỹ, xác nhận bài đã đạt chuẩn đúng tiêu chí exam-track (mục 2.1 sườn A) — ví dụ số cụ thể (Hà Nội 0.10/Đà Nẵng 0.02), rủi ro leakage giải thích rõ + 2 cách khắc phục cụ thể (k-fold encoding, smoothing), feature interaction có ví dụ đa dạng. Không 'vỏ rỗng', không cần viết lại. Giữ nguyên nội dung, chỉ nâng status. Cập nhật (2026-07-06, cùng task viết bài 10 Data Augmentation): sửa câu kết luận vì không còn là bài cuối module 2.
+---
+
+Bài [Baseline & Nâng cấp Mô hình](03-baseline-nang-cap-mo-hinh-va-chien-luoc-nop-bai.mdx)
+đã giới thiệu gradient boosting như bước nâng cấp mặc định cho dữ liệu
+bảng. Nhưng bản thân thuật toán mạnh chỉ là một nửa câu chuyện — với dữ
+liệu tabular, chất lượng feature đưa vào thường quyết định điểm số nhiều
+hơn cả việc chọn thuật toán. Bài này đi sâu hơn cách xử lý category (mục
+2.3 đã học ở bài Quy trình thi đấu — one-hot/label encoding) và cách tạo
+feature mới có chủ đích, thay vì chỉ xử lý từng cột một cách riêng lẻ.
+
+## Vấn đề: one-hot encoding vỡ trận với category có quá nhiều giá trị
+
+One-hot encoding (đã học ở bài quy trình cơ bản) hoạt động tốt khi category
+có ít giá trị khác nhau (ví dụ 5-10 thành phố). Nhưng với category có
+**hàng trăm tới hàng nghìn giá trị khác nhau** — gọi là **high cardinality**
+— ví dụ mã bưu điện, ID sản phẩm, tên người dùng, one-hot encoding tạo ra
+hàng nghìn cột nhị phân mới, phần lớn cực kỳ thưa (sparse, gần như toàn số
+0), khiến mô hình khó học và tốn tài nguyên tính toán không cần thiết.
+
+## Target encoding — nén thông tin category thành 1 con số có ý nghĩa
+
+**Target encoding** (còn gọi là mean encoding) giải quyết vấn đề này bằng
+cách thay mỗi giá trị category bằng **giá trị trung bình của target** ứng
+với các dòng thuộc category đó. Ví dụ với bài toán dự đoán gian lận giao
+dịch, cột "thành phố" có thể được mã hoá: "Hà Nội" → 0.10 (10% giao dịch
+tại Hà Nội là gian lận), "Đà Nẵng" → 0.02 (2%) — thay vì tạo ra hàng chục
+cột nhị phân, ta có **đúng một cột số duy nhất**, vừa gọn vừa trực tiếp
+mang thông tin dự đoán của chính category đó.
+
+### Rủi ro leakage nghiêm trọng nếu làm sai
+
+Target encoding có một rủi ro lớn hơn hẳn one-hot/label encoding thông
+thường: nếu bạn tính giá trị trung bình target **trên chính dữ liệu đang
+được mã hoá**, mô hình học được một mối tương quan gần như hoàn hảo giữa
+feature đã mã hoá và target — về bản chất, mô hình đang "ghi nhớ" đáp án
+của tập train thay vì học một pattern tổng quát. Đây là một dạng target
+leakage cụ thể (đã học nguyên lý chung ở bài
+[Leaderboard, Metric & Lỗi nộp bài](01-leaderboard-metric-va-loi-nop-bai.mdx)),
+đặc biệt nguy hiểm với các category chỉ xuất hiện 1-2 lần trong dữ liệu —
+mô hình có thể gán "trọng số cực đoan" cho các giá trị hiếm này, thực chất
+là ghi nhớ chứ không phải học.
+
+### Hai cách khắc phục bắt buộc phải dùng
+
+- **K-fold target encoding:** chia dữ liệu train thành K fold, với mỗi
+  fold, tính giá trị trung bình target chỉ từ **K-1 fold còn lại** (không
+  bao gồm chính fold đang được mã hoá) — giữ đúng nguyên tắc "không tính
+  toán tham số trên chính dữ liệu đang xử lý" đã học xuyên suốt track này.
+- **Smoothing (làm mượt):** với category có ít mẫu (ước lượng trung bình
+  không đáng tin cậy), kéo giá trị trung bình của category đó về gần
+  **trung bình toàn cục** hơn, theo tỷ lệ phụ thuộc vào số lượng mẫu của
+  category đó — category càng ít mẫu, càng bị kéo về gần trung bình toàn
+  cục, tránh việc một category chỉ có 2 mẫu (một trong đó là gian lận) bị
+  gán thẳng giá trị 0.5 (50% gian lận) một cách không đáng tin cậy.
+
+Nhiều thư viện gradient boosting hiện đại (ví dụ CatBoost — tên gọi xuất
+phát trực tiếp từ "Category Gradient Boosting") có cơ chế xử lý category
+tích hợp sẵn theo nguyên lý tương tự, là một lựa chọn thay thế đáng cân
+nhắc thay vì tự cài đặt target encoding thủ công.
+
+## Feature interaction — tạo feature từ tổ hợp nhiều cột
+
+Bài [Quy trình thi đấu](02-quy-trinh-thi-dau-tu-du-lieu-den-nop-bai.mdx)
+đã nhắc tới việc tạo feature mới từ tỷ lệ/hiệu số giữa 2 cột — đó chính là
+một dạng đơn giản của **feature interaction**: thông tin hữu ích không
+nằm ở một cột riêng lẻ, mà nằm ở **cách hai hay nhiều cột tương tác với
+nhau**.
+
+Vài dạng interaction phổ biến đáng thử:
+
+- **Nhân/chia hai feature số** — ví dụ "giá mỗi m²" (giá nhà / diện tích)
+  thường mang thông tin trực tiếp hơn hai feature gốc riêng lẻ.
+- **Kết hợp hai feature category** — ví dụ ghép "thành phố" và "loại sản
+  phẩm" thành một category mới "thành phố × loại sản phẩm", nắm bắt được
+  pattern chỉ xuất hiện ở đúng tổ hợp đó (ví dụ một sản phẩm bán chạy bất
+  thường chỉ tại một thành phố cụ thể, điều mà xét riêng từng cột không
+  thấy được).
+- **Feature theo nhóm (group-by aggregation)** — với mỗi giá trị của một
+  category, tính thống kê (trung bình, độ lệch chuẩn, số lượng) của một
+  feature số khác trong cùng nhóm đó. Ví dụ: "giá trung bình của các giao
+  dịch cùng người dùng này" — mang thông tin về hành vi của cả nhóm, không
+  chỉ riêng dòng dữ liệu hiện tại.
+
+**Nguyên tắc bắt buộc giống hệt các bài trước:** feature interaction, đặc
+biệt loại tính theo nhóm (group-by aggregation), rất dễ dính leakage nếu
+tính toán trên toàn bộ dữ liệu (gồm cả test) thay vì chỉ trên tập train —
+áp dụng đúng nguyên tắc "chỉ tính tham số từ train, áp dụng lại cho test"
+đã nhắc lại xuyên suốt track.
+
+## Kiểm chứng bằng cross-validation, không phải trực giác
+
+Cả target encoding và feature interaction đều có thể tạo ra hàng chục
+feature mới rất nhanh — nhưng không phải feature nào cũng thực sự giúp
+ích. Đúng nguyên tắc đã học: mỗi feature mới cần kiểm chứng bằng
+cross-validation, và cân nhắc dùng chính gradient boosting (vốn có khả
+năng đo **feature importance**) để nhận diện feature nào thực sự đóng góp,
+loại bỏ những feature chỉ làm phức tạp thêm mô hình mà không cải thiện
+điểm số.
+
+Kết hợp với transfer learning/ensembling (cho dữ liệu ảnh/văn bản) và
+target encoding/feature interaction (cho dữ liệu bảng), bạn đã có đủ bộ
+công cụ thực chiến để tối ưu điểm số vượt xa mức baseline ban đầu. Bài
+tiếp theo ([Data Augmentation](10-data-augmentation.mdx)) quay lại đào
+sâu thêm một kỹ thuật riêng cho dữ liệu ảnh.
+
+## Nguồn tham khảo
+
+- [3 Smart Ways to Encode Categorical Features for Machine Learning (MachineLearningMastery)](https://machinelearningmastery.com/3-smart-ways-to-encode-categorical-features-for-machine-learning/) — dùng cho cơ chế target encoding, ví dụ cụ thể (mã hoá thành phố theo tỷ lệ gian lận), rủi ro leakage khi tính mean trên chính dữ liệu đang mã hoá, và hai giải pháp khắc phục: k-fold target encoding và smoothing.
+- [Gradient Boosting with Scikit-Learn, XGBoost, LightGBM, and CatBoost (MachineLearningMastery)](https://machinelearningmastery.com/gradient-boosting-with-scikit-learn-xgboost-lightgbm-and-catboost/) — dùng cho chi tiết CatBoost có cơ chế xử lý category tích hợp sẵn (tên gọi xuất phát từ "Category Gradient Boosting").

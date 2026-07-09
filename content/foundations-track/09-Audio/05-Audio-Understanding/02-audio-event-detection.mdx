@@ -1,0 +1,46 @@
+---
+title: Phân Loại Sự Kiện Âm Thanh — Nhận Diện Tiếng Động Môi Trường
+track: foundations-track
+module: Audio
+order: 2
+status: stable
+prerequisites: ["01-bieu-dien-am-thanh", "01-cnn"]
+summary: Nhận diện các sự kiện âm thanh không phải giọng nói: tiếng chó sủa, còi xe, mưa rơi. Ứng dụng: giám sát an ninh, hỗ trợ người khiếm thính, smart home. Bài này giới thiệu AudioSet (632 lớp), YAMNet (MobileNet, real-time), và PANNs (CNN pre-trained, transfer learning).
+last_touched_by_task: Bài mới (2026-07-08): Phase 4.3 đào sâu Audio — Audio Event Detection. Nguồn: arxiv AudioSet 1705.02034 + arxiv PANNs 2002.01277.
+submodule: Audio-Understanding
+---
+
+Các bài trước trong module Audio tập trung vào giọng nói (ASR, TTS). Audio
+event detection (AED — phát hiện sự kiện âm thanh) là bài toán nhận diện
+các âm thanh không phải giọng nói: tiếng chó sủa, tiếng còi xe, tiếng mưa,
+tiếng cưa máy.
+
+## Vấn đề: âm thanh môi trường đa dạng, có thể chồng lấn
+
+Khác với ASR (chỉ có giọng người), AED phải xử lý đồng thời nhiều sự kiện:
+một video đường phố có thể có tiếng còi xe (giao thông) + tiếng chim hót
+(động vật) + tiếng người nói (giọng) → multi-label classification.
+
+## AudioSet — Dataset chuẩn
+
+AudioSet (Gemmeke et al. 2017, Google): 632 lớp sự kiện âm thanh, 2.1M clips
+từ YouTube, mỗi clip có thể có nhiều nhãn (multi-label). 527 lớp dùng cho
+eval. Dataset lớn nhất cho AED.
+
+## YAMNet — MobileNet trên Spectrogram
+
+YAMNet (Google 2019): dùng MobileNet (depthwise separable convolution, bài
+38) trên log-mel spectrogram, 521 lớp AudioSet. Chạy real-time trên thiết
+bị di động. Mã nguồn mở, dùng làm feature extractor cho AED.
+
+## PANNs — Pre-trained Audio Neural Networks
+
+PANNs (Kong et al. 2020): huấn luyện CNN (CNN10, CNN14) trên AudioSet.
+Khác YAMNet: dùng mạng lớn hơn (ResNet-style), wavelet thay log-mel, và
+transfer learning — feature học từ AudioSet có thể fine-tune sang các tác
+vụ AED khác. SOTA trên nhiều benchmark AED.
+
+## Nguồn tham khảo
+
+- [arXiv — AudioSet: An Ontology and Human-Labeled Dataset for Audio Events (Gemmeke et al., 2017)](https://arxiv.org/abs/1705.02034) — paper gốc AudioSet, dùng cho 632 lớp, 2.1M clips, multi-label ontology.
+- [arXiv — PANNs: Large-Scale Pretrained Audio Neural Networks for Audio Pattern Recognition (Kong et al., 2020)](https://arxiv.org/abs/2002.01277) — paper gốc PANNs, dùng cho CNN14/CNN10, transfer learning, benchmark SOTA.

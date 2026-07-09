@@ -1,0 +1,190 @@
+---
+title: Xác suất & thống kê cơ bản cho ML
+track: foundations-track
+module: Nền tảng Toán & ML cổ điển
+order: 1
+status: stable
+prerequisites: []
+summary: Những khái niệm xác suất/thống kê tối thiểu để hiểu ML: biến ngẫu nhiên, xác suất có điều kiện, định lý Bayes, kỳ vọng và phương sai.
+last_touched_by_task: Tự đề xuất cải thiện (Task 90, 2026-07-07): phần kỳ vọng/phương sai trước đây chỉ có công thức trừu tượng, thiếu con số cụ thể — thêm tính phương sai xúc xắc (≈2.917) + độ lệch chuẩn (≈1.71) để người mới thấy số thật; bổ sung trực giác covariance matrix (dấu dương/âm/≈0 kèm ví dụ chiều cao–cân nặng, thời gian chạy–tốc độ) và liên hệ tới PCA bài 21. Không đổi khái niệm cốt lõi.
+---
+
+Trước khi chạm vào bất kỳ thuật toán ML nào — kể cả thứ đơn giản như linear
+regression — bạn cần một bộ từ vựng xác suất/thống kê tối thiểu. Không phải
+vì ML "toàn là toán", mà vì mọi mô hình ML về bản chất đang làm một việc:
+**đoán một thứ chưa biết, dựa trên dữ liệu đã biết, và ước lượng xem đoán đó
+đáng tin đến đâu**. Xác suất là ngôn ngữ để nói về "đáng tin đến đâu" một
+cách chính xác, thay vì mơ hồ kiểu "chắc là được".
+
+Bài này không đi sâu vào chứng minh toán học — mục tiêu là xây trực giác đủ
+để đọc hiểu các bài sau về linear regression, classification, hay cách một
+mô hình "tự tin" bao nhiêu vào dự đoán của nó.
+
+## Biến ngẫu nhiên (random variable)
+
+Biến ngẫu nhiên là một đại lượng mà giá trị của nó phụ thuộc vào kết quả của
+một sự kiện ngẫu nhiên. Có hai loại:
+
+- **Rời rạc (discrete):** số giá trị có thể đếm được. Ví dụ: kết quả tung
+  xúc xắc (1 đến 6), nhãn của một email (spam / không spam).
+- **Liên tục (continuous):** giá trị nằm trong một khoảng số thực. Ví dụ:
+  chiều cao một người, điểm số F1 của một submission.
+
+Ký hiệu quen thuộc: `X` là biến ngẫu nhiên, `P(X = x)` là xác suất biến đó
+nhận đúng giá trị `x`. Với xúc xắc 6 mặt công bằng, `P(X = 3) = 1/6`.
+
+Ba tiên đề cơ bản của xác suất (Kolmogorov) mà mọi hàm xác suất phải thoả:
+
+- Không âm: `P(A) >= 0` với mọi sự kiện `A`.
+- Toàn bộ không gian mẫu có xác suất 1: nếu liệt kê hết mọi kết quả có thể,
+  tổng xác suất phải bằng 1.
+- Cộng tính: nếu `A` và `B` không thể xảy ra cùng lúc (loại trừ lẫn nhau),
+  thì `P(A hoặc B) = P(A) + P(B)`.
+
+## Xác suất đồng thời và xác suất có điều kiện
+
+Khi có từ hai biến ngẫu nhiên trở lên, hai khái niệm sau xuất hiện liên tục
+trong ML:
+
+**Xác suất đồng thời (joint probability)** — `P(A = a, B = b)` — xác suất
+hai sự kiện cùng xảy ra. Ví dụ: xác suất một submission vừa dùng model
+XGBoost (`A`) vừa đạt F1 > 0.9 (`B`).
+
+**Xác suất có điều kiện (conditional probability)** — `P(B = b | A = a)` —
+xác suất `B` xảy ra, *biết trước* rằng `A` đã xảy ra. Công thức:
+
+```
+P(B | A) = P(A, B) / P(A)
+```
+
+Nói cách khác: trong toàn bộ trường hợp `A` đã xảy ra, tỷ lệ nào trong đó
+`B` cũng xảy ra. Ví dụ trong classification: `P(nhãn = spam | có từ "khuyến
+mãi")` — xác suất một email là spam, biết rằng nó chứa từ "khuyến mãi". Đây
+chính xác là loại câu hỏi mà mô hình phân loại đang cố trả lời.
+
+Từ công thức trên, nếu biết xác suất riêng lẻ của từng biến (gọi là
+**marginal probability**, có được bằng cách cộng dồn joint probability trên
+mọi giá trị của biến còn lại), ta có thể tính ngược lại các đại lượng liên
+quan.
+
+## Định lý Bayes
+
+Đây là công cụ quan trọng nhất trong phần này — nó cho phép *đảo chiều*
+điều kiện, tức là suy ra `P(A | B)` khi ta chỉ biết `P(B | A)`:
+
+```
+P(A | B) = P(B | A) * P(A) / P(B)
+```
+
+Ví dụ kinh điển: một xét nghiệm y tế cho một bệnh hiếm có **độ nhạy
+(sensitivity) 99%** (người có bệnh thì 99% khả năng test dương tính) và
+**độ đặc hiệu (specificity) 95%** (người không có bệnh thì 95% khả năng
+test âm tính — tức 5% khả năng dương tính giả). Giả sử tỷ lệ mắc bệnh
+trong dân số chỉ là 1%. Nếu một người xét nghiệm dương tính, xác suất họ
+**thực sự** mắc bệnh là bao nhiêu?
+
+Trực giác sai lầm phổ biến là "99%". Nhưng áp dụng Bayes:
+
+```
+P(bệnh | dương tính) = P(dương tính | bệnh) * P(bệnh) / P(dương tính)
+```
+
+Với `P(dương tính) = P(dương|bệnh)*P(bệnh) + P(dương|khỏe)*P(khỏe)
+= 0.99*0.01 + 0.05*0.99 = 0.0099 + 0.0495 = 0.0594`, ta có
+`P(bệnh | dương tính) = 0.0099 / 0.0594 ≈ 0.167` — chỉ khoảng **17%**,
+thấp hơn nhiều so với trực giác "99%" ban đầu. Vì bệnh hiếm (chỉ 1% dân
+số), số ca dương tính giả (người khoẻ mạnh nhưng test sai) đông hơn hẳn số
+ca dương tính thật, dù độ đặc hiệu 95% nghe có vẻ cao. Nếu xét nghiệm lại
+lần hai độc lập và cũng dương tính (dùng 17% làm tỷ lệ nền mới), độ tin
+cậy tăng vọt lên khoảng `0.99*0.167 / (0.99*0.167 + 0.05*0.833) ≈ 0.80`
+— khoảng **80%**.
+
+Bài học rút ra không nằm ở con số cụ thể, mà ở nguyên lý: **xác suất một sự
+kiện hiếm xảy ra, dựa trên một tín hiệu không hoàn hảo, phụ thuộc rất nhiều
+vào tỷ lệ nền (base rate)** — không chỉ vào độ chính xác của tín hiệu đó.
+Nguyên lý này quay lại rất nhiều trong ML: một mô hình phân loại "99%
+accuracy" trên dữ liệu mất cân bằng (ví dụ 99% ví dụ thuộc lớp âm) có thể
+hoàn toàn vô dụng — nó chỉ đang đoán lớp đa số mọi lúc.
+
+## Kỳ vọng (expectation) và phương sai (variance)
+
+**Kỳ vọng** là giá trị trung bình có trọng số của một biến ngẫu nhiên, theo
+đúng xác suất xảy ra của từng giá trị:
+
+```
+E[X] = sum( x * P(X = x) )   -- với mọi giá trị x có thể
+```
+
+Với xúc xắc công bằng: `E[X] = (1+2+3+4+5+6)/6 = 3.5` — dù 3.5 không phải
+là một giá trị xúc xắc có thể ra, nó là giá trị trung bình kỳ vọng nếu tung
+rất nhiều lần.
+
+**Phương sai** đo độ phân tán của biến ngẫu nhiên quanh kỳ vọng của nó:
+
+```
+Var[X] = E[(X - E[X])^2] = E[X^2] - E[X]^2
+```
+
+Áp dụng luôn cho xúc xắc: `E[X^2] = (1+4+9+16+25+36)/6 = 91/6 ≈ 15.167`,
+ nên `Var[X] = 15.167 - 3.5^2 = 15.167 - 12.25 ≈ 2.917`. Căn bậc hai của
+phương sai chính là **độ lệch chuẩn (standard deviation)** — `σ ≈ 1.71` —
+nó có cùng đơn vị với biến gốc (số chấm) nên dễ diễn giải hơn: "mỗi lần
+tung, kết quả thường lệch khoảng ±1.7 chấm so với trung bình 3.5".
+
+Phương sai lớn nghĩa là giá trị thực tế dao động xa quanh trung bình; nhỏ
+nghĩa là các giá trị tập trung gần trung bình. Khi làm việc với nhiều
+biến/nhiều chiều (ví dụ nhiều feature trong một dataset), khái niệm tương
+ứng là **ma trận hiệp phương sai (covariance matrix)** — nó không chỉ cho
+biết mỗi feature phân tán ra sao (các phần tử trên đường chéo chính, chính
+là phương sai của từng feature), mà còn feature nào có xu hướng tăng/giảm
+cùng nhau (các phần tử ngoài đường chéo, gọi là **covariance**):
+
+- **Covariance dương** — hai feature có xu hướng cùng tăng hoặc cùng giảm.
+  Ví dụ: "chiều cao" và "cân nặng" trong cùng một nhóm người — người cao
+  thường cũng nặng hơn, nên covariance giữa chúng mang dấu dương.
+- **Covariance âm** — một feature tăng thì feature kia có xu hướng giảm.
+  Ví dụ: "thời gian chạy 100m" và "tốc độ sprint tối đa" — chạy càng nhanh
+  thì thời gian càng ngắn, nên covariance mang dấu âm.
+- **Covariance ≈ 0** — hai feature thay đổi độc lập, không có xu hướng
+  đồng biến/đồng biến rõ ràng.
+
+Ma trận hiệp phương sai là nền tảng của **PCA** (bài 21) — kỹ thuật giảm
+chiều tìm các hướng mà dữ liệu phân tán mạnh nhất, chính là các trục có
+phương sai lớn nhất.
+
+## Vì sao phần này quan trọng cho ML
+
+Ba điều rút ra sẽ quay lại liên tục ở các bài sau:
+
+- **Aleatoric uncertainty vs epistemic uncertainty.** Loại thứ nhất là
+  nhiễu vốn có trong chính hiện tượng (ví dụ: hai người giống hệt điều kiện
+  vẫn có thể mắc bệnh khác nhau — không có mô hình nào xoá được nó). Loại
+  thứ hai là sự không chắc chắn do ta chưa có đủ dữ liệu để ước lượng đúng
+  tham số — loại này **giảm dần khi có thêm dữ liệu**. Phân biệt được hai
+  loại này giúp hiểu vì sao có thêm data đôi khi giúp ích, đôi khi không.
+- **Tốc độ hội tụ chậm dần.** Độ chính xác của một ước lượng thống kê
+  thường cải thiện theo tỷ lệ `1/sqrt(n)` với `n` là số lượng quan sát —
+  nghĩa là muốn giảm sai số ước lượng đi một nửa, cần **gấp 4 lần** dữ
+  liệu, không phải gấp đôi. Đây là lý do "có thêm dữ liệu luôn tốt" là đúng
+  nhưng lợi ích biên giảm dần rất nhanh.
+- **Maximum likelihood — nguyên lý chọn tham số "tốt nhất".** Ví dụ đơn
+  giản: tung một đồng xu 13 lần, ra 9 lần mặt ngửa. Trực giác sẽ đoán ngay
+  xác suất ra mặt ngửa của đồng xu này khoảng `9/13` — và đó chính xác là
+  điều nguyên lý **maximum likelihood** hình thức hoá: chọn tham số (ở đây
+  là xác suất ra mặt ngửa) sao cho xác suất quan sát được đúng dữ liệu đã
+  thấy (9 lần ngửa trên 13 lần tung) là **lớn nhất**. Không phải đoán mò
+  hay áp đặt giả định — mà để chính dữ liệu "nói" tham số nào hợp lý nhất.
+  Đây chính xác là cách nhiều mô hình ML "học" tham số, từ đơn giản như ví
+  dụ đồng xu tới phức tạp như neural network.
+
+Ở các bài tiếp theo về ML cổ điển (linear regression, logistic regression),
+những khái niệm này sẽ quay lại dưới dạng cụ thể: ước lượng tham số mô hình
+chính là một bài toán thống kê — dùng dữ liệu quan sát được để suy ra tham
+số "thật" mà ta không thấy trực tiếp, và với logistic regression, hàm loss
+(cross-entropy) thực chất bắt nguồn trực tiếp từ nguyên lý maximum
+likelihood vừa nhắc ở trên.
+
+## Nguồn tham khảo
+
+- [Dive into Deep Learning — 2.6. Probability and Statistics](http://d2l.ai/chapter_preliminaries/probability.html) — dùng làm nguồn chính cho định nghĩa biến ngẫu nhiên, xác suất đồng thời/có điều kiện, định lý Bayes (ví dụ xét nghiệm y tế), kỳ vọng, phương sai, và phần phân biệt aleatoric/epistemic uncertainty cùng tốc độ hội tụ `1/sqrt(n)`.
+- [Dive into Deep Learning — 22.7. Maximum Likelihood](http://d2l.ai/chapter_appendix-mathematics-for-deep-learning/maximum-likelihood.html) — dùng cho ví dụ tung đồng xu minh hoạ trực giác maximum likelihood (chọn tham số làm dữ liệu quan sát được có xác suất lớn nhất), bổ sung khi cải thiện bài để liên hệ chặt hơn với cross-entropy loss ở bài Logistic Regression.

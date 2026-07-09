@@ -1,0 +1,33 @@
+---
+quiz_for: 01-audio-source-separation
+---
+
+## Q1
+Audio source separation giải quyết bài toán gì?
+
+- [ ] Nhận diện giọng nói trong môi trường yên tĩnh
+- [x] Tách bản ghi âm hỗn hợp thành các nguồn riêng — tách giọng người nói trong đám đông, tách nhạc cụ từ bài hát
+- [ ] Chuyển speech thành text
+- [ ] Lọc nhiễu nền
+
+> Source separation = cocktail party problem. Từ 1 bản ghi có nhiều nguồn cùng lúc → tách thành các track riêng. Speech separation (giọng người), music separation (nhạc cụ, vocals).
+
+## Q2
+Conv-TasNet khác các phương pháp source separation trước ở điểm gì?
+
+- [ ] Dùng spectrogram
+- [ ] Dùng RNN
+- [x] Xử lý trực tiếp trong time-domain (1D convolution) thay vì spectrogram — không cần STFT
+- [ ] Dùng Transformer
+
+> Hầu hết các phương pháp trước Conv-TasNet dùng spectrogram (tách trên time-frequency mask). Conv-TasNet dùng 1D conv trong time-domain — không cần STFT, end-to-end.
+
+## Q3
+Spleeter và Demucs khác Conv-TasNet thế nào?
+
+- [ ] Chúng dùng cho speech separation, Conv-TasNet cho music
+- [x] Chúng dùng cho music separation — Spleeter dùng U-Net spectrogram, Demucs hybrid time+spectrogram
+- [ ] Chúng không dùng deep learning
+- [ ] Chúng nhanh hơn 100 lần
+
+> Conv-TasNet chủ yếu cho speech separation. Spleeter (Deezer, 5 stems) và Demucs (SOTA) là các model cho music separation.

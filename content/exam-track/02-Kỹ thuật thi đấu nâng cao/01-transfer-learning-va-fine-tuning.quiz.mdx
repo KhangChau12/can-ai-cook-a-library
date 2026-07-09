@@ -1,0 +1,43 @@
+---
+quiz_for: 01-transfer-learning-va-fine-tuning
+---
+
+## Q1
+Vì sao các layer đầu của một CNN đã pretrain (ví dụ trên ImageNet) thường vẫn hữu ích cho một bài toán ảnh hoàn toàn khác (ví dụ ảnh y tế)?
+
+- [x] Vì các layer đầu học đặc trưng tổng quát (cạnh, texture, màu sắc) gần như giống nhau bất kể bài toán ảnh cụ thể là gì
+- [ ] Vì các layer đầu luôn được train lại hoàn toàn khi fine-tuning
+- [ ] Vì ImageNet chứa sẵn ảnh y tế trong dữ liệu pretrain
+- [ ] Vì layer đầu không ảnh hưởng tới kết quả dự đoán cuối cùng
+
+> Đặc trưng thị giác tổng quát (cạnh, góc, texture) học được ở các layer đầu của CNN gần như dùng chung được cho mọi bài toán ảnh — đây là lý do cốt lõi khiến transfer learning hiệu quả.
+
+## Q2
+Khi fine-tuning, vì sao nên dùng learning rate nhỏ hơn nhiều cho các layer đã pretrain so với layer đầu ra mới?
+
+- [x] Vì layer đã pretrain đã mang thông tin hữu ích, cần tinh chỉnh nhẹ nhàng, trong khi layer đầu ra mới khởi tạo ngẫu nhiên cần học từ số 0
+- [ ] Vì layer đã pretrain luôn cần nhiều epoch hơn để hội tụ
+- [ ] Vì learning rate nhỏ giúp giảm dung lượng bộ nhớ khi train
+- [ ] Vì đây là yêu cầu bắt buộc của framework deep learning, không có ý nghĩa thuật toán
+
+> Dùng chung một learning rate lớn cho toàn bộ model có thể phá huỷ đặc trưng tổng quát hữu ích đã học được từ pretraining — sai lầm phổ biến khiến fine-tuning cho kết quả kém hơn train from scratch.
+
+## Q3
+Dataset của competition chỉ có 300 ảnh. Chiến lược freeze nào phù hợp nhất?
+
+- [x] Full freezing — chỉ train layer đầu ra mới, giữ nguyên toàn bộ layer đã pretrain
+- [ ] Full fine-tuning — mở toàn bộ model để tận dụng tối đa dữ liệu
+- [ ] Không cần freeze gì, vì số lượng ảnh không ảnh hưởng tới quyết định freeze
+- [ ] Chỉ freeze layer đầu ra, mở toàn bộ layer còn lại
+
+> Với dữ liệu rất ít, mở thêm layer để train dễ dẫn tới overfit nghiêm trọng vì không đủ dữ liệu để cập nhật an toàn — full freezing buộc model dựa hoàn toàn vào đặc trưng đã học sẵn.
+
+## Q4
+"Gradual unfreezing" giải quyết vấn đề gì?
+
+- [x] Catastrophic forgetting — model "quên" kiến thức tổng quát đã pretrain nếu bị ép cập nhật quá nhanh, quá mạnh ngay từ đầu
+- [ ] Thiếu dữ liệu train
+- [ ] Tốc độ huấn luyện quá chậm
+- [ ] Sai định dạng file checkpoint
+
+> Gradual unfreezing mở khoá dần từng layer từ sau ra trước thay vì mở toàn bộ ngay lập tức, giảm nguy cơ phá vỡ đột ngột các đặc trưng tổng quát đã học được.

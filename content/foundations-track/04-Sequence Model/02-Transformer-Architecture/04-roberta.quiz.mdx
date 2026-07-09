@@ -1,0 +1,60 @@
+---
+quiz_for: 04-roberta
+---
+
+## Q1
+Kết luận cốt lõi của Liu và cộng sự (2019) trong nghiên cứu RoBERTa là gì?
+
+- [ ] Kiến trúc Transformer encoder của BERT có lỗi thiết kế cần sửa
+- [x] BERT gốc bị huấn luyện chưa tới (undertrained) — chỉ cần huấn luyện đúng cách và đủ lâu hơn là đã có thể vượt các model công bố sau nó
+- [ ] Next Sentence Prediction là mục tiêu pretraining quan trọng nhất của BERT
+- [ ] BERT cần nhiều tham số hơn để đạt hiệu năng tốt hơn
+
+> Đây là điểm khác biệt cốt lõi của RoBERTa so với các hướng cải tiến
+> khác (như ALBERT): không đổi kiến trúc, chỉ đổi quy trình huấn luyện —
+> và riêng việc đó đã đủ để vượt qua nhiều model được cho là có kiến trúc
+> tốt hơn.
+
+## Q2
+RoBERTa phát hiện điều gì về Next Sentence Prediction (NSP) — mục tiêu
+pretraining thứ hai của BERT gốc?
+
+- [ ] NSP là thành phần quan trọng nhất, cải thiện hiệu năng nhiều nhất
+- [x] Bỏ hẳn NSP không làm giảm hiệu năng, cho thấy đây là một ràng buộc không cần thiết
+- [ ] NSP chỉ hoạt động tốt khi kết hợp với dynamic masking
+- [ ] NSP cần được thay bằng Sentence-Order Prediction để hoạt động đúng
+
+> Thực nghiệm của RoBERTa cho thấy bỏ NSP không giảm hiệu năng (thậm chí
+> một số cấu hình còn cải thiện nhẹ) — gợi ý rằng Masked Language Modeling
+> mới là thành phần cốt lõi tạo nên sức mạnh của BERT, không phải NSP.
+> (Lưu ý: thay NSP bằng Sentence-Order Prediction là cách tiếp cận của
+> ALBERT — bài 69 — không phải RoBERTa.)
+
+## Q3
+"Dynamic masking" của RoBERTa khác "static masking" của BERT gốc như
+thế nào?
+
+- [ ] Dynamic masking che nhiều token hơn (30% thay vì 15%)
+- [ ] Dynamic masking chỉ áp dụng cho câu thứ hai trong cặp câu
+- [x] Dynamic masking tạo mẫu che mới mỗi lần một chuỗi được đưa vào mô hình, thay vì dùng đúng một mẫu che cố định qua mọi epoch như BERT gốc
+- [ ] Dynamic masking loại bỏ hoàn toàn token [MASK] đặc biệt
+
+> BERT gốc che token một lần khi tiền xử lý rồi dùng lại đúng mẫu che đó
+> suốt quá trình huấn luyện. RoBERTa tạo mẫu che mới mỗi lần, giúp mô
+> hình thấy nhiều biến thể che khác nhau cho cùng một câu, tránh học
+> "thuộc lòng" một mẫu cố định.
+
+## Q4
+RoBERTa và ALBERT đều cải tiến từ BERT nhưng theo hai hướng đối lập nhau
+như thế nào?
+
+- [ ] RoBERTa dùng ít dữ liệu hơn, ALBERT dùng nhiều dữ liệu hơn
+- [ ] RoBERTa đổi kiến trúc để tăng tham số, ALBERT giữ nguyên kiến trúc
+- [x] ALBERT đổi kiến trúc để giảm tham số (đánh đổi lấy hiệu quả), RoBERTa giữ nguyên kiến trúc nhưng tăng tài nguyên huấn luyện (đánh đổi lấy hiệu năng cao hơn)
+- [ ] Cả hai đều đổi kiến trúc theo cùng một hướng nhưng mức độ khác nhau
+
+> ALBERT (bài 69) chia sẻ tham số + factorized embedding để giảm 18 lần
+> số tham số, đánh đổi lấy hiệu quả bộ nhớ/tốc độ. RoBERTa giữ nguyên
+> kiến trúc Transformer encoder gốc của BERT, chỉ tăng dữ liệu/thời gian
+> huấn luyện/batch size để đạt hiệu năng cao hơn — hai triết lý cải tiến
+> trái ngược nhau từ cùng một điểm xuất phát.

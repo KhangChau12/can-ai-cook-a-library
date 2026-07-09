@@ -1,0 +1,87 @@
+---
+title: Mask R-CNN — Kết hợp Detection và Segmentation trong Một Kiến trúc
+track: foundations-track
+module: Computer Vision
+submodule: Segmentation
+order: 3
+status: stable
+prerequisites: ["01-object-detection", "02-unet"]
+summary: U-Net giải quyết semantic segmentation nhưng không phân biệt được từng cá thể riêng lẻ cùng lớp (instance segmentation). He và cộng sự (2017) giải quyết bằng cách mở rộng trực tiếp Faster R-CNN: thêm một nhánh dự đoán mask chạy song song với nhánh bounding box đã có — đạt kết quả hàng đầu cả 3 hạng mục COCO 2016 (instance segmentation, detection, keypoint) với overhead nhỏ, chạy 5 FPS.
+last_touched_by_task: Bài mới (2026-07-06) — bài đầu tiên kết nối trực tiếp 2 sub-module Detection và Segmentation, đặt tại Segmentation theo đúng ghi chú CLAUDE.md mục 4 (bản chất bài toán là segmentation dù dựa trên kiến trúc detection). Nguồn: arxiv (paper gốc He et al. 2017, xác nhận qua WebFetch trực tiếp abstract: vấn đề instance segmentation, giải pháp thêm nhánh mask, kết quả COCO 2016 cụ thể).
+---
+
+Bài [Object Detection](33-object-detection.mdx) đã nhắc tới **instance
+segmentation** như bài toán khó nhất trong 4 tác vụ computer vision cơ
+bản — kết hợp cả định vị/đếm vật thể (tinh thần detection) và phân loại
+chi tiết mức pixel (tinh thần semantic segmentation). Bài [U-Net](40-unet.mdx)
+giải quyết tốt semantic segmentation nhưng **không phân biệt được** hai
+cá thể riêng lẻ cùng lớp (ví dụ 2 con mèo trong cùng ảnh vẫn chỉ được
+gán chung nhãn "mèo", không biết đâu là "mèo thứ nhất" hay "mèo thứ
+hai"). Bài này kể cách một kiến trúc cụ thể giải quyết trọn vẹn bài
+toán khó nhất đó.
+
+## Ý tưởng: tận dụng nguyên vẹn Faster R-CNN, chỉ thêm một nhánh song song
+
+**He và cộng sự (2017)**, trong bài báo "Mask R-CNN", không xây dựng
+một kiến trúc hoàn toàn mới cho instance segmentation — thay vào đó, họ
+nhận ra Faster R-CNN (đã kể ở bài [Object Detection](33-object-detection.mdx))
+đã giải quyết đúng phần khó của bài toán: tìm và phân loại từng vật thể
+riêng lẻ trong ảnh (chính là "instance" mà instance segmentation cần).
+Cái còn thiếu chỉ là: với mỗi vật thể đã tìm được, cần thêm một bước dự
+đoán **chính xác pixel nào** thuộc về vật thể đó (thay vì chỉ có bounding
+box thô).
+
+Giải pháp: **mở rộng Faster R-CNN bằng cách thêm một nhánh (branch) mới**
+— dự đoán một **mask** (mặt nạ nhị phân đánh dấu đúng pixel nào thuộc
+vật thể) — chạy **song song** với nhánh dự đoán bounding box và lớp đã
+có sẵn trong Faster R-CNN. Nói cách khác: với mỗi vùng ứng viên (region
+of interest) mà Faster R-CNN đã xác định, Mask R-CNN không chỉ hỏi "đây
+là vật thể gì, ở đâu (bounding box)" mà còn hỏi thêm "chính xác pixel
+nào trong vùng này thuộc về vật thể đó". Ba nhánh dự đoán (lớp, bounding
+box, mask) chạy đồng thời trên cùng một vùng ứng viên, chia sẻ phần
+trích xuất đặc trưng chung từ CNN nền tảng.
+
+## Kết quả: dẫn đầu cả 3 hạng mục COCO cùng lúc
+
+He và cộng sự công bố kết quả tại **COCO 2016** (một trong những bộ dữ
+liệu chuẩn quan trọng nhất cho computer vision, có 3 hạng mục thi riêng
+biệt: instance segmentation, bounding-box detection, và keypoint
+detection): Mask R-CNN đạt kết quả **hàng đầu ở cả 3 hạng mục cùng
+lúc**, vượt trội hơn tất cả các phương pháp tham gia COCO 2016 trước đó
+— một minh chứng rõ ràng rằng việc thêm nhánh mask không chỉ giải quyết
+instance segmentation mà còn không làm giảm chất lượng ở các nhiệm vụ
+gốc (detection, keypoint). Về mặt hiệu năng, nhóm tác giả ghi nhận Mask
+R-CNN chạy với **overhead nhỏ** so với Faster R-CNN gốc — đạt khoảng
+**5 khung hình/giây (FPS)** — và **dễ huấn luyện**, không đòi hỏi kỹ
+thuật phức tạp bổ sung ngoài việc thêm nhánh mask vào kiến trúc đã có.
+
+## Điểm mấu chốt: mở rộng đúng chỗ, không phát minh lại từ đầu
+
+Câu chuyện Mask R-CNN là một minh hoạ rõ ràng cho nguyên tắc đã lặp lại
+nhiều lần trong giáo trình: giải quyết một bài toán khó hơn không nhất
+thiết cần kiến trúc hoàn toàn mới — đôi khi chỉ cần nhận ra đúng phần
+nào của kiến trúc đã có đã giải quyết được một phần bài toán, rồi bổ
+sung đúng cơ chế còn thiếu. Faster R-CNN đã giải quyết phần "tìm và
+phân loại từng instance"; Mask R-CNN chỉ cần thêm nhánh mask để giải
+quyết nốt phần "định vị chính xác pixel" — kết hợp cả tinh thần
+detection và segmentation trong đúng một kiến trúc duy nhất.
+
+## Liên hệ lại với các bài trước
+
+- Mask R-CNN là ví dụ cụ thể nhất trong giáo trình cho thấy ranh giới
+  giữa các "sub-module" (Detection, Segmentation) không hoàn toàn tách
+  biệt trong thực tế — cùng một kiến trúc có thể giải quyết cả hai bài
+  toán cùng lúc, vì instance segmentation vốn dĩ là sự kết hợp của cả
+  hai (đã nói ở bài [Object Detection](33-object-detection.mdx)).
+- Vẫn dùng CNN (bài [CNN](11-convolutional-neural-network.mdx)) làm
+  nền tảng trích xuất đặc trưng chung cho cả 3 nhánh dự đoán, và vẫn
+  huấn luyện bằng [backpropagation](09-backpropagation.mdx) — điểm mới
+  chỉ nằm ở việc thêm một đầu ra (nhánh mask) và hàm loss tương ứng cho
+  nhánh đó, không thay đổi cơ chế tối ưu hoá nền tảng.
+- Đây cũng là một ví dụ khác cho mẫu hình "mở rộng đúng chỗ" đã gặp ở
+  U-Net (bổ sung skip connection cho FCN) và VGG/ResNet/MobileNet/
+  EfficientNet (mỗi bước bổ sung đúng cơ chế còn thiếu của bước trước).
+
+## Nguồn tham khảo
+
+- [arXiv — Mask R-CNN](https://arxiv.org/abs/1703.06870) — paper gốc của He và cộng sự (2017), dùng cho vấn đề cụ thể (instance segmentation cần cả định vị và phân loại chi tiết pixel), giải pháp (thêm nhánh mask song song với nhánh bounding box của Faster R-CNN), và kết quả (hàng đầu cả 3 hạng mục COCO 2016, overhead nhỏ, ~5 FPS, dễ huấn luyện).
