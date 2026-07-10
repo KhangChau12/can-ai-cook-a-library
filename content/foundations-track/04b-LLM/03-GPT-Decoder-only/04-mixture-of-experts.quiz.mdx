@@ -1,0 +1,53 @@
+---
+quiz_for: 04-mixture-of-experts
+---
+
+## Q1
+Vấn đề cụ thể mà Mixture-of-Experts (MoE) giải quyết ở kiến trúc dense (như GPT-3) là gì?
+
+- [ ] Kiến trúc dense không thể xử lý được văn bản dài
+- [x] Với kiến trúc dense, tăng số tham số kéo theo tăng chi phí tính toán TUYẾN TÍNH cho mọi input, vì mọi tham số đều tham gia tính toán cho mọi input
+- [ ] Kiến trúc dense không dùng được với causal mask
+- [ ] Kiến trúc dense chỉ hoạt động với dữ liệu có nhãn
+
+> Bài nêu rõ: capacity của mạng nơ-ron bị giới hạn bởi số tham số, nhưng với kiến trúc dense, tăng tham số đồng nghĩa tăng chi phí tính toán tương ứng cho mỗi lần suy luận — vì mọi tham số đều tham gia tính toán cho mọi input, không có cách nào "thêm capacity" mà không "thêm chi phí" theo cùng tỷ lệ.
+
+## Q2
+"Conditional computation" trong MoE hoạt động theo cơ chế nào?
+
+- [ ] Tính toán lại toàn bộ mô hình nhiều lần cho tới khi hội tụ
+- [x] Một gating network quyết định động, cho mỗi input cụ thể, chỉ kích hoạt một vài expert trong số hàng nghìn expert — phần lớn expert còn lại không tham gia tính toán
+- [ ] Mô hình tự động giảm số lớp khi gặp input phức tạp
+- [ ] Chỉ áp dụng được cho input có độ dài cố định
+
+> Ý tưởng cốt lõi: hàng nghìn expert (mạng con nhỏ) cộng với một gating network nhỏ quyết định động nên kích hoạt expert nào cho input cụ thể — tổng capacity mô hình có thể rất lớn (tổng tham số mọi expert), nhưng chi phí tính toán mỗi input chỉ tỷ lệ với số expert được chọn.
+
+## Q3
+Switch Transformer (Fedus và cộng sự, 2021) đơn giản hoá MoE gốc (Shazeer 2017) như thế nào?
+
+- [ ] Bỏ hẳn gating network, chọn expert ngẫu nhiên
+- [x] Chỉ chọn đúng MỘT expert duy nhất cho mỗi input (thay vì nhiều expert như thiết kế gốc), giúp giảm chi phí giao tiếp khi huấn luyện phân tán và giải quyết bất ổn huấn luyện
+- [ ] Tăng số expert được chọn lên gấp đôi so với thiết kế gốc
+- [ ] Loại bỏ hoàn toàn khái niệm expert, quay lại kiến trúc dense
+
+> Switch Transformer đơn giản hoá routing bằng cách chỉ chọn 1 expert/input (thay vì nhiều expert), giảm chi phí communication khi huấn luyện phân tán, đồng thời giải quyết các vấn đề bất ổn (mất cân bằng tải giữa expert) — đạt tốc độ pretrain nhanh hơn 7 lần so với T5 dense cùng compute.
+
+## Q4
+Điểm khác biệt cốt lõi giữa ALBERT và MoE, dù cả hai đều nhắm tới "giảm chi phí tham số hiệu dụng", là gì?
+
+- [ ] ALBERT và MoE thực chất là cùng một kỹ thuật, chỉ khác tên gọi
+- [x] ALBERT giảm TỔNG SỐ tham số thực tế bằng chia sẻ trọng số (mọi input đi qua cùng tham số); MoE giữ tổng tham số rất lớn nhưng giảm CHI PHÍ TÍNH TOÁN mỗi input bằng cách chỉ kích hoạt một phần nhỏ (mỗi input đi theo đường khác nhau)
+- [ ] ALBERT chỉ áp dụng được cho BERT, MoE chỉ áp dụng được cho GPT
+- [ ] MoE luôn cho kết quả tệ hơn ALBERT trên mọi benchmark
+
+> Bài đối chiếu rõ: ALBERT trả lời "làm sao có ít tham số hơn mà vẫn mạnh" (chia sẻ trọng số, mọi input dùng chung tham số). MoE trả lời câu hỏi khác — "làm sao có nhiều tham số hơn (capacity lớn) mà không phải trả chi phí tính toán tương ứng" (mỗi input chỉ kích hoạt một phần nhỏ, đường đi khác nhau qua các expert khác nhau).
+
+## Q5
+Theo bài, MoE là nền tảng kiến trúc cho xu hướng nào trong các LLM hiện đại?
+
+- [ ] Xu hướng dùng RNN thay thế hoàn toàn Transformer
+- [x] Xu hướng LLM sparse (Mixtral, DeepSeek, và một phần kiến trúc GPT-4) — một hướng scale khác với cách dense của GPT-3
+- [ ] Xu hướng bỏ hẳn pretraining, chỉ dùng fine-tuning
+- [ ] Xu hướng giảm số lượng tham số xuống dưới 1 triệu cho mọi mô hình
+
+> Bài kết luận: MoE là nền tảng kiến trúc cho các LLM sparse hiện đại (Mixtral, DeepSeek, một phần GPT-4) — minh chứng cho thấy hướng "mở rộng quy mô" dense của GPT-3 không phải con đường duy nhất để tiếp tục scale LLM.

@@ -1,0 +1,53 @@
+---
+quiz_for: 03-topic-modeling-lda
+---
+
+## Q1
+Điểm khác biệt cơ bản nhất giữa Topic Modeling (LDA) và hai bài toán trước (Phân loại văn bản, POS Tagging/NER) là gì?
+
+- [ ] LDA chỉ hoạt động với văn bản tiếng Anh
+- [x] LDA là bài toán unsupervised — không cần dữ liệu có nhãn sẵn, trong khi hai bài trước đều là supervised
+- [ ] LDA không thể xử lý được nhiều văn bản cùng lúc
+- [ ] LDA chỉ dùng được sau khi đã có BiLSTM
+
+> Phân loại văn bản và POS Tagging/NER đều cần dữ liệu đã được gán nhãn trước (nhãn cảm xúc, nhãn thực thể). LDA ngược lại — nó tự động khám phá cấu trúc chủ đề ẩn từ một tập văn bản hoàn toàn không có nhãn, đây chính là lý do bài học gọi nó là bài toán unsupervised, đối lập có chủ đích với 2 bài trước.
+
+## Q2
+Trong LDA, mỗi văn bản được biểu diễn như thế nào?
+
+- [ ] Một nhãn cứng duy nhất, ví dụ "văn bản này thuộc chủ đề thể thao"
+- [x] Một phân phối xác suất trên các chủ đề (θ_d) — ví dụ 70% thể thao, 20% chính trị, 10% kinh tế
+- [ ] Một vector TF-IDF không thay đổi qua các chủ đề
+- [ ] Một chuỗi các nhãn BIO giống như trong NER
+
+> LDA mô hình hoá mỗi văn bản như một HỖN HỢP các chủ đề (θ_d, một phân phối xác suất lấy mẫu từ Dirichlet), không phải một nhãn cứng duy nhất — đây là điểm khác biệt quan trọng so với phân loại văn bản truyền thống.
+
+## Q3
+Vì sao LDA dùng phân phối Dirichlet (thay vì một phân phối xác suất khác) để mô hình hoá θ_d và β_k?
+
+- [ ] Vì Dirichlet là phân phối duy nhất có giá trị luôn dương
+- [ ] Vì Dirichlet giúp mô hình chạy nhanh hơn trên GPU
+- [x] Vì Dirichlet là phân phối liên hợp (conjugate prior) với Multinomial dùng ở bước chọn từ/chủ đề, giúp việc suy luận dễ xử lý hơn về mặt toán học
+- [ ] Vì Dirichlet không cần bước suy luận xấp xỉ nào cả
+
+> Bài nêu rõ: việc chọn Dirichlet không phải ngẫu nhiên — nó là "liên hợp" (conjugate prior) với phân phối Multinomial dùng để chọn từ/chủ đề cụ thể, một lựa chọn toán học giúp suy luận (tính phân phối hậu nghiệm) dễ xử lý hơn nhiều so với các lựa chọn khác.
+
+## Q4
+Tại sao suy luận (inference) trong LDA cần dùng phương pháp xấp xỉ (như variational inference) thay vì tính chính xác?
+
+- [ ] Vì phân phối Dirichlet không thể lấy mẫu được
+- [x] Vì tính chính xác phân phối hậu nghiệm của θ_d và β_k từ dữ liệu quan sát là bất khả thi về mặt tính toán (intractable) với corpus thực tế
+- [ ] Vì LDA không có công thức toán học rõ ràng
+- [ ] Vì variational inference luôn cho kết quả chính xác hơn tính trực tiếp
+
+> Bài giải thích: không có công thức đóng để tính trực tiếp phân phối hậu nghiệm thật với corpus thực tế (bài toán intractable), nên cần các phương pháp xấp xỉ như variational inference — tối đa hoá ELBO để tìm một phân phối đơn giản hơn xấp xỉ gần nhất với phân phối hậu nghiệm thật.
+
+## Q5
+LDA có tự động đặt tên có ý nghĩa (ví dụ "chủ đề thể thao") cho mỗi chủ đề nó tìm ra không?
+
+- [ ] Có, LDA luôn tự sinh ra tên chủ đề chính xác bằng tiếng Anh
+- [x] Không — LDA chỉ trả về một phân phối xác suất trên từ vựng cho mỗi chủ đề; con người phải tự nhìn các từ xác suất cao để suy ra và đặt tên ý nghĩa
+- [ ] Có, nhưng chỉ khi dùng kèm với BERT
+- [ ] Không, vì LDA không sinh ra được bất kỳ thông tin nào về từ vựng
+
+> Bài nêu rõ: LDA chỉ khám phá CẤU TRÚC THỐNG KÊ (phân phối xác suất trên từ vựng cho mỗi chủ đề), không tự đặt tên cho chủ đề. Việc diễn giải ý nghĩa (nhìn các từ xác suất cao như "bóng đá", "cầu thủ" để suy ra đây là chủ đề thể thao) vẫn cần con người thực hiện.

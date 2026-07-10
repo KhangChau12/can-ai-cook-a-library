@@ -1,0 +1,53 @@
+---
+quiz_for: 03-gpt3
+---
+
+## Q1
+Khác biệt cốt lõi giữa "few-shot" và "zero-shot" trong bài này là gì?
+
+- [ ] Few-shot cần cập nhật gradient, zero-shot thì không
+- [x] Few-shot đưa kèm vài ví dụ minh hoạ trong prompt, zero-shot không kèm ví dụ nào — cả hai đều không cập nhật gradient
+- [ ] Zero-shot chỉ dùng được với GPT-2, few-shot chỉ dùng được với GPT-3
+- [ ] Few-shot yêu cầu fine-tune trên một tập dữ liệu nhỏ trước khi dùng
+
+> Cả ba mức (zero-shot, one-shot, few-shot) đều KHÔNG cập nhật gradient hay fine-tune — khác biệt duy nhất là số lượng ví dụ minh hoạ đặt trong prompt (0, 1, hoặc vài ví dụ).
+
+## Q2
+GPT-3 có 175 tỷ tham số — con số này được mô tả cụ thể thế nào so với các mô hình trước đó?
+
+- [ ] Gấp đôi GPT-2
+- [x] Gấp 10 lần bất kỳ mô hình ngôn ngữ non-sparse (không dùng kỹ thuật thưa tham số) nào công bố trước đó
+- [ ] Bằng đúng số tham số của BERT-large
+- [ ] Nhỏ hơn GPT-2 nhưng huấn luyện lâu hơn
+
+> Bài trích dẫn trực tiếp từ paper: GPT-3 có 175 tỷ tham số, "gấp 10 lần bất kỳ mô hình ngôn ngữ non-sparse nào trước đó" — và gấp hơn 100 lần so với GPT-2 (1.5 tỷ tham số).
+
+## Q3
+Về mặt kiến trúc, GPT-3 có gì khác so với GPT-2?
+
+- [x] Không có gì khác — vẫn decoder Transformer với causal mask, điểm khác biệt duy nhất là quy mô tham số và lượng dữ liệu huấn luyện
+- [ ] GPT-3 thay causal mask bằng bidirectional attention
+- [ ] GPT-3 dùng encoder-decoder thay vì decoder-only
+- [ ] GPT-3 bỏ hẳn cơ chế attention, dùng CNN thay thế
+
+> Đúng như dòng tiến hoá GPT-1 → GPT-2 → GPT-3: kiến trúc cốt lõi (decoder Transformer + causal mask) không đổi qua cả 3 phiên bản — mỗi bước chỉ thay đổi quy mô và cách khai thác, không đổi nguyên lý kiến trúc.
+
+## Q4
+Theo bài, kết quả few-shot của GPT-3 trên nhiều tác vụ NLP có ý nghĩa gì so với fine-tuning truyền thống?
+
+- [ ] GPT-3 luôn vượt trội hoàn toàn fine-tuning trên MỌI tác vụ không ngoại lệ
+- [x] Ở nhiều tác vụ, hiệu năng few-shot cạnh tranh được với fine-tuning truyền thống — dù fine-tuning cần hàng nghìn ví dụ có nhãn, còn few-shot chỉ cần vài ví dụ trong prompt
+- [ ] GPT-3 không thể đạt kết quả tốt trên bất kỳ tác vụ nào so với fine-tuning
+- [ ] Few-shot chỉ hoạt động tốt trên bài toán dịch máy, không áp dụng được cho tác vụ khác
+
+> Bài nêu: kết quả few-shot "cạnh tranh được" với fine-tuning truyền thống ở nhiều tác vụ (không phải vượt trội tuyệt đối mọi lúc) — điểm đáng chú ý là đạt được điều này chỉ với vài ví dụ trong prompt, so với hàng nghìn ví dụ có nhãn mà fine-tuning cần.
+
+## Q5
+Brown và cộng sự (2020) có tự nhận hạn chế nào của GPT-3 không?
+
+- [ ] Không, paper tuyên bố GPT-3 giải quyết hoàn hảo mọi tác vụ NLP
+- [x] Có — họ tự chỉ ra vẫn có dataset mà few-shot của GPT-3 gặp khó khăn, và một số dataset gặp vấn đề phương pháp luận liên quan tới huấn luyện trên corpus web lớn
+- [ ] Có, nhưng chỉ nói GPT-3 chạy chậm trên phần cứng thông thường
+- [ ] Không, hạn chế chỉ được phát hiện bởi các nhà nghiên cứu khác sau này
+
+> Bài nêu rõ: chính Brown và cộng sự tự thừa nhận vẫn còn dataset few-shot GPT-3 gặp khó khăn, và một số dataset gặp vấn đề phương pháp luận (như khả năng dữ liệu đánh giá vô tình lẫn vào dữ liệu huấn luyện — data contamination) khi huấn luyện trên corpus web quy mô lớn.

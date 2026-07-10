@@ -1,0 +1,119 @@
+---
+title: Topic Modeling (LDA) — Khám phá Chủ đề Ẩn Không Cần Nhãn
+track: foundations-track
+module: NLP
+submodule: NLP Task cổ điển
+order: 3
+status: stable
+prerequisites: ["01-phan-loai-van-ban"]
+summary: Hai bài trước (phân loại văn bản, POS tagging/NER) đều là bài toán SUPERVISED — cần dữ liệu có nhãn sẵn. Topic Modeling đặt câu hỏi ngược lại hoàn toàn khác: cho một tập hợp văn bản KHÔNG có nhãn, có thể tự động khám phá các "chủ đề" ẩn bên trong hay không? Latent Dirichlet Allocation (LDA, Blei/Ng/Jordan 2003) trả lời bằng một mô hình sinh xác suất (generative probabilistic model): mỗi văn bản là một hỗn hợp các chủ đề, mỗi chủ đề là một hỗn hợp các từ — suy luận ngược từ dữ liệu quan sát được để tìm ra cấu trúc ẩn đó.
+last_touched_by_task: Bài mới (2026-07-10), sub-module "NLP Task cổ điển" — bài thứ 3, đối lập có chủ đích với 2 bài supervised trước đó (Phân loại văn bản, POS tagging/NER) bằng một bài toán unsupervised. Nguồn: scikit-learn.org (xác nhận qua WebFetch: định nghĩa LDA là generative probabilistic model, mô hình hoá document-topic và topic-word bằng phân phối Dirichlet, quy trình sinh dữ liệu (generative process) cụ thể, công thức ELBO cho variational inference, trích dẫn paper gốc Blei/Ng/Jordan 2003 JMLR). Không thuộc dạng "dòng tiến hoá nhiều model cạnh tranh" (LDA là một kỹ thuật đơn, không có tiền thân trực tiếp trong track) nên 1 nguồn đủ theo mục 2.5.
+---
+
+Hai bài trước trong sub-module này — [Phân loại văn bản](01-phan-loai-van-ban.mdx)
+và [POS Tagging & NER](02-pos-tagging-ner.mdx) — đều là bài toán
+**supervised**: cần dữ liệu đã có nhãn sẵn (câu đã biết trước là tích
+cực/tiêu cực, token đã biết trước là thực thể loại nào) để huấn luyện mô
+hình. Nhưng phần lớn văn bản trên thực tế **không có nhãn** — hàng triệu
+bài báo, bài đăng diễn đàn, tài liệu nội bộ công ty không hề được gắn
+sẵn "chủ đề X". Câu hỏi tự nhiên: có thể tự động khám phá cấu trúc chủ
+đề ẩn bên trong một tập văn bản lớn, **không cần** ai gán nhãn trước hay
+không?
+
+## Bài toán: khám phá chủ đề ẩn từ văn bản không nhãn
+
+**Topic modeling** (mô hình hoá chủ đề) là bài toán **unsupervised**:
+cho một tập hợp lớn văn bản (corpus), tự động tìm ra một tập nhỏ các
+"chủ đề" tiềm ẩn, và biểu diễn mỗi văn bản như một **hỗn hợp** của các
+chủ đề đó — thay vì gán nhãn cứng "văn bản này thuộc chủ đề A", topic
+modeling trả về một câu trả lời mềm hơn và thực tế hơn: "văn bản này 70%
+thuộc chủ đề thể thao, 20% chính trị, 10% kinh tế".
+
+## Giải pháp: Latent Dirichlet Allocation (LDA)
+
+**Blei, Ng và Jordan (2003)**, trong bài báo "Latent Dirichlet
+Allocation" (JMLR), đề xuất **LDA** — một **mô hình sinh xác suất**
+(generative probabilistic model): thay vì trực tiếp "phân cụm" văn bản,
+LDA giả định văn bản được **sinh ra** theo một quy trình xác suất cụ
+thể, rồi dùng suy luận thống kê để "đảo ngược" quy trình đó — tìm ra
+tham số ẩn (chủ đề) có khả năng cao nhất đã sinh ra đúng dữ liệu quan
+sát được.
+
+Quy trình sinh dữ liệu giả định của LDA gồm ba bước:
+
+1. **Mỗi chủ đề `k`** (trong tổng số `K` chủ đề chọn trước) là một
+   **phân phối xác suất trên từ vựng** — `β_k`, lấy mẫu từ phân phối
+   **Dirichlet** với tham số `η`. Nói cách khác, mỗi chủ đề gán một xác
+   suất khác nhau cho mỗi từ trong từ vựng (chủ đề "thể thao" cho xác
+   suất cao với các từ như "bóng đá", "vô địch"; chủ đề "kinh tế" cho
+   xác suất cao với "lãi suất", "cổ phiếu").
+2. **Mỗi văn bản `d`** có một **phân phối xác suất trên các chủ đề** —
+   `θ_d`, cũng lấy mẫu từ phân phối Dirichlet, lần này với tham số `α`.
+   Đây chính là "tỷ lệ hỗn hợp chủ đề" riêng của từng văn bản.
+3. **Mỗi từ trong văn bản** được sinh ra qua hai bước: trước tiên chọn
+   một chủ đề cụ thể theo phân phối `θ_d` của văn bản đó, rồi chọn một
+   từ cụ thể theo phân phối `β_k` của chủ đề vừa chọn.
+
+Trong thực tế, ta chỉ **quan sát được** từ trong văn bản — không biết
+trước `θ_d` (tỷ lệ chủ đề của từng văn bản) hay `β_k` (phân phối từ của
+mỗi chủ đề). Nhiệm vụ của LDA là **suy luận ngược**: tìm `θ_d` và `β_k`
+có khả năng cao nhất đã sinh ra đúng những từ đã quan sát được trong
+toàn bộ corpus.
+
+## Vì sao dùng phân phối Dirichlet
+
+Điểm mấu chốt của cái tên "Latent Dirichlet Allocation": cả `θ_d`
+(tỷ lệ chủ đề của văn bản) và `β_k` (phân phối từ của chủ đề) đều được
+mô hình hoá bằng phân phối **Dirichlet** — một phân phối xác suất trên
+chính các... phân phối xác suất (mỗi mẫu từ Dirichlet là một vector các
+số không âm cộng lại bằng 1, đúng dạng một phân phối xác suất rời rạc).
+Lựa chọn này không phải ngẫu nhiên: Dirichlet là **liên hợp** (conjugate
+prior) với phân phối Multinomial dùng để chọn từ/chủ đề cụ thể ở bước 3
+— một lựa chọn toán học giúp việc suy luận (tính toán phân phối hậu
+nghiệm) dễ xử lý hơn nhiều so với các lựa chọn phân phối khác.
+
+## Suy luận: bài toán khó tính chính xác, cần xấp xỉ
+
+Tính chính xác phân phối hậu nghiệm của `θ_d` và `β_k` từ dữ liệu quan
+sát được là **bất khả thi về mặt tính toán** (intractable) với corpus
+thực tế — không có công thức đóng để tính trực tiếp. Vì vậy, các thuật
+toán suy luận cho LDA đều dùng phương pháp **xấp xỉ**, phổ biến nhất là
+**variational inference** (suy luận biến phân): thay vì tính chính xác
+phân phối hậu nghiệm thật, tìm một phân phối "đơn giản hơn" xấp xỉ gần
+với nó nhất, bằng cách tối đa hoá một cận dưới gọi là **ELBO** (Evidence
+Lower Bound) — tương đương với việc tối thiểu hoá khoảng cách
+(KL-divergence) giữa phân phối xấp xỉ và phân phối hậu nghiệm thật.
+
+## Đầu ra: chủ đề là danh sách từ, không phải nhãn có tên sẵn
+
+Một điểm quan trọng cần lưu ý: LDA **không** tự đặt tên cho mỗi chủ đề
+(ví dụ không tự biết chủ đề số 3 là "thể thao") — nó chỉ trả về, với
+mỗi chủ đề, một **phân phối xác suất trên từ vựng** (`β_k`). Con người
+phải tự nhìn vào các từ có xác suất cao nhất trong mỗi chủ đề (ví dụ
+"bóng đá", "cầu thủ", "vô địch" cho một chủ đề cụ thể) để suy ra và đặt
+tên ý nghĩa cho chủ đề đó — LDA chỉ khám phá **cấu trúc thống kê**, việc
+diễn giải ý nghĩa vẫn cần con người.
+
+## Liên hệ lại với các bài trước
+
+- Đây là bài đầu tiên trong sub-module thuộc loại **unsupervised** —
+  đối lập trực tiếp với [Phân loại văn bản](01-phan-loai-van-ban.mdx) và
+  [POS Tagging & NER](02-pos-tagging-ner.mdx), cả hai đều cần dữ liệu có
+  nhãn. Cùng nguyên tắc phân biệt supervised/unsupervised đã học ở module
+  "Nền tảng Toán & ML cổ điển" (K-means là ví dụ unsupervised khác đã
+  học ở đó — phân cụm dữ liệu không nhãn, tương tự tinh thần LDA phân
+  cụm "mềm" theo chủ đề thay vì cụm "cứng" theo khoảng cách).
+- LDA biểu diễn mỗi văn bản bằng một vector số (`θ_d`, tỷ lệ hỗn hợp chủ
+  đề) — về bản chất là một cách **giảm chiều** dữ liệu văn bản (từ không
+  gian từ vựng hàng chục nghìn chiều xuống còn `K` chiều, `K` là số chủ
+  đề), cùng mục tiêu với PCA (module "Nền tảng Toán & ML cổ điển") dù
+  công cụ toán học khác hẳn (phân phối xác suất Dirichlet/Multinomial so
+  với phép chiếu tuyến tính trực giao của PCA).
+- Vector `θ_d` học được từ LDA cũng có thể dùng làm đặc trưng đầu vào
+  cho bài toán [Phân loại văn bản](01-phan-loai-van-ban.mdx) — một cách
+  kết hợp: dùng LDA (unsupervised) để giảm chiều/trích đặc trưng trước,
+  rồi huấn luyện một bộ phân loại supervised phía trên đặc trưng đó.
+
+## Nguồn tham khảo
+
+- [scikit-learn — Decomposing signals in components: Latent Dirichlet Allocation](https://scikit-learn.org/stable/modules/decomposition.html) — dùng cho định nghĩa LDA là generative probabilistic model, quy trình sinh dữ liệu cụ thể (Dirichlet cho θ_d và β_k, Multinomial cho việc chọn chủ đề/từ), công thức ELBO cho variational inference, và trích dẫn paper gốc Blei, Ng và Jordan (2003, JMLR) định nghĩa LDA.

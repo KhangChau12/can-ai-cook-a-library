@@ -20,6 +20,59 @@ export function trackLabel(track: Track): string {
   return TRACK_LABELS[track];
 }
 
+export type ModuleLevel = 'foundation' | 'intermediate' | 'advanced';
+
+export const LEVEL_LABELS: Record<ModuleLevel, string> = {
+  foundation: 'Nền tảng',
+  intermediate: 'Trung cấp',
+  advanced: 'Nâng cao',
+};
+
+// Curriculum-position heuristic, not stored in frontmatter: modules that
+// gate on an entire other module (LLM needs NLP; RL's Advanced Topics needs
+// all 3 RL branches; Audio's SSL leans on representation-learning ideas) are
+// 'advanced'. Modules needing only DL Nền tảng are 'intermediate'. The 2
+// truly prerequisite-free math/DL modules are 'foundation'. Human-reviewed
+// 2026-07-10 — update by hand if module.json's module set changes shape.
+const MODULE_LEVELS: Record<string, ModuleLevel> = {
+  'Hướng dẫn dùng nền tảng': 'foundation',
+  'Kỹ thuật thi đấu nâng cao': 'advanced',
+  'Nền tảng Toán & ML cổ điển': 'foundation',
+  'Deep Learning Nền tảng': 'foundation',
+  'Computer Vision': 'intermediate',
+  NLP: 'intermediate',
+  'Generative Models': 'intermediate',
+  'Recommendation Systems': 'intermediate',
+  LLM: 'advanced',
+  'Reinforcement Learning': 'advanced',
+  Audio: 'advanced',
+};
+
+export function moduleLevel(moduleName: string): ModuleLevel {
+  return MODULE_LEVELS[moduleName] ?? 'intermediate';
+}
+
+// Lucide icon names (see src/components/icons.ts for the stroke-path data) —
+// one per module, used as a watermark on ModuleCard. Purely decorative; pick
+// by topic association, no other significance.
+const MODULE_ICONS: Record<string, string> = {
+  'Hướng dẫn dùng nền tảng': 'compass',
+  'Kỹ thuật thi đấu nâng cao': 'trophy',
+  'Nền tảng Toán & ML cổ điển': 'sigma',
+  'Deep Learning Nền tảng': 'brain-circuit',
+  'Computer Vision': 'eye',
+  NLP: 'message-square',
+  LLM: 'sparkles',
+  'Reinforcement Learning': 'gamepad-2',
+  'Generative Models': 'image',
+  Audio: 'audio-waveform',
+  'Recommendation Systems': 'thumbs-up',
+};
+
+export function moduleIcon(moduleName: string): string {
+  return MODULE_ICONS[moduleName] ?? 'book-open';
+}
+
 export function getModuleMeta(track: Track, moduleName: string): ModuleMeta | undefined {
   const trackMeta = (modulesMeta as Record<string, Record<string, ModuleMeta>>)[track];
   return trackMeta?.[moduleName];
@@ -55,6 +108,9 @@ export async function getIndexPage(track: Track): Promise<Lesson | undefined> {
 export interface ModuleGroup {
   name: string;
   slug: string;
+  track: Track;
+  level: ModuleLevel;
+  icon: string;
   meta?: ModuleMeta;
   lessons: Lesson[];
   submodules: SubmoduleGroup[];
@@ -119,6 +175,9 @@ export async function getModuleGroups(track: Track): Promise<ModuleGroup[]> {
     return {
       name,
       slug: slugify(name),
+      track,
+      level: moduleLevel(name),
+      icon: moduleIcon(name),
       meta,
       lessons: flatLessons,
       submodules,
@@ -129,6 +188,25 @@ export async function getModuleGroups(track: Track): Promise<ModuleGroup[]> {
 export async function getModuleGroup(track: Track, moduleSlug: string): Promise<ModuleGroup | undefined> {
   const groups = await getModuleGroups(track);
   return groups.find((g) => g.slug === moduleSlug);
+}
+
+// All modules across both tracks, in level order (foundation -> intermediate
+// -> advanced) for the unified home page. Within a level, tracks interleave
+// in their own curriculum order (exam-track modules first since it's the
+// shorter, entry-point track).
+const LEVEL_ORDER: ModuleLevel[] = ['foundation', 'intermediate', 'advanced'];
+
+export async function getAllModuleGroups(): Promise<Record<ModuleLevel, ModuleGroup[]>> {
+  const [examGroups, foundationGroups] = await Promise.all([
+    getModuleGroups('exam-track'),
+    getModuleGroups('foundations-track'),
+  ]);
+  const all = [...examGroups, ...foundationGroups];
+  const byLevel = {} as Record<ModuleLevel, ModuleGroup[]>;
+  for (const level of LEVEL_ORDER) {
+    byLevel[level] = all.filter((g) => g.level === level);
+  }
+  return byLevel;
 }
 
 // Flattened reading order for a track (module -> submodule -> lesson,
@@ -167,8 +245,4 @@ export function lessonUrl(lesson: Lesson): string {
 
 export function moduleUrl(track: Track, moduleSlug: string): string {
   return `/${track}/${moduleSlug}/`;
-}
-
-export function trackUrl(track: Track): string {
-  return `/${track}/`;
 }

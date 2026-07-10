@@ -1,0 +1,151 @@
+---
+title: LSTM & GRU — Giải quyết vấn đề nhớ phụ thuộc xa của RNN
+track: foundations-track
+module: NLP
+submodule: RNN Family
+order: 2
+status: stable
+prerequisites: ["01-rnn"]
+summary: Hochreiter phát hiện vấn đề vanishing gradient từ 1991, rồi cùng Schmidhuber đề xuất LSTM (1997) giải quyết bằng cơ chế gating; gần 2 thập kỷ sau, Cho et al. (2014) đơn giản hoá thành GRU — dòng tiến hoá cụ thể từ vấn đề tới giải pháp tới bản rút gọn.
+last_touched_by_task: Viết lại theo triết lý nội dung mới (2026-07-06): thêm dòng lịch sử ý tưởng cụ thể (Hochreiter luận văn thạc sĩ 1991 nhận diện vấn đề, Hochreiter & Schmidhuber 1997 đề xuất LSTM, Cho et al. 2014 đề xuất GRU vì lý do tốc độ tính toán) — trước đó bài chỉ có cơ chế kỹ thuật, không có tên người/năm/động cơ cụ thể. Thêm nguồn thứ 2 (cs231n) với chi tiết mới: LSTM không đảm bảo loại bỏ hoàn toàn vanishing gradient, chỉ giúp dễ học phụ thuộc xa hơn. Cập nhật thêm (2026-07-06, Task 70): đóng khoảng trống 'peephole connections' đã ghi ở _index.mdx bằng 1 đoạn ngắn (không đủ chất liệu cho bài riêng, xác nhận qua WebSearch) — Gers & Schmidhuber 2000 đề xuất peephole, nhưng Greff et al. 2015 'LSTM: A Search Space Odyssey' (5400 lượt thực nghiệm) kết luận không biến thể nào kể cả peephole cải thiện đáng kể so với LSTM chuẩn — bài học về kiểm chứng thực nghiệm thay vì tin trực giác thiết kế. Nguồn thứ 3: arxiv 1503.04069. Cập nhật (2026-07-10, tách module NLP/LLM): sửa 2 link [RNN] trỏ nhầm slug "recurrent-neural-network" (không tồn tại) thành đúng "01-rnn.mdx".
+---
+
+Bài [RNN](01-rnn.mdx) kết thúc bằng một vấn đề bỏ
+ngỏ: RNN thuần khó "nhớ" thông tin từ những bước rất xa trong quá khứ. Bài
+này giải thích chính xác vấn đề đó là gì, và cách kiến trúc **LSTM** (Long
+Short-Term Memory) và **GRU** (Gated Recurrent Unit) giải quyết nó bằng
+một ý tưởng chung: **gating** (cơ chế cổng).
+
+Đây là một dòng tiến hoá có mốc thời gian rõ ràng, không phải hai kiến
+trúc xuất hiện cùng lúc rồi được so sánh sau. Sepp Hochreiter nhận diện
+vấn đề vanishing/exploding gradient của RNN sớm nhất trong luận văn thạc
+sĩ (viết bằng tiếng Đức) từ năm 1991 — trước cả khi vấn đề này được cộng
+đồng rộng rãi công nhận. Sáu năm sau, **Hochreiter và Schmidhuber (1997)**
+công bố **LSTM**, đề xuất cơ chế memory cell với gating cụ thể để giải
+quyết đúng vấn đề đã nhận diện. Gần hai thập kỷ sau đó, khi LSTM đã phổ
+biến rộng rãi trong thập niên 2010, **Cho và cộng sự (2014)** đề xuất
+**GRU** — không phải để giải quyết một vấn đề mới, mà để đơn giản hoá
+LSTM: giữ nguyên ý tưởng cốt lõi (gating + đường truyền cộng dồn) nhưng
+giảm số cổng và tính toán nhanh hơn.
+
+## Vấn đề cụ thể: vanishing/exploding gradient qua nhiều bước thời gian
+
+Nhớ lại [backpropagation through time](01-rnn.mdx)
+(BPTT): để tính gradient tại bước thời gian đầu tiên, phải lan truyền
+ngược qua **mọi bước thời gian ở giữa**. Mỗi bước lan truyền đó liên quan
+tới một phép **nhân** (qua trọng số `W_hh` và đạo hàm activation). Nhân
+liên tiếp rất nhiều số nhỏ hơn 1 khiến kết quả tiến dần về 0 (**vanishing
+gradient**) — gradient tại các bước xa trong quá khứ gần như bằng 0, nghĩa
+là mô hình gần như không học được gì từ thông tin ở xa. Ngược lại, nhân
+liên tiếp nhiều số lớn hơn 1 khiến kết quả bùng nổ (**exploding
+gradient**) — cập nhật tham số trở nên bất ổn.
+
+Đây không phải vấn đề lý thuyết suông: nó giải thích trực tiếp hiện tượng
+đã nhắc ở bài trước — RNN thuần khó nhớ một danh từ đã xuất hiện từ rất
+đầu một đoạn văn dài khi cần dùng nó ở cuối đoạn.
+
+## Ý tưởng giải quyết: thay phép nhân dồn bằng phép cộng dồn có kiểm soát
+
+Cả LSTM và GRU giải quyết vấn đề trên bằng cùng một nguyên lý: thêm một
+đường truyền thông tin riêng, nơi thông tin được **cộng dồn** (thay vì
+nhân dồn liên tiếp) qua các bước thời gian, và dùng các **cổng (gate)** —
+các vector giá trị từ 0 đến 1, đóng vai trò như một "van điều tiết" — để
+quyết định lượng thông tin nào được giữ lại, thêm vào, hay bỏ qua ở mỗi
+bước.
+
+## LSTM: ba cổng và một cell state
+
+LSTM thêm một đường truyền thông tin riêng gọi là **cell state** (`C_t`),
+tách biệt với hidden state thông thường, và ba cổng điều khiển nó:
+
+- **Forget gate:** quyết định giữ lại bao nhiêu thông tin từ cell state
+  cũ. Giá trị gần 1 nghĩa là "giữ nguyên", gần 0 nghĩa là "quên đi".
+- **Input gate:** quyết định thêm bao nhiêu thông tin mới vào cell state,
+  kết hợp với một "ứng viên" thông tin mới được tính từ input hiện tại.
+- **Output gate:** quyết định lấy bao nhiêu từ cell state để tạo ra hidden
+  state hiện tại (output thực sự dùng cho bước tiếp theo/dự đoán).
+
+Cập nhật cell state là phép **cộng** có trọng số bởi 2 cổng đầu:
+
+```
+C_t = forget_gate * C_{t-1} + input_gate * candidate_moi
+```
+
+Vì đây là phép **cộng** (không phải nhân liên tiếp như hidden state của
+RNN thuần), gradient có thể "chảy" qua nhiều bước thời gian mà không bị
+suy giảm theo cấp số nhân — nếu forget gate giữ giá trị gần 1 và input
+gate gần 0 trong một khoảng thời gian dài, cell state gần như được bảo
+toàn nguyên vẹn qua toàn bộ khoảng đó, không phụ thuộc vào một ma trận
+trọng số nhân liên tiếp duy nhất như hidden state của RNN thuần. Các cổng
+(giá trị học được, không cố định) cho phép mô hình tự quyết định thông
+tin nào đáng giữ lại lâu dài, thông tin nào nên quên.
+
+Cần nói rõ một điểm hay bị hiểu lầm: LSTM không **đảm bảo tuyệt đối**
+loại bỏ hoàn toàn vanishing gradient — nó chỉ tạo ra một con đường dễ hơn
+nhiều để gradient "chảy" qua nhiều bước, giúp mô hình học phụ thuộc xa dễ
+dàng hơn hẳn so với RNN thuần, chứ không phải một lời giải toán học triệt
+để loại bỏ vấn đề trong mọi trường hợp.
+
+## GRU: phiên bản đơn giản hoá, ra đời khi LSTM đã phổ biến
+
+Tới giữa thập niên 2010, LSTM đã được dùng rộng rãi và chứng minh hiệu
+quả — nhưng 3 cổng + cell state riêng biệt đồng nghĩa nhiều tham số hơn,
+tính toán chậm hơn. **Cho và cộng sự (2014)** đặt câu hỏi: có thể giữ
+nguyên ý tưởng cốt lõi (gating + đường truyền cộng dồn) nhưng đơn giản
+hoá cấu trúc để tính nhanh hơn không? Câu trả lời là **GRU** (Gated
+Recurrent Unit): chỉ 2 cổng (**reset gate** và **update gate**) thay vì
+3, và không tách riêng cell state khỏi hidden state — chỉ dùng một trạng
+thái duy nhất. Đây không phải một ý tưởng giải quyết vấn đề mới, mà là
+một đánh đổi có chủ đích: chấp nhận cấu trúc đơn giản hơn LSTM (ít biểu
+đạt hơn về mặt lý thuyết) để đổi lấy tốc độ tính toán nhanh hơn.
+
+Trong thực hành, GRU thường huấn luyện nhanh hơn (ít tham số hơn) và cho
+kết quả tương đương LSTM trên nhiều bài toán — lựa chọn giữa hai kiến trúc
+thường mang tính thực nghiệm (thử cả hai, so sánh trên bài toán cụ thể)
+hơn là có một quy tắc "luôn dùng cái nào tốt hơn".
+
+## Không phải mọi biến thể LSTM đều đáng dùng: bài học từ "Search Space Odyssey"
+
+LSTM/GRU không phải điểm dừng duy nhất — nhiều biến thể khác từng được đề
+xuất. Một ví dụ cụ thể: **Gers và Schmidhuber (2000)** đề xuất **peephole
+connections** — thêm kết nối trực tiếp từ cell state vào các cổng (forget/
+input/output "nhìn trộm" được giá trị cell state hiện tại hoặc trước đó,
+thay vì chỉ dựa vào input và hidden state), với động cơ giúp mô hình học
+chính xác hơn các khoảng thời gian (timing) giữa các sự kiện.
+
+Nhưng **Greff, Srivastava, Koutník, Steunebrink, và Schmidhuber (2015)**,
+trong nghiên cứu thực nghiệm quy mô lớn "LSTM: A Search Space Odyssey"
+(8 biến thể LSTM khác nhau — bao gồm peephole — thử trên 3 bài toán: nhận
+dạng giọng nói, nhận dạng chữ viết tay, và mô hình hoá nhạc đa âm, tổng
+cộng 5400 lượt chạy thực nghiệm), đưa ra một kết luận đáng chú ý: **không
+biến thể nào cải thiện đáng kể so với LSTM chuẩn** — kể cả peephole. Hai
+thành phần thực sự quan trọng, theo nghiên cứu này, là **forget gate** và
+**hàm activation ở output**; các lựa chọn kiến trúc khác gần như không
+ảnh hưởng tới hiệu năng cuối cùng.
+
+Bài học rút ra không phải "peephole vô dụng nên bỏ qua nó hoàn toàn", mà
+là một nguyên tắc thực hành rộng hơn: khi một kiến trúc cốt lõi (như LSTM)
+đã hoạt động tốt, không phải mọi biến thể "nghe có vẻ hợp lý" đều tự động
+cải thiện kết quả — cần kiểm chứng thực nghiệm nghiêm túc thay vì tin vào
+trực giác thiết kế. Đây cũng là lý do sách/thư viện hiện đại (kể cả
+D2L.ai) không còn nhấn mạnh peephole như một cải tiến bắt buộc.
+
+## Liên hệ lại với các bài trước
+
+- Vấn đề vanishing gradient ở đây là một biến thể theo **thời gian** của
+  vấn đề đã gặp khi bàn về activation function ở bài
+  [Perceptron & MLP](08-perceptron-va-mang-no-ron.mdx) (sigmoid có đạo hàm
+  rất nhỏ ở hai đầu, làm chậm quá trình học) — cùng bản chất "nhân liên
+  tiếp nhiều số nhỏ khiến gradient teo lại", chỉ khác chiều nhân là qua
+  nhiều **lớp** hay qua nhiều **bước thời gian**.
+- Cơ chế gate (giá trị 0-1 nhân với thông tin để kiểm soát luồng đi qua)
+  là một ý tưởng mới xuất hiện lần đầu ở đây, nhưng sẽ quay lại dưới một
+  hình thức tổng quát hơn ở bài tiếp theo về **attention** — cũng là một
+  cơ chế học cách "chú ý" chọn lọc thông tin nào quan trọng.
+
+## Nguồn tham khảo
+
+- [Dive into Deep Learning — Long Short-Term Memory (LSTM)](http://d2l.ai/chapter_recurrent-modern/lstm.html) — dùng cho vấn đề vanishing/exploding gradient của RNN thuần, cơ chế 3 cổng (forget/input/output), công thức cập nhật cell state dạng cộng, và bối cảnh lịch sử (Hochreiter nhận diện vấn đề trong luận văn thạc sĩ 1991, Hochreiter & Schmidhuber đề xuất LSTM năm 1997).
+- [Dive into Deep Learning — Gated Recurrent Units (GRU)](http://d2l.ai/chapter_recurrent-modern/gru.html) — dùng cho bối cảnh GRU ra đời (Cho et al., 2014, khi LSTM đã phổ biến rộng rãi trong thập niên 2010), và động cơ cụ thể: đơn giản hoá cấu trúc để tính toán nhanh hơn trong khi vẫn giữ hiệu quả tương đương.
+- [Stanford CS231n — Recurrent Neural Networks](https://cs231n.github.io/rnn/) — dùng cho mô tả cơ chế cell state "đường cao tốc" cho gradient, và sắc thái quan trọng: LSTM không đảm bảo loại bỏ hoàn toàn vanishing gradient, chỉ giúp mô hình học phụ thuộc xa dễ dàng hơn đáng kể so với RNN thuần.
+- [arXiv — LSTM: A Search Space Odyssey](https://arxiv.org/abs/1503.04069) — dùng cho peephole connections (Gers & Schmidhuber 2000, kết nối trực tiếp cell state vào các cổng) và kết luận thực nghiệm quy mô lớn (Greff et al. 2015, 5400 lượt chạy trên 3 bài toán) rằng không biến thể LSTM nào — kể cả peephole — cải thiện đáng kể so với LSTM chuẩn, chỉ forget gate và output activation là thực sự quan trọng.

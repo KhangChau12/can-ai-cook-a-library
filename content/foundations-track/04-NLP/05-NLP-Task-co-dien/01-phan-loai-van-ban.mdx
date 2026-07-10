@@ -1,0 +1,129 @@
+---
+title: Phân loại văn bản — Từ TF-IDF/Naive Bayes tới Embedding học được
+track: foundations-track
+module: NLP
+submodule: NLP Task cổ điển
+order: 1
+status: stable
+prerequisites: ["01-rnn", "04-bidirectional-rnn"]
+summary: Bài toán NLP cụ thể đầu tiên áp dụng những gì đã học ở Tokenization/RNN Family. Cách tiếp cận cổ điển (TF-IDF + Naive Bayes/SVM) coi văn bản là "túi từ" không quan tâm thứ tự — nhanh, dễ hiểu, đạt baseline tốt nhưng bỏ lỡ ngữ cảnh. Biểu diễn bằng embedding học được (word2vec/GloVe) rồi cho qua Bidirectional RNN/LSTM nắm được thứ tự và ngữ cảnh hai chiều, cải thiện độ chính xác rõ rệt trên bài toán cụ thể (sentiment analysis IMDB) — đổi lại cần nhiều dữ liệu và compute hơn.
+last_touched_by_task: Bài mới (2026-07-10), sau khi tách module "NLP & LLM" thành "NLP" + "LLM" — mở sub-module "NLP Task cổ điển" (mới) để lấp khoảng trống: module trước đó dạy kiến trúc (RNN, Transformer) nhưng chưa từng áp dụng chúng để giải một bài toán NLP cụ thể có tên riêng. Nguồn: scikit-learn.org (xác nhận qua WebFetch: công thức TF-IDF, lý do dùng thay raw count, độ chính xác cụ thể MultinomialNB 83.48% vs SGDClassifier/SVM 91.01% trên 20 newsgroups 4 categories) + d2l.ai (xác nhận qua WebSearch: kiến trúc BiRNN+GloVe cho sentiment analysis IMDB, kết quả cụ thể 88.0% train/85.0% test accuracy).
+---
+
+Track đã học cách tokenize văn bản (BPE, word2vec), cách xử lý chuỗi
+(RNN, LSTM/GRU, Bidirectional, Transformer) — nhưng chưa áp dụng những
+công cụ đó để giải một bài toán NLP có tên cụ thể. **Phân loại văn bản**
+(text classification) — gán một văn bản vào một hoặc nhiều nhãn có sẵn
+(ví dụ: email là spam/không spam, đánh giá phim là tích cực/tiêu cực) —
+là bài toán đơn giản nhất để bắt đầu, và là nơi thấy rõ nhất sự khác
+biệt giữa hai triết lý biểu diễn văn bản: **đặc trưng thủ công** (feature
+thống kê đơn giản) và **biểu diễn học được** (embedding + mạng nơ-ron).
+
+## Cách tiếp cận cổ điển: túi từ có trọng số (TF-IDF) + Naive Bayes
+
+Cách đơn giản nhất để biến một văn bản thành vector số (không dùng
+embedding, không dùng mạng nơ-ron) là **bag-of-words** (túi từ): đếm số
+lần mỗi từ trong từ vựng xuất hiện trong văn bản, bỏ hoàn toàn thứ tự.
+Nhưng đếm thô (raw count) có hai vấn đề: (1) văn bản dài hơn tự nhiên có
+số đếm cao hơn dù không nói nhiều nội dung hơn, và (2) một từ xuất hiện
+ở hầu hết mọi văn bản trong corpus (ví dụ "là", "và") không mang nhiều
+thông tin phân biệt, dù số đếm của nó có thể rất cao.
+
+**TF-IDF** (Term Frequency × Inverse Document Frequency) giải quyết cả
+hai vấn đề bằng cách nhân hai thành phần:
+
+```
+TF(từ, văn bản)  = (số lần từ xuất hiện trong văn bản) / (tổng số từ trong văn bản)
+IDF(từ)          = log( tổng số văn bản / số văn bản chứa từ đó )
+TF-IDF(từ, văn bản) = TF(từ, văn bản) × IDF(từ)
+```
+
+`TF` chuẩn hoá theo độ dài văn bản (giải quyết vấn đề 1); `IDF` hạ thấp
+trọng số của từ xuất hiện ở nhiều văn bản (giải quyết vấn đề 2) — một từ
+càng hiếm gặp trong toàn corpus, `IDF` của nó càng cao, nghĩa là khi nó
+xuất hiện, nó càng đáng chú ý.
+
+Vector TF-IDF của mỗi văn bản sau đó được đưa vào một bộ phân loại đơn
+giản. **Naive Bayes** (cụ thể là biến thể Multinomial, phù hợp với dữ
+liệu dạng đếm/tần suất) thường được dùng làm **baseline** cho bài toán
+này — nhanh để huấn luyện, dễ diễn giải, và cho kết quả tốt bất ngờ dù
+giả định "các từ độc lập có điều kiện với nhau" (điều không đúng trong
+thực tế ngôn ngữ) nghe có vẻ quá đơn giản. Trên bộ dữ liệu chuẩn 20
+Newsgroups (phân loại văn bản vào 4 chủ đề), MultinomialNB huấn luyện
+trên đặc trưng TF-IDF đạt **83.48%** độ chính xác — một baseline vững
+chắc chỉ với vài dòng code, không cần embedding hay mạng nơ-ron nào.
+
+## Giới hạn: bag-of-words không biết thứ tự và ngữ cảnh
+
+TF-IDF (và bag-of-words nói chung) có một giới hạn cố hữu: nó coi văn
+bản là một **túi từ không có thứ tự**. Câu "phim này không hay, chỉ dở"
+và "phim này không dở, chỉ hay" chứa đúng những từ giống hệt nhau — bag-
+of-words không phân biệt được hai câu có nghĩa trái ngược này, vì thứ tự
+từ (đặc biệt vị trí của từ phủ định "không") hoàn toàn bị bỏ qua. Đây
+chính xác là loại thông tin mà **RNN** (đã học ở sub-module trước) được
+thiết kế để nắm bắt — hidden state tại mỗi bước phụ thuộc vào toàn bộ
+chuỗi đã đọc trước đó, không chỉ đếm từ độc lập.
+
+Cải thiện thứ hai đến từ chính cách biểu diễn từ: TF-IDF gán mỗi từ một
+trọng số vô hướng, không mang thông tin ngữ nghĩa (từ "hay" và "tuyệt
+vời" hoàn toàn không liên quan gì nhau trong không gian TF-IDF) — trong
+khi **embedding học được** (word2vec/GloVe, đã học ở sub-module
+Tokenization) đặt các từ gần nghĩa nhau ở gần nhau trong không gian
+vector, cho mô hình downstream một điểm khởi đầu tốt hơn nhiều so với
+one-hot hay đếm thô.
+
+## Giải pháp: embedding + Bidirectional RNN/LSTM
+
+Cách tiếp cận hiện đại hơn cho phân loại văn bản (cụ thể bài toán phân
+tích cảm xúc — sentiment analysis) kết hợp cả hai cải thiện trên: mỗi
+token trong câu được biểu diễn bằng **embedding đã pretrain** (ví dụ
+GloVe), sau đó toàn bộ chuỗi embedding được đưa qua một **Bidirectional
+LSTM** (đã học ở sub-module RNN Family) — tận dụng ngữ cảnh cả hai
+chiều, vì với một câu đã có sẵn đầy đủ (không phải sinh tuần tự), không
+có lý do gì chỉ dùng ngữ cảnh một chiều. Hidden state ở bước đầu và bước
+cuối của cả hai chiều (forward/backward) được ghép nối lại thành một
+vector duy nhất đại diện cho toàn câu, rồi đưa qua một lớp fully-
+connected để phân loại.
+
+Trên bộ dữ liệu IMDB (phân loại đánh giá phim thành tích cực/tiêu cực),
+kiến trúc BiLSTM + GloVe embedding đạt **88.0%** độ chính xác trên tập
+huấn luyện và **85.0%** trên tập kiểm tra — cải thiện đáng kể so với
+baseline TF-IDF + Naive Bayes, nhờ nắm được cả thứ tự từ lẫn ngữ nghĩa
+liên tục của embedding.
+
+## Đánh đổi: không phải lúc nào cũng nên dùng mạng nơ-ron
+
+Cải thiện độ chính xác của embedding + RNN không miễn phí: cần nhiều dữ
+liệu huấn luyện hơn, nhiều compute hơn (GPU, thời gian huấn luyện), và
+khó diễn giải hơn nhiều so với TF-IDF + Naive Bayes (không thể nhìn vào
+trọng số một từ cụ thể để hiểu vì sao mô hình quyết định như vậy). Với
+bài toán đơn giản, dữ liệu ít, hoặc cần triển khai nhanh/rẻ, TF-IDF +
+Naive Bayes hay SVM tuyến tính (trên cùng bộ 20 Newsgroups, SVM tuyến
+tính đạt tới 91.01%, vượt cả Naive Bayes mà vẫn không cần embedding hay
+mạng nơ-ron) vẫn là lựa chọn thực dụng, không phải "lỗi thời" một cách
+tuyệt đối.
+
+Đây cũng chỉ là điểm khởi đầu của dòng tiến hoá biểu diễn văn bản cho
+phân loại: BERT-encoder (đã học ở module LLM) đẩy xa hơn nữa nhờ ngữ
+cảnh phụ thuộc câu cụ thể (contextual embedding) thay vì embedding tĩnh
+như GloVe — nhưng đó là câu chuyện của một mô hình được pretrain ở quy
+mô lớn trên corpus khổng lồ, khác hẳn về triết lý so với huấn luyện một
+BiLSTM nhỏ riêng cho đúng bài toán này.
+
+## Liên hệ lại với các bài trước
+
+- Naive Bayes ở đây chính là mô hình đã học ở module "Nền tảng Toán & ML
+  cổ điển" — áp dụng trực tiếp cho dữ liệu văn bản dạng đếm/tần suất,
+  không có gì thay đổi về mặt thuật toán.
+- Bidirectional RNN/LSTM dùng nguyên vẹn kiến trúc đã học ở bài
+  [Bidirectional RNN/LSTM/GRU](../02-RNN-Family/04-bidirectional-rnn.mdx)
+  — điểm mới ở đây chỉ là cách áp dụng cho bài toán phân loại toàn câu
+  (lấy hidden state đầu/cuối ghép lại), không phải kiến trúc mới.
+- Embedding (word2vec/GloVe) dùng lại đúng khái niệm đã học ở bài
+  [word2vec](../01-Tokenization/02-word2vec.mdx) — vector dày mang ngữ
+  nghĩa, đối lập với one-hot hay đếm thô của TF-IDF.
+
+## Nguồn tham khảo
+
+- [scikit-learn — Working With Text Data](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html) — dùng cho công thức TF-IDF, lý do dùng thay raw count (chuẩn hoá độ dài văn bản, hạ trọng số từ phổ biến), và số liệu cụ thể (MultinomialNB đạt 83.48%, SGDClassifier/SVM tuyến tính đạt 91.01% trên 20 Newsgroups 4 categories).
+- [Dive into Deep Learning — Sentiment Analysis: Using Recurrent Neural Networks](https://d2l.ai/chapter_natural-language-processing-applications/sentiment-analysis-rnn.html) — dùng cho kiến trúc BiLSTM + GloVe embedding cho phân loại cảm xúc (ghép hidden state đầu/cuối của cả hai chiều), và kết quả cụ thể trên IMDB (88.0% train accuracy, 85.0% test accuracy).

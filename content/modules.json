@@ -31,16 +31,26 @@
         "Segmentation": "Phân vùng ảnh cấp độ pixel: kiến trúc U-Net, Mask R-CNN, DeepLab và SegFormer."
       }
     },
-    "NLP & LLM": {
-      "description": "Xử lý ngôn ngữ tự nhiên từ nền tảng tới mô hình ngôn ngữ lớn: pipeline văn bản → token → vector → mô hình, kiến trúc hồi quy và Transformer, các mô hình pretrained (BERT, GPT), và cách huấn luyện/khai thác LLM hiện đại.",
+    "NLP": {
+      "description": "Xử lý ngôn ngữ tự nhiên: pipeline văn bản → token → vector → mô hình, kiến trúc hồi quy và Transformer, và cách áp dụng chúng để giải các bài toán NLP cụ thể (phân loại văn bản, NER, topic modeling).",
       "submodules": {
-        "Overview": "Bản đồ tư duy module: vì sao dữ liệu chuỗi cần kiến trúc riêng, pipeline chung nối 6 sub-module còn lại.",
+        "Overview": "Bản đồ tư duy module: vì sao dữ liệu chuỗi cần kiến trúc riêng, pipeline chung nối 4 sub-module còn lại, và câu hỏi mở dẫn sang module LLM.",
         "Tokenization": "Tiền xử lý văn bản: cắt token bằng subword (BPE, WordPiece, SentencePiece) và biến token thành vector số (word2vec, GloVe).",
         "RNN Family": "Kiến trúc hồi quy cổ điển: RNN, LSTM/GRU, ứng dụng Seq2seq và kỹ thuật Bidirectional/Deep RNN dùng chung cho mọi cell.",
         "Transformer Architecture": "Kiến trúc dựa hoàn toàn trên Attention: Transformer gốc và các biến thể xử lý văn bản dài (Transformer-XL, Longformer, Reformer).",
+        "NLP Task cổ điển": "Áp dụng kiến trúc đã học để giải bài toán cụ thể: Phân loại văn bản (TF-IDF/Naive Bayes → embedding/BiLSTM), POS Tagging & NER (BiLSTM-CRF), Topic Modeling (LDA, unsupervised)."
+      }
+    },
+    "LLM": {
+      "description": "Mô hình ngôn ngữ lớn: triết lý pretrain một mô hình khổng lồ dùng chung cho mọi bài toán, hai nhánh kiến trúc (encoder-only/BERT-họ, decoder-only/GPT-họ), toàn bộ lộ trình huấn luyện/alignment, hướng cải thiện qua test-time compute, cách khai thác và cách đánh giá một LLM.",
+      "submodules": {
+        "Overview": "Bản đồ tư duy module: nối tiếp câu hỏi mở từ module NLP, hai nhánh kiến trúc song song (encoder-only/decoder-only), và lộ trình 7 sub-module.",
         "Pretrained Language Models": "Kiến trúc pretrained quy mô lớn dựa trên Transformer: BERT (encoder-only) → RoBERTa/ALBERT (cải tiến huấn luyện/tham số) → T5 (encoder-decoder, text-to-text).",
-        "Huấn luyện & Alignment": "Lộ trình cập nhật tham số cho LLM decoder-only (GPT-style): Pretraining, Scaling Laws, Fine-tuning và Alignment (RLHF, LoRA, DPO).",
-        "Ứng dụng & Inference-time": "Khai thác mô hình không cập nhật tham số: Prompting, RAG và Agent."
+        "GPT & Decoder-only": "Dòng tiến hoá GPT-1 (task-agnostic, cần fine-tune) → GPT-2 (zero-shot) → GPT-3 (few-shot, in-context learning), và Mixture-of-Experts (kiến trúc sparse hiệu quả tham số cho decoder-only cực lớn).",
+        "Huấn luyện & Alignment": "Lộ trình cập nhật tham số cho LLM decoder-only: Pretraining, Scaling Laws, Fine-tuning và Alignment (RLHF, LoRA, DPO).",
+        "Reasoning & Test-time Compute": "Trục cải thiện LLM khác Scaling Laws: dạy mô hình suy nghĩ lâu hơn lúc suy luận (test-time compute) qua reinforcement learning, thay vì chỉ scale lúc huấn luyện.",
+        "Ứng dụng & Inference-time": "Khai thác mô hình không cập nhật tham số: Prompting, RAG và Agent.",
+        "Evaluation": "Cách đo một LLM: benchmark tự động (MMLU, GSM8K...), giới hạn của benchmark (data contamination), và LLM-as-judge."
       }
     },
     "Reinforcement Learning": {

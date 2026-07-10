@@ -1,0 +1,94 @@
+---
+title: GPT-3 — Few-shot Learning Chỉ Qua Prompt, Không Cập nhật Gradient
+track: foundations-track
+module: LLM
+submodule: GPT & Decoder-only
+order: 3
+status: stable
+prerequisites: ["02-gpt2"]
+summary: GPT-2 chứng minh zero-shot task transfer khả thi nhưng vẫn còn khoảng cách với fine-tuning truyền thống trên nhiều tác vụ. Brown và cộng sự (2020, OpenAI) đẩy quy mô lên 175 tỷ tham số (gấp 10 lần bất kỳ mô hình non-sparse nào trước đó) và phát hiện: khi đủ lớn, mô hình có thể học từ VÀI VÍ DỤ đặt ngay trong prompt (few-shot) — không cập nhật gradient nào — đạt hiệu năng cạnh tranh được với fine-tuning truyền thống trên nhiều tác vụ NLP (dịch, hỏi-đáp, điền từ khuyết). Đây là bằng chứng thực nghiệm mạnh nhất cho in-context learning.
+last_touched_by_task: Bài mới (2026-07-10), sub-module "GPT & Decoder-only" — bài thứ 3, hoàn thiện dòng tiến hoá GPT-1 (task-agnostic, cần fine-tune) → GPT-2 (zero-shot, không cần fine-tune nhưng chưa cạnh tranh được fine-tuning) → GPT-3 (few-shot, cạnh tranh được fine-tuning). Nội dung Brown et al. 2020 trước đây nằm rải rác trong bài Prompting & In-context Learning (module LLM cũ) — nay tách thành bài riêng, bài Prompting rút gọn lại chỉ còn tóm tắt + link sang đây. Nguồn: arxiv 2005.14165 (paper gốc Brown et al. 2020, xác nhận qua WebFetch abstract: số liệu 175 tỷ tham số = 10x mô hình non-sparse lớn nhất trước đó, cơ chế in-context learning không cập nhật gradient/fine-tune, kết quả mạnh trên dịch máy/hỏi-đáp/cloze task, hạn chế tự thừa nhận: vẫn có dataset few-shot GPT-3 gặp khó khăn + vấn đề phương pháp luận khi huấn luyện trên corpus web lớn).
+---
+
+Bài [GPT-2](02-gpt2.mdx) chứng minh **zero-shot task transfer** khả thi —
+một mô hình đủ lớn có thể thực hiện nhiều tác vụ mà không cần fine-tune,
+chỉ bằng cách tiếp tục sinh văn bản. Nhưng hiệu năng zero-shot của GPT-2
+vẫn còn khoảng cách so với các phương pháp fine-tuning truyền thống tốt
+nhất. Bài này kể cách GPT-3 thu hẹp — và ở nhiều tác vụ, xoá bỏ hoàn
+toàn — khoảng cách đó, bằng một quan sát quan trọng: **học từ vài ví dụ
+đặt ngay trong prompt** hiệu quả hơn nhiều so với hoàn toàn zero-shot.
+
+## Ba mức độ: zero-shot, one-shot, few-shot
+
+**Brown và cộng sự (2020)**, trong bài báo "Language Models are Few-Shot
+Learners" (OpenAI), phân biệt rõ ba cách khai thác một mô hình ngôn ngữ
+đã pretrain, không cập nhật gradient ở bất kỳ mức nào:
+
+- **Zero-shot:** đưa thẳng mô tả tác vụ, không kèm ví dụ nào (đúng cách
+  GPT-2 đã làm).
+- **One-shot:** đưa mô tả tác vụ kèm theo **đúng một** ví dụ minh hoạ.
+- **Few-shot:** đưa mô tả tác vụ kèm theo **vài** ví dụ minh hoạ (thường
+  từ vài tới vài chục ví dụ, tuỳ độ dài context cho phép).
+
+Cả ba đều **không** cập nhật gradient hay fine-tune — khác biệt duy nhất
+là lượng ví dụ đặt trong prompt. Trực giác: few-shot cho mô hình nhiều
+tín hiệu hơn về **định dạng** đầu ra mong muốn (điều khó truyền đạt
+chính xác chỉ bằng mô tả bằng lời), giúp nó thực hiện đúng tác vụ chính
+xác hơn nhiều so với zero-shot.
+
+## Quy mô: 175 tỷ tham số, gấp 10 lần mọi mô hình non-sparse trước đó
+
+Để kiểm chứng giả thuyết "học từ vài ví dụ hiệu quả hơn khi mô hình đủ
+lớn", Brown và cộng sự huấn luyện **GPT-3** với **175 tỷ tham số** — gấp
+**10 lần** bất kỳ mô hình ngôn ngữ non-sparse (không dùng kỹ thuật thưa
+tham số như Mixture-of-Experts) nào công bố trước đó, và gấp hơn 100
+lần so với GPT-2 (1.5 tỷ tham số). Về kiến trúc, GPT-3 không thay đổi gì
+so với GPT-2 — vẫn là decoder Transformer với causal mask — điểm khác
+biệt duy nhất là quy mô tham số và lượng dữ liệu huấn luyện.
+
+## Kết quả: cạnh tranh được với fine-tuning, không cập nhật gradient nào
+
+GPT-3 được áp dụng cho **mọi** tác vụ đánh giá **hoàn toàn không** cập
+nhật gradient hay fine-tune — tác vụ và ví dụ minh hoạ (few-shot) đều
+chỉ được truyền vào qua **văn bản thuần** (đặt trong prompt). Kết quả:
+GPT-3 đạt hiệu năng **mạnh** trên nhiều bộ dữ liệu NLP đa dạng, bao gồm
+dịch máy, trả lời câu hỏi, và các tác vụ điền từ khuyết (cloze task) —
+ở nhiều tác vụ, hiệu năng few-shot này **cạnh tranh được** với các
+phương pháp fine-tuning truyền thống tốt nhất tại thời điểm đó, dù
+fine-tuning cần hàng nghìn ví dụ huấn luyện có nhãn cho từng tác vụ cụ
+thể, còn few-shot chỉ cần vài ví dụ đặt ngay trong prompt.
+
+## Hạn chế: chính tác giả cũng thừa nhận vẫn còn khoảng cách
+
+Brown và cộng sự không tuyên bố GPT-3 giải quyết hoàn toàn mọi tác vụ —
+họ tự chỉ ra: vẫn có những bộ dữ liệu mà few-shot learning của GPT-3
+**còn gặp khó khăn**, và một số bộ dữ liệu gặp **vấn đề về phương pháp
+luận** liên quan tới việc huấn luyện trên corpus web quy mô lớn (ví dụ
+khả năng dữ liệu đánh giá vô tình đã xuất hiện trong dữ liệu huấn luyện
+— data contamination, một vấn đề sẽ được bàn kỹ hơn ở bài Đánh giá LLM,
+sub-module Evaluation). Đây là một điểm quan trọng: kết quả ấn tượng của
+GPT-3 không có nghĩa in-context learning đã là lời giải hoàn chỉnh cho
+mọi bài toán NLP.
+
+## Liên hệ lại với các bài trước
+
+- GPT-3 hoàn thiện dòng tiến hoá 3 bước rõ ràng: [GPT-1](01-gpt1.mdx)
+  (task-agnostic nhưng vẫn cần fine-tune) → [GPT-2](02-gpt2.mdx)
+  (zero-shot, không cần fine-tune nhưng chưa cạnh tranh được fine-tuning)
+  → GPT-3 (few-shot, cạnh tranh được fine-tuning) — mỗi bước giải quyết
+  đúng hạn chế còn lại của bước trước, không đổi kiến trúc cốt lõi, chỉ
+  đổi quy mô và cách khai thác.
+- Kết quả này là bằng chứng thực nghiệm mạnh nhất cho **in-context
+  learning** — sẽ được đào sâu đầy đủ hơn ở bài Prompting & In-context
+  Learning (sub-module Ứng dụng & Inference-time), nơi few-shot prompting
+  chỉ là một trong nhiều kỹ thuật khai thác khả năng này (cùng với
+  zero-shot, chain-of-thought, role prompting).
+- Quan hệ giữa quy mô mô hình (175 tỷ tham số) và khả năng học từ vài ví
+  dụ là minh chứng sớm cho hiện tượng sẽ được đo đạc có hệ thống ở bài
+  Scaling Laws (sub-module Huấn luyện & Alignment) — khả năng few-shot
+  hiệu quả không xuất hiện rõ rệt ở mô hình nhỏ, chỉ "nổi lên" khi scale
+  đủ lớn.
+
+## Nguồn tham khảo
+
+- [arXiv — Language Models are Few-Shot Learners](https://arxiv.org/abs/2005.14165) — paper gốc của Brown và cộng sự (2020, OpenAI), dùng cho số liệu cụ thể (175 tỷ tham số, gấp 10 lần mô hình non-sparse lớn nhất trước đó), cơ chế zero/one/few-shot không cập nhật gradient, kết quả mạnh trên dịch máy/hỏi-đáp/cloze task cạnh tranh được với fine-tuning, và hạn chế tự thừa nhận (vẫn có dataset few-shot gặp khó khăn, vấn đề phương pháp luận khi huấn luyện trên corpus web lớn).

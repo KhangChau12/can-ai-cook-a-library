@@ -1,0 +1,112 @@
+---
+title: Pretraining — Vì sao LLM học được từ hàng tỷ trang văn bản không nhãn
+track: foundations-track
+module: LLM
+submodule: Huấn luyện & Alignment
+order: 1
+status: stable
+prerequisites: ["03-gpt3"]
+summary: Bài này đào sâu cơ chế huấn luyện đã dùng ở GPT-1/2/3 (sub-module trước): self-supervised learning (tự tạo nhãn từ chính dữ liệu) và next-token prediction — mục tiêu huấn luyện autoregressive dùng kiến trúc Transformer decoder đã học, cách một mô hình học được biểu diễn ngôn ngữ từ lượng văn bản khổng lồ mà không cần con người gán nhãn thủ công.
+last_touched_by_task: Tách module NLP/LLM (2026-07-10): module giờ có sub-module "GPT & Decoder-only" (GPT-1/2/3, Mixture-of-Experts) đứng TRƯỚC sub-module này — sửa đoạn mở đầu để đào sâu đúng cơ chế next-token prediction/self-supervised learning mà các bài GPT vừa dùng, thay vì giới thiệu decoder-only từ số 0 (đã học ở GPT-1). Đổi prerequisite từ Transformer sang GPT-3 (bài liền trước trong sub-module mới).
+---
+
+Sub-module trước (GPT & Decoder-only) đã giới thiệu GPT-1, GPT-2, GPT-3
+như một dòng tiến hoá — decoder-only Transformer, pretrain bằng next-token
+prediction, ngày càng lớn hơn. Bài này đào sâu chính xác cơ chế huấn
+luyện đó: **pretraining** bằng mục tiêu **next-token prediction**, và vì
+sao self-supervised learning cho phép một mô hình học từ hàng tỷ trang
+văn bản mà không cần con người gán nhãn thủ công.
+
+Để đối chiếu: sub-module "Pretrained Language Models" (BERT, RoBERTa,
+ALBERT, T5) dùng phần **encoder** (hoặc encoder-decoder) của Transformer,
+pretrain bằng mục tiêu **điền vào chỗ trống** (masked language modeling),
+mạnh nhất ở tác vụ **hiểu** văn bản. GPT-style dùng riêng phần
+**decoder** (causal mask, chỉ nhìn về bên trái), pretrain bằng mục tiêu
+**sinh** văn bản tiếp theo, mạnh nhất ở tác vụ **tạo ra** nội dung mới.
+Đây không phải một biến thể nhỏ của BERT — là một lựa chọn kiến trúc/mục
+tiêu khác hẳn, phù hợp hơn cho bài toán sinh văn bản mở.
+
+## Vấn đề: lấy nhãn ở đâu cho hàng tỷ câu văn bản?
+
+Mọi mô hình supervised đã học trong track (linear regression, logistic
+regression, CNN...) đều cần dữ liệu có nhãn `y` do con người gán sẵn.
+Nhưng để một mô hình "hiểu ngôn ngữ" tốt, cần lượng văn bản khổng lồ (toàn
+bộ internet, sách, bài báo) — gán nhãn thủ công cho lượng dữ liệu này là
+bất khả thi.
+
+**Self-supervised learning** (học tự giám sát) giải quyết vấn đề này bằng
+một mẹo đơn giản nhưng mạnh: **tự tạo ra nhãn từ chính dữ liệu**, không
+cần con người gán thêm. Với văn bản, cách tự nhiên nhất là: cho mô hình
+xem một đoạn văn bản, **che đi phần cuối**, và yêu cầu nó dự đoán phần bị
+che — chính văn bản gốc (mà ta đã có sẵn, không cần gán thêm) đóng vai trò
+là "đáp án đúng".
+
+## Next-token prediction: dự đoán từ tiếp theo
+
+Cụ thể, mục tiêu huấn luyện phổ biến nhất cho LLM hiện đại (kiểu GPT) là
+**next-token prediction** (dự đoán token tiếp theo): cho mô hình xem một
+chuỗi token (từ hoặc mảnh từ) `t_1, t_2, ..., t_n`, huấn luyện nó dự đoán
+`t_{n+1}` — token tiếp theo trong chuỗi. Với mọi câu văn bản có sẵn, ta có
+thể tạo ra vô số cặp (ngữ cảnh, token-tiếp-theo) chỉ bằng cách trượt qua
+từng vị trí trong văn bản — không cần bất kỳ nhãn nào ngoài chính văn bản
+đó.
+
+Hàm loss dùng lại chính xác **cross-entropy loss** đã học ở bài
+[Logistic Regression](03-logistic-regression.mdx)/[Softmax](03-logistic-regression.mdx):
+tại mỗi vị trí, mô hình đưa ra một phân phối xác suất trên toàn bộ từ vựng
+(có thể hàng chục nghìn token khả dĩ), và loss đo mức độ "tự tin đúng" vào
+token thật sự xuất hiện tiếp theo.
+
+## Nhắc lại: vì sao cần causal mask (đã học ở bài GPT-1)
+
+Next-token prediction đòi hỏi mô hình **không được phép nhìn thấy tương
+lai** khi dự đoán token tiếp theo — nếu không, nó chỉ đơn giản "chép"
+đáp án từ chính input, không học được gì. Đây chính là lý do GPT-1 (sub-
+module trước) dùng **causal mask**: mỗi vị trí chỉ liên hệ được với các
+vị trí đứng trước hoặc bằng nó, chặn hoàn toàn thông tin từ phía sau —
+kiến trúc **decoder-only Transformer**, và cách dự đoán tuần tự token
+này qua token khác gọi là tính chất **autoregressive** (tự hồi quy). Bài
+này không nhắc lại cơ chế đó (xem GPT-1 để hiểu đầy đủ), chỉ tập trung
+vào phần GPT-1 không đi sâu: **vì sao** self-supervised pretraining trên
+corpus khổng lồ lại hiệu quả tới vậy.
+
+## Kết quả của pretraining: một mô hình biết "tiếp tục" văn bản
+
+Sau khi pretrain trên lượng văn bản khổng lồ, mô hình học được khả năng
+cơ bản: cho một đoạn văn bản bất kỳ, dự đoán phần tiếp theo hợp lý nhất.
+Nghe đơn giản, nhưng để làm tốt việc này ở quy mô lớn, mô hình buộc phải
+học được rất nhiều thứ ẩn bên trong: ngữ pháp, sự thật về thế giới, khả
+năng suy luận cơ bản, phong cách viết khác nhau — vì tất cả những thứ đó
+đều giúp dự đoán token tiếp theo chính xác hơn. Đây là lý do một mục tiêu
+huấn luyện tưởng chừng đơn giản (dự đoán từ tiếp theo) lại tạo ra được
+những khả năng phong phú không được dạy trực tiếp.
+
+Mô hình sau bước pretraining này gọi là **base model** (hay pretrained
+model) — nó đã "biết" rất nhiều nhưng chưa được định hướng để trả lời câu
+hỏi, làm theo hướng dẫn, hay trò chuyện theo cách con người mong muốn. Đó
+là công việc của bước tiếp theo trong series: **fine-tuning**.
+
+## Liên hệ lại với các bài trước
+
+- Bài này không giới thiệu kiến trúc mới — nó đào sâu đúng cơ chế huấn
+  luyện đã dùng ở GPT-1/2/3 (sub-module trước), chỉ khác ở góc nhìn: các
+  bài GPT tập trung vào kiến trúc và kết quả từng model, bài này tập
+  trung vào lý do self-supervised pretraining hiệu quả ở quy mô lớn.
+- Next-token prediction dùng lại chính xác **cross-entropy loss** và
+  **softmax** đã học ở bài [Logistic Regression](03-logistic-regression.mdx)
+  — chỉ khác là dự đoán trên hàng chục nghìn lớp (từ vựng) thay vì 2 lớp,
+  và lặp lại việc dự đoán này ở mọi vị trí trong chuỗi.
+- Việc huấn luyện vẫn là [backpropagation](09-backpropagation.mdx) và
+  gradient descent — không có kỹ thuật tối ưu hoá mới, chỉ có mục tiêu
+  (dự đoán token tiếp theo) và cách tạo dữ liệu train (self-supervised,
+  không cần nhãn con người) là mới.
+- Self-supervised learning ở đây là một cách nhìn khác về ranh giới
+  supervised/unsupervised đã phân biệt từ bài
+  [K-means Clustering](07-k-means-clustering.mdx): về mặt kỹ thuật huấn
+  luyện vẫn có "nhãn" (token tiếp theo), nhưng nhãn đó được tạo tự động từ
+  chính dữ liệu, không cần con người gán — một dạng lai giữa 2 thế giới.
+
+## Nguồn tham khảo
+
+- [Dive into Deep Learning — Natural Language Processing: Pretraining](http://d2l.ai/chapter_natural-language-processing-pretraining/index.html) — dùng cho lập luận cốt lõi: self-supervised learning cho phép pretrain trên corpus lớn không nhãn bằng cách dự đoán một phần văn bản từ phần còn lại, hiệu quả hơn train from scratch cho từng task riêng lẻ.
+- [Dive into Deep Learning — BERT: Pretraining](http://d2l.ai/chapter_natural-language-processing-pretraining/bert.html) — dùng cho khái niệm self-supervised pretraining task không cần gán nhãn thủ công, làm nền tảng đối chiếu với next-token prediction (khác BERT ở việc dùng causal mask thay vì bidirectional context).

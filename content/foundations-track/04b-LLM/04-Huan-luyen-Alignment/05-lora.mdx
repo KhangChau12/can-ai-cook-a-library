@@ -1,0 +1,96 @@
+---
+title: LoRA — Fine-tune Hàng Tỷ Tham số Bằng Cách Chỉ Học Một Ma trận Hạng Thấp
+track: foundations-track
+module: LLM
+submodule: Huấn luyện & Alignment
+order: 5
+status: stable
+prerequisites: ["03-fine-tuning-instruction-tuning"]
+summary: Instruction tuning (bài 26) nói 'fine-tuning nhanh và cần ít dữ liệu hơn pretraining' nhưng không nói CÁCH cụ thể để làm điều đó hiệu quả về tham số. Hu và cộng sự (2021, Microsoft) đề xuất LoRA: giả định rằng thay đổi trọng số khi fine-tune có 'hạng nội tại' (intrinsic rank) thấp — thay vì cập nhật toàn bộ ma trận trọng số khổng lồ, chỉ cần học một cặp ma trận hạng thấp nhỏ hơn hàng nghìn lần, đóng băng hoàn toàn trọng số gốc.
+last_touched_by_task: Viết mới 2026-07-06: lấp khoảng trống — track chưa từng nhắc kỹ thuật fine-tuning hiệu quả tham số nào, dù đây là kỹ thuật fine-tuning phổ biến nhất hiện nay (liên hệ trực tiếp bài 26 và exam-track 04/06 freeze layer). Nguồn: arxiv 2106.09685 (Hu, Shen, Wallis, Allen-Zhu, Li, Wang, Wang, Chen 2021, Microsoft) — chỉ 1 nguồn vì không tìm được nguồn giải thích trực giác thứ 2 (sebastianraschka.com/lilianweng.github.io không có bài riêng qua WebSearch); LoRA là 1 kỹ thuật cụ thể, không phải dòng tiến hoá nhiều model cạnh tranh, áp dụng ngoại lệ mục 2.1 như tiền lệ RoBERTa/DPO/WordPiece.
+---
+
+Bài [Fine-tuning & Instruction Tuning](26-fine-tuning-instruction-tuning.mdx)
+nói fine-tuning "nhanh hơn và cần ít dữ liệu hơn pretraining rất nhiều" —
+nhưng với các LLM hiện đại có hàng chục tới hàng trăm tỷ tham số, ngay cả
+fine-tuning **toàn bộ** tham số đó cũng đòi hỏi lượng bộ nhớ GPU khổng lồ
+(phải lưu gradient và trạng thái optimizer cho **mọi** tham số). Bài này
+giải thích một kỹ thuật giải quyết đúng vấn đề chi phí đó.
+
+## Giả thuyết cốt lõi: thay đổi trọng số khi fine-tune có "hạng nội tại" thấp
+
+**Hu và cộng sự (2021)**, trong bài báo "LoRA: Low-Rank Adaptation of
+Large Language Models" (Microsoft), đặt ra một giả thuyết toán học: dù
+một ma trận trọng số pretrained có kích thước rất lớn, **lượng thay đổi**
+cần thiết để thích ứng nó với một tác vụ cụ thể (fine-tune) thường nằm
+trong một không gian con có **số chiều thấp hơn nhiều** — nói cách khác,
+ma trận biểu diễn sự thay đổi đó có **hạng (rank) thấp**, dù bản thân ma
+trận trọng số gốc có hạng đầy đủ.
+
+## Giải pháp: phân rã ma trận thay đổi thành tích của 2 ma trận nhỏ
+
+Với một ma trận trọng số pretrained `W` (kích thước `d × k`, đóng băng
+hoàn toàn, **không** cập nhật gradient), thay vì học trực tiếp một ma
+trận cập nhật `ΔW` cùng kích thước `d × k`, LoRA biểu diễn `ΔW` như tích
+của **hai** ma trận nhỏ hơn nhiều:
+
+```
+W' = W + ΔW = W + B·A
+```
+
+Trong đó `B` có kích thước `d × r` và `A` có kích thước `r × k`, với
+`r` (gọi là **rank**, hạng) được chọn **nhỏ hơn rất nhiều** so với `d`
+và `k` — chỉ `B` và `A` là tham số cần huấn luyện, `W` gốc giữ nguyên bất
+biến. Ví dụ cụ thể: với một lớp `d = k = 512` và chọn `r = 8`, số tham số
+cần học giảm từ `512 × 512 = 262,144` xuống chỉ còn
+`8 × (512 + 512) = 8,192` — giảm hơn **96%**.
+
+Một chi tiết khởi tạo quan trọng: ma trận `A` được khởi tạo **ngẫu
+nhiên** (theo phân phối Gaussian), còn `B` được khởi tạo **bằng 0** —
+đảm bảo `ΔW = B·A = 0` ngay từ đầu, nghĩa là mô hình bắt đầu quá trình
+fine-tune từ **đúng** hành vi của model pretrained gốc, rồi mới dần dần
+học ra thay đổi cần thiết qua quá trình huấn luyện.
+
+## Vì sao không phát sinh thêm chi phí khi suy luận (inference)
+
+Một lo ngại tự nhiên: nếu fine-tune bằng cách thêm một phép tính phụ
+(`B·A`), liệu việc dự đoán sau này có chậm hơn không? Câu trả lời: không
+— vì phép cộng `W + B·A` là phép cộng ma trận thông thường (cùng kích
+thước `d × k`), ta có thể **gộp** (merge) trực tiếp `B·A` vào `W` trước
+khi triển khai, tạo ra một ma trận trọng số duy nhất có **đúng cùng kích
+thước** với model gốc chưa fine-tune. Sau bước gộp này, mô hình chạy suy
+luận với tốc độ **y hệt** model pretrained ban đầu — không hề chậm hơn
+dù đã fine-tune.
+
+## Kết quả: giảm hàng nghìn lần tham số, chất lượng tương đương full fine-tuning
+
+Hu và cộng sự báo cáo LoRA giảm số tham số cần huấn luyện tới **10.000
+lần** và giảm yêu cầu bộ nhớ GPU tới **3 lần** so với fine-tune toàn bộ
+GPT-3 175B bằng Adam optimizer — trong khi đạt chất lượng **tương đương
+hoặc tốt hơn** full fine-tuning trên nhiều mô hình (RoBERTa, DeBERTa,
+GPT-2, GPT-3), dù có ít tham số huấn luyện hơn và tốc độ huấn luyện
+(throughput) cao hơn.
+
+## Liên hệ lại với các bài trước
+
+- LoRA là câu trả lời cụ thể cho câu hỏi "làm sao fine-tune hiệu quả về
+  tham số" mà bài [Fine-tuning](26-fine-tuning-instruction-tuning.mdx)
+  chỉ nói chung chung ("nhanh hơn, ít dữ liệu hơn"). Kỹ thuật đóng băng
+  trọng số gốc cũng cùng tinh thần với **full freezing** đã học ở bài
+  exam-track [Transfer Learning & Fine-tuning](../exam-track/04-transfer-learning-va-fine-tuning.mdx)
+  — nhưng thay vì chỉ mở/khoá nguyên layer, LoRA cho phép "mở một phần
+  rất nhỏ" của mỗi layer (thông qua ma trận hạng thấp), linh hoạt hơn
+  nhiều so với chọn giữa "khoá hẳn" hay "mở hẳn" một layer.
+- Ý tưởng phân rã một ma trận lớn thành tích của các ma trận nhỏ hơn để
+  giảm tham số gợi nhớ cách [ALBERT](../02-Pretrained-Language-Models/03-albert.mdx)
+  dùng factorized embedding parameterization (tách `V×H` thành `V×E + E×H`) — cùng
+  nguyên lý toán học (phân rã ma trận hạng thấp) áp dụng ở hai bối cảnh
+  khác nhau (embedding layer vs mọi layer cần fine-tune).
+- Khởi tạo `B = 0` để đảm bảo bắt đầu từ đúng hành vi gốc là một nguyên
+  tắc thận trọng tương tự tinh thần "không phá vỡ đặc trưng đã học" đã
+  gặp ở bài exam-track khi dùng learning rate nhỏ hơn cho phần pretrain
+  trong fine-tuning thông thường.
+
+## Nguồn tham khảo
+
+- [arXiv — LoRA: Low-Rank Adaptation of Large Language Models](https://arxiv.org/abs/2106.09685) — paper gốc của Hu và cộng sự (2021, Microsoft), dùng cho giả thuyết hạng nội tại thấp, công thức phân rã `W' = W + B·A` (kích thước cụ thể, chiến lược khởi tạo A ngẫu nhiên/B=0), lập luận không phát sinh inference latency (merge weights), và kết quả thực nghiệm (giảm 10.000 lần tham số/3 lần GPU memory trên GPT-3 175B, chất lượng tương đương hoặc tốt hơn trên RoBERTa/DeBERTa/GPT-2/GPT-3).

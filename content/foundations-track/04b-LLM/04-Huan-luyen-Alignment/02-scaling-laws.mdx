@@ -1,0 +1,131 @@
+---
+title: Scaling Laws — Vì sao LLM cứ to hơn lại thường tốt hơn
+track: foundations-track
+module: LLM
+submodule: Huấn luyện & Alignment
+order: 2
+status: stable
+prerequisites: ["01-pretraining-llm"]
+summary: Kaplan và cộng sự (2020) chỉ ra loss tuân theo power-law với 3 yếu tố: số tham số, lượng dữ liệu, và compute — kết luận ban đầu: huấn luyện mô hình rất lớn trên dữ liệu vừa phải rồi dừng sớm. Hoffmann và cộng sự (2022, Chinchilla) điều chỉnh lại: kích thước mô hình và lượng dữ liệu cần tăng theo tỷ lệ NGANG NHAU — Chinchilla 70B (4 lần dữ liệu Gopher, cùng compute) vượt trội Gopher 280B/GPT-3 175B, cho thấy phần lớn LLM lớn thời điểm đó bị huấn luyện chưa tới.
+last_touched_by_task: Viết lại theo triết lý nội dung mới (2026-07-06): thêm tên tác giả/năm/tên paper cụ thể (Kaplan et al., 2020, 'Scaling Laws for Neural Language Models') và cấu trúc quan hệ cụ thể (power-law, không phải chỉ 'không tuyến tính' chung chung), cùng kết luận cụ thể về sample efficiency và early stopping — xác nhận qua WebFetch trực tiếp abstract arxiv 2001.08361. Cập nhật (2026-07-06, Task 86): thử lại tìm nguồn Chinchilla (trước đó đánh dấu 'chưa xác nhận qua nguồn whitelist đọc được') — lần này xác nhận thành công qua WebFetch trực tiếp arxiv 2203.15556 (Hoffmann et al. 2022, DeepMind), thêm đoạn 'Chinchilla điều chỉnh lại Kaplan' với số liệu cụ thể (70B params/4x data Gopher, MMLU 67.5%/+7pp).
+---
+
+Bài [Pretraining](24-pretraining-llm.mdx) giải thích **cách** LLM học (next-
+token prediction trên corpus khổng lồ). Câu hỏi tự nhiên tiếp theo: quy mô
+— số tham số của mô hình, lượng dữ liệu huấn luyện, lượng compute bỏ ra —
+ảnh hưởng thế nào tới kết quả cuối cùng? **Scaling laws** (quy luật mở
+rộng quy mô) là câu trả lời thực nghiệm cho câu hỏi này, và là kim chỉ nam
+chi phối gần như mọi quyết định thiết kế LLM trong thực tế.
+
+## Quan sát cốt lõi: performance cải thiện có thể dự đoán được khi tăng quy mô
+
+**Kaplan và cộng sự (2020)**, trong bài báo "Scaling Laws for Neural
+Language Models", là những người đầu tiên đo đạc và mô tả chính xác xu
+hướng này: khi huấn luyện nhiều mô hình ở các quy mô khác nhau (số tham
+số khác nhau, lượng dữ liệu khác nhau) và đo loss (cụ thể là
+cross-entropy loss của next-token prediction, đã học ở bài trước), loss
+tuân theo một **power-law** (quy luật luỹ thừa) đối với cả ba yếu tố:
+số tham số, lượng dữ liệu, và compute. Đây là lý do gọi là "luật" (laws):
+không phải một hiện tượng ngẫu nhiên xảy ra ở một vài mô hình cụ thể, mà
+là một xu hướng lặp lại nhất quán, có công thức toán học mô tả được, qua
+rất nhiều quy mô mô hình khác nhau.
+
+Điểm quan trọng cần nhấn mạnh: dạng **power-law** này không tuyến tính.
+Tăng gấp đôi số tham số không đơn giản cho ra cải thiện gấp đôi — chi phí
+compute cần thiết để tiếp tục cải thiện tăng nhanh hơn nhiều so với mức
+cải thiện thu được. Một kết luận khác, khá phản trực giác, mà Kaplan và
+cộng sự rút ra: **mô hình lớn hơn thực chất "tiết kiệm mẫu" (sample-
+efficient) hơn** — nghĩa là chiến lược huấn luyện tối ưu về mặt compute
+không phải là "huấn luyện một mô hình nhỏ cho tới khi hội tụ hoàn toàn",
+mà là **huấn luyện một mô hình rất lớn trên một lượng dữ liệu tương đối
+vừa phải, rồi dừng sớm** — trước khi mô hình thực sự hội tụ. Nói cách
+khác, lợi ích biên (marginal benefit) của việc tăng quy mô giảm dần
+theo đúng dạng luỹ thừa, dù xu hướng tổng thể vẫn là "to hơn thì tốt
+hơn".
+
+## Ba trục có thể mở rộng: tham số, dữ liệu, compute
+
+Ba yếu tố chính ảnh hưởng tới performance của một LLM:
+
+- **Số tham số (`N`)** — kích thước mô hình, quyết định "sức chứa" của
+  mô hình để học các pattern phức tạp trong dữ liệu.
+- **Lượng dữ liệu huấn luyện (`D`)** — số token mô hình được huấn luyện
+  qua.
+- **Compute (`C`)** — tổng lượng tính toán bỏ ra, gắn chặt với cả `N` và
+  `D` (huấn luyện mô hình lớn hơn trên nhiều dữ liệu hơn đều tốn compute
+  nhiều hơn).
+
+Ba yếu tố này không độc lập — chúng ràng buộc lẫn nhau trong thực tế: với
+một ngân sách compute cố định, tăng số tham số thường có nghĩa phải giảm
+lượng dữ liệu huấn luyện mỗi tham số (huấn luyện chưa đủ lâu), và ngược
+lại. Đây chính là bài toán đánh đổi trung tâm khi thiết kế một LLM mới:
+**với ngân sách compute đã biết, nên phân bổ bao nhiêu cho việc làm mô
+hình lớn hơn, và bao nhiêu cho việc huấn luyện trên nhiều dữ liệu hơn?**
+
+## Vì sao điều này quan trọng trong thực tế
+
+Trước khi có scaling laws được nghiên cứu kỹ, quyết định "nên xây mô hình
+kích thước bao nhiêu, huấn luyện trên bao nhiêu dữ liệu" phần lớn dựa trên
+thử nghiệm và trực giác. Khi xu hướng mở rộng quy mô được quan sát và đo
+đạc có hệ thống, các phòng lab có thể **ngoại suy** (extrapolate) từ các
+thí nghiệm quy mô nhỏ, rẻ tiền hơn để dự đoán trước hiệu năng của một mô
+hình quy mô lớn hơn nhiều, tốn kém hơn nhiều — trước khi thực sự bỏ ra chi
+phí huấn luyện mô hình đó. Điều này biến việc thiết kế LLM từ "thử và
+xem" thành một bài toán có thể lập kế hoạch trước một phần.
+
+## Chinchilla: kết luận của Kaplan cần điều chỉnh lại
+
+Kết luận "huấn luyện mô hình rất lớn rồi dừng sớm" của Kaplan và cộng sự
+không phải điểm dừng cuối cùng của nghiên cứu scaling laws. **Hoffmann và
+cộng sự (2022, DeepMind)**, trong bài báo "Training Compute-Optimal Large
+Language Models", huấn luyện **hơn 400 mô hình** (từ 70 triệu tới hơn 16
+tỷ tham số, trên 5-500 tỷ token) để đo lại chính xác quan hệ tối ưu giữa
+kích thước mô hình và lượng dữ liệu. Kết luận của họ **điều chỉnh lại**
+khuyến nghị trước đó: để huấn luyện tối ưu về compute, **kích thước mô
+hình và số lượng token huấn luyện cần tăng theo tỷ lệ ngang nhau** — cứ
+gấp đôi số tham số thì cũng cần gấp đôi lượng dữ liệu huấn luyện, không
+phải ưu tiên tăng kích thước mô hình trong khi giữ dữ liệu gần như cố
+định như xu hướng trước đó trong ngành.
+
+Để kiểm chứng, nhóm huấn luyện **Chinchilla** — một mô hình chỉ **70 tỷ**
+tham số nhưng dùng **gấp 4 lần** lượng dữ liệu so với Gopher (280 tỷ tham
+số), với đúng **cùng một ngân sách compute**. Kết quả: Chinchilla vượt
+trội một cách nhất quán so với Gopher (280B), GPT-3 (175B), Jurassic-1
+(178B), và Megatron-Turing NLG (530B) — dù nhỏ hơn tất cả các mô hình đó
+đáng kể — trên hầu hết các tác vụ đánh giá downstream, đạt độ chính xác
+trung bình **67.5%** trên benchmark MMLU, cải thiện hơn **7 điểm phần
+trăm** so với Gopher. Kết luận chung: phần lớn các LLM lớn thời điểm đó
+**bị huấn luyện chưa tới** (undertrained) — hệ quả trực tiếp của xu hướng
+ưu tiên tăng kích thước mô hình trong khi giữ lượng dữ liệu huấn luyện
+gần như không đổi.
+
+## Giới hạn: scaling không phải phép màu vô hạn
+
+Xu hướng "to hơn thì tốt hơn" không có nghĩa là quy mô là yếu tố duy nhất
+quyết định chất lượng. Trên thực tế, chất lượng dữ liệu huấn luyện, cách
+huấn luyện (kiến trúc, hyperparameter), và các bước sau pretraining (fine-
+tuning, alignment — sẽ học ở các bài tiếp theo trong series) đều ảnh
+hưởng đáng kể tới khả năng thực tế của mô hình, không chỉ riêng số tham
+số. Một mô hình nhỏ hơn nhưng huấn luyện tốt hơn, trên dữ liệu chất lượng
+cao hơn, hoàn toàn có thể vượt trội một mô hình lớn hơn nhưng huấn luyện
+kém hiệu quả — scaling laws mô tả một xu hướng thống kê chung, không phải
+một đảm bảo tuyệt đối cho từng trường hợp cụ thể.
+
+## Liên hệ lại với các bài trước
+
+- Đây là ví dụ cụ thể, ở quy mô rất lớn, cho nguyên tắc đánh đổi bias-
+  variance đã gặp xuyên suốt giáo trình (`max_depth` ở Decision Tree, `k`
+  ở k-NN, `C` ở SVM): mô hình có sức chứa (capacity) lớn hơn (nhiều tham
+  số hơn) có khả năng khớp dữ liệu tốt hơn, nhưng đòi hỏi tương ứng nhiều
+  dữ liệu và compute hơn để tận dụng đúng sức chứa đó mà không rơi vào
+  underfitting (huấn luyện chưa đủ).
+- Loss được đo ở đây chính là cross-entropy loss của next-token
+  prediction đã học ở bài [Pretraining](24-pretraining-llm.mdx) — scaling
+  laws không giới thiệu hàm loss mới, chỉ mô tả cách loss đó biến thiên
+  theo quy mô.
+
+## Nguồn tham khảo
+
+- [arXiv — Scaling Laws for Neural Language Models](https://arxiv.org/abs/2001.08361) — paper gốc của Kaplan và cộng sự (2020), dùng cho quan sát cốt lõi (loss tuân theo power-law với số tham số/dữ liệu/compute) và kết luận về sample efficiency (mô hình lớn hơn tiết kiệm dữ liệu hơn, nên huấn luyện mô hình lớn trên dữ liệu vừa phải rồi dừng sớm thay vì huấn luyện mô hình nhỏ tới hội tụ).
+- [arXiv — Training Compute-Optimal Large Language Models](https://arxiv.org/abs/2203.15556) — paper Chinchilla của Hoffmann và cộng sự (2022, DeepMind), dùng cho kết luận điều chỉnh lại Kaplan (kích thước mô hình và lượng dữ liệu cần tăng theo tỷ lệ ngang nhau), kết quả cụ thể Chinchilla 70B (4 lần dữ liệu Gopher, cùng compute) vượt Gopher/GPT-3/Jurassic-1/Megatron-Turing NLG, và số liệu MMLU 67.5% (+7 điểm phần trăm so với Gopher).
+- [7 Concepts Behind Large Language Models Explained in 7 Minutes (MachineLearningMastery)](https://machinelearningmastery.com/7-concepts-behind-large-language-models-explained-in-7-minutes/) — dùng cho nhận định cốt lõi: nhiều tham số hơn nhìn chung cho performance tốt hơn nhưng quan hệ không tuyến tính, và việc mở rộng quy mô mô hình đòi hỏi tăng đáng kể compute, dữ liệu, và thời gian huấn luyện tương ứng.

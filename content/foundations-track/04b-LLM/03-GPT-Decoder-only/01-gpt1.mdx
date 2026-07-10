@@ -1,0 +1,96 @@
+---
+title: GPT-1 — Decoder-only Transformer và Pretrain-rồi-Fine-tune
+track: foundations-track
+module: LLM
+submodule: GPT & Decoder-only
+order: 1
+status: stable
+prerequisites: ["01-llm-overview", "01-bert"]
+summary: Trước GPT, ELMo đạt hiệu quả nhưng cần kiến trúc riêng cho từng tác vụ downstream. Radford và cộng sự (2018, OpenAI) giải quyết bằng GPT: dùng decoder Transformer với causal mask, pretrain qua next-token prediction trên corpus không nhãn, rồi fine-tune GẦN NHƯ TOÀN BỘ tham số cho từng tác vụ cụ thể — chỉ cần thêm một lớp output tuyến tính, không cần thiết kế kiến trúc riêng cho mỗi loại bài toán. Đạt cải thiện SOTA trên 9/12 tác vụ NLP benchmark.
+last_touched_by_task: Bài mới (2026-07-10), mở sub-module "GPT & Decoder-only" — bài đầu tiên trong dòng tiến hoá GPT-1 → GPT-2 → GPT-3, đối trọng trực tiếp với sub-module "Pretrained Language Models" (BERT-họ, encoder-only) học ngay trước. Nguồn: d2l.ai (xác nhận qua WebFetch chapter BERT: kiến trúc GPT dùng decoder Transformer trái-phải, quy trình 2 giai đoạn pretraining+fine-tuning fine-tune TOÀN BỘ tham số khác ELMo đóng băng, tính chất task-agnostic chỉ cần thêm lớp output tuyến tính, kết quả cụ thể cải thiện SOTA 9/12 tác vụ) + machinelearningmastery.com (xác nhận qua WebSearch: định nghĩa decoder-only là kiến trúc tập trung dự đoán token tiếp theo, đối chiếu với encoder-only/encoder-decoder). Paper gốc GPT-1 (Radford et al. 2018, "Improving Language Understanding by Generative Pre-Training") không có bản arxiv, chỉ công bố qua OpenAI — trích dẫn qua d2l.ai (đã xác nhận đọc trực tiếp nội dung liên quan) thay vì trích thẳng nguồn OpenAI (ngoài whitelist).
+---
+
+Sub-module trước ("Pretrained Language Models") kể nhánh **encoder-only**
+(BERT-họ): giữ phần encoder của Transformer, pretrain bằng điền chỗ
+trống, mạnh cho tác vụ hiểu. Bài này bắt đầu kể nhánh còn lại — **decoder-
+only** (GPT-họ) — bằng chính model đầu tiên khởi xướng nó: **GPT-1**.
+
+## Bối cảnh trước GPT: ELMo hiệu quả nhưng cần kiến trúc riêng cho từng tác vụ
+
+Trước GPT, một hướng tiếp cận phổ biến để tận dụng biểu diễn ngôn ngữ
+học từ dữ liệu không nhãn là **ELMo** (đã nhắc tới ở bài BERT) — đạt
+được ngữ cảnh hai chiều, nhưng có một hạn chế quan trọng: các tham số
+ELMo học được thường bị **đóng băng** khi áp dụng cho tác vụ downstream,
+và mỗi loại tác vụ (phân loại, gán nhãn chuỗi, hỏi-đáp) vẫn cần thiết kế
+một **kiến trúc riêng** phía trên ELMo — không có một công thức chung áp
+dụng thẳng cho mọi tác vụ.
+
+## Giải pháp: Radford và cộng sự (2018) — pretrain rồi fine-tune toàn bộ
+
+**Radford và cộng sự (2018)**, trong bài báo "Improving Language
+Understanding by Generative Pre-Training" (OpenAI), đề xuất một quy
+trình hai giai đoạn đơn giản hơn nhiều:
+
+1. **Pretraining không giám sát:** huấn luyện một mô hình ngôn ngữ trên
+   corpus văn bản lớn không có nhãn, bằng mục tiêu **next-token
+   prediction** (dự đoán token tiếp theo) — cùng nguyên lý sẽ được đào
+   sâu ở bài Pretraining (sub-module sau).
+2. **Fine-tuning có giám sát:** với mỗi tác vụ downstream cụ thể, **fine-
+   tune gần như toàn bộ tham số** của mô hình đã pretrain (khác hẳn ELMo,
+   nơi tham số thường bị đóng băng) trên dữ liệu có nhãn của tác vụ đó.
+
+## Kiến trúc: decoder Transformer, chỉ nhìn về bên trái
+
+Để thực hiện next-token prediction, GPT dùng **decoder** của Transformer
+(đã học ở module NLP) với **causal mask** — mỗi vị trí chỉ được phép
+liên hệ với các vị trí đứng trước hoặc bằng nó, xử lý văn bản theo chiều
+**trái-phải** duy nhất. Đây chính xác là kiến trúc **decoder-only
+Transformer**: không có encoder riêng biệt, chỉ một chuỗi các khối
+decoder xếp chồng, vai trò tương tự phần decoder trong Transformer gốc
+nhưng dùng độc lập, không nhận input từ một encoder nào khác — khác
+hẳn kiến trúc encoder-only của BERT (ngữ cảnh hai chiều, không causal
+mask).
+
+## Task-agnostic: chỉ cần thêm một lớp output tuyến tính
+
+Điểm mấu chốt tạo nên sức mạnh thực dụng của GPT: kiến trúc này là
+**task-agnostic** (không phụ thuộc tác vụ cụ thể) — để áp dụng cho một
+tác vụ downstream mới, chỉ cần thêm **một lớp output tuyến tính đơn
+giản** phía trên mô hình đã pretrain, sau đó fine-tune, mà **không cần**
+thiết kế lại kiến trúc riêng cho từng loại bài toán như cách tiếp cận
+trước đó (ELMo). Đây chính là điểm chung với BERT (cũng task-agnostic,
+cũng chỉ cần thêm lớp output) — điểm khác biệt duy nhất giữa hai hướng
+tiếp cận nằm ở việc dùng **encoder** (BERT, ngữ cảnh hai chiều) hay
+**decoder** (GPT, ngữ cảnh một chiều).
+
+## Kết quả: cải thiện SOTA trên 9/12 tác vụ NLP benchmark
+
+Radford và cộng sự đánh giá GPT trên **12 tác vụ NLP** khác nhau (bao
+gồm suy luận ngôn ngữ, trả lời câu hỏi, đánh giá tính tương đồng ngữ
+nghĩa, phân loại văn bản), và đạt kết quả cải thiện hiện đại nhất (SOTA)
+trên **9 trong số 12** tác vụ đó — một minh chứng thực nghiệm rõ ràng
+cho quy trình pretrain-rồi-fine-tune, dù đây chỉ là bước khởi đầu (GPT-2
+và GPT-3, hai bài tiếp theo, sẽ đẩy triết lý này đi xa hơn nhiều).
+
+## Liên hệ lại với các bài trước
+
+- GPT dùng nguyên vẹn khái niệm decoder Transformer với causal mask —
+  cùng cơ chế sẽ được đào sâu ở bài Pretraining (sub-module sau), chỉ
+  khác góc nhìn: bài này giới thiệu GPT như một model cụ thể có tên
+  riêng, bài Pretraining đào sâu **vì sao** cơ chế next-token prediction
+  hiệu quả ở quy mô lớn.
+- Đối chiếu trực tiếp với [BERT](../02-Pretrained-Language-Models/01-bert.mdx):
+  cả hai đều task-agnostic (chỉ cần thêm lớp output), cả hai đều pretrain
+  trên dữ liệu không nhãn rồi fine-tune — khác biệt duy nhất là encoder
+  (BERT, hai chiều) hay decoder (GPT, một chiều). Đây không phải hai
+  cách tiếp cận cạnh tranh loại trừ nhau, mà hai lựa chọn kiến trúc phù
+  hợp với hai lớp bài toán khác nhau (hiểu vs sinh).
+- Khác với ELMo (tham số bị đóng băng khi dùng cho downstream task), GPT
+  fine-tune gần như toàn bộ tham số — cùng tinh thần "tận dụng biểu diễn
+  đã học nhưng vẫn cho phép cập nhật" sẽ gặp lại ở bài Fine-tuning &
+  Instruction Tuning (sub-module Huấn luyện & Alignment).
+
+## Nguồn tham khảo
+
+- [Dive into Deep Learning — BERT: Pretraining](http://d2l.ai/chapter_natural-language-processing-pretraining/bert.html) — dùng cho mô tả kiến trúc GPT (decoder Transformer trái-phải), quy trình pretraining + fine-tuning (fine-tune toàn bộ tham số, khác ELMo đóng băng tham số), tính chất task-agnostic (chỉ cần thêm lớp output tuyến tính), và kết quả cụ thể (cải thiện SOTA trên 9/12 tác vụ NLP benchmark).
+- [Machine Learning Mastery — Encoders and Decoders in Transformer Models](https://machinelearningmastery.com/encoders-and-decoders-in-transformer-models/) — dùng cho định nghĩa decoder-only là kiến trúc tập trung hoàn toàn vào dự đoán token tiếp theo, đối chiếu với encoder-only và encoder-decoder, làm nền cho việc phân biệt 3 nhánh kiến trúc Transformer (encoder-only/decoder-only/encoder-decoder) xuất hiện xuyên suốt module.

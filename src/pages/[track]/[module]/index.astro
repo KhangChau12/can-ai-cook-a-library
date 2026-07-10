@@ -2,7 +2,7 @@
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import SiteHeader from '../../../components/SiteHeader.astro';
 import LessonRow from '../../../components/LessonRow.astro';
-import { getModuleGroups, trackLabel, type Track } from '../../../lib/content';
+import { getModuleGroups, trackLabel, LEVEL_LABELS, type Track } from '../../../lib/content';
 
 export async function getStaticPaths() {
   const tracks: Track[] = ['exam-track', 'foundations-track'];
@@ -19,49 +19,76 @@ export async function getStaticPaths() {
 const { group, track } = Astro.props as { group: Awaited<ReturnType<typeof getModuleGroups>>[number]; track: Track };
 const base = import.meta.env.BASE_URL;
 const totalLessons = group.lessons.length + group.submodules.reduce((n, s) => n + s.lessons.length, 0);
+
+const levelClasses: Record<string, string> = {
+  foundation: 'border-success/25 bg-success/10 text-success',
+  intermediate: 'border-primary-blue/25 bg-primary-blue/10 text-accent-blue',
+  advanced: 'border-warning/25 bg-warning/10 text-warning',
+};
 ---
 
 <BaseLayout title={group.name}>
   <SiteHeader />
 
-  <main class="mx-auto max-w-4xl px-5 py-12 sm:py-16">
+  <main class="mx-auto max-w-3xl px-5 py-12 sm:py-16">
     <nav class="mb-6 flex flex-wrap items-center gap-2 text-[12.5px] text-text-disabled">
       <a href={base} class="transition hover:text-text-tertiary">Trang chủ</a>
       <span>/</span>
-      <a href={`${base}${track}/`} class="transition hover:text-text-tertiary">{trackLabel(track)}</a>
+      <a href={`${base}#${track}`} class="transition hover:text-text-tertiary">{trackLabel(track)}</a>
       <span>/</span>
       <span class="text-text-tertiary">{group.name}</span>
     </nav>
 
     <div class="mb-10 border-b border-border-default pb-8">
-      <h1 class="text-3xl font-extrabold tracking-tight text-text-primary">{group.name}</h1>
+      <div class="flex flex-wrap items-center gap-2">
+        <span class={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10.5px] font-bold uppercase tracking-wide ${levelClasses[group.level]}`}>
+          {LEVEL_LABELS[group.level]}
+        </span>
+        <span class="text-[12px] font-semibold text-text-disabled">{trackLabel(track)}</span>
+      </div>
+      <h1 class="mt-3 text-3xl font-extrabold tracking-tight text-text-primary">{group.name}</h1>
       {group.meta?.description && (
         <p class="mt-3 max-w-2xl text-[14.5px] leading-relaxed text-text-tertiary">{group.meta.description}</p>
       )}
-      <p class="mt-3 font-mono text-[12.5px] text-text-disabled">{totalLessons} bài học</p>
+
+      <div class="mt-6 flex items-center gap-4">
+        <div class="h-2 flex-1 max-w-xs overflow-hidden rounded-full bg-bg-elevated">
+          <div data-module-progress-bar={`${track}/${group.slug}`} data-total={totalLessons} class="h-full w-0 rounded-full bg-gradient-to-r from-primary-blue to-accent-cyan-bright transition-all duration-500"></div>
+        </div>
+        <span data-module-progress-label={`${track}/${group.slug}`} class="font-mono text-[12.5px] font-bold text-text-tertiary">0 / {totalLessons} bài</span>
+      </div>
     </div>
 
     {group.lessons.length > 0 && (
-      <div class="mb-10">
+      <div class="mb-12">
         <div class="flex flex-col">
           {group.lessons.map((lesson, i) => <LessonRow lesson={lesson} index={i} />)}
         </div>
       </div>
     )}
 
-    {group.submodules.map((sub) => (
-      <section class="mb-10">
-        <h2 class="text-lg font-bold text-text-primary">{sub.name}</h2>
-        {sub.description && <p class="mt-1.5 max-w-2xl text-[13.5px] text-text-tertiary">{sub.description}</p>}
-        <div class="mt-4 flex flex-col">
-          {sub.lessons.map((lesson, i) => <LessonRow lesson={lesson} index={i} />)}
-        </div>
-      </section>
-    ))}
+    {group.submodules.length > 0 && (
+      <div class="flex flex-col gap-6">
+        {group.submodules.map((sub, subIndex) => (
+          <section class="rounded-xl border border-border-default bg-bg-surface/40 p-5">
+            <div class="mb-3 flex items-center gap-2.5 border-b border-border-default pb-3">
+              <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-primary-blue to-accent-cyan-bright font-mono text-[12px] font-extrabold text-white">
+                {subIndex + 1}
+              </span>
+              <h2 class="min-w-0 truncate text-[14.5px] font-bold text-text-primary" title={sub.name}>{sub.name}</h2>
+              <span class="ml-auto shrink-0 font-mono text-[11px] font-semibold text-text-disabled">{sub.lessons.length} bài</span>
+            </div>
+            <div class="flex flex-col">
+              {sub.lessons.map((lesson, i) => <LessonRow lesson={lesson} index={i} />)}
+            </div>
+          </section>
+        ))}
+      </div>
+    )}
   </main>
 
   <script>
-    import { getProgress } from '../../../lib/progress';
+    import { getProgress, getAllProgress } from '../../../lib/progress';
 
     document.querySelectorAll<HTMLElement>('[data-lesson-check]').forEach((el) => {
       const id = el.dataset.lessonCheck!;
@@ -72,5 +99,17 @@ const totalLessons = group.lessons.length + group.submodules.reduce((n, s) => n 
         el.classList.add('bg-accent-blue', 'border-accent-blue');
       }
     });
+
+    const progress = getAllProgress();
+    const bar = document.querySelector<HTMLElement>('[data-module-progress-bar]');
+    const label = document.querySelector<HTMLElement>('[data-module-progress-label]');
+    if (bar) {
+      const key = bar.dataset.moduleProgressBar!;
+      const total = parseInt(bar.dataset.total || '0', 10);
+      const done = Object.keys(progress).filter((id) => id.startsWith(`${key}/`) && progress[id] !== 'unread').length;
+      const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+      bar.style.width = `${pct}%`;
+      if (label) label.textContent = `${done} / ${total} bài`;
+    }
   </script>
 </BaseLayout>

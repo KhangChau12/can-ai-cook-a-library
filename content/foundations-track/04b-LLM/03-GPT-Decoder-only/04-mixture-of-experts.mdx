@@ -1,0 +1,117 @@
+---
+title: Mixture-of-Experts — Tăng Tham số Mà Không Tăng Compute Tuyến tính
+track: foundations-track
+module: LLM
+submodule: GPT & Decoder-only
+order: 4
+status: stable
+prerequisites: ["03-gpt3"]
+summary: GPT-3 chứng minh scale tham số cải thiện hiệu năng, nhưng theo cách "dense" — tăng tham số kéo theo tăng compute tuyến tính cho MỌI input. Shazeer và cộng sự (2017) giải quyết bằng Sparsely-Gated Mixture-of-Experts: hàng nghìn "expert" (mạng con), nhưng một gating network chỉ kích hoạt MỘT VÀI expert cho mỗi input cụ thể — tăng >1000 lần capacity mô hình chỉ với tổn thất nhỏ về hiệu quả tính toán. Switch Transformer (Fedus và cộng sự, 2021) đơn giản hoá còn hơn nữa (chỉ 1 expert/input), scale tới hàng nghìn tỷ tham số, nền tảng cho các LLM sparse hiện đại (Mixtral, GPT-4).
+last_touched_by_task: Bài mới (2026-07-10), sub-module "GPT & Decoder-only" — bài thứ 4, đối chiếu trực tiếp ALBERT (module cùng track, sub-module Pretrained Language Models): cùng mục tiêu "giảm chi phí tham số hiệu dụng" nhưng kỹ thuật đối lập hoàn toàn (chia sẻ trọng số dense vs định tuyến thưa). Nguồn: arxiv 1701.06538 (paper gốc Shazeer, Mirhoseini, Maziarz, Davis, Le, Hinton, Dean 2017, "Outrageously Large Neural Networks: The Sparsely-Gated Mixture-of-Experts Layer", xác nhận qua WebFetch abstract: vấn đề cụ thể capacity mạng nơ-ron bị giới hạn bởi số tham số + compute tăng tuyến tính theo tham số, giải pháp conditional computation qua gating network chọn động tập con expert, kết quả >1000x cải thiện capacity với tổn thất nhỏ hiệu quả tính toán, quy mô 137 tỷ tham số) + arxiv 2101.03961 (paper Fedus, Zoph, Shazeer 2021, "Switch Transformers", xác nhận qua WebSearch: đơn giản hoá routing chỉ 1 expert/input, giải quyết bất ổn huấn luyện MoE, scale tới trillion tham số, kết quả 7x tăng tốc pretrain so với T5-Base/Large cùng compute).
+---
+
+Bài [GPT-3](03-gpt3.mdx) chứng minh tăng quy mô tham số cải thiện hiệu
+năng — nhưng theo cách **dense**: mọi tham số của mô hình đều được kích
+hoạt (tham gia tính toán) cho **mọi** input, nên tăng tham số kéo theo
+tăng **compute tuyến tính** cho mọi lần suy luận. Bài này kể một hướng
+kiến trúc khác, giải quyết đúng giới hạn đó: **Mixture-of-Experts**
+(MoE) — tăng tham số **không** tăng compute theo cùng tỷ lệ.
+
+## Vấn đề: capacity mạng nơ-ron bị giới hạn bởi tham số, kéo theo compute tuyến tính
+
+**Shazeer và cộng sự (2017)**, trong bài báo "Outrageously Large Neural
+Networks: The Sparsely-Gated Mixture-of-Experts Layer", chỉ ra một giới
+hạn cơ bản: khả năng "hấp thụ thông tin" (capacity) của một mạng nơ-ron
+bị giới hạn trực tiếp bởi **số tham số** của nó. Nhưng với kiến trúc
+dense thông thường (như GPT, BERT, mọi mô hình đã học trong track), tăng
+số tham số đồng nghĩa tăng **chi phí tính toán tương ứng** cho mỗi lần
+suy luận — vì mọi tham số đều tham gia tính toán cho mọi input, không có
+cách nào "thêm capacity" mà không "thêm chi phí" theo cùng tỷ lệ.
+
+## Giải pháp: chỉ kích hoạt một phần nhỏ tham số cho mỗi input (conditional computation)
+
+Ý tưởng cốt lõi của MoE: thay vì có **một** mạng feed-forward dày đặc xử
+lý mọi input, xây dựng **hàng nghìn** mạng con nhỏ hơn gọi là **expert**
+(chuyên gia), cộng với một **gating network** (mạng cổng) nhỏ, có nhiệm
+vụ **quyết định động**, cho mỗi input cụ thể, nên kích hoạt **một vài**
+expert nào trong số hàng nghìn expert đó — phần lớn expert còn lại **không
+tham gia tính toán** cho input đó. Đây gọi là **conditional computation**
+(tính toán có điều kiện): tổng capacity của mô hình (tổng tham số của
+mọi expert cộng lại) có thể rất lớn, nhưng chi phí tính toán thực tế cho
+mỗi input chỉ tỷ lệ với số expert được kích hoạt (một số nhỏ, không phải
+toàn bộ).
+
+## Kết quả ban đầu: tăng hơn 1000 lần capacity, tổn thất nhỏ về hiệu quả
+
+Shazeer và cộng sự công bố: kỹ thuật Sparsely-Gated MoE đạt cải thiện
+**hơn 1000 lần** về capacity mô hình, chỉ với **tổn thất nhỏ** về hiệu
+quả tính toán — áp dụng thử nghiệm ở quy mô **137 tỷ tham số** (rất lớn
+so với thời điểm 2017), trên các benchmark mô hình hoá ngôn ngữ và dịch
+máy, đạt kết quả vượt trội hơn cả các mô hình dense state-of-the-art
+cùng thời, với chi phí tính toán **thấp hơn**.
+
+## Switch Transformer: đơn giản hoá còn hơn nữa, scale tới trillion tham số
+
+**Fedus, Zoph và Shazeer (2021)**, trong bài báo "Switch Transformers:
+Scaling to Trillion Parameter Models with Simple and Efficient
+Sparsity", đơn giản hoá thêm cơ chế định tuyến (routing) của MoE: thay
+vì chọn **nhiều** expert cho mỗi input (như thiết kế gốc), Switch
+Transformer chỉ chọn **đúng một** expert duy nhất — đơn giản hơn về
+thuật toán, giảm chi phí giao tiếp (communication) giữa các phần của mô
+hình khi huấn luyện phân tán trên nhiều thiết bị. Nhóm tác giả cũng giải
+quyết các vấn đề **bất ổn khi huấn luyện** MoE (như mất cân bằng tải
+giữa các expert — một số expert được chọn quá thường xuyên trong khi số
+khác gần như không bao giờ được dùng), và cho phép huấn luyện các mô
+hình sparse rất lớn với độ chính xác số học thấp hơn (bfloat16) mà vẫn
+ổn định.
+
+Kết quả cụ thể: các mô hình Switch Transformer dựa trên nền T5-Base và
+T5-Large (đã học ở sub-module Pretrained Language Models) đạt tốc độ
+**pretrain nhanh hơn tới 7 lần** so với phiên bản dense gốc, với **cùng
+một lượng tài nguyên tính toán** — và kỹ thuật này mở đường cho việc
+scale MoE tới quy mô **hàng nghìn tỷ** (trillion) tham số.
+
+## Đối chiếu với ALBERT: cùng mục tiêu, kỹ thuật đối lập hoàn toàn
+
+Cả MoE và [ALBERT](../02-Pretrained-Language-Models/03-albert.mdx) (đã
+học ở sub-module trước) đều nhắm tới mục tiêu chung: **giảm chi phí
+tham số hiệu dụng** so với một mô hình dense có cùng khả năng biểu diễn.
+Nhưng hai kỹ thuật đi theo hướng **đối lập nhau hoàn toàn**:
+
+- **ALBERT** giảm **tổng số tham số thực tế** bằng cách **chia sẻ**
+  trọng số giữa các lớp (cross-layer parameter sharing) — mọi input đều
+  đi qua đúng những tham số đã chia sẻ đó, không có sự khác biệt về
+  "đường đi" giữa các input khác nhau.
+- **MoE** giữ **tổng số tham số rất lớn** (không chia sẻ, mỗi expert có
+  bộ trọng số riêng), nhưng giảm **chi phí tính toán mỗi lần suy luận**
+  bằng cách chỉ kích hoạt một phần nhỏ tham số đó cho mỗi input — mỗi
+  input có thể đi theo một "đường đi" khác nhau qua các expert khác
+  nhau.
+
+Nói cách khác: ALBERT trả lời câu hỏi "làm sao có ít tham số hơn mà vẫn
+mạnh", còn MoE trả lời câu hỏi khác hẳn — "làm sao có nhiều tham số hơn
+(capacity lớn hơn) mà không phải trả chi phí tính toán tương ứng cho mỗi
+input". Cả hai đều là những câu trả lời hợp lệ cho vấn đề hiệu quả tham
+số, nhưng phục vụ hai kịch bản khác nhau: ALBERT phù hợp khi bị giới hạn
+bộ nhớ/kích thước mô hình triển khai, MoE phù hợp khi muốn tối đa hoá
+capacity trong khi vẫn kiểm soát được chi phí suy luận.
+
+## Liên hệ lại với các bài trước
+
+- MoE là nền tảng kiến trúc cho các LLM sparse hiện đại (Mixtral,
+  DeepSeek, và được cho là một phần kiến trúc GPT-4) — một minh chứng
+  cho thấy hướng "mở rộng quy mô" của GPT-3 (dense, đã học ở bài trước)
+  không phải con đường duy nhất để tiếp tục scale LLM.
+- Gating network (mạng cổng) trong MoE học cách "định tuyến" input tới
+  expert phù hợp — về tinh thần gợi nhớ cơ chế attention (mỗi query
+  "chọn" tập trung vào key/value nào, đã học ở module NLP), dù MoE định
+  tuyến ở cấp độ chọn **mạng con** thay vì chọn **vị trí trong chuỗi**.
+- Cùng nguyên tắc "đánh đổi giữa các trục hiệu quả khác nhau" (compute
+  vs tham số vs bộ nhớ) đã gặp nhiều lần trong track — ALBERT/MoE là một
+  cặp đối lập cụ thể khác, tương tự cặp đối lập RoBERTa (tăng resource
+  huấn luyện) vs ALBERT (giảm tham số) đã học ở sub-module trước.
+
+## Nguồn tham khảo
+
+- [arXiv — Outrageously Large Neural Networks: The Sparsely-Gated Mixture-of-Experts Layer](https://arxiv.org/abs/1701.06538) — paper gốc của Shazeer, Mirhoseini, Maziarz, Davis, Le, Hinton và Dean (2017), dùng cho vấn đề cụ thể (capacity mạng nơ-ron giới hạn bởi tham số, compute tăng tuyến tính), giải pháp (conditional computation qua gating network chọn động expert), và kết quả (hơn 1000x cải thiện capacity với tổn thất nhỏ hiệu quả tính toán, quy mô 137 tỷ tham số).
+- [arXiv — Switch Transformers: Scaling to Trillion Parameter Models with Simple and Efficient Sparsity](https://arxiv.org/abs/2101.03961) — paper của Fedus, Zoph và Shazeer (2021), dùng cho cải tiến đơn giản hoá routing (1 expert/input thay vì nhiều), giải quyết bất ổn huấn luyện MoE (mất cân bằng tải giữa expert), và kết quả cụ thể (7x tăng tốc pretrain so với T5-Base/Large cùng compute, scale tới trillion tham số).

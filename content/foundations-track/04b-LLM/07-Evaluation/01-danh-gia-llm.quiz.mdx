@@ -1,0 +1,53 @@
+---
+quiz_for: 01-danh-gia-llm
+---
+
+## Q1
+MMLU (Massive Multitask Language Understanding) đo cụ thể điều gì?
+
+- [ ] Tốc độ sinh token của mô hình trên một GPU cụ thể
+- [x] Kiến thức tổng quát trên diện rộng — bao phủ 57 chủ đề khác nhau, từ khoa học tự nhiên tới nhân văn
+- [ ] Chỉ đo khả năng dịch máy giữa các ngôn ngữ
+- [ ] Khả năng sinh code không lỗi cú pháp
+
+> Bài nêu rõ: MMLU bao phủ 57 chủ đề khác nhau, từ khoa học tự nhiên tới nhân văn, dùng để đo kiến thức tổng quát trên diện rộng — khác với GSM8K (tập trung vào toán) hay HellaSwag (commonsense knowledge).
+
+## Q2
+"Data contamination" là vấn đề gì cụ thể trong đánh giá LLM bằng benchmark?
+
+- [ ] Benchmark chứa lỗi chính tả khiến mô hình hiểu sai câu hỏi
+- [x] Dữ liệu benchmark vô tình xuất hiện trong dữ liệu huấn luyện (do pretrain trên gần như toàn bộ internet), khiến mô hình "học thuộc" câu hỏi thay vì thực sự hiểu/suy luận — điểm số trông tốt hơn thực tế
+- [ ] Benchmark chỉ hoạt động với văn bản tiếng Anh, gây sai lệch với ngôn ngữ khác
+- [ ] Mô hình từ chối trả lời một số câu hỏi trong benchmark vì lý do an toàn
+
+> Bài giải thích: với LLM pretrain trên corpus khổng lồ, nguy cơ benchmark công khai (đã xuất bản, có thể bị crawl) vô tình lọt vào dữ liệu huấn luyện là có thật — khiến điểm số benchmark không phản ánh đúng khả năng thực sự của mô hình, chỉ phản ánh việc nó đã "thấy" câu hỏi đó trước.
+
+## Q3
+LLM-as-judge là gì, và nhược điểm chính của nó là gì?
+
+- [ ] Là việc con người tự đánh giá LLM, không liên quan tới mô hình khác
+- [x] Dùng một LLM mạnh (như GPT-4/Claude) để chấm điểm output của mô hình khác theo rubric — nhược điểm là mô hình chấm điểm có thể mang thiên kiến (ưu ái phong cách viết tương tự nó), thiếu minh bạch, và khó khăn với miền chuyên sâu
+- [ ] Là một loại benchmark tự động dạng trắc nghiệm, không liên quan tới LLM khác
+- [ ] Chỉ dùng được để đánh giá code, không dùng được cho văn bản tự nhiên
+
+> Bài mô tả LLM-as-judge là dùng một LLM (GPT-4/Claude) chấm điểm output theo rubric — ưu điểm là mở rộng quy mô nhanh, nhưng nhược điểm gồm thiên kiến phong cách viết, thiếu minh bạch trong lý do chấm điểm, và khó khăn với miền chuyên sâu.
+
+## Q4
+Perplexity đo điều gì, và một lưu ý quan trọng khi so sánh perplexity giữa các mô hình là gì?
+
+- [x] Đo mức độ "bất ngờ" của mô hình khi dự đoán từng token — perplexity càng thấp càng tốt, nhưng chỉ có ý nghĩa so sánh khi đo trên CÙNG một bộ dữ liệu
+- [ ] Đo tốc độ huấn luyện, không liên quan tới chất lượng dự đoán
+- [ ] Perplexity càng cao nghĩa là mô hình càng tốt
+- [ ] Có thể so sánh perplexity giữa hai mô hình đo trên hai bộ dữ liệu khác nhau mà không cần lưu ý gì
+
+> Bài nêu: perplexity đo mức độ bất ngờ dựa trên xác suất next-token prediction, thấp hơn thường tốt hơn — nhưng là chỉ số PHỤ THUỘC DATASET, chỉ có ý nghĩa so sánh khi đo trên cùng một bộ dữ liệu.
+
+## Q5
+Bài học tổng quát cuối bài về việc đánh giá một LLM là gì?
+
+- [ ] Chỉ cần một benchmark duy nhất (ví dụ MMLU) là đủ để kết luận mô hình nào tốt hơn
+- [x] Không có một con số duy nhất trả lời trọn vẹn "mô hình này có tốt không" — cần kết hợp nhiều phương pháp (nhiều benchmark, kiểm tra data contamination, có thể cả đánh giá con người), không dựa hoàn toàn vào một con số
+- [ ] LLM-as-judge luôn đáng tin cậy hơn benchmark tự động trong mọi trường hợp
+- [ ] Perplexity là chỉ số duy nhất cần quan tâm khi đánh giá LLM
+
+> Bài kết luận: mỗi phương pháp đánh giá đo một khía cạnh khác nhau với đánh đổi/điểm mù riêng — đánh giá nghiêm túc cần kết hợp nhiều phương pháp, không dựa vào một con số benchmark duy nhất.

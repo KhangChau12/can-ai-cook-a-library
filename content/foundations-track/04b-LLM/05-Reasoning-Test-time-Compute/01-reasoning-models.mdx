@@ -1,0 +1,112 @@
+---
+title: Reasoning Models & Test-time Compute — Suy nghĩ Lâu hơn Lúc Suy luận, Không Chỉ To hơn Lúc Huấn luyện
+track: foundations-track
+module: LLM
+submodule: Reasoning & Test-time Compute
+order: 1
+status: stable
+prerequisites: ["02-scaling-laws", "01-prompting-in-context-learning"]
+summary: Scaling Laws (đã học) mô tả một trục cải thiện LLM: tăng tham số/dữ liệu/compute LÚC HUẤN LUYỆN. Reasoning model (OpenAI o1, DeepSeek-R1) mở ra một trục hoàn toàn khác: tăng compute LÚC SUY LUẬN — để mô hình "suy nghĩ" lâu hơn trước khi trả lời. DeepSeek-R1-Zero (DeepSeek, 2025) chứng minh khả năng suy luận phức tạp có thể xuất hiện từ RL THUẦN (không cần dữ liệu suy luận có nhãn của con người) với reward dựa trên quy tắc (đúng/sai + đúng định dạng) — mô hình tự học các hành vi như tự kiểm tra lại, thử chiến lược khác, và biết dừng lại đánh giá lại bước suy luận trước đó ("aha moment"), đạt hiệu năng cạnh tranh với OpenAI o1 trên toán học/lập trình.
+last_touched_by_task: Bài mới (2026-07-10), mở sub-module "Reasoning & Test-time Compute" — đối lập trực tiếp với Scaling Laws (sub-module Huấn luyện & Alignment) đã học, và phân biệt rõ với Chain-of-thought prompting (đã học ở bài Prompting & In-context Learning) vốn chỉ là kỹ thuật viết prompt, không phải cách huấn luyện mới. Nguồn: arxiv 2501.12948 (paper gốc DeepSeek-AI, "DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning", 2025, xác nhận qua WebFetch: DeepSeek-R1-Zero huấn luyện bằng RL thuần không qua SFT trước, cơ chế rule-based reward (accuracy + format), hiện tượng "aha moment" tự phát mô hình học cách dừng lại đánh giá lại suy luận, kết quả cạnh tranh với OpenAI-o1 trên toán/lập trình/STEM, và DeepSeek-R1 bản chuẩn dùng multi-stage training + cold-start data khác Zero). Chỉ 1 nguồn: đây là chủ đề rất mới (2025), đã thử tìm nguồn giải thích trực giác thứ 2 (lilianweng.github.io, sebastianraschka.com) qua WebSearch nhưng không tìm được bài viết riêng về reasoning model/test-time compute trong whitelist — áp dụng ngoại lệ mục 2.5 như tiền lệ RoBERTa/LoRA/DPO khi whitelist chưa phủ kịp chủ đề mới.
+---
+
+Bài [Scaling Laws](../04-Huan-luyen-Alignment/02-scaling-laws.mdx) mô tả
+một trục cải thiện LLM đã quen thuộc: tăng số tham số, lượng dữ liệu, và
+compute **lúc huấn luyện**. Bài này kể một trục cải thiện khác hẳn, gần
+đây mới nổi lên rõ rệt: tăng compute **lúc suy luận** (inference) — để
+mô hình "suy nghĩ" lâu hơn trước khi đưa ra câu trả lời cuối cùng, thay
+vì chỉ cải thiện bằng cách huấn luyện một mô hình to hơn.
+
+## Phân biệt quan trọng: khác Chain-of-thought prompting đã học
+
+Cần làm rõ ngay từ đầu: đây **không phải** chain-of-thought (CoT)
+prompting đã học ở bài [Prompting & In-context Learning](../06-Ung-dung-Inference-time/01-prompting-in-context-learning.mdx).
+CoT là một **kỹ thuật viết prompt** — yêu cầu mô hình (đã huấn luyện
+xong, không đổi) viết ra các bước suy luận trung gian trong cùng một lần
+sinh văn bản. **Reasoning model** (như OpenAI o1, DeepSeek-R1) là một
+cách tiếp cận khác về bản chất: mô hình được **huấn luyện riêng** (qua
+reinforcement learning) để biết cách tạo ra chuỗi suy luận dài, tự kiểm
+tra, và điều chỉnh chiến lược — đây là thay đổi ở **cách huấn luyện**,
+không chỉ ở cách prompt.
+
+## DeepSeek-R1-Zero: suy luận phức tạp nổi lên từ RL thuần, không cần SFT
+
+**DeepSeek-AI (2025)**, trong bài báo "DeepSeek-R1: Incentivizing
+Reasoning Capability in LLMs via Reinforcement Learning", giới thiệu
+**DeepSeek-R1-Zero** — chứng minh một kết quả đáng chú ý: khả năng suy
+luận phức tạp có thể **nổi lên** (emerge) hoàn toàn từ **reinforcement
+learning thuần tuý**, không cần bước supervised fine-tuning (SFT) làm
+nền trước, và không cần dữ liệu suy luận có nhãn do con người viết sẵn.
+Mô hình học các mẫu hình suy luận **hoàn toàn từ tín hiệu reward**,
+không từ quỹ đạo suy luận mẫu do con người cung cấp.
+
+## Cơ chế reward: dựa trên quy tắc (rule-based), không cần reward model học riêng
+
+Khác với RLHF (đã học ở sub-module Huấn luyện & Alignment — cần huấn
+luyện một **reward model** riêng từ dữ liệu xếp hạng của con người),
+DeepSeek-R1-Zero dùng **rule-based reward** (thưởng dựa trên quy tắc cố
+định, có thể kiểm chứng tự động): kết hợp hai tín hiệu — **accuracy**
+(câu trả lời cuối cùng có đúng hay không, kiểm tra được tự động ví dụ
+qua so khớp đáp án hoặc chạy thử code) và **format** (câu trả lời có
+tuân theo đúng cấu trúc định dạng yêu cầu hay không). Cách tiếp cận này
+chỉ khả thi với các miền có tiêu chí đúng/sai **rõ ràng, kiểm chứng
+được** (toán học, lập trình, các bài toán STEM) — không cần một mô hình
+riêng học cách "đoán" sở thích con người như RLHF.
+
+## Hiện tượng nổi lên: tự phản tư, tự kiểm tra, và "aha moment"
+
+Trong quá trình huấn luyện bằng RL, DeepSeek-R1-Zero **tự phát triển**
+(không được lập trình tường minh) một loạt hành vi phức tạp: **self-
+reflection** (tự nhìn lại bước suy luận đã làm), **verification** (tự
+kiểm tra lại kết quả trung gian), và **dynamic strategy exploration**
+(thử chiến lược giải khác khi cách tiếp cận hiện tại không hiệu quả).
+Đáng chú ý nhất: mô hình học được **khi nào nên dừng lại và đánh giá lại
+suy luận trước đó** — một hiện tượng nhóm tác giả gọi là **"aha
+moment"** — hoàn toàn nổi lên như một chiến lược tối ưu dưới khung RL,
+không phải hành vi được dạy trực tiếp. Test-time compute (số token suy
+luận mô hình sinh ra trước khi trả lời) tăng dần một cách tự nhiên
+trong quá trình huấn luyện — mô hình tự học rằng "suy nghĩ" lâu hơn giúp
+giải đúng các bài toán khó hơn.
+
+## DeepSeek-R1 (bản chuẩn): thêm cold-start data để thực dụng hơn
+
+Phiên bản Zero (RL thuần từ đầu) tuy chứng minh được khả năng suy luận
+có thể nổi lên hoàn toàn từ RL, nhưng có hạn chế thực tế (huấn luyện
+kém ổn định, output đôi khi khó đọc). **DeepSeek-R1** (bản chuẩn, không
+phải Zero) khắc phục bằng cách thêm một bước **multi-stage training**
+với **cold-start data** — một lượng nhỏ dữ liệu khởi động (có thể bao
+gồm ví dụ suy luận chất lượng cao) trước khi bắt đầu vòng lặp RL chính,
+giúp quá trình huấn luyện ổn định và thực dụng hơn so với RL hoàn toàn
+thuần tuý từ đầu.
+
+## Kết quả: cạnh tranh được với OpenAI o1
+
+DeepSeek-R1 đạt hiệu năng **vượt trội** so với các mô hình huấn luyện
+theo cách thông thường trên các tác vụ **có thể kiểm chứng được**
+(verifiable tasks) — toán học, thi đấu lập trình, các lĩnh vực STEM — và
+đạt kết quả **cạnh tranh được** với OpenAI-o1 (mô hình reasoning đóng
+của OpenAI, khởi xướng xu hướng này) trên cùng loại benchmark.
+
+## Liên hệ lại với các bài trước
+
+- Đây là trục cải thiện LLM **thứ hai**, độc lập với Scaling Laws (bài
+  trước): Scaling Laws nói về việc tăng tham số/dữ liệu/compute **lúc
+  huấn luyện** để giảm loss; reasoning model nói về việc tăng compute
+  **lúc suy luận** (số token "suy nghĩ" trước khi trả lời) để cải thiện
+  chất lượng câu trả lời cho từng câu hỏi cụ thể — hai trục này có thể
+  **kết hợp** với nhau, không loại trừ nhau.
+- Rule-based reward ở đây là một biến thể **đơn giản hoá** của RLHF (đã
+  học) — thay vì huấn luyện reward model riêng từ sở thích con người
+  (cần thiết cho các miền mở, không có tiêu chí đúng/sai rõ ràng),
+  rule-based reward dùng trực tiếp một hàm kiểm tra tự động cho các miền
+  có đáp án kiểm chứng được — đơn giản hơn nhưng chỉ áp dụng được cho
+  một lớp bài toán hẹp hơn RLHF.
+- "Aha moment" (mô hình tự học cách dừng và đánh giá lại) là một minh
+  chứng khác cho nguyên tắc "khả năng nổi lên khi đủ điều kiện" đã gặp ở
+  GPT-2 (zero-shot transfer) và GPT-3 (few-shot learning) — chỉ khác ở
+  đây điều kiện nổi lên không phải quy mô tham số, mà là quá trình RL
+  đủ dài trên miền có reward kiểm chứng được.
+
+## Nguồn tham khảo
+
+- [arXiv — DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning](https://arxiv.org/abs/2501.12948) — paper gốc của DeepSeek-AI (2025), dùng cho cơ chế DeepSeek-R1-Zero (RL thuần không qua SFT, không cần dữ liệu suy luận có nhãn), rule-based reward (accuracy + format), hiện tượng tự phát (self-reflection, verification, dynamic strategy exploration, "aha moment"), sự khác biệt giữa DeepSeek-R1-Zero và DeepSeek-R1 (multi-stage training + cold-start data), và kết quả cạnh tranh với OpenAI-o1 trên toán học/lập trình/STEM.

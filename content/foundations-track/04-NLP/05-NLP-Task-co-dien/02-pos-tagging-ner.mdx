@@ -1,0 +1,128 @@
+---
+title: POS Tagging & NER — Gán nhãn từng token bằng BiLSTM-CRF
+track: foundations-track
+module: NLP
+submodule: NLP Task cổ điển
+order: 2
+status: stable
+prerequisites: ["04-bidirectional-rnn", "01-phan-loai-van-ban"]
+summary: Phân loại văn bản gán MỘT nhãn cho CẢ câu; POS tagging và NER (Named Entity Recognition) là bài toán khác hẳn — sequence labeling, gán MỘT nhãn cho MỖI token, và nhãn của token này phụ thuộc vào nhãn token lân cận (không thể quyết định độc lập). Cách tiếp cận cổ điển dùng Conditional Random Field (CRF) mô hình hoá trực tiếp sự phụ thuộc đó bằng thống kê. Lample và cộng sự (2016) kết hợp Bidirectional LSTM (học biểu diễn ngữ cảnh) với CRF (ràng buộc nhãn hợp lệ) thành BiLSTM-CRF, đạt SOTA 4 ngôn ngữ mà không cần feature thủ công/gazetteer.
+last_touched_by_task: Bài mới (2026-07-10), sub-module "NLP Task cổ điển" — bài thứ 2, giới thiệu sequence labeling như một dạng bài toán NLP khác hẳn phân loại văn bản (bài trước). Nguồn: arxiv 1603.01360 (paper gốc Lample, Ballesteros, Subramanian, Kawakami, Dyer 2016, "Neural Architectures for Named Entity Recognition", xác nhận qua WebFetch abstract: vấn đề cụ thể NER truyền thống phụ thuộc feature thủ công/domain knowledge, kiến trúc BiLSTM-CRF kết hợp character-level + word embedding không cần feature thủ công, kết quả SOTA 4 ngôn ngữ không cần gazetteer) + machinelearningmastery.com (xác nhận qua WebFetch: ví dụ minh hoạ cụ thể NER, lịch sử 3 giai đoạn rule-based → HMM/CRF → deep learning, 3 thách thức sequence labeling, BIO/IOB tagging scheme).
+---
+
+Bài [Phân loại văn bản](01-phan-loai-van-ban.mdx) gán **một nhãn duy nhất
+cho cả câu** (tích cực/tiêu cực, spam/không spam). Nhiều bài toán NLP
+quan trọng lại cần một dạng nhãn khác hẳn: gán **một nhãn cho từng
+token** trong câu. Hai ví dụ kinh điển:
+
+- **POS tagging** (Part-of-Speech tagging — gán nhãn từ loại): mỗi từ
+  trong câu được gán một nhãn ngữ pháp (danh từ, động từ, tính từ...).
+- **NER** (Named Entity Recognition — nhận dạng thực thể có tên): mỗi
+  token được gán nhãn xem nó có phải một phần của thực thể có tên hay
+  không (người, tổ chức, địa điểm...). Ví dụ minh hoạ cụ thể: trong câu
+  "Microsoft's CEO Satya Nadella spoke at a conference in Seattle",
+  "Microsoft" được gán nhãn Organization, "Satya Nadella" gán nhãn
+  Person, "Seattle" gán nhãn Location — còn lại các từ khác không thuộc
+  thực thể nào.
+
+Cả hai bài toán này thuộc một lớp bài toán chung gọi là **sequence
+labeling** (gán nhãn chuỗi).
+
+## Vấn đề: nhãn của một token phụ thuộc vào nhãn token lân cận
+
+Khác với phân loại văn bản (mỗi câu một quyết định độc lập), sequence
+labeling có một đặc điểm quan trọng: **nhãn của một token không thể
+quyết định hoàn toàn độc lập** với nhãn của các token xung quanh. Ví dụ
+cụ thể minh hoạ từ machinelearningmastery.com: cùng một từ "Apple" mang
+nhãn khác nhau tuỳ ngữ cảnh — trong "Apple announced new products" nó là
+Organization, nhưng trong "I ate an apple for lunch" nó chỉ là danh từ
+chung, không phải thực thể.
+
+Ngoài phụ thuộc ngữ cảnh, sequence labeling còn gặp một ràng buộc mang
+tính **cấu trúc**: nếu dùng scheme gán nhãn phổ biến **BIO** (hay IOB —
+Beginning/Inside/Outside, đánh dấu token nào bắt đầu một thực thể, token
+nào tiếp tục thực thể đó, token nào không thuộc thực thể nào), một nhãn
+`I-Person` (tiếp tục thực thể Person) chỉ **hợp lệ** nếu token ngay
+trước nó được gán `B-Person` hoặc `I-Person` — không thể có `I-Person`
+đứng ngay sau một nhãn `O` (ngoài thực thể). Đây là một ràng buộc rõ
+ràng giữa nhãn liền kề mà nếu gán nhãn cho từng token hoàn toàn độc lập
+(không quan tâm nhãn xung quanh), mô hình có thể sinh ra chuỗi nhãn vô
+nghĩa.
+
+## Cách tiếp cận cổ điển: Conditional Random Field (CRF)
+
+**Conditional Random Field** (CRF) là một mô hình xác suất thống kê
+được thiết kế riêng để mô hình hoá sự phụ thuộc giữa các nhãn liền kề
+trong một chuỗi — thay vì tính xác suất của mỗi nhãn độc lập, CRF tính
+xác suất của **toàn bộ chuỗi nhãn** cùng lúc, có tính tới cả đặc trưng
+của từng token (giống một bộ phân loại thông thường) lẫn xác suất
+chuyển đổi giữa cặp nhãn liền kề (ví dụ xác suất `I-Person` đứng sau
+`B-Person` cao hơn nhiều so với đứng sau `O`). Trước khi có deep
+learning, CRF (cùng với Hidden Markov Model — HMM, một mô hình xác suất
+đơn giản hơn) là công cụ tiêu chuẩn cho NER và POS tagging, thường kết
+hợp với các đặc trưng thủ công (capitalization, tiền tố/hậu tố của từ,
+có nằm trong một danh sách tên riêng — gazetteer — hay không).
+
+## Giới hạn: CRF thuần cần rất nhiều feature engineering
+
+Vấn đề của CRF cổ điển: chất lượng của nó phụ thuộc nặng vào **đặc
+trưng thủ công** do con người thiết kế (viết hoa chữ cái đầu, tiền tố/
+hậu tố, gazetteer theo từng miền dữ liệu cụ thể) — tốn nhiều công sức,
+và các đặc trưng thiết kế cho một ngôn ngữ/miền dữ liệu thường không
+chuyển đổi tốt sang ngôn ngữ hay miền dữ liệu khác.
+
+## Giải pháp: BiLSTM-CRF — học biểu diễn, giữ ràng buộc thống kê
+
+**Lample và cộng sự (2016)**, trong bài báo "Neural Architectures for
+Named Entity Recognition", giải quyết vấn đề đó bằng cách **kết hợp**
+hai công cụ, mỗi công cụ đảm nhiệm đúng vai trò nó làm tốt nhất:
+
+- **Bidirectional LSTM** (đã học ở sub-module RNN Family): học biểu diễn
+  ngữ cảnh cho mỗi token, dựa trên character-level representation (học
+  được từ dữ liệu có nhãn, nắm bắt hình thái từ như tiền tố/hậu tố mà
+  không cần thiết kế thủ công) kết hợp với word embedding (học từ corpus
+  không nhãn, như word2vec đã học) — thay thế hoàn toàn nhu cầu feature
+  engineering thủ công của CRF cổ điển.
+- **CRF layer**: đặt ngay phía trên output của BiLSTM, đảm nhiệm đúng vai
+  trò mà BiLSTM thuần không làm được — ràng buộc **nhãn của chuỗi đầu ra
+  phải hợp lệ** (ví dụ không cho phép `I-Person` đứng ngay sau `O`), nhờ
+  mô hình hoá xác suất chuyển đổi giữa các cặp nhãn liền kề thay vì gán
+  nhãn từng token hoàn toàn độc lập.
+
+Nói cách khác: BiLSTM thay thế phần "học đặc trưng" của pipeline cũ (bỏ
+hẳn feature engineering thủ công), còn CRF giữ lại đúng phần "ràng buộc
+thống kê giữa nhãn liền kề" mà một BiLSTM đơn thuần (gán nhãn độc lập ở
+mỗi bước) không tự có được.
+
+## Kết quả: SOTA 4 ngôn ngữ, không cần gazetteer
+
+Lample và cộng sự công bố: kiến trúc BiLSTM-CRF (kết hợp character-level
+representation học từ dữ liệu có nhãn và word embedding học từ corpus
+không nhãn) đạt kết quả **hiện đại nhất (SOTA)** về NER trên **4 ngôn
+ngữ** khác nhau, mà **không cần** các tài nguyên đặc thù ngôn ngữ như
+gazetteer (danh sách tên riêng được biên soạn thủ công) — một cải thiện
+đáng kể so với pipeline CRF cổ điển vốn phụ thuộc nặng vào đặc trưng thủ
+công cho từng ngôn ngữ/miền dữ liệu cụ thể.
+
+## Liên hệ lại với các bài trước
+
+- BiLSTM-CRF dùng nguyên vẹn kiến trúc
+  [Bidirectional RNN/LSTM/GRU](../02-RNN-Family/04-bidirectional-rnn.mdx)
+  đã học — điểm mới nằm ở việc **thêm CRF layer** phía trên để mô hình
+  hoá ràng buộc giữa nhãn liền kề, một điều BiLSTM thuần (chỉ phân loại
+  độc lập ở mỗi bước) không tự có.
+- Đây là ví dụ rõ ràng cho nguyên tắc "kết hợp hai công cụ, mỗi công cụ
+  giải đúng phần nó làm tốt nhất" — cùng tinh thần với Seq2seq (kết hợp
+  2 LSTM cho 2 vai trò encoder/decoder khác nhau) đã học ở sub-module
+  RNN Family.
+- Sequence labeling là bài toán khác về bản chất với phân loại văn bản
+  (bài trước): một câu → một nhãn (phân loại) so với một câu → nhiều
+  nhãn, mỗi nhãn ứng với một token (sequence labeling) — cùng dùng
+  BiLSTM làm nền nhưng cách lấy output khác hẳn nhau (hidden state
+  đầu/cuối ghép lại cho phân loại, so với hidden state tại MỌI bước cho
+  sequence labeling).
+
+## Nguồn tham khảo
+
+- [arXiv — Neural Architectures for Named Entity Recognition](https://arxiv.org/abs/1603.01360) — paper gốc của Lample, Ballesteros, Subramanian, Kawakami và Dyer (2016), dùng cho vấn đề cụ thể (NER truyền thống phụ thuộc nặng vào feature thủ công/domain knowledge), kiến trúc BiLSTM-CRF (character-level representation + word embedding, không cần feature thủ công), và kết quả (SOTA trên 4 ngôn ngữ không cần gazetteer).
+- [Machine Learning Mastery — How to Do Named Entity Recognition (NER) with a BERT Model](https://machinelearningmastery.com/how-to-do-named-entity-recognition-ner-with-a-bert-model/) — dùng cho ví dụ minh hoạ cụ thể NER (Microsoft/Satya Nadella/Seattle, "Apple" nhập nhằng theo ngữ cảnh), lịch sử phát triển 3 giai đoạn (rule-based → HMM/CRF → deep learning), và BIO/IOB tagging scheme.

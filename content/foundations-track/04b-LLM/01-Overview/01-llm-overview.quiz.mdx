@@ -1,0 +1,53 @@
+---
+quiz_for: 01-llm-overview
+---
+
+## Q1
+Điểm khác biệt cốt lõi giữa "module NLP" và "module LLM" theo bài này là gì?
+
+- [ ] Module LLM dùng một kiến trúc toán học hoàn toàn mới, không phải Transformer
+- [x] Module NLP huấn luyện một mô hình riêng cho từng bài toán; module LLM pretrain MỘT mô hình khổng lồ dùng chung cho rất nhiều bài toán
+- [ ] Module NLP chỉ dùng được cho tiếng Anh, module LLM dùng được cho mọi ngôn ngữ
+- [ ] Module LLM không cần dữ liệu văn bản để huấn luyện
+
+> Bài nhấn mạnh: sự khác biệt không nằm ở kiến trúc (cả hai đều dùng Transformer) mà ở TRIẾT LÝ sử dụng — module NLP huấn luyện riêng cho từng bài toán, module LLM pretrain một lần trên corpus khổng lồ rồi dùng lại cho nhiều bài toán khác nhau.
+
+## Q2
+Vì sao một mô hình pretrain tốn kém (hàng triệu đô la compute) vẫn được coi là "đáng giá" theo lập luận của bài?
+
+- [x] Vì chi phí pretrain chỉ trả một lần, trong khi lợi ích (một mô hình nền dùng được cho nhiều bài toán) được chia sẻ cho mọi ứng dụng xây trên nó sau này
+- [ ] Vì pretrain luôn rẻ hơn huấn luyện một mô hình nhỏ cho một bài toán cụ thể
+- [ ] Vì các công ty công nghệ lớn không quan tâm tới chi phí
+- [ ] Vì pretrain chỉ cần chạy trên CPU thông thường
+
+> Bài lập luận: chi phí pretrain là một khoản đầu tư "một lần", còn lợi ích (dùng lại mô hình cho vô số bài toán sau, qua fine-tuning nhẹ hoặc chỉ cần prompt) trải dài và chia sẻ được cho nhiều ứng dụng khác nhau — khác hẳn việc huấn luyện riêng một mô hình nhỏ chỉ dùng được cho đúng một bài toán.
+
+## Q3
+Nhánh kiến trúc "encoder-only" (BERT-họ) và "decoder-only" (GPT-họ) khác nhau ở điểm nào?
+
+- [ ] Encoder-only dùng RNN, decoder-only dùng Transformer
+- [x] Encoder-only dùng ngữ cảnh hai chiều, pretrain bằng điền chỗ trống, mạnh cho tác vụ HIỂU; decoder-only dùng causal mask, pretrain bằng sinh token tiếp theo, mạnh cho tác vụ TẠO nội dung mới
+- [ ] Decoder-only luôn cần fine-tune, còn encoder-only không bao giờ cần
+- [ ] Encoder-only chỉ dùng được cho văn bản ngắn, decoder-only dùng được cho văn bản dài
+
+> Bài phân biệt rõ: encoder-only (BERT-họ) có ngữ cảnh hai chiều, pretrain bằng masked language modeling, mạnh ở tác vụ hiểu (cần fine-tune thêm lớp output). Decoder-only (GPT-họ) dùng causal mask, pretrain bằng next-token prediction, mạnh ở tác vụ sinh, và ở quy mô đủ lớn có thể làm nhiều việc chỉ qua prompt.
+
+## Q4
+Theo bài, sub-module "Reasoning & Test-time Compute" khác gì so với việc chỉ "scale mô hình to hơn lúc huấn luyện"?
+
+- [x] Đây là một trục cải thiện hoàn toàn khác — dạy mô hình "suy nghĩ lâu hơn" lúc suy luận (inference), thay vì chỉ tăng số tham số lúc huấn luyện
+- [ ] Đây chỉ là một cách gọi khác của Scaling Laws, không có gì mới
+- [ ] Reasoning models không cần huấn luyện, chỉ cần prompt khéo léo
+- [ ] Test-time compute nghĩa là chạy mô hình trên nhiều GPU cùng lúc
+
+> Bài mô tả đây là "một trục cải thiện LLM hoàn toàn khác với việc huấn luyện to hơn" — thay vì tăng số tham số/dữ liệu lúc train (Scaling Laws), hướng này tập trung vào việc mô hình "suy nghĩ" nhiều hơn tại thời điểm suy luận.
+
+## Q5
+Sub-module 6 (Ứng dụng & Inference-time) và 7 (Evaluation) có điểm chung gì phân biệt chúng với sub-module 2-5?
+
+- [x] Cả hai đều nói về cách DÙNG và ĐO một LLM đã có sẵn, không cần huấn luyện thêm tham số nào
+- [ ] Cả hai đều yêu cầu huấn luyện lại toàn bộ mô hình từ đầu
+- [ ] Cả hai chỉ áp dụng cho mô hình encoder-only, không áp dụng cho decoder-only
+- [ ] Cả hai là các bước bắt buộc phải làm trước khi pretraining
+
+> Bài kết luận rõ: sub-module 2-3 xây kiến trúc, 4-5 đào sâu cách huấn luyện và cải thiện mô hình, còn 6-7 nói về cách DÙNG (prompting, RAG, agent) và ĐO (benchmark, evaluation) một LLM đã huấn luyện xong — không cần cập nhật thêm tham số nào.

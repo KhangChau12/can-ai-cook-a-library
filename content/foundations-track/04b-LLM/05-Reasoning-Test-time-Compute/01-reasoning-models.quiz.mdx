@@ -1,0 +1,53 @@
+---
+quiz_for: 01-reasoning-models
+---
+
+## Q1
+Reasoning model (như DeepSeek-R1) khác gì so với chain-of-thought (CoT) prompting đã học ở bài Prompting?
+
+- [ ] Chúng hoàn toàn giống nhau, chỉ khác tên gọi
+- [x] CoT prompting là một kỹ thuật viết prompt cho mô hình đã huấn luyện xong (không đổi); reasoning model được HUẤN LUYỆN RIÊNG (qua RL) để biết cách tạo chuỗi suy luận dài, tự kiểm tra và điều chỉnh chiến lược
+- [ ] CoT prompting chỉ dùng được với GPT-3, reasoning model chỉ dùng được với DeepSeek
+- [ ] Reasoning model không bao giờ sinh ra các bước suy luận trung gian
+
+> Bài phân biệt rõ: CoT là kỹ thuật prompt (mô hình không đổi, chỉ thay đổi cách hỏi). Reasoning model là một cách huấn luyện khác biệt về bản chất — mô hình được huấn luyện qua RL để tự phát triển khả năng suy luận dài, tự kiểm tra, và điều chỉnh chiến lược.
+
+## Q2
+Điểm đáng chú ý nhất của DeepSeek-R1-Zero, theo bài, là gì?
+
+- [ ] Nó cần một lượng lớn dữ liệu suy luận có nhãn do con người viết sẵn
+- [x] Khả năng suy luận phức tạp nổi lên hoàn toàn từ reinforcement learning THUẦN TUÝ, không cần bước supervised fine-tuning (SFT) làm nền trước, không cần dữ liệu suy luận có nhãn
+- [ ] Nó chỉ hoạt động tốt trên các bài toán không có đáp án rõ ràng
+- [ ] Nó dùng chính xác cùng kiến trúc encoder như BERT
+
+> Bài nhấn mạnh: DeepSeek-R1-Zero chứng minh khả năng suy luận phức tạp có thể nổi lên từ RL thuần, không cần SFT làm nền và không cần quỹ đạo suy luận mẫu do con người cung cấp — mô hình học hoàn toàn từ tín hiệu reward.
+
+## Q3
+"Rule-based reward" trong DeepSeek-R1-Zero khác gì so với reward model của RLHF (đã học ở bài RLHF & Alignment)?
+
+- [ ] Rule-based reward luôn cho kết quả tệ hơn reward model của RLHF
+- [x] Rule-based reward dùng trực tiếp một hàm kiểm tra tự động (đúng/sai + đúng định dạng), không cần huấn luyện một mô hình riêng học sở thích con người — nhưng chỉ áp dụng được cho miền có tiêu chí đúng/sai rõ ràng, kiểm chứng được
+- [ ] Rule-based reward cần nhiều dữ liệu xếp hạng của con người hơn RLHF
+- [ ] Cả hai hoàn toàn giống nhau, chỉ khác tên gọi
+
+> Bài đối chiếu: RLHF cần huấn luyện một reward model riêng từ dữ liệu xếp hạng con người (áp dụng cho miền mở, không có tiêu chí rõ ràng). Rule-based reward dùng trực tiếp hàm kiểm tra tự động (accuracy + format) — đơn giản hơn nhưng chỉ khả thi với miền có đáp án kiểm chứng được (toán, code).
+
+## Q4
+"Aha moment" trong DeepSeek-R1-Zero là gì?
+
+- [ ] Một lỗi huấn luyện khiến mô hình dừng đột ngột
+- [x] Hiện tượng mô hình tự học được KHI NÀO nên dừng lại và đánh giá lại bước suy luận trước đó — nổi lên như một chiến lược tối ưu dưới RL, không được lập trình tường minh
+- [ ] Một bước bắt buộc trong kiến trúc mô hình, được thiết kế sẵn từ đầu
+- [ ] Tên gọi khác của test-time compute
+
+> Bài mô tả: "aha moment" là hành vi mô hình tự phát triển — biết khi nào nên dừng lại và đánh giá lại suy luận đã làm — hoàn toàn nổi lên như một chiến lược tối ưu dưới khung RL, không phải hành vi được dạy trực tiếp hay lập trình sẵn.
+
+## Q5
+Reasoning model (tăng compute lúc suy luận) và Scaling Laws (tăng compute lúc huấn luyện) có quan hệ với nhau thế nào?
+
+- [ ] Chúng loại trừ nhau — chỉ có thể chọn một trong hai, không thể kết hợp
+- [x] Đây là hai trục cải thiện LLM độc lập, có thể kết hợp với nhau — Scaling Laws cải thiện qua huấn luyện to hơn, reasoning model cải thiện qua suy nghĩ lâu hơn lúc trả lời từng câu hỏi cụ thể
+- [ ] Reasoning model là một phần bắt buộc của Scaling Laws, không tách rời được
+- [ ] Scaling Laws chỉ áp dụng được cho reasoning model, không áp dụng được cho GPT-3
+
+> Bài kết luận: đây là hai trục độc lập — Scaling Laws nói về tăng tham số/dữ liệu/compute LÚC HUẤN LUYỆN để giảm loss; reasoning model nói về tăng compute LÚC SUY LUẬN (số token suy nghĩ) để cải thiện câu trả lời cho từng câu hỏi — hai trục này có thể kết hợp, không loại trừ nhau.

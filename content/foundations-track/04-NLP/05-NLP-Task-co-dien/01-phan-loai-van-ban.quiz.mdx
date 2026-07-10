@@ -1,0 +1,53 @@
+---
+quiz_for: 01-phan-loai-van-ban
+---
+
+## Q1
+TF-IDF cải thiện gì so với việc đếm số lần xuất hiện thô (raw count) của từ trong văn bản?
+
+- [ ] Nó giúp mô hình biết được thứ tự các từ trong câu
+- [x] Nó chuẩn hoá theo độ dài văn bản và hạ trọng số các từ xuất hiện ở quá nhiều văn bản (ít mang tính phân biệt)
+- [ ] Nó biến từ thành vector mang thông tin ngữ nghĩa như embedding
+- [ ] Nó loại bỏ hoàn toàn nhu cầu cần một bộ phân loại (classifier) phía sau
+
+> TF (term frequency) chia số lần xuất hiện cho tổng số từ trong văn bản, giải quyết vấn đề văn bản dài có số đếm cao hơn tự nhiên. IDF (inverse document frequency) hạ trọng số các từ xuất hiện ở nhiều văn bản (ít thông tin phân biệt). TF-IDF vẫn là một vector vô hướng cho mỗi từ (không mang ngữ nghĩa như embedding) và vẫn bỏ qua hoàn toàn thứ tự từ — đó chính là giới hạn của bag-of-words.
+
+## Q2
+Vì sao bag-of-words (kể cả khi dùng TF-IDF) không phân biệt được câu "phim này không hay, chỉ dở" và "phim này không dở, chỉ hay"?
+
+- [ ] Vì TF-IDF chỉ hoạt động với văn bản tiếng Anh, không xử lý được tiếng Việt
+- [ ] Vì hai câu này có độ dài khác nhau nên IDF tính sai
+- [x] Vì bag-of-words coi văn bản là một tập hợp từ không có thứ tự — hai câu chứa đúng các từ giống nhau, chỉ khác vị trí
+- [ ] Vì Naive Bayes giả định các từ độc lập nên không thể phân loại cảm xúc
+
+> Cả hai câu chứa đúng cùng một tập từ, chỉ khác thứ tự sắp xếp. Vì bag-of-words/TF-IDF chỉ đếm/tính trọng số từng từ độc lập mà bỏ qua vị trí, vector biểu diễn của hai câu gần như giống hệt nhau dù ý nghĩa trái ngược — đây chính là giới hạn mà kiến trúc xử lý chuỗi như RNN được thiết kế để khắc phục.
+
+## Q3
+Trong kiến trúc Bidirectional LSTM + GloVe cho phân loại cảm xúc (bài IMDB), vì sao dùng Bidirectional (thay vì chỉ một chiều) lại hợp lý?
+
+- [ ] Vì Bidirectional luôn nhanh hơn RNN một chiều
+- [ ] Vì bài toán sinh văn bản tuần tự bắt buộc phải dùng Bidirectional
+- [x] Vì toàn bộ câu đã có sẵn đầy đủ trước khi phân loại (không phải sinh tuần tự), nên không có lý do gì giới hạn mô hình chỉ nhìn một chiều
+- [ ] Vì Bidirectional không cần dùng embedding, giúp giảm số tham số
+
+> Bidirectional RNN/LSTM cần biết trước toàn bộ chuỗi để chạy chiều ngược — điều này khả thi với phân loại (câu đã có sẵn), nhưng không khả thi với sinh văn bản tuần tự (chưa biết token tương lai). Vì phân loại thuộc loại tác vụ "encoding" (mã hoá toàn bộ input có sẵn), tận dụng cả hai chiều là hợp lý và cải thiện độ chính xác.
+
+## Q4
+Trên bộ dữ liệu 20 Newsgroups, SVM tuyến tính (SGDClassifier trên đặc trưng TF-IDF) đạt độ chính xác 91.01%, cao hơn Naive Bayes (83.48%) — điều này có nghĩa gì?
+
+- [ ] TF-IDF không còn giá trị gì một khi có SVM
+- [ ] Naive Bayes không phải một baseline hợp lệ cho bài toán này
+- [x] Một mô hình cổ điển khác (không dùng embedding/mạng nơ-ron) vẫn có thể cải thiện đáng kể so với baseline, không nhất thiết phải nhảy thẳng lên embedding + RNN
+- [ ] SVM chỉ hoạt động được với dữ liệu đã qua embedding
+
+> Kết quả này cho thấy trong không gian các phương pháp cổ điển (không dùng embedding/mạng nơ-ron), vẫn có nhiều bậc thang cải thiện (đổi bộ phân loại từ Naive Bayes sang SVM tuyến tính) trước khi cần tới chi phí và độ phức tạp của embedding + RNN. Naive Bayes vẫn là baseline hợp lệ — chỉ đơn giản là chưa phải lựa chọn tốt nhất trong số các phương pháp cổ điển.
+
+## Q5
+Bài học nói: "embedding + RNN không miễn phí". Đánh đổi cụ thể nào được nhắc tới khi chuyển từ TF-IDF + Naive Bayes sang embedding + Bidirectional LSTM?
+
+- [ ] Độ chính xác luôn giảm khi dùng embedding + RNN
+- [x] Cần nhiều dữ liệu và compute hơn, đồng thời khó diễn giải hơn (không thể nhìn trọng số một từ để hiểu quyết định của mô hình)
+- [ ] Embedding + RNN không thể áp dụng cho bài toán phân loại nhị phân
+- [ ] TF-IDF không thể kết hợp được với bất kỳ bộ phân loại nào khác ngoài Naive Bayes
+
+> Bài nêu rõ: cải thiện độ chính xác của embedding + RNN đánh đổi bằng nhu cầu dữ liệu/compute lớn hơn và mất khả năng diễn giải trực tiếp (TF-IDF + Naive Bayes có thể nhìn trọng số từng từ, còn embedding + RNN thì không) — đây là lý do TF-IDF + phân loại cổ điển vẫn là lựa chọn thực dụng trong nhiều tình huống, không phải "lỗi thời" tuyệt đối.

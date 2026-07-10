@@ -14,27 +14,31 @@
 
 ## 1. STATUS (đọc đầu mỗi task, không ngoại lệ)
 
-- **Version:** v10.1
-- **Phiên gần nhất:** RÀ SOÁT + HOÀN THIỆN MODULE "AUDIO" (2026-07-10) —
-  theo yêu cầu người vận hành đọc lại toàn bộ 13 bài module Audio (đọc
-  nội dung thật, không suy luận từ tên file) ở 2 tầng: cấu trúc/mạch và
-  chiều sâu nội dung cho người mới. Phát hiện + sửa (đã người vận hành
-  duyệt phạm vi trước khi làm): (1) 3 bài chưa được rà trong đợt sửa
-  trước (Whisper, Tacotron/FastSpeech, HiFi-GAN) còn tham chiếu "bài NN"
-  bằng số thứ tự cũ dạng plain text và link hiển thị số ảo — đổi hết
-  sang link theo tên bài; (2) câu chốt cuối bài Audio Segmentation đếm
-  sai "4 sub-module" (đúng là 5, tự mâu thuẫn với chính Overview nó dẫn
-  link tới) — sửa lại; (3) viết quiz cho 4 bài còn thiếu (Overview, SSL —
-  Ý tưởng chung, Speaker Recognition, Audio Segmentation) — nay đủ
-  quiz cho toàn bộ 13/13 bài nội dung của module.
-- **Tổng số bài hiện có:** 133 (11 exam-track + 122 foundations-track) —
-  tổ chức thành **8 module** cho foundations-track:
+- **Version:** v11.0
+- **Phiên gần nhất:** TÁCH MODULE "NLP & LLM" THÀNH "NLP" + "LLM"
+  (2026-07-10) — sau khi rà soát toàn bộ 25 bài module cũ theo yêu cầu
+  người vận hành (2 tầng: cấu trúc/mạch và chiều sâu/bao quát nội dung),
+  phát hiện: (1) 5 link nội bộ hỏng do đổi tên file mà chưa cập nhật
+  (CNN, RNN ×3, Seq2seq, Longformer ×2) — đã sửa hết; (2) module lệch
+  tỷ trọng nặng về "kiến trúc + huấn luyện", thiếu hẳn GPT như dòng tiến
+  hoá riêng, Mixture-of-Experts, Reasoning models/test-time compute,
+  Evaluation, và NLP task cổ điển (NER/POS/phân loại văn bản/topic
+  modeling). Người vận hành duyệt hướng tách module theo ranh giới bản
+  chất: module "NLP" (kiến trúc xử lý chuỗi + áp dụng cho task NLP cụ
+  thể) và module "LLM" (triết lý pretrain quy mô lớn dùng chung mọi bài
+  toán). Đã viết 10 bài mới lấp đúng các khoảng trống trên, di chuyển 12
+  bài cũ (Pretrained LM, Huấn luyện & Alignment, Ứng dụng) sang module
+  LLM, sửa link/prerequisite/path cosmetic liên quan.
+- **Tổng số bài hiện có:** 143 (11 exam-track + 132 foundations-track) —
+  tổ chức thành **9 module** cho foundations-track:
   ML cổ điển (12 bài, 4 sub-module: Overview 1/Supervised Learning 6/
   Unsupervised Learning 4/Ensemble Methods 1), DL Nền tảng (7, phẳng),
   Computer Vision (17 bài, 3 sub-module: Cơ bản 8/Detection 4/Segmentation 5),
-  NLP & LLM (25 bài, 7 sub-module: Overview 1/Tokenization 3/RNN Family 5/
-  Transformer Architecture 5/Pretrained Language Models 4/Huấn luyện &
-  Alignment 6/Ứng dụng & Inference-time 2),
+  NLP (17 bài, 5 sub-module: Overview 1/Tokenization 3/RNN Family 5/
+  Transformer Architecture 5/NLP Task cổ điển 3),
+  LLM (19 bài, 7 sub-module: Overview 1/Pretrained Language Models 4/
+  GPT & Decoder-only 4/Huấn luyện & Alignment 6/Reasoning & Test-time
+  Compute 1/Ứng dụng & Inference-time 2/Evaluation 1),
   Reinforcement Learning (22 bài, 5 sub-module: Overview 2/Value-based 5/
   Policy-based 9 (Policy Gradient, Actor-Critic, TRPO, PPO, A3C, A2C,
   DDPG/TD3, SAC, Synthesis)/Model-based 2/Advanced Topics 4),
@@ -83,7 +87,11 @@
    đầu) qua map toàn track, không quan tâm path/số thật, nên các link này
    vẫn trỏ đúng miễn bare-slug không đổi và không trùng bài khác. Chỉ nên
    sửa path cho khớp khi đang sửa bài đó vì lý do khác (dễ đọc source),
-   không cần task quét riêng.
+   không cần task quét riêng. **Phân biệt với link thực sự hỏng:** nếu
+   bare-slug trong link không khớp bare-slug của BẤT KỲ file thật nào
+   (không phải chỉ khác số, mà khác hẳn tên — ví dụ do đổi tên file lúc
+   viết lại bài), đó là lỗi thật cần sửa ngay khi phát hiện, không thuộc
+   diện "an toàn" ở trên.
 
 ### 1.3 Human Pin (người ngoài có thể ghi task ưu tiên vào đây, agent luôn ưu tiên đọc dòng này trước khi tự chọn task)
 
@@ -153,14 +161,22 @@ module có ≥2 nhánh/giai đoạn/trường phái đủ khác biệt về bả
 có ngưỡng số bài tối thiểu cứng. Danh sách hiện tại (chi tiết bài nào ở
 mục 4, hoặc đọc trực tiếp `content/modules.json` + thư mục bài):
 - **Computer Vision**: "Cơ bản" / "Detection" / "Segmentation"
-- **NLP & LLM**: "Overview" (bản đồ tư duy module) / "Tokenization" (tiền
-  xử lý text→token→vector) / "RNN Family" (kiến trúc hồi quy) /
-  "Transformer Architecture" (kiến trúc dựa attention) / "Pretrained
-  Language Models" (BERT/RoBERTa/ALBERT/T5) / "Huấn luyện & Alignment"
-  (thay đổi tham số, GPT-style) / "Ứng dụng & Inference-time" (không đổi
-  tham số) — 7 sub-module theo đúng thứ tự pipeline; module này gộp 2
-  module cũ "Sequence Model" + "LLM" (2026-07-09) vì cùng một mạch tiến
-  hoá liền (RNN → Transformer → BERT/GPT → LLM hiện đại)
+- **NLP**: "Overview" / "Tokenization" (tiền xử lý text→token→vector) /
+  "RNN Family" (kiến trúc hồi quy) / "Transformer Architecture" (kiến
+  trúc dựa attention) / "NLP Task cổ điển" (áp dụng kiến trúc đã học để
+  giải bài toán cụ thể: phân loại văn bản, POS/NER, topic modeling) — 5
+  sub-module theo đúng thứ tự pipeline, dừng ở "áp dụng kiến trúc cho
+  bài toán NLP cụ thể", chưa chạm khái niệm pretrain quy mô lớn.
+- **LLM**: "Overview" / "Pretrained Language Models" (BERT/RoBERTa/ALBERT/
+  T5, encoder-only) / "GPT & Decoder-only" (GPT-1/2/3 dòng tiến hoá +
+  Mixture-of-Experts) / "Huấn luyện & Alignment" (Pretraining, Scaling
+  Laws, Fine-tuning, RLHF/LoRA/DPO) / "Reasoning & Test-time Compute"
+  (trục cải thiện khác Scaling Laws) / "Ứng dụng & Inference-time"
+  (Prompting/RAG/Agent) / "Evaluation" (benchmark, data contamination,
+  LLM-as-judge) — 7 sub-module; tách từ module "NLP & LLM" cũ
+  (2026-07-10) theo ranh giới bản chất: kiến trúc chuỗi nói chung (module
+  NLP) vs triết lý pretrain 1 mô hình khổng lồ dùng chung mọi bài toán
+  (module LLM này)
 - **Reinforcement Learning**: "Overview" (Framework, MDP — nền tảng chung
   đọc trước mọi nhánh) / "Value-based" / "Policy-based" (gồm cả
   Actor-Critic, hợp lưu 2 trường phái) / "Model-based" / "Advanced Topics"
@@ -490,7 +506,7 @@ bài này bị sửa mà không phải vì nó sai.
 - `"Hướng dẫn dùng nền tảng"` — bài 1-3
 - `"Kỹ thuật thi đấu nâng cao"` — bài 4-11
 
-### foundations-track — 122 bài, 8 module
+### foundations-track — 132 bài, 9 module
 
 1. `"Nền tảng Toán & ML cổ điển"` — 12 bài, 4 sub-module: Overview 1
    (Xác suất & thống kê)/Supervised Learning 6 (Linear/Logistic
@@ -500,13 +516,14 @@ bài này bị sửa mà không phải vì nó sai.
    Regularization/Optimizer/Weight Initialization/Normalization/
    Learning Rate Schedule)
 3. `"Computer Vision"` — 17 bài, 3 sub-module: Cơ bản 8/Detection 4/Segmentation 5
-4. `"NLP & LLM"` — 25 bài, 7 sub-module: Overview 1/Tokenization 3/RNN Family 5/Transformer Architecture 5/Pretrained Language Models 4/Huấn luyện & Alignment 6/Ứng dụng & Inference-time 2
-5. `"Reinforcement Learning"` — 22 bài, 5 sub-module: Overview 2/Value-based 5/Policy-based 9 (Policy Gradient, Actor-Critic, TRPO, PPO, A3C, A2C, DDPG/TD3, SAC, Synthesis)/Model-based 2/Advanced Topics 4
-6. `"Generative Models"` — 14 bài, 3 sub-module: Overview 5 (gồm
+4. `"NLP"` — 17 bài, 5 sub-module: Overview 1/Tokenization 3/RNN Family 5/Transformer Architecture 5/NLP Task cổ điển 3 (Phân loại văn bản, POS Tagging & NER, Topic Modeling)
+5. `"LLM"` — 19 bài, 7 sub-module: Overview 1/Pretrained Language Models 4 (BERT/RoBERTa/ALBERT/T5)/GPT & Decoder-only 4 (GPT-1/GPT-2/GPT-3, Mixture-of-Experts)/Huấn luyện & Alignment 6 (Pretraining, Scaling Laws, Fine-tuning, RLHF, LoRA, DPO)/Reasoning & Test-time Compute 1/Ứng dụng & Inference-time 2/Evaluation 1
+6. `"Reinforcement Learning"` — 22 bài, 5 sub-module: Overview 2/Value-based 5/Policy-based 9 (Policy Gradient, Actor-Critic, TRPO, PPO, A3C, A2C, DDPG/TD3, SAC, Synthesis)/Model-based 2/Advanced Topics 4
+7. `"Generative Models"` — 14 bài, 3 sub-module: Overview 5 (gồm
    Autoencoder → VAE → Flow-based → VQ-VAE, mạch tiến hoá "nén → sinh dữ
    liệu")/GAN Family 5/Diffusion Models 4
-7. `"Audio"` — 13 bài, 5 sub-module: Overview 1/Biểu diễn âm thanh 3 (waveform/spectrogram, SSL — Ý tưởng chung, SSL cho Âm thanh)/STT 2/TTS 3/Audio-Understanding 4 (Source Separation, Event Detection, Speaker Recognition, Audio Segmentation)
-8. `"Recommendation Systems"` — 11 bài, 5 sub-module: Overview 1/Nền tảng Content-based & CF 3 (Content-based Filtering, Memory-based CF, Matrix Factorization)/Deep Learning cho RS 3 (NeuMF, DeepFM, AutoRec)/Ranking & Evaluation 2 (metric ranking + cold-start, BPR)/Sequence-aware & Modern Architectures 2 (GRU4Rec/SASRec, Two-Tower)
+8. `"Audio"` — 13 bài, 5 sub-module: Overview 1/Biểu diễn âm thanh 3 (waveform/spectrogram, SSL — Ý tưởng chung, SSL cho Âm thanh)/STT 2/TTS 3/Audio-Understanding 4 (Source Separation, Event Detection, Speaker Recognition, Audio Segmentation)
+9. `"Recommendation Systems"` — 11 bài, 5 sub-module: Overview 1/Nền tảng Content-based & CF 3 (Content-based Filtering, Memory-based CF, Matrix Factorization)/Deep Learning cho RS 3 (NeuMF, DeepFM, AutoRec)/Ranking & Evaluation 2 (metric ranking + cold-start, BPR)/Sequence-aware & Modern Architectures 2 (GRU4Rec/SASRec, Two-Tower)
 
 **Trạng thái review:** 0 bài `needs-review` trên cả 2 track — toàn bộ đã
 đạt `stable`. Lý do cụ thể "vì sao mỗi bài đạt stable" nằm trong

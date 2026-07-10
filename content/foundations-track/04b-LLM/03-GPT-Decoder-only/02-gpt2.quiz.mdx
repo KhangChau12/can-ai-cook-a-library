@@ -1,0 +1,53 @@
+---
+quiz_for: 02-gpt2
+---
+
+## Q1
+Hạn chế cụ thể của GPT-1 mà GPT-2 giải quyết là gì?
+
+- [ ] GPT-1 không dùng được kiến trúc Transformer
+- [x] GPT-1 vẫn cần fine-tune gần như toàn bộ tham số cho mỗi tác vụ downstream — vẫn có một bước huấn luyện riêng cho từng bài toán
+- [ ] GPT-1 không thể xử lý được văn bản tiếng Anh
+- [ ] GPT-1 chỉ hoạt động với văn bản có độ dài cố định
+
+> GPT-1 giải quyết vấn đề "cần kiến trúc riêng cho từng tác vụ" nhưng vẫn giữ lại bước fine-tune gần như toàn bộ tham số. GPT-2 đặt câu hỏi triệt để hơn: liệu có thể bỏ hẳn bước fine-tune đó, đạt "zero-shot task transfer" hay không.
+
+## Q2
+Về mặt kiến trúc, GPT-2 khác gì so với GPT-1?
+
+- [ ] GPT-2 dùng encoder-decoder thay vì chỉ decoder
+- [ ] GPT-2 bỏ hẳn causal mask để có ngữ cảnh hai chiều
+- [x] Gần như không thay đổi kiến trúc cốt lõi — chỉ vài điều chỉnh kỹ thuật nhỏ, thay đổi chính là quy mô: 1.5 tỷ tham số, gấp 10 lần GPT-1
+- [ ] GPT-2 thay Transformer bằng LSTM để xử lý chuỗi dài hơn
+
+> Bài nêu rõ: GPT-2 không giới thiệu gì mới về kiến trúc so với GPT-1 (vẫn decoder Transformer + causal mask), chỉ có vài điều chỉnh nhỏ (layer normalization, khởi tạo residual) và quan trọng nhất là quy mô — 1.5 tỷ tham số, gấp 10 lần GPT-1.
+
+## Q3
+WebText — dữ liệu huấn luyện GPT-2 — được xây dựng bằng cách nào?
+
+- [ ] Thu thập toàn bộ Wikipedia bằng nhiều ngôn ngữ
+- [x] Crawl các đường link ra ngoài (outbound link) được đăng trên Reddit và đã qua ngưỡng lọc chất lượng (upvote tối thiểu)
+- [ ] Chỉ dùng sách đã xuất bản có bản quyền công khai
+- [ ] Do con người viết tay riêng cho mục đích huấn luyện GPT-2
+
+> Bài giải thích: WebText gồm 8 triệu trang web thu thập bằng cách crawl các link ra ngoài được đăng trên Reddit và đã qua ngưỡng lọc chất lượng (số upvote) — một cách gián tiếp dùng con người làm bộ lọc chất lượng, không cần tự tay đánh giá hàng triệu trang.
+
+## Q4
+"Zero-shot task transfer" trong GPT-2 hoạt động theo cơ chế nào?
+
+- [ ] Mô hình được fine-tune với 1 ví dụ duy nhất cho mỗi tác vụ mới
+- [x] Đưa thẳng input của tác vụ vào mô hình (không kèm ví dụ, không cập nhật gradient) rồi để nó tiếp tục sinh văn bản như bình thường — không có gì thay đổi về cơ chế so với việc mô hình chỉ "tiếp tục viết văn bản"
+- [ ] Mô hình tự động tải thêm dữ liệu huấn luyện mới từ internet khi gặp tác vụ lạ
+- [ ] Cần thay đổi kiến trúc mô hình cho mỗi loại tác vụ khác nhau
+
+> Cơ chế cụ thể: đưa input của tác vụ trực tiếp vào mô hình, để nó tiếp tục sinh next-token prediction như bình thường — không kèm ví dụ minh hoạ, không cập nhật gradient nào. Nếu mô hình học đủ tốt, văn bản sinh ra tiếp theo tự nhiên mang đúng hình thức mong muốn (ví dụ bản tóm tắt).
+
+## Q5
+Theo bài, GPT-2 cải thiện rõ rệt nhất ở loại benchmark nào?
+
+- [ ] Chỉ cải thiện ở các bộ dữ liệu rất lớn, không cải thiện ở bộ dữ liệu nhỏ
+- [x] Các bộ dữ liệu nhỏ và các bộ dữ liệu đo phụ thuộc dài hạn (long-term dependency)
+- [ ] Chỉ cải thiện ở bài toán dịch máy, không cải thiện ở bài toán khác
+- [ ] Không có sự khác biệt giữa các loại benchmark
+
+> Bài nêu: cải thiện rõ rệt nhất của GPT-2 được ghi nhận trên các bộ dữ liệu nhỏ và các bộ dữ liệu đo phụ thuộc dài hạn — đúng loại bài toán mà một mô hình lớn, huấn luyện trên dữ liệu đa dạng, có lợi thế tự nhiên so với mô hình nhỏ chỉ fine-tune trên dữ liệu hẹp.

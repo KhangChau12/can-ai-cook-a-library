@@ -1,0 +1,53 @@
+---
+quiz_for: 01-gpt1
+---
+
+## Q1
+Hạn chế cụ thể của ELMo mà GPT-1 giải quyết là gì?
+
+- [ ] ELMo không thể xử lý được văn bản tiếng Anh
+- [ ] ELMo không dùng được với dữ liệu không nhãn
+- [x] Tham số ELMo thường bị đóng băng khi áp dụng cho downstream task, và mỗi loại tác vụ vẫn cần thiết kế kiến trúc riêng phía trên nó
+- [ ] ELMo chỉ hoạt động với câu có độ dài cố định
+
+> Bài nêu rõ: ELMo đạt ngữ cảnh hai chiều nhưng có hạn chế — tham số thường bị đóng băng khi dùng cho downstream task, và mỗi loại tác vụ (phân loại, gán nhãn chuỗi, hỏi-đáp) vẫn cần một kiến trúc riêng phía trên, không có công thức chung cho mọi tác vụ.
+
+## Q2
+GPT-1 dùng phần nào của kiến trúc Transformer, và cơ chế attention nào đi kèm?
+
+- [ ] Dùng encoder, với self-attention hai chiều đầy đủ
+- [x] Dùng decoder, với causal mask — mỗi vị trí chỉ liên hệ được với các vị trí đứng trước hoặc bằng nó
+- [ ] Dùng cả encoder lẫn decoder, giống kiến trúc T5
+- [ ] Không dùng Transformer, dùng LSTM xếp chồng nhiều lớp
+
+> GPT dùng decoder Transformer với causal mask, xử lý văn bản theo chiều trái-phải duy nhất — đây chính là điểm khác biệt cốt lõi với BERT (dùng encoder, ngữ cảnh hai chiều, không causal mask).
+
+## Q3
+"Task-agnostic" trong ngữ cảnh GPT-1 nghĩa là gì?
+
+- [ ] Mô hình có thể tự động dịch sang mọi ngôn ngữ mà không cần huấn luyện thêm
+- [x] Để áp dụng cho một tác vụ downstream mới, chỉ cần thêm một lớp output tuyến tính đơn giản, không cần thiết kế lại kiến trúc riêng cho từng loại bài toán
+- [ ] Mô hình không cần bất kỳ dữ liệu có nhãn nào để hoạt động tốt trên mọi tác vụ
+- [ ] Mô hình chỉ giải được đúng một tác vụ duy nhất, không thay đổi được
+
+> Bài giải thích: task-agnostic nghĩa là không cần thiết kế kiến trúc riêng cho từng loại tác vụ (như cách tiếp cận ELMo trước đó) — chỉ cần thêm một lớp output tuyến tính đơn giản phía trên mô hình đã pretrain rồi fine-tune.
+
+## Q4
+Điểm khác biệt then chốt giữa GPT-1 và BERT, theo bài, là gì?
+
+- [ ] GPT-1 không phải task-agnostic, còn BERT thì có
+- [ ] GPT-1 dùng nhiều tham số hơn BERT ở mọi phiên bản
+- [x] Cả hai đều task-agnostic và pretrain-rồi-fine-tune; khác biệt duy nhất là GPT dùng decoder (ngữ cảnh một chiều) còn BERT dùng encoder (ngữ cảnh hai chiều)
+- [ ] BERT không thể fine-tune, chỉ dùng được qua prompting
+
+> Bài nhấn mạnh: GPT và BERT không phải hai cách tiếp cận loại trừ nhau — cả hai đều task-agnostic, đều pretrain trên dữ liệu không nhãn rồi fine-tune. Khác biệt duy nhất nằm ở lựa chọn kiến trúc (encoder hai chiều vs decoder một chiều), phù hợp cho hai lớp bài toán khác nhau (hiểu vs sinh).
+
+## Q5
+Kết quả thực nghiệm cụ thể của GPT-1 trên các tác vụ NLP benchmark là gì?
+
+- [ ] Đạt SOTA trên toàn bộ 12/12 tác vụ được đánh giá
+- [x] Đạt cải thiện SOTA trên 9 trong số 12 tác vụ NLP được đánh giá
+- [ ] Không cải thiện SOTA ở bất kỳ tác vụ nào, chỉ nhanh hơn về tốc độ huấn luyện
+- [ ] Chỉ được đánh giá trên đúng 1 tác vụ duy nhất là dịch máy
+
+> Radford và cộng sự đánh giá GPT trên 12 tác vụ NLP khác nhau và đạt kết quả cải thiện SOTA trên 9/12 tác vụ — một minh chứng thực nghiệm mạnh cho quy trình pretrain-rồi-fine-tune, dù đây mới chỉ là bước khởi đầu của dòng GPT.

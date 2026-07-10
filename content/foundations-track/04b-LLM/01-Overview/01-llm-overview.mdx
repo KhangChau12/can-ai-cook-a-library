@@ -1,0 +1,88 @@
+---
+title: LLM — Tổng quan module và lộ trình học
+track: foundations-track
+module: LLM
+submodule: Overview
+order: 1
+status: stable
+prerequisites: ["01-nlp-overview"]
+summary: Bài mở đầu module LLM — nối tiếp câu hỏi bỏ ngỏ từ module NLP (điều gì xảy ra nếu pretrain một mô hình khổng lồ dùng chung cho mọi bài toán), giới thiệu 2 nhánh kiến trúc song song (encoder-only/BERT-họ, decoder-only/GPT-họ) và bản đồ 7 sub-module của module này.
+last_touched_by_task: Bài mới (2026-07-10), viết sau khi tách module "NLP & LLM" thành "NLP" + "LLM" — mở sub-module "Overview" cho module LLM mới, đóng vai trò cầu nối từ module NLP (kết thúc bằng câu hỏi mở về pretrain quy mô lớn) sang toàn bộ nội dung LLM (Pretrained Language Models, GPT & Decoder-only, Huấn luyện & Alignment, Reasoning, Ứng dụng, Evaluation).
+---
+
+Bài [Overview của module NLP](../../04-NLP/00-Overview/01-nlp-overview.mdx)
+kết thúc bằng một câu hỏi bỏ ngỏ: thay vì huấn luyện một mô hình **riêng**
+cho từng bài toán NLP cụ thể (phân loại văn bản, NER, dịch máy...), điều
+gì xảy ra nếu ta **pretrain một mô hình duy nhất**, đủ lớn, trên gần như
+toàn bộ văn bản có sẵn, để nó tự "biết" hầu hết mọi tác vụ ngôn ngữ mà
+không cần huấn luyện lại cho từng cái? Module này trả lời câu hỏi đó —
+đây chính là triết lý dẫn tới **LLM** (Large Language Model — mô hình
+ngôn ngữ lớn).
+
+## Vì sao đây là một bước ngoặt, không chỉ "mô hình to hơn"
+
+Sự khác biệt quan trọng nhất giữa LLM và các mô hình đã học ở module NLP
+không nằm ở kiến trúc (LLM vẫn dùng Transformer — không có kiến trúc
+toán học mới), mà ở **triết lý sử dụng**:
+
+- Module NLP: mỗi bài toán (phân loại văn bản, NER, dịch máy) huấn luyện
+  một mô hình riêng, thường từ đầu hoặc từ một embedding nhỏ, chỉ dùng
+  được cho đúng bài toán đó.
+- Module LLM: pretrain **một lần**, trên **corpus khổng lồ** (gần như
+  toàn bộ văn bản có thể thu thập được), rồi dùng lại mô hình đó cho
+  **rất nhiều** bài toán khác nhau — qua fine-tuning nhẹ, hoặc thậm chí
+  không cần huấn luyện lại chút nào (chỉ cần viết đúng prompt).
+
+Đây là lý do một mô hình pretrain tốn kém (hàng triệu đô la compute cho
+các LLM lớn nhất) vẫn "đáng giá" về lâu dài — chi phí đó chỉ trả **một
+lần**, còn lợi ích (một mô hình nền dùng được cho vô số bài toán sau này)
+được chia sẻ cho mọi ứng dụng xây trên nó.
+
+## Hai nhánh kiến trúc song song
+
+Áp dụng triết lý pretrain-quy-mô-lớn cho Transformer dẫn tới hai nhánh
+kiến trúc khác nhau, tuỳ vào phần nào của Transformer (encoder hay
+decoder) được giữ lại và mục tiêu pretrain đi kèm:
+
+- **Encoder-only (BERT-họ):** dùng riêng phần encoder của Transformer
+  (ngữ cảnh hai chiều, không causal mask), pretrain bằng mục tiêu
+  **điền vào chỗ trống** (masked language modeling). Mạnh nhất ở các tác
+  vụ **hiểu** văn bản (phân loại, trích xuất, hỏi-đáp trên đoạn văn có
+  sẵn) — cần fine-tune (thêm một lớp output nhỏ) cho từng tác vụ cụ thể.
+- **Decoder-only (GPT-họ):** dùng riêng phần decoder (causal mask, chỉ
+  nhìn về bên trái), pretrain bằng mục tiêu **sinh** văn bản tiếp theo
+  (next-token prediction). Mạnh nhất ở tác vụ **tạo ra** nội dung mới, và
+  ở quy mô đủ lớn, có thể thực hiện nhiều tác vụ khác nhau chỉ qua
+  prompt — không cần fine-tune riêng cho từng tác vụ.
+
+Không nhánh nào "tốt hơn" nhánh kia một cách tuyệt đối — chúng phù hợp
+với hai lớp bài toán khác nhau, và cả hai đều xuất hiện trong các hệ
+thống thực tế ngày nay.
+
+## Bản đồ 7 sub-module của module này
+
+1. **Overview** (bài này) — bản đồ tư duy, không đi sâu kỹ thuật.
+2. **Pretrained Language Models** — nhánh encoder-only: BERT, RoBERTa,
+   ALBERT, T5 (encoder-decoder). Học biểu diễn ngôn ngữ hai chiều từ dữ
+   liệu không nhãn, mạnh cho tác vụ hiểu.
+3. **GPT & Decoder-only** — nhánh decoder-only: GPT-1, GPT-2, GPT-3 như
+   một dòng tiến hoá cụ thể (mỗi bản sau giải quyết đúng hạn chế của bản
+   trước), và Mixture-of-Experts (kiến trúc hiệu quả tham số cho
+   decoder-only cực lớn).
+4. **Huấn luyện & Alignment** — toàn bộ lộ trình biến một decoder-only
+   đã pretrain thành một trợ lý hữu ích: cơ chế pretraining sâu hơn,
+   scaling laws, fine-tuning/instruction tuning, RLHF/DPO (alignment),
+   LoRA (fine-tune hiệu quả tham số).
+5. **Reasoning & Test-time Compute** — một trục cải thiện LLM hoàn toàn
+   khác với việc "huấn luyện to hơn": dạy mô hình "suy nghĩ lâu hơn" lúc
+   suy luận (inference), thay vì chỉ scale số tham số lúc huấn luyện.
+6. **Ứng dụng & Inference-time** — khai thác một LLM đã huấn luyện xong
+   mà **không** cập nhật tham số: prompting, in-context learning, RAG,
+   agent.
+7. **Evaluation** — cách đo một LLM có "tốt" hay không: benchmark, giới
+   hạn của benchmark, và các phương pháp đánh giá hiện đại hơn.
+
+Sub-module 2-3 xây hai nhánh kiến trúc song song; sub-module 4-5 đào sâu
+cách huấn luyện và cải thiện nhánh decoder-only (nhánh phổ biến nhất cho
+LLM hiện đại); sub-module 6-7 nói về cách **dùng** và **đo** một LLM đã
+có sẵn, không cần huấn luyện thêm.

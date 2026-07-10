@@ -1,0 +1,53 @@
+---
+quiz_for: 02-pos-tagging-ner
+---
+
+## Q1
+Điểm khác biệt cốt lõi giữa "sequence labeling" (POS tagging/NER) và "phân loại văn bản" (bài trước) là gì?
+
+- [ ] Sequence labeling không dùng được embedding, chỉ dùng one-hot
+- [x] Sequence labeling gán MỘT nhãn cho MỖI token trong câu, còn phân loại văn bản gán MỘT nhãn cho CẢ câu
+- [ ] Sequence labeling chỉ áp dụng được cho tiếng Anh
+- [ ] Phân loại văn bản luôn chính xác hơn sequence labeling
+
+> Phân loại văn bản đưa ra đúng một quyết định cho toàn bộ câu (ví dụ tích cực/tiêu cực). Sequence labeling (POS tagging, NER) đưa ra một quyết định RIÊNG cho từng token trong câu — và các quyết định đó không độc lập với nhau, khác hẳn bài toán phân loại toàn câu.
+
+## Q2
+Vì sao không thể gán nhãn cho mỗi token trong sequence labeling một cách hoàn toàn độc lập (bỏ qua nhãn của các token lân cận)?
+
+- [ ] Vì làm vậy sẽ chậm hơn nhiều so với gán nhãn phụ thuộc lẫn nhau
+- [x] Vì có ràng buộc cấu trúc giữa nhãn liền kề (ví dụ nhãn `I-Person` chỉ hợp lệ khi đứng sau `B-Person` hoặc `I-Person`, không thể đứng ngay sau `O`)
+- [ ] Vì BiLSTM không thể xử lý được nhiều token cùng lúc
+- [ ] Vì tiếng Việt không có khái niệm thực thể có tên
+
+> Bài nêu rõ với scheme BIO/IOB, một nhãn `I-Person` (tiếp tục thực thể) chỉ hợp lệ nếu token trước nó đã được gán `B-Person` hoặc `I-Person` — nếu gán nhãn độc lập hoàn toàn, mô hình có thể sinh ra chuỗi nhãn vô nghĩa vi phạm ràng buộc này.
+
+## Q3
+Trong kiến trúc BiLSTM-CRF, vai trò của lớp CRF (đặt phía trên BiLSTM) là gì?
+
+- [ ] Thay thế hoàn toàn BiLSTM, không cần học biểu diễn ngữ cảnh nữa
+- [ ] Biến token thành vector embedding trước khi đưa vào BiLSTM
+- [x] Mô hình hoá xác suất chuyển đổi giữa các cặp nhãn liền kề, đảm bảo chuỗi nhãn đầu ra hợp lệ — điều mà BiLSTM gán nhãn độc lập từng bước không tự có được
+- [ ] Tăng tốc độ huấn luyện bằng cách bỏ qua character-level representation
+
+> BiLSTM học biểu diễn ngữ cảnh cho từng token (thay thế feature engineering thủ công của CRF cổ điển), nhưng nếu chỉ dùng BiLSTM để phân loại độc lập ở mỗi bước, chuỗi nhãn ra có thể vi phạm ràng buộc cấu trúc. CRF layer phía trên giải quyết đúng vấn đề này bằng cách tính xác suất của toàn bộ chuỗi nhãn, có tính đến xác suất chuyển đổi giữa nhãn liền kề.
+
+## Q4
+Theo Lample và cộng sự (2016), điểm cải thiện chính của BiLSTM-CRF so với pipeline CRF cổ điển (dùng feature thủ công) là gì?
+
+- [ ] BiLSTM-CRF chạy nhanh hơn CRF cổ điển trên CPU
+- [x] BiLSTM-CRF học biểu diễn (character-level + word embedding) thay vì cần feature thủ công/gazetteer, đạt SOTA trên 4 ngôn ngữ mà không cần tài nguyên đặc thù ngôn ngữ
+- [ ] BiLSTM-CRF không cần dữ liệu có nhãn để huấn luyện
+- [ ] CRF cổ điển không thể áp dụng cho bài toán POS tagging
+
+> Vấn đề CRF cổ điển giải quyết là cần rất nhiều feature engineering (viết hoa, tiền tố/hậu tố, gazetteer theo từng ngôn ngữ/miền dữ liệu). BiLSTM-CRF thay thế phần này bằng biểu diễn học được (character-level representation + word embedding), đạt SOTA trên 4 ngôn ngữ mà không cần các tài nguyên đặc thù ngôn ngữ như gazetteer.
+
+## Q5
+Ví dụ "Apple" trong "Apple announced new products" (Organization) so với "I ate an apple for lunch" (không phải thực thể) minh hoạ điều gì?
+
+- [ ] TF-IDF là cách tốt nhất để phân biệt hai câu này
+- [ ] BIO tagging scheme không xử lý được trường hợp này
+- [x] Nhãn của một từ phụ thuộc vào NGỮ CẢNH xung quanh nó, không phải một thuộc tính cố định của bản thân từ đó
+- [ ] "Apple" luôn được gán nhãn Organization bất kể ngữ cảnh
+
+> Đây chính là lý do sequence labeling cần một mô hình có khả năng nắm bắt ngữ cảnh (như BiLSTM) thay vì chỉ tra từ điển tĩnh — cùng một từ có thể mang nhãn khác nhau hoàn toàn tuỳ vào các từ xung quanh nó trong câu.

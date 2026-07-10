@@ -1,0 +1,90 @@
+---
+title: GPT-2 — Zero-shot Task Transfer, Không Cần Fine-tune Nữa
+track: foundations-track
+module: LLM
+submodule: GPT & Decoder-only
+order: 2
+status: stable
+prerequisites: ["01-gpt1"]
+summary: GPT-1 vẫn cần fine-tune gần như toàn bộ tham số cho mỗi tác vụ downstream — vẫn một bước huấn luyện riêng cho mỗi bài toán. Radford và cộng sự (2019, OpenAI) đặt câu hỏi triệt để hơn: nếu mô hình đủ lớn và huấn luyện trên đủ đa dạng văn bản, liệu nó có thể thực hiện nhiều tác vụ mà KHÔNG CẦN fine-tune gì cả? GPT-2 (1.5 tỷ tham số, gấp 10 lần GPT-1, huấn luyện trên WebText — 8 triệu trang web từ Reddit) trả lời có: đạt SOTA zero-shot trên 7/8 bộ dữ liệu mô hình hoá ngôn ngữ, chỉ bằng cách đưa thẳng input của tác vụ vào mô hình và để nó tiếp tục sinh văn bản.
+last_touched_by_task: Bài mới (2026-07-10), sub-module "GPT & Decoder-only" — bài thứ 2 trong dòng tiến hoá GPT-1 → GPT-2 → GPT-3, giải quyết đúng hạn chế còn lại của GPT-1 (vẫn cần fine-tune per-task). Nguồn: lilianweng.github.io (xác nhận qua WebFetch trực tiếp posts/2019-01-31-lm: vấn đề cụ thể zero-shot transfer không cần fine-tune, kiến trúc giữ nguyên GPT nhưng scale 1.5B tham số = 10x GPT-1, dữ liệu WebText 8 triệu trang từ Reddit outbound link, kết quả SOTA 7/8 dataset zero-shot, cải thiện rõ rệt nhất trên dataset nhỏ và đo phụ thuộc dài hạn) + machinelearningmastery.com/encoders-and-decoders-in-transformer-models (đã dùng ở bài GPT-1, tiếp tục làm nguồn phụ cho khái niệm decoder-only, không lặp lại trích dẫn chi tiết ở bài này).
+---
+
+Bài [GPT-1](01-gpt1.mdx) giải quyết vấn đề "cần kiến trúc riêng cho từng
+tác vụ" (hạn chế của ELMo) — nhưng vẫn giữ lại một bước: **fine-tune gần
+như toàn bộ tham số** cho mỗi tác vụ downstream cụ thể. Vẫn còn một
+bước huấn luyện riêng, dù kiến trúc dùng chung. Bài này kể cách GPT-2 đặt
+câu hỏi triệt để hơn: liệu có thể **bỏ hẳn** bước fine-tune đó không?
+
+## Câu hỏi: có cần fine-tune cho từng tác vụ không, nếu mô hình đủ lớn?
+
+**Radford và cộng sự (2019)**, trong bài báo "Language Models are
+Unsupervised Multitask Learners" (OpenAI), đặt giả thuyết: nếu một mô
+hình ngôn ngữ được huấn luyện trên đủ **lớn** và đủ **đa dạng** văn bản,
+nó có thể ngầm học được cách thực hiện nhiều tác vụ khác nhau (dịch, tóm
+tắt, trả lời câu hỏi) **chỉ từ next-token prediction thuần tuý** — không
+cần một bước huấn luyện riêng (fine-tuning) nào cho từng tác vụ cụ thể.
+Đây gọi là **zero-shot task transfer**: chuyển giao sang tác vụ mới với
+**không** ví dụ huấn luyện nào, không cập nhật gradient nào.
+
+## Kiến trúc: giữ nguyên GPT-1, chỉ scale lên 10 lần
+
+Về mặt kiến trúc, GPT-2 **không** giới thiệu gì mới so với
+[GPT-1](01-gpt1.mdx) — vẫn là decoder Transformer với causal mask, chỉ
+thêm một vài điều chỉnh kỹ thuật nhỏ (thay đổi vị trí layer normalization,
+điều chỉnh cách khởi tạo trọng số của các lớp residual). Thay đổi chính
+là **quy mô**: phiên bản lớn nhất của GPT-2 có **1.5 tỷ tham số** — gấp
+**10 lần** GPT-1.
+
+## Dữ liệu: WebText, thu thập có chọn lọc từ Reddit
+
+Để huấn luyện một mô hình lớn hơn nhiều, Radford và cộng sự cũng cần
+nhiều dữ liệu đa dạng hơn: họ xây dựng **WebText** — một bộ dữ liệu gồm
+**8 triệu trang web**, thu thập bằng cách crawl các đường link ra ngoài
+(outbound link) được đăng trên Reddit và đã qua một ngưỡng lọc chất
+lượng (số upvote tối thiểu) — một cách gián tiếp tận dụng con người
+(người dùng Reddit) làm bộ lọc chất lượng nội dung, mà không cần tự tay
+đánh giá chất lượng hàng triệu trang web.
+
+## Zero-shot task transfer hoạt động thế nào
+
+Cơ chế cụ thể: với một tác vụ downstream (ví dụ tóm tắt văn bản), thay
+vì fine-tune, người dùng chỉ cần đưa **input của tác vụ đó trực tiếp**
+vào GPT-2 (ví dụ đoạn văn cần tóm tắt, theo sau bởi một tín hiệu ngữ
+cảnh gợi ý "đây là bản tóm tắt:"), rồi để mô hình **tiếp tục sinh văn
+bản** như bình thường (next-token prediction) — không có gì thay đổi về
+mặt cơ chế so với việc GPT-2 "chỉ tiếp tục viết văn bản". Nếu mô hình đã
+học đủ tốt từ pretraining, phần văn bản nó sinh ra tiếp theo sẽ tự nhiên
+mang đúng hình thức của một bản tóm tắt — không cần bất kỳ bước huấn
+luyện bổ sung nào.
+
+## Kết quả: SOTA zero-shot trên 7/8 bộ dữ liệu mô hình hoá ngôn ngữ
+
+Radford và cộng sự công bố: GPT-2 đạt kết quả **hiện đại nhất (SOTA)**
+trên **7 trong số 8** bộ dữ liệu mô hình hoá ngôn ngữ được kiểm tra,
+trong chế độ **zero-shot transfer** — không hề fine-tune riêng cho bất
+kỳ tác vụ nào trong số đó. Cải thiện rõ rệt nhất được ghi nhận trên các
+bộ dữ liệu **nhỏ** và các bộ dữ liệu đo **phụ thuộc dài hạn** (long-term
+dependency) — đúng loại bài toán mà một mô hình lớn, huấn luyện trên
+nhiều văn bản đa dạng, có lợi thế tự nhiên so với mô hình nhỏ chỉ được
+fine-tune trên dữ liệu hẹp của một tác vụ.
+
+## Liên hệ lại với các bài trước
+
+- GPT-2 không thay đổi kiến trúc so với [GPT-1](01-gpt1.mdx) — điểm mới
+  hoàn toàn nằm ở **quy mô** (10 lần tham số) và **dữ liệu** (WebText đa
+  dạng hơn nhiều so với dữ liệu huấn luyện GPT-1). Đây là minh chứng sớm
+  cho xu hướng "scale" sẽ được đo đạc có hệ thống ở bài Scaling Laws
+  (sub-module Huấn luyện & Alignment).
+- Zero-shot task transfer là bước đệm trực tiếp dẫn tới **in-context
+  learning** — khả năng nổi bật hơn nữa của GPT-3 (bài tiếp theo), nơi
+  mô hình còn có thể học thêm từ vài ví dụ đặt ngay trong prompt (few-
+  shot), không chỉ hoàn toàn zero-shot.
+- Cùng nguyên tắc "khả năng nổi lên khi scale đủ lớn" (emergent
+  capability) sẽ được nhắc lại nhiều lần ở các bài sau (Scaling Laws,
+  Prompting & In-context Learning) — GPT-2 là minh chứng thực nghiệm đầu
+  tiên trong dòng GPT cho hiện tượng này.
+
+## Nguồn tham khảo
+
+- [Lil'Log — Generalized Language Models (Lilian Weng)](https://lilianweng.github.io/posts/2019-01-31-lm/) — dùng cho vấn đề cụ thể (zero-shot task transfer không cần fine-tune), kiến trúc (giữ nguyên GPT, scale lên 1.5 tỷ tham số = 10x GPT-1, điều chỉnh layer normalization/khởi tạo residual), dữ liệu WebText (8 triệu trang web từ Reddit outbound link), và kết quả (SOTA 7/8 dataset zero-shot, cải thiện rõ nhất trên dataset nhỏ và đo phụ thuộc dài hạn).

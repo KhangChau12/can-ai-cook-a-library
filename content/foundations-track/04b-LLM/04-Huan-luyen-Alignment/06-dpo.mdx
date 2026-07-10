@@ -1,0 +1,108 @@
+---
+title: DPO — Ngôn ngữ Mô hình 'Bí mật' Chính là Reward Model
+track: foundations-track
+module: LLM
+submodule: Huấn luyện & Alignment
+order: 6
+status: stable
+prerequisites: ["04-rlhf-alignment"]
+summary: RLHF truyền thống (bài 27) cần duy trì nhiều mô hình cùng lúc và huấn luyện RL vốn dễ bất ổn định. Rafailov và cộng sự (2023) chứng minh một kết quả toán học đẹp: có thể viết lại chính xác reward function chỉ bằng policy hiện tại và policy tham chiếu — nghĩa là 'ngôn ngữ mô hình bí mật đã chính là reward model' — biến toàn bộ bài toán RLHF thành một hàm loss classification đơn giản, không cần bước RL riêng.
+last_touched_by_task: Viết mới 2026-07-06: đóng khoảng trống — DPO đã được nhắc ở bài 27 (RLHF) và 47 (PPO) như 'đơn giản hoá RLHF bằng cách bỏ hẳn bước RL' nhưng chưa có công thức toán/tên paper cụ thể. Nguồn: arxiv 2305.18290 (Rafailov, Sharma, Mitchell, Ermon, Manning, Finn 2023, NeurIPS) — chỉ 1 nguồn vì không tìm được nguồn giải thích trực giác thứ 2 (lilianweng.github.io không có bài riêng qua WebSearch); DPO là cải tiến trực tiếp 1 kỹ thuật (RLHF), không phải dòng tiến hoá nhiều model cạnh tranh, nên áp dụng ngoại lệ mục 2.1 (1 nguồn đủ) như tiền lệ RoBERTa/WordPiece.
+---
+
+Bài [RLHF & Alignment](27-rlhf-alignment.mdx) đã nhắc: RLHF truyền thống
+cần duy trì **nhiều mô hình cùng lúc** (policy đang tối ưu, policy tham
+chiếu, reward model, và một mô hình value) và huấn luyện bằng RL (PPO)
+vốn dễ bất ổn định hơn supervised learning thuần tuý. Bài này giải thích
+chính xác **DPO** — cách Rafailov và cộng sự (2023) loại bỏ hoàn toàn
+bước RL bằng một quan sát toán học đẹp.
+
+## Câu hỏi: có cần huấn luyện reward model RIÊNG không?
+
+RLHF truyền thống chia làm 2 giai đoạn tách biệt: (1) huấn luyện reward
+model từ dữ liệu xếp hạng của con người, (2) dùng RL để tối ưu policy sao
+cho tối đa hoá điểm số từ reward model đó. **Rafailov và cộng sự (2023)**,
+trong bài báo "Direct Preference Optimization: Your Language Model is
+Secretly a Reward Model", đặt câu hỏi: nếu bước 2 (tối ưu RL) có nghiệm
+đóng (closed-form) có thể viết ra được, liệu có thể "lồng" luôn nghiệm đó
+ngược lại vào bước 1, để tránh phải huấn luyện reward model như một mô
+hình riêng?
+
+## Kết quả toán học cốt lõi: reward chỉ là một hàm của policy
+
+Bài toán RLHF chuẩn có nghiệm tối ưu lý thuyết đã biết dạng đóng: policy
+tối ưu `π*` liên hệ với reward `r` và policy tham chiếu `π_ref` qua một
+công thức cụ thể. Điều thú vị Rafailov và cộng sự chỉ ra: công thức này
+có thể **đảo ngược** — thay vì coi reward là thứ cần học trước rồi mới
+suy ra policy tối ưu, ta có thể biểu diễn reward **trực tiếp** như một
+hàm của chính policy đang huấn luyện và policy tham chiếu:
+
+```
+r(x, y) = β * log( π_θ(y|x) / π_ref(y|x) ) + β * log Z(x)
+```
+
+Trong đó `π_θ` là policy đang huấn luyện, `π_ref` là policy tham chiếu cố
+định (thường là mô hình sau bước SFT, trước khi tối ưu preference), và
+`β` là một hằng số điều khiển mức độ policy được phép lệch khỏi tham
+chiếu. Điểm mấu chốt: **không cần một mạng nơ-ron riêng nào để biểu diễn
+reward** — reward được tính thẳng từ tỷ lệ log giữa 2 policy đã có sẵn.
+Đây chính là ý nghĩa tên gọi bài báo: "ngôn ngữ mô hình bí mật đã là
+reward model" — không cần huấn luyện thêm gì mới.
+
+## Kết hợp với mô hình Bradley-Terry: về lại một bài toán classification
+
+Dữ liệu preference (con người xếp hạng câu trả lời `y_w` — "thắng" — hơn
+`y_l` — "thua" — cho cùng câu hỏi `x`) thường được mô hình hoá bằng
+**Bradley-Terry model**: xác suất `y_w` được thích hơn `y_l` là một hàm
+sigmoid của hiệu số reward giữa chúng:
+
+```
+P(y_w thắng y_l | x) = sigmoid( r(x, y_w) - r(x, y_l) )
+```
+
+Thay công thức reward (viết bằng policy) ở trên vào Bradley-Terry, hằng
+số `Z(x)` (khó tính, phụ thuộc toàn bộ không gian output) **triệt tiêu**
+hoàn toàn — vì nó xuất hiện ở cả hai vế của phép trừ. Kết quả cuối cùng là
+một hàm loss **chỉ phụ thuộc vào chính policy `π_θ` và `π_ref`**, không
+còn `r` hay `Z(x)` tường minh nữa:
+
+```
+L_DPO = -E[ log sigmoid( β*log(π_θ(y_w|x)/π_ref(y_w|x)) 
+                       - β*log(π_θ(y_l|x)/π_ref(y_l|x)) ) ]
+```
+
+Đây chính xác là một hàm loss **classification** thông thường (dạng
+binary cross-entropy quen thuộc từ bài
+[Logistic Regression](03-logistic-regression.mdx)) — huấn luyện bằng
+gradient descent tiêu chuẩn, không cần vòng lặp sampling-đánh giá-cập nhật
+của RL, không cần huấn luyện reward model như một bước riêng, không cần
+duy trì nhiều mô hình phụ trong lúc huấn luyện (chỉ cần `π_θ` và
+`π_ref` cố định).
+
+## Kết quả: đơn giản hơn nhiều, hiệu năng tương đương hoặc tốt hơn PPO
+
+Rafailov và cộng sự báo cáo DPO **vượt qua** RLHF dựa trên PPO ở tác vụ
+kiểm soát cảm xúc (sentiment control), **khớp hoặc vượt** ở tác vụ tóm
+tắt văn bản, và đạt hiệu năng **tương đương hoặc tốt hơn** ở hội thoại
+một lượt (single-turn dialogue) — trong khi đơn giản hơn đáng kể để cài
+đặt và huấn luyện so với các phương pháp dựa trên PPO.
+
+## Liên hệ lại với các bài trước
+
+- DPO là minh chứng đẹp cho nguyên tắc đã lặp lại nhiều lần trong track:
+  một bài toán tưởng chừng cần thuật toán phức tạp (RL đầy đủ với PPO)
+  đôi khi giải được bằng công cụ đơn giản hơn (classification loss) nếu
+  tìm đúng cách công thức hoá lại vấn đề — tương tự cách
+  [Ensemble Methods](20-ensemble-methods.mdx) dùng lại nguyên vẹn
+  Decision Tree, hay [Autoencoder tuyến tính hội tụ về PCA](../../06-Generative Models/01-Overview/02-autoencoder.mdx).
+- Hàm loss cuối cùng của DPO chính là **binary cross-entropy** đã học ở
+  bài [Logistic Regression](03-logistic-regression.mdx) — chỉ khác input
+  không phải feature thô, mà là hiệu số log-ratio giữa hai policy.
+- DPO không cần [PPO](47-ppo.mdx) — đây là điểm khác biệt cốt lõi so với
+  RLHF truyền thống đã học ở bài [27](27-rlhf-alignment.mdx): PPO giải
+  quyết bài toán tối ưu RL một cách an toàn, còn DPO tránh hẳn việc phải
+  giải bài toán RL đó bằng cách biến đổi toán học lại từ đầu.
+
+## Nguồn tham khảo
+
+- [arXiv — Direct Preference Optimization: Your Language Model is Secretly a Reward Model](https://arxiv.org/abs/2305.18290) — paper gốc của Rafailov, Sharma, Mitchell, Ermon, Manning, và Finn (2023, NeurIPS), dùng cho toàn bộ lập luận toán học cốt lõi (reparameterize reward bằng policy, kết hợp Bradley-Terry triệt tiêu partition function Z(x), rút về hàm loss classification), công thức DPO loss chính xác, và kết quả thực nghiệm (vượt PPO ở sentiment control, tương đương/tốt hơn ở summarization và dialogue).

@@ -1,0 +1,124 @@
+---
+title: Đánh giá LLM — Benchmark, Giới hạn của Benchmark, và LLM-as-Judge
+track: foundations-track
+module: LLM
+submodule: Evaluation
+order: 1
+status: stable
+prerequisites: ["01-gpt3", "01-reasoning-models"]
+summary: Xuyên suốt module này, nhiều bài đã trích dẫn số liệu benchmark (GLUE, SQuAD, MMLU, GSM8K) như bằng chứng một mô hình "tốt" — nhưng chưa bài nào giải thích CÁCH các con số đó được đo, hay chúng đáng tin tới mức nào. Bài này lấp khoảng trống đó: các benchmark tự động phổ biến đo gì cụ thể, hạn chế nghiêm trọng nhất của chúng (data contamination — dữ liệu benchmark vô tình lọt vào dữ liệu huấn luyện, khiến điểm số trông tốt hơn thực tế), và LLM-as-judge — dùng chính một LLM khác để chấm điểm, đánh đổi giữa khả năng mở rộng và độ tin cậy.
+last_touched_by_task: Bài mới (2026-07-10), mở sub-module "Evaluation" — bài cuối cùng của module LLM, lấp khoảng trống: track đã trích dẫn số liệu benchmark (GLUE 80.5% ở bài BERT, MMLU 67.5% ở bài Scaling Laws, GSM8K ở bài Prompting/Reasoning models) xuyên suốt nhiều bài nhưng chưa từng giải thích cách đo hay giới hạn của phương pháp đo. Nguồn: machinelearningmastery.com (xác nhận qua WebFetch bài "Everything You Need to Know About LLM Evaluation Metrics": các benchmark cụ thể MMLU/GSM8K/ARC/TruthfulQA/HellaSwag đo gì, cơ chế LLM-as-judge (dùng GPT-4/Claude đánh giá theo rubric) kèm ưu/nhược điểm cụ thể, giới hạn data contamination, định nghĩa perplexity). Chỉ 1 nguồn: đây không phải bài "dòng tiến hoá nhiều model cạnh tranh" mà là một chủ đề phương pháp luận đơn, theo mục 2.5.
+---
+
+Xuyên suốt module này, nhiều bài đã trích dẫn số liệu benchmark như bằng
+chứng một mô hình "tốt hơn" mô hình khác: GLUE 80.5% ở bài
+[BERT](../02-Pretrained-Language-Models/01-bert.mdx), MMLU 67.5% ở bài
+[Scaling Laws](../04-Huan-luyen-Alignment/02-scaling-laws.mdx), GSM8K ở
+bài [Prompting](../06-Ung-dung-Inference-time/01-prompting-in-context-learning.mdx)
+và [Reasoning models](../05-Reasoning-Test-time-Compute/01-reasoning-models.mdx).
+Nhưng chưa bài nào giải thích: các con số đó được **đo** như thế nào, và
+chúng đáng **tin** tới mức nào? Bài này trả lời câu hỏi đó.
+
+## Benchmark tự động: bộ câu hỏi lớn, có đáp án chuẩn sẵn
+
+Cách đánh giá phổ biến và dễ áp dụng nhất là **automated benchmark**
+(benchmark tự động): một bộ dữ liệu lớn gồm câu hỏi kèm đáp án đúng đã
+biết trước, cho phép đo hiệu năng một cách **định lượng** (accuracy =
+số câu trả lời đúng / tổng số câu hỏi). Một số benchmark phổ biến, đo
+những khía cạnh khác nhau:
+
+- **MMLU** (Massive Multitask Language Understanding): bao phủ **57 chủ
+  đề** khác nhau, từ khoa học tự nhiên tới nhân văn — đo kiến thức tổng
+  quát trên diện rộng.
+- **GSM8K:** tập trung vào các bài toán đố bằng lời liên quan tới số
+  học, đòi hỏi suy luận nhiều bước (đã gặp ở bài Reasoning models).
+- **ARC, TruthfulQA, HellaSwag:** mỗi bộ đo một khía cạnh khác nhau —
+  suy luận theo miền cụ thể, tính trung thực (mô hình có tránh được câu
+  trả lời sai phổ biến hay không), và commonsense knowledge (kiến thức
+  thông thường).
+
+## Perplexity: đo mức độ "bất ngờ" của mô hình trước một chuỗi token
+
+Ngoài các benchmark dạng câu hỏi-đáp án, một chỉ số khác thường dùng để
+đo chất lượng mô hình ngôn ngữ thuần tuý (không qua một tác vụ cụ thể)
+là **perplexity** (PPL) — đo mức độ "bất ngờ" (surprised) của mô hình
+khi dự đoán từng token trong một chuỗi văn bản, dựa trên xác suất mô
+hình gán cho token thực sự xuất hiện tiếp theo (chính là cơ chế next-
+token prediction đã học ở bài Pretraining). Perplexity **càng thấp**,
+mô hình càng "tự tin đúng" — thường coi là dấu hiệu văn bản tự nhiên,
+trôi chảy hơn. Điểm cần lưu ý: perplexity là chỉ số **phụ thuộc vào
+dataset đo** — một con số perplexity chỉ có ý nghĩa so sánh khi đo trên
+cùng một bộ dữ liệu.
+
+## Giới hạn nghiêm trọng nhất: data contamination
+
+Benchmark tự động có một hạn chế mang tính nền tảng: **mô hình có thể
+đã "học thuộc" chính các câu hỏi benchmark** nếu chúng vô tình xuất hiện
+trong dữ liệu huấn luyện — hiện tượng gọi là **data contamination**
+(nhiễm dữ liệu). Với các LLM hiện đại pretrain trên gần như toàn bộ
+internet có thể thu thập được (đã học ở bài Pretraining), nguy cơ một
+bộ benchmark công khai (đã xuất bản, có thể bị crawl vào tập huấn
+luyện) vô tình lọt vào dữ liệu huấn luyện là **có thật và khó loại trừ
+hoàn toàn**. Hệ quả: điểm số benchmark có thể **trông tốt hơn thực tế**
+— mô hình không thực sự "hiểu" hay "suy luận" tốt hơn, mà chỉ đơn giản
+đã thấy đúng câu hỏi đó (hoặc một biến thể rất gần) trong lúc pretrain.
+
+Một hạn chế khác, ít kịch tính hơn nhưng cũng quan trọng: benchmark tự
+động **thường không đo được** khả năng tổng quát hoá thực sự hay suy
+luận sâu — chúng đo tốt khả năng trả lời đúng một tập câu hỏi cụ thể,
+nhưng không đảm bảo mô hình sẽ làm tốt với những câu hỏi có cấu trúc
+tương tự nhưng chưa từng xuất hiện dưới bất kỳ hình thức nào trong dữ
+liệu huấn luyện.
+
+## LLM-as-Judge: dùng một LLM để chấm điểm LLM khác
+
+Với nhiều tác vụ (viết văn sáng tạo, trả lời hội thoại mở, tóm tắt) —
+không có một "đáp án đúng" duy nhất để so khớp tự động như benchmark
+dạng trắc nghiệm — một cách đánh giá khác đã trở nên phổ biến: **LLM-
+as-judge**, dùng chính một LLM mạnh (ví dụ GPT-4 hoặc Claude) để **chấm
+điểm** output của một mô hình khác, theo một **rubric** (tiêu chí chấm
+điểm) cụ thể như độ chính xác, độ rõ ràng.
+
+Đánh đổi của cách tiếp cận này:
+
+- **Ưu điểm:** có thể **mở rộng quy mô** đánh giá nhanh chóng (đánh giá
+  hàng nghìn câu trả lời) mà không cần người chấm thủ công — nhanh hơn
+  và rẻ hơn nhiều so với thuê con người đánh giá từng câu trả lời.
+- **Nhược điểm:** mô hình chấm điểm có thể mang **thiên kiến** (bias) —
+  ví dụ có xu hướng ưu ái output có **phong cách viết tương tự** chính
+  nó, thiếu **minh bạch** trong lý do đưa ra điểm số cụ thể (không thể
+  luôn giải thích rõ "vì sao chấm 7/10 mà không phải 8/10"), và gặp khó
+  khăn với các **miền chuyên sâu** (domain chuyên môn cao) mà bản thân
+  mô hình chấm điểm cũng không thực sự vững.
+
+## Không có một chỉ số duy nhất trả lời trọn vẹn "mô hình này có tốt không"
+
+Bài học tổng quát rút ra từ cả benchmark tự động lẫn LLM-as-judge: không
+có một con số duy nhất trả lời trọn vẹn câu hỏi "mô hình này có tốt
+không" — mỗi phương pháp đo một khía cạnh khác nhau, với những đánh đổi
+và điểm mù riêng. Đánh giá một LLM nghiêm túc trong thực tế thường cần
+**kết hợp nhiều phương pháp**: vài benchmark khác nhau (đo nhiều khía
+cạnh), kiểm tra chéo về khả năng data contamination, và có thể cả đánh
+giá của con người cho các tác vụ quan trọng nhất — không dựa hoàn toàn
+vào một con số benchmark duy nhất để kết luận.
+
+## Liên hệ lại với các bài trước
+
+- Mọi số liệu benchmark đã trích dẫn xuyên suốt module này (GLUE ở BERT,
+  MMLU ở Scaling Laws, GSM8K ở Prompting/Reasoning models) giờ có thể
+  được nhìn nhận cẩn trọng hơn: đây là các con số hữu ích để **so sánh
+  tương đối** giữa các mô hình cùng thời điểm, nhưng không phải thước đo
+  tuyệt đối, đặc biệt với các mô hình pretrain trên corpus quy mô cực
+  lớn (nguy cơ data contamination cao hơn).
+- Perplexity dùng lại chính cơ chế **next-token prediction** đã học ở
+  bài [Pretraining](../04-Huan-luyen-Alignment/01-pretraining-llm.mdx) —
+  không phải một khái niệm đo lường mới, chỉ là cách diễn giải xác suất
+  dự đoán token thành một chỉ số tổng hợp.
+- Vấn đề "GPT-3 vẫn gặp khó khăn ở một số dataset, và một số dataset gặp
+  vấn đề phương pháp luận" (đã nhắc ở bài [GPT-3](../03-GPT-Decoder-only/03-gpt3.mdx))
+  chính là một ví dụ cụ thể, sớm, của đúng vấn đề data contamination
+  được bàn kỹ ở bài này.
+
+## Nguồn tham khảo
+
+- [Machine Learning Mastery — Everything You Need to Know About LLM Evaluation Metrics](https://machinelearningmastery.com/everything-you-need-to-know-about-llm-evaluation-metrics/) — dùng cho các benchmark cụ thể (MMLU 57 chủ đề, GSM8K, ARC/TruthfulQA/HellaSwag), định nghĩa perplexity, cơ chế LLM-as-judge (dùng GPT-4/Claude chấm theo rubric) kèm ưu điểm (mở rộng quy mô, nhanh) và nhược điểm cụ thể (thiên kiến phong cách viết, thiếu minh bạch, khó khăn với miền chuyên sâu), và giới hạn data contamination (mô hình học thuộc câu hỏi benchmark khiến điểm số trông tốt hơn thực tế).
