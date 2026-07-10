@@ -4,10 +4,10 @@ track: foundations-track
 summary: "Lộ trình bài bản chinh phục AI/ML từ gốc, từ các thuật toán học máy cổ điển đến kiến trúc Deep Learning và LLM hiện đại."
 ---
 
-Mục lục dự kiến (cập nhật 2026-07-09 — tách submodule cho "Nền tảng Toán
-& ML cổ điển" và gộp Dimensionality Reduction vào làm submodule
-Unsupervised Learning). Mỗi module là 1 thư mục, bài đánh số local trong
-module/submodule.
+Mục lục dự kiến (cập nhật 2026-07-10 — tách module "NLP & LLM" cũ thành
+"Natural Language Processing" (module 4) và "Large Language Models"
+(module 4b); đổi tên module/submodule viết tắt sang dạng đầy đủ). Mỗi
+module là 1 thư mục, bài đánh số local trong module/submodule.
 
 ## Module 1 — Nền tảng Toán & ML cổ điển
 
@@ -73,54 +73,81 @@ module/submodule.
 4. [DeepLab — Atrous Convolution Giải quyết Đánh đổi Giữa Ngữ cảnh Đa tỷ lệ và Độ phân giải](03-Computer Vision/03-Segmentation/04-deeplab.mdx)
 5. [SegFormer — Kết hợp Transformer Phân cấp với Decoder MLP Nhẹ cho Segmentation](03-Computer Vision/03-Segmentation/05-segformer.mdx)
 
-## Module 4 — NLP & LLM
+## Module 4 — Natural Language Processing
 
 ### Overview
 
-1. [NLP & LLM — Tổng quan module và lộ trình học](04-NLP-LLM/00-Overview/01-nlp-llm-overview.mdx)
+1. [NLP — Tổng quan module và lộ trình học](04-NLP/00-Overview/01-nlp-overview.mdx)
 
 ### Tokenization
 
-1. [Tokenization — Từ Cấp độ Từ tới Subword, Vì sao Byte Pair Encoding Hiệu quả](04-NLP-LLM/01-Tokenization/01-tokenization-word-to-subword.mdx)
-2. [Word2vec — Biến Token Rời rạc Thành Vector Số Mang Nghĩa](04-NLP-LLM/01-Tokenization/02-word2vec.mdx)
-3. [WordPiece & SentencePiece — Hai Biến thể Subword Dẫn tới Tokenizer Hiện đại](04-NLP-LLM/01-Tokenization/03-wordpiece-sentencepiece.mdx)
+1. [Tokenization — Từ Cấp độ Từ tới Subword, Vì sao Byte Pair Encoding Hiệu quả](04-NLP/01-Tokenization/01-tokenization-word-to-subword.mdx)
+2. [Word2vec — Biến Token Rời rạc Thành Vector Số Mang Nghĩa](04-NLP/01-Tokenization/02-word2vec.mdx)
+3. [WordPiece & SentencePiece — Hai Biến thể Subword Dẫn tới Tokenizer Hiện đại](04-NLP/01-Tokenization/03-wordpiece-sentencepiece.mdx)
 
-### RNN Family
+### Recurrent Neural Network Family
 
-1. [RNN — Mạng nơ-ron hồi quy cho dữ liệu chuỗi](04-NLP-LLM/02-RNN-Family/01-rnn.mdx)
-2. [LSTM & GRU — Giải quyết vấn đề nhớ phụ thuộc xa của RNN](04-NLP-LLM/02-RNN-Family/02-lstm-gru.mdx)
-3. [Seq2seq (Encoder-Decoder) — Ánh xạ Chuỗi sang Chuỗi Độ dài Khác nhau](04-NLP-LLM/02-RNN-Family/03-seq2seq.mdx)
-4. [Bidirectional RNN/LSTM/GRU — Dùng Cả Ngữ cảnh Tương lai, Không Chỉ Quá khứ](04-NLP-LLM/02-RNN-Family/04-bidirectional-rnn.mdx)
-5. [Deep RNN — Xếp chồng Nhiều Lớp Hồi quy Để Học Quan hệ Phức tạp Hơn](04-NLP-LLM/02-RNN-Family/05-deep-rnn.mdx)
+1. [RNN — Mạng nơ-ron hồi quy cho dữ liệu chuỗi](04-NLP/02-Recurrent-Neural-Network-Family/01-rnn.mdx)
+2. [LSTM & GRU — Giải quyết vấn đề nhớ phụ thuộc xa của RNN](04-NLP/02-Recurrent-Neural-Network-Family/02-lstm-gru.mdx)
+3. [Seq2seq (Encoder-Decoder) — Ánh xạ Chuỗi sang Chuỗi Độ dài Khác nhau](04-NLP/02-Recurrent-Neural-Network-Family/03-seq2seq.mdx)
+4. [Bidirectional RNN/LSTM/GRU — Dùng Cả Ngữ cảnh Tương lai, Không Chỉ Quá khứ](04-NLP/02-Recurrent-Neural-Network-Family/04-bidirectional-rnn.mdx)
+5. [Deep RNN — Xếp chồng Nhiều Lớp Hồi quy Để Học Quan hệ Phức tạp Hơn](04-NLP/02-Recurrent-Neural-Network-Family/05-deep-rnn.mdx)
 
 ### Transformer Architecture
 
-1. [Attention — Cơ chế học cách 'chú ý' có chọn lọc](04-NLP-LLM/03-Transformer-Architecture/01-attention.mdx)
-2. [Transformer — Kiến trúc dựa hoàn toàn trên Attention](04-NLP-LLM/03-Transformer-Architecture/02-transformer.mdx)
-3. [Transformer-XL — Segment-level Recurrence Giải quyết Vấn đề Context Fragmentation](04-NLP-LLM/03-Transformer-Architecture/03-transformer-xl.mdx)
-4. [Longformer & Efficient Attention — Giải quyết Trực tiếp Độ phức tạp Bậc hai của Self-Attention](04-NLP-LLM/03-Transformer-Architecture/04-longformer.mdx)
-5. [Reformer — LSH Attention và Reversible Layers Giải quyết Cả Compute lẫn Bộ nhớ](04-NLP-LLM/03-Transformer-Architecture/05-reformer.mdx)
+1. [Attention — Cơ chế học cách 'chú ý' có chọn lọc](04-NLP/03-Transformer-Architecture/01-attention.mdx)
+2. [Transformer — Kiến trúc dựa hoàn toàn trên Attention](04-NLP/03-Transformer-Architecture/02-transformer.mdx)
+3. [Transformer-XL — Segment-level Recurrence Giải quyết Vấn đề Context Fragmentation](04-NLP/03-Transformer-Architecture/03-transformer-xl.mdx)
+4. [Longformer & Efficient Attention — Giải quyết Trực tiếp Độ phức tạp Bậc hai của Self-Attention](04-NLP/03-Transformer-Architecture/04-longformer.mdx)
+5. [Reformer — LSH Attention và Reversible Layers Giải quyết Cả Compute lẫn Bộ nhớ](04-NLP/03-Transformer-Architecture/05-reformer.mdx)
+
+### NLP Task cổ điển
+
+1. [Phân loại văn bản — Từ TF-IDF/Naive Bayes tới Embedding học được](04-NLP/05-NLP-Task-co-dien/01-phan-loai-van-ban.mdx)
+2. [POS Tagging & NER — Gán nhãn từng token bằng BiLSTM-CRF](04-NLP/05-NLP-Task-co-dien/02-pos-tagging-ner.mdx)
+3. [Topic Modeling (LDA) — Khám phá Chủ đề Ẩn Không Cần Nhãn](04-NLP/05-NLP-Task-co-dien/03-topic-modeling-lda.mdx)
+
+## Module 4b — Large Language Models
+
+### Overview
+
+1. [LLM — Tổng quan module và lộ trình học](04b-LLM/01-Overview/01-llm-overview.mdx)
 
 ### Pretrained Language Models
 
-1. [BERT — Kết hợp Ngữ cảnh Hai chiều với Kiến trúc Task-agnostic](04-NLP-LLM/04-Pretrained-Language-Models/01-bert.mdx)
-2. [RoBERTa — BERT Bị Huấn luyện Chưa Tới, Không Phải Kiến trúc Sai](04-NLP-LLM/04-Pretrained-Language-Models/02-roberta.mdx)
-3. [ALBERT — Giảm 18 Lần Tham số BERT Bằng Chia sẻ Trọng số và Factorized Embedding](04-NLP-LLM/04-Pretrained-Language-Models/03-albert.mdx)
-4. [T5 — Thống nhất Mọi Tác vụ NLP Thành Một Định dạng Text-to-Text](04-NLP-LLM/04-Pretrained-Language-Models/04-t5.mdx)
+1. [BERT — Kết hợp Ngữ cảnh Hai chiều với Kiến trúc Task-agnostic](04b-LLM/02-Pretrained-Language-Models/01-bert.mdx)
+2. [RoBERTa — BERT Bị Huấn luyện Chưa Tới, Không Phải Kiến trúc Sai](04b-LLM/02-Pretrained-Language-Models/02-roberta.mdx)
+3. [ALBERT — Giảm 18 Lần Tham số BERT Bằng Chia sẻ Trọng số và Factorized Embedding](04b-LLM/02-Pretrained-Language-Models/03-albert.mdx)
+4. [T5 — Thống nhất Mọi Tác vụ NLP Thành Một Định dạng Text-to-Text](04b-LLM/02-Pretrained-Language-Models/04-t5.mdx)
+
+### GPT & Decoder-only
+
+1. [GPT-1 — Decoder-only Transformer và Pretrain-rồi-Fine-tune](04b-LLM/03-GPT-Decoder-only/01-gpt1.mdx)
+2. [GPT-2 — Zero-shot Task Transfer, Không Cần Fine-tune Nữa](04b-LLM/03-GPT-Decoder-only/02-gpt2.mdx)
+3. [GPT-3 — Few-shot Learning Chỉ Qua Prompt, Không Cập nhật Gradient](04b-LLM/03-GPT-Decoder-only/03-gpt3.mdx)
+4. [Mixture-of-Experts — Tăng Tham số Mà Không Tăng Compute Tuyến tính](04b-LLM/03-GPT-Decoder-only/04-mixture-of-experts.mdx)
 
 ### Huấn luyện & Alignment
 
-1. [Pretraining — Vì sao LLM học được từ hàng tỷ trang văn bản không nhãn](04-NLP-LLM/05-Huan-luyen-Alignment/01-pretraining-llm.mdx)
-2. [Scaling Laws — Vì sao LLM cứ to hơn lại thường tốt hơn](04-NLP-LLM/05-Huan-luyen-Alignment/02-scaling-laws.mdx)
-3. [Fine-tuning & Instruction Tuning — Từ 'hoàn thành văn bản' sang 'làm theo hướng dẫn'](04-NLP-LLM/05-Huan-luyen-Alignment/03-fine-tuning-instruction-tuning.mdx)
-4. [RLHF & Alignment — Dùng Reinforcement Learning để LLM 'hợp ý' con người hơn](04-NLP-LLM/05-Huan-luyen-Alignment/04-rlhf-alignment.mdx)
-5. [LoRA — Fine-tune Hàng Tỷ Tham số Bằng Cách Chỉ Học Một Ma trận Hạng Thấp](04-NLP-LLM/05-Huan-luyen-Alignment/05-lora.mdx)
-6. [DPO — Ngôn ngữ Mô hình 'Bí mật' Chính là Reward Model](04-NLP-LLM/05-Huan-luyen-Alignment/06-dpo.mdx)
+1. [Pretraining — Vì sao LLM học được từ hàng tỷ trang văn bản không nhãn](04b-LLM/04-Huan-luyen-Alignment/01-pretraining-llm.mdx)
+2. [Scaling Laws — Vì sao LLM cứ to hơn lại thường tốt hơn](04b-LLM/04-Huan-luyen-Alignment/02-scaling-laws.mdx)
+3. [Fine-tuning & Instruction Tuning — Từ 'hoàn thành văn bản' sang 'làm theo hướng dẫn'](04b-LLM/04-Huan-luyen-Alignment/03-fine-tuning-instruction-tuning.mdx)
+4. [RLHF & Alignment — Dùng Reinforcement Learning để LLM 'hợp ý' con người hơn](04b-LLM/04-Huan-luyen-Alignment/04-rlhf-alignment.mdx)
+5. [LoRA — Fine-tune Hàng Tỷ Tham số Bằng Cách Chỉ Học Một Ma trận Hạng Thấp](04b-LLM/04-Huan-luyen-Alignment/05-lora.mdx)
+6. [DPO — Ngôn ngữ Mô hình 'Bí mật' Chính là Reward Model](04b-LLM/04-Huan-luyen-Alignment/06-dpo.mdx)
+
+### Reasoning & Test-time Compute
+
+1. [Reasoning Models & Test-time Compute — Suy nghĩ Lâu hơn Lúc Suy luận, Không Chỉ To hơn Lúc Huấn luyện](04b-LLM/05-Reasoning-Test-time-Compute/01-reasoning-models.mdx)
 
 ### Ứng dụng & Inference-time
 
-1. [Prompting & In-context Learning — 'Dạy' một tác vụ mới mà không cần huấn luyện lại](04-NLP-LLM/06-Ung-dung-Inference-time/01-prompting-in-context-learning.mdx)
-2. [RAG, Embedding & Agent — Đưa LLM vào Sản phẩm thật](04-NLP-LLM/06-Ung-dung-Inference-time/02-rag-embedding-agent.mdx)
+1. [Prompting & In-context Learning — 'Dạy' một tác vụ mới mà không cần huấn luyện lại](04b-LLM/06-Ung-dung-Inference-time/01-prompting-in-context-learning.mdx)
+2. [RAG, Embedding & Agent — Đưa LLM vào Sản phẩm thật](04b-LLM/06-Ung-dung-Inference-time/02-rag-embedding-agent.mdx)
+
+### Evaluation
+
+1. [Đánh giá LLM — Benchmark, Giới hạn của Benchmark, và LLM-as-Judge](04b-LLM/07-Evaluation/01-danh-gia-llm.mdx)
 
 ## Module 5 — Reinforcement Learning
 
@@ -171,13 +198,13 @@ module/submodule.
 4. [Flow-based Models — Biến Đổi Phân Phối Bằng Dòng Chảy Khả Nghịch](06-Generative Models/01-Overview/04-flow-based-models.mdx)
 5. [VQ-VAE & VQ-GAN — Lượng Tử Hóa Không Gian Latent Cho Sinh Ảnh Chất Lượng Cao](06-Generative Models/01-Overview/05-vq-vae-vq-gan.mdx)
 
-### GAN Family
+### Generative Adversarial Network Family
 
-1. [GAN — Hai mạng nơ-ron thi đấu để tạo dữ liệu giả chân thực](06-Generative Models/02-GAN-Family/01-gan.mdx)
-2. [DCGAN — Kiến trúc Convolutional Ổn định hoá Huấn luyện GAN](06-Generative Models/02-GAN-Family/02-dcgan.mdx)
-3. [WGAN & StyleGAN — Hai Hướng Nâng cấp GAN: Ổn định hoá và Kiểm soát](06-Generative Models/02-GAN-Family/03-wgan-stylegan.mdx)
-4. [Conditional GAN — Sinh Ảnh Có Điều Kiện Từ Nhãn, Ảnh Khác, Và Miền](06-Generative Models/02-GAN-Family/04-conditional-gan.mdx)
-5. [GAN Family — Tổng Kết Dòng Tiến Hóa Từ GAN Gốc Đến StyleGAN](06-Generative Models/02-GAN-Family/05-gan-family-synthesis.mdx)
+1. [GAN — Hai mạng nơ-ron thi đấu để tạo dữ liệu giả chân thực](06-Generative Models/02-Generative-Adversarial-Network-Family/01-gan.mdx)
+2. [DCGAN — Kiến trúc Convolutional Ổn định hoá Huấn luyện GAN](06-Generative Models/02-Generative-Adversarial-Network-Family/02-dcgan.mdx)
+3. [WGAN & StyleGAN — Hai Hướng Nâng cấp GAN: Ổn định hoá và Kiểm soát](06-Generative Models/02-Generative-Adversarial-Network-Family/03-wgan-stylegan.mdx)
+4. [Conditional GAN — Sinh Ảnh Có Điều Kiện Từ Nhãn, Ảnh Khác, Và Miền](06-Generative Models/02-Generative-Adversarial-Network-Family/04-conditional-gan.mdx)
+5. [GAN Family — Tổng Kết Dòng Tiến Hóa Từ GAN Gốc Đến StyleGAN](06-Generative Models/02-Generative-Adversarial-Network-Family/05-gan-family-synthesis.mdx)
 
 ### Diffusion Models
 

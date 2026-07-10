@@ -1,12 +1,12 @@
 ---
 title: NLP — Tổng quan module và lộ trình học
 track: foundations-track
-module: NLP
+module: Natural Language Processing
 submodule: Overview
 order: 1
 status: stable
 prerequisites: ["02-backpropagation"]
-summary: Bài mở đầu module NLP — vì sao dữ liệu chuỗi (không chỉ văn bản) cần kiến trúc riêng ngoài MLP/CNN, pipeline chung "văn bản thô → token → vector → mô hình" nối 5 sub-module lại thành một mạch duy nhất, và bản đồ tư duy trước khi đi vào Tokenization.
+summary: Bài mở đầu module Natural Language Processing — vì sao dữ liệu chuỗi (không chỉ văn bản) cần kiến trúc riêng ngoài MLP/CNN, pipeline chung "văn bản thô → token → vector → mô hình" nối 5 sub-module lại thành một mạch duy nhất, và bản đồ tư duy trước khi đi vào Tokenization.
 last_touched_by_task: Viết lại (2026-07-10) sau khi tách module "NLP & LLM" cũ thành 2 module riêng "NLP" và "LLM" — module này giờ chỉ dạy kiến trúc xử lý chuỗi nói chung và cách áp dụng cho các bài toán NLP cụ thể (không còn nói tới pretrain quy mô lớn/BERT/GPT, những nội dung đó chuyển sang module LLM). Sửa đoạn kết để dẫn sang module LLM thay vì mô tả BERT/GPT ngay trong module này.
 ---
 
@@ -47,7 +47,7 @@ này, thay vì theo độ phức tạp kiến trúc:
 1. **Tokenization** — cắt văn bản thành token và biến token thành vector.
    Đây là bước tiền xử lý mọi mô hình sau đó đều giả định đã có sẵn, nên
    học trước tiên.
-2. **RNN Family** — kiến trúc hồi quy cổ điển (RNN, LSTM/GRU, Seq2seq,
+2. **Recurrent Neural Network Family** — kiến trúc hồi quy cổ điển (RNN, LSTM/GRU, Seq2seq,
    Bidirectional/Deep RNN): xử lý chuỗi token bằng cách duyệt tuần tự,
    duy trì hidden state.
 3. **Transformer Architecture** — attention thay hoàn toàn cho hồi quy
@@ -67,7 +67,7 @@ buộc người đọc gặp công thức RNN (`H_t = f(X_t, H_{t-1})`) mà khô
 quyết đúng vấn đề đó: khi vào bài RNN, `X_t` đã là một khái niệm cụ thể
 đã biết, không phải hộp đen.
 
-## Điểm dừng của module này — và câu hỏi mở sang module LLM
+## Điểm dừng của module này — và câu hỏi mở sang module Large Language Models
 
 Học xong 4 sub-module trên, bạn có đủ công cụ để giải nhiều bài toán NLP
 cụ thể: mỗi bài toán (phân loại văn bản, NER, dịch máy...) được huấn

@@ -31,20 +31,20 @@
         "Segmentation": "Phân vùng ảnh cấp độ pixel: kiến trúc U-Net, Mask R-CNN, DeepLab và SegFormer."
       }
     },
-    "NLP": {
+    "Natural Language Processing": {
       "description": "Xử lý ngôn ngữ tự nhiên: pipeline văn bản → token → vector → mô hình, kiến trúc hồi quy và Transformer, và cách áp dụng chúng để giải các bài toán NLP cụ thể (phân loại văn bản, NER, topic modeling).",
       "submodules": {
-        "Overview": "Bản đồ tư duy module: vì sao dữ liệu chuỗi cần kiến trúc riêng, pipeline chung nối 4 sub-module còn lại, và câu hỏi mở dẫn sang module LLM.",
+        "Overview": "Bản đồ tư duy module: vì sao dữ liệu chuỗi cần kiến trúc riêng, pipeline chung nối 4 sub-module còn lại, và câu hỏi mở dẫn sang module Large Language Models.",
         "Tokenization": "Tiền xử lý văn bản: cắt token bằng subword (BPE, WordPiece, SentencePiece) và biến token thành vector số (word2vec, GloVe).",
-        "RNN Family": "Kiến trúc hồi quy cổ điển: RNN, LSTM/GRU, ứng dụng Seq2seq và kỹ thuật Bidirectional/Deep RNN dùng chung cho mọi cell.",
+        "Recurrent Neural Network Family": "Kiến trúc hồi quy cổ điển: RNN, LSTM/GRU, ứng dụng Seq2seq và kỹ thuật Bidirectional/Deep RNN dùng chung cho mọi cell.",
         "Transformer Architecture": "Kiến trúc dựa hoàn toàn trên Attention: Transformer gốc và các biến thể xử lý văn bản dài (Transformer-XL, Longformer, Reformer).",
         "NLP Task cổ điển": "Áp dụng kiến trúc đã học để giải bài toán cụ thể: Phân loại văn bản (TF-IDF/Naive Bayes → embedding/BiLSTM), POS Tagging & NER (BiLSTM-CRF), Topic Modeling (LDA, unsupervised)."
       }
     },
-    "LLM": {
+    "Large Language Models": {
       "description": "Mô hình ngôn ngữ lớn: triết lý pretrain một mô hình khổng lồ dùng chung cho mọi bài toán, hai nhánh kiến trúc (encoder-only/BERT-họ, decoder-only/GPT-họ), toàn bộ lộ trình huấn luyện/alignment, hướng cải thiện qua test-time compute, cách khai thác và cách đánh giá một LLM.",
       "submodules": {
-        "Overview": "Bản đồ tư duy module: nối tiếp câu hỏi mở từ module NLP, hai nhánh kiến trúc song song (encoder-only/decoder-only), và lộ trình 7 sub-module.",
+        "Overview": "Bản đồ tư duy module: nối tiếp câu hỏi mở từ module Natural Language Processing, hai nhánh kiến trúc song song (encoder-only/decoder-only), và lộ trình 7 sub-module.",
         "Pretrained Language Models": "Kiến trúc pretrained quy mô lớn dựa trên Transformer: BERT (encoder-only) → RoBERTa/ALBERT (cải tiến huấn luyện/tham số) → T5 (encoder-decoder, text-to-text).",
         "GPT & Decoder-only": "Dòng tiến hoá GPT-1 (task-agnostic, cần fine-tune) → GPT-2 (zero-shot) → GPT-3 (few-shot, in-context learning), và Mixture-of-Experts (kiến trúc sparse hiệu quả tham số cho decoder-only cực lớn).",
         "Huấn luyện & Alignment": "Lộ trình cập nhật tham số cho LLM decoder-only: Pretraining, Scaling Laws, Fine-tuning và Alignment (RLHF, LoRA, DPO).",
@@ -66,7 +66,7 @@
     "Generative Models": {
       "description": "Mô hình sinh dữ liệu hình ảnh: nền tảng representation learning (Autoencoder/VAE) và 2 nhánh song song — sinh đối kháng (GAN family) và khuếch tán (Diffusion Models).",
       "submodules": {
-        "GAN Family": "Mô hình sinh đối kháng: GAN gốc (Goodfellow 2014) → DCGAN (convolutional), giải quyết khó định nghĩa loss đo độ chân thực bằng discriminator học được.",
+        "Generative Adversarial Network Family": "Mô hình sinh đối kháng: GAN gốc (Goodfellow 2014) → DCGAN (convolutional), giải quyết khó định nghĩa loss đo độ chân thực bằng discriminator học được.",
         "Diffusion Models": "Mô hình sinh khuếch tán: DDPM (forward/reverse process) → DDIM (sample nhanh 10-50×) → classifier-free guidance + Latent Diffusion (Stable Diffusion) biến thành text-to-image thực tế.",
         "Overview": "Nền tảng chung: phân loại generative models, Autoencoder → VAE (mạch tiến hoá nén dữ liệu → sinh dữ liệu), Flow-based models, VQ-VAE/VQ-GAN."
       }

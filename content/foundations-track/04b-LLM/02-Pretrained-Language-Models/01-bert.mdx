@@ -1,7 +1,7 @@
 ---
 title: BERT — Kết hợp Ngữ cảnh Hai chiều với Kiến trúc Task-agnostic
 track: foundations-track
-module: LLM
+module: Large Language Models
 submodule: Pretrained Language Models
 order: 1
 status: stable
@@ -10,7 +10,7 @@ summary: Trước BERT, ELMo đạt ngữ cảnh hai chiều nhưng cần kiến
 last_touched_by_task: Tách module NLP/LLM (2026-07-10): BERT giờ mở đầu module LLM (sau Overview) thay vì "Pretrained Language Models" đứng trước "Huấn luyện & Alignment" trong cùng module NLP & LLM cũ — sửa đoạn mở đầu trỏ sang sub-module "GPT & Decoder-only" (mới, kể GPT-1/2/3 như dòng tiến hoá riêng) thay vì "Huấn luyện & Alignment", vì GPT-1/2/3 giờ có bài riêng trước khi track đi vào Pretraining/Scaling Laws/Fine-tuning. Đổi prerequisite sang Overview của module LLM (Transformer giờ ở module NLP khác — vẫn hợp lệ cross-module cùng track, nhưng Overview LLM là điểm vào tự nhiên hơn).
 ---
 
-Bài Transformer (module NLP, sub-module Transformer Architecture) giới
+Bài Transformer (module Natural Language Processing, sub-module Transformer Architecture) giới
 thiệu kiến trúc dựa hoàn toàn trên attention, gồm cả encoder và decoder.
 GPT — mô hình sẽ gặp lại ở sub-module "GPT & Decoder-only" ngay sau đây —
 dùng riêng phần **decoder** (với causal mask, chỉ nhìn về bên trái) để

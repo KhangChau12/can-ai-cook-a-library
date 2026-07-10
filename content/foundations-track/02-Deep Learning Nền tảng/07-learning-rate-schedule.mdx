@@ -122,7 +122,7 @@ từ một giá trị nhỏ lên tới mức mục tiêu trong vài bước/epoc
 sau đó mới áp dụng lịch trình giảm dần (step/cosine/...) như bình thường.
 
 **Công thức cụ thể trong Transformer** (Vaswani và cộng sự, 2017, paper
-"Attention Is All You Need" — sẽ gặp lại kiến trúc này ở module NLP & LLM):
+"Attention Is All You Need" — sẽ gặp lại kiến trúc này ở module Natural Language Processing):
 
 ```
 learning_rate = d_model^(-0.5) * min(step_num^(-0.5), step_num * warmup_steps^(-1.5))

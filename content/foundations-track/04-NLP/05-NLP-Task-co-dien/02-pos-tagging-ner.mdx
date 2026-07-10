@@ -1,7 +1,7 @@
 ---
 title: POS Tagging & NER — Gán nhãn từng token bằng BiLSTM-CRF
 track: foundations-track
-module: NLP
+module: Natural Language Processing
 submodule: NLP Task cổ điển
 order: 2
 status: stable
@@ -77,7 +77,7 @@ chuyển đổi tốt sang ngôn ngữ hay miền dữ liệu khác.
 Named Entity Recognition", giải quyết vấn đề đó bằng cách **kết hợp**
 hai công cụ, mỗi công cụ đảm nhiệm đúng vai trò nó làm tốt nhất:
 
-- **Bidirectional LSTM** (đã học ở sub-module RNN Family): học biểu diễn
+- **Bidirectional LSTM** (đã học ở sub-module Recurrent Neural Network Family): học biểu diễn
   ngữ cảnh cho mỗi token, dựa trên character-level representation (học
   được từ dữ liệu có nhãn, nắm bắt hình thái từ như tiền tố/hậu tố mà
   không cần thiết kế thủ công) kết hợp với word embedding (học từ corpus
@@ -114,7 +114,7 @@ công cho từng ngôn ngữ/miền dữ liệu cụ thể.
 - Đây là ví dụ rõ ràng cho nguyên tắc "kết hợp hai công cụ, mỗi công cụ
   giải đúng phần nó làm tốt nhất" — cùng tinh thần với Seq2seq (kết hợp
   2 LSTM cho 2 vai trò encoder/decoder khác nhau) đã học ở sub-module
-  RNN Family.
+  Recurrent Neural Network Family.
 - Sequence labeling là bài toán khác về bản chất với phân loại văn bản
   (bài trước): một câu → một nhãn (phân loại) so với một câu → nhiều
   nhãn, mỗi nhãn ứng với một token (sequence labeling) — cùng dùng
