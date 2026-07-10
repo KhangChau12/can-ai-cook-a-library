@@ -1,0 +1,108 @@
+---
+title: "Đánh giá Chất lượng Ranking & Vấn đề Cold-start"
+track: foundations-track
+module: Recommendation Systems
+submodule: Ranking & Evaluation
+order: 1
+status: stable
+prerequisites: ["01-recommendation-systems-overview", "03-collaborative-filtering-matrix-factorization"]
+summary: "Rating prediction dùng RMSE/MAE để đánh giá — nhưng ranking (mục tiêu thực sự của phần lớn hệ thống gợi ý) cần một họ metric khác: Precision@K, Recall@K, NDCG đo chất lượng của TOÀN BỘ danh sách top-K, không chỉ một cặp dự đoán-thực tế. Bài này cũng giới thiệu cold-start — vấn đề kinh điển khi user/item hoàn toàn mới, không có lịch sử tương tác để bất kỳ kỹ thuật collaborative filtering nào khai thác."
+last_touched_by_task: "Bài mới (2026-07-10), bài đầu sub-module Ranking & Evaluation — lấp lỗ hổng: bài BPR cũ nói 'tối ưu đúng tiêu chí ranking' nhưng module chưa từng định nghĩa cách ĐO ranking, và cold-start được nhắc nhiều lần rải rác (Content-based, Overview) nhưng chưa có bài giải thích đầy đủ. Nguồn: D2L.ai recsys-intro.html (xác nhận qua WebFetch: định nghĩa cold-start recommendation) + machinelearningmastery.com/practical-guide-building-recommender-systems (xác nhận qua WebFetch: liệt kê các metric chuẩn cho recommender systems — precision, recall, NDCG, MAP — và định nghĩa Precision@K/Recall@K/NDCG@K)."
+---
+
+Từ bài [Overview](../01-Overview/01-recommendation-systems-overview.mdx),
+track đã biết ranking (xếp đúng thứ tự top-N item) là mục tiêu thực sự của
+phần lớn hệ thống gợi ý, khác với rating prediction (dự đoán đúng điểm số).
+Nhưng nếu mục tiêu đã đổi, cách **đo** chất lượng mô hình cũng phải đổi
+theo — RMSE/MAE (đo sai số một con số dự đoán) không nói lên được gì về
+chất lượng của cả một **danh sách** gợi ý.
+
+## Vì sao RMSE/MAE không đủ cho bài toán ranking
+
+RMSE đo sai số trung bình giữa rating dự đoán và rating thật cho **từng
+cặp** người dùng-item riêng lẻ. Nhưng một mô hình có RMSE thấp không đảm
+bảo nó xếp hạng đúng thứ tự — ngược lại, một mô hình dự đoán rating lệch
+khá xa giá trị thật nhưng vẫn giữ đúng **thứ tự tương đối** giữa các item
+vẫn tạo ra danh sách gợi ý tốt (đây chính là quan sát mở đầu bài
+[BPR](02-bayesian-personalized-ranking.mdx)). Vì vậy, cần một họ metric
+đánh giá trực tiếp chất lượng của **danh sách top-K** được gợi ý, không
+phải từng điểm số riêng lẻ.
+
+## Precision@K và Recall@K: đo trên danh sách top-K
+
+Với mỗi người dùng, gọi tập item hệ thống gợi ý ở vị trí top-K là
+**tập dự đoán**, và tập item người dùng thực sự tương tác/thích là **tập
+liên quan** (relevant items):
+
+- **Precision@K**: trong số K item được gợi ý, bao nhiêu phần trăm thực sự
+  liên quan?
+  ```
+  Precision@K = (số item liên quan trong top-K) / K
+  ```
+- **Recall@K**: trong số toàn bộ item thực sự liên quan, bao nhiêu phần
+  trăm lọt vào được top-K gợi ý?
+  ```
+  Recall@K = (số item liên quan trong top-K) / (tổng số item liên quan)
+  ```
+
+Hai metric này đánh đổi lẫn nhau — tăng K luôn làm Recall@K tăng (dễ "vét"
+được nhiều item liên quan hơn khi danh sách dài ra) nhưng thường làm
+Precision@K giảm (danh sách dài hơn dễ lẫn nhiều item không liên quan hơn).
+
+## NDCG: có tính đến cả vị trí xếp hạng
+
+Precision@K và Recall@K coi mọi vị trí trong top-K như nhau — một item
+liên quan ở vị trí 1 hay vị trí K được tính điểm giống hệt nhau. Nhưng với
+người dùng thực tế, vị trí đầu danh sách quan trọng hơn nhiều (họ thường
+chỉ nhìn vài kết quả đầu). **NDCG** (Normalized Discounted Cumulative Gain)
+giải quyết đúng vấn đề đó: gán trọng số **giảm dần** theo vị trí — item
+liên quan xếp càng gần đầu danh sách đóng góp điểm càng cao — rồi chuẩn
+hoá theo điểm số của một xếp hạng lý tưởng (mọi item liên quan xếp ngay
+đầu) để giá trị nằm trong khoảng `[0, 1]`, dễ so sánh giữa các người dùng
+khác nhau.
+
+## Cold-start: vấn đề kinh điển của mọi kỹ thuật dựa trên lịch sử tương tác
+
+Mọi kỹ thuật collaborative filtering đã học trong module này — dù là
+memory-based, Matrix Factorization, hay các biến thể deep learning — đều
+có chung một điểm yếu cố hữu: chúng cần **lịch sử tương tác** để hoạt động.
+**Cold-start** là tình huống không có (hoặc có rất ít) lịch sử đó, chia
+thành hai dạng:
+
+- **User cold-start**: người dùng hoàn toàn mới, chưa từng tương tác với
+  bất kỳ item nào — không có gì để tìm "người dùng giống họ" hay tính
+  latent factor cho họ.
+- **Item cold-start**: item hoàn toàn mới, chưa từng được ai tương tác —
+  không nằm trong ma trận rating, không có latent factor học được, không
+  thể xuất hiện trong bất kỳ gợi ý collaborative filtering nào.
+
+## Vì sao content-based filtering vẫn giữ vai trò trong cold-start
+
+Đây chính là lý do [Content-based Filtering](../02-Nen-tang-Content-based-va-CF/01-content-based-filtering.mdx)
+(bài đầu module) vẫn quan trọng dù thường cho chất lượng gợi ý tổng thể
+kém hơn collaborative filtering: nó không cần lịch sử tương tác, chỉ cần
+đặc điểm nội dung của item — giải quyết được item cold-start ngay lập tức
+(mô tả sản phẩm mới vẫn trích xuất được vector đặc trưng, dù chưa ai mua).
+Với user cold-start, cách xử lý phổ biến nhất trong thực tế là **hybrid**:
+dùng content-based hoặc gợi ý phổ biến chung (popularity-based) cho tới
+khi người dùng mới tích luỹ đủ lịch sử tương tác để collaborative filtering
+phát huy tác dụng.
+
+## Liên hệ lại với các bài trước
+
+- Precision/Recall là khái niệm đã quen thuộc từ metric phân loại trong
+  exam-track — Precision@K/Recall@K là bản mở rộng cho bài toán **xếp
+  hạng danh sách top-K**, thay vì phân loại nhị phân từng mẫu riêng lẻ.
+- Cold-start là động lực chính khiến [Content-based Filtering](../02-Nen-tang-Content-based-va-CF/01-content-based-filtering.mdx)
+  không bị "lỗi thời" dù ra đời trước và đơn giản hơn nhiều so với các kỹ
+  thuật deep learning ở sub-module 3 — mỗi trường phái có vùng ứng dụng
+  mạnh yếu khác nhau, không phải trường phái sau luôn thay thế hoàn toàn
+  trường phái trước.
+- Bài tiếp theo, [Bayesian Personalized Ranking](02-bayesian-personalized-ranking.mdx),
+  dùng chính động lực "ranking mới là mục tiêu thật" đã nêu ở đây để thiết
+  kế lại **hàm huấn luyện** (không chỉ cách đo) cho đúng tiêu chí đó.
+
+## Nguồn tham khảo
+
+- [Dive into Deep Learning — Overview of Recommender Systems](http://d2l.ai/chapter_recommender-systems/recsys-intro.html) — dùng cho định nghĩa cold-start recommendation (user mới/item mới) như một trong các dạng bài toán chính của recommendation systems.
+- [MachineLearningMastery — A Practical Guide to Building Recommender Systems](https://machinelearningmastery.com/practical-guide-building-recommender-systems/) — dùng cho việc xác nhận danh sách các metric chuẩn dùng để đánh giá recommender systems (precision, recall, NDCG, MAP) và vai trò riêng biệt của chúng so với metric hồi quy như RMSE/MAE.

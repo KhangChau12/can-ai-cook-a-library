@@ -40,6 +40,10 @@ module/submodule.
 1. [Perceptron & Mạng nơ-ron nhiều lớp](02-Deep Learning Nền tảng/01-perceptron-va-mang-no-ron.mdx)
 2. [Backpropagation — Cách huấn luyện mạng nơ-ron nhiều lớp](02-Deep Learning Nền tảng/02-backpropagation.mdx)
 3. [Regularization — Kiểm soát Overfitting khi Mạng nơ-ron ngày càng sâu](02-Deep Learning Nền tảng/03-regularization.mdx)
+4. [Optimizer — Từ SGD tới Adam](02-Deep Learning Nền tảng/04-optimization.mdx)
+5. [Weight Initialization — Từ Xavier tới He](02-Deep Learning Nền tảng/05-weight-initialization.mdx)
+6. [Normalization — Từ Batch Normalization tới Layer Normalization](02-Deep Learning Nền tảng/06-normalization.mdx)
+7. [Learning Rate Schedule — Điều chỉnh Tốc độ Học Theo Thời gian](02-Deep Learning Nền tảng/07-learning-rate-schedule.mdx)
 
 ## Module 3 — Computer Vision
 
@@ -124,11 +128,6 @@ module/submodule.
 
 1. [Reinforcement Learning — Framework Agent/Environment/Reward](05-Reinforcement Learning/01-Overview/01-reinforcement-learning-framework.mdx)
 2. [Markov Decision Process (MDP) — Hình thức hoá bài toán RL](05-Reinforcement Learning/01-Overview/02-markov-decision-process.mdx)
-3. [Actor-Critic — Thống nhất Value-based và Policy-based trong RL](05-Reinforcement Learning/01-Overview/03-actor-critic.mdx)
-4. [Imitation Learning — Học Từ Minh Chứng Thay Vì Thử-sai](05-Reinforcement Learning/01-Overview/04-imitation-learning.mdx)
-5. [Exploration Trong RL — Từ epsilon-greedy Tới Tò Mò Nội Tại](05-Reinforcement Learning/01-Overview/05-exploration-deep-dive.mdx)
-6. [Offline RL — Học Chính Sách Từ Dữ Liệu Tĩnh Mà Không Cần Môi Trường](05-Reinforcement Learning/01-Overview/06-offline-rl.mdx)
-7. [Hierarchical RL — Học Chính Sách Theo Nhiều Cấp Bậc Thời Gian](05-Reinforcement Learning/01-Overview/07-hierarchical-rl.mdx)
 
 ### Value-based
 
@@ -141,17 +140,26 @@ module/submodule.
 ### Policy-based
 
 1. [Policy Gradient — Học trực tiếp Policy thay vì Q-function](05-Reinforcement Learning/03-Policy-based/01-policy-gradient.mdx)
-2. [PPO — Cập nhật Policy An toàn Bằng Clipped Surrogate Objective](05-Reinforcement Learning/03-Policy-based/02-ppo.mdx)
-3. [A3C — Song song hoá Actor-Critic Bằng Nhiều Luồng Độc lập](05-Reinforcement Learning/03-Policy-based/03-a3c.mdx)
-4. [SAC — Tối đa hoá Cả Reward Lẫn Entropy Để Explore Tốt Hơn](05-Reinforcement Learning/03-Policy-based/04-sac.mdx)
-5. [DDPG & TD3 — Off-policy Policy-based cho Không gian Hành động Liên tục](05-Reinforcement Learning/03-Policy-based/05-ddpg-td3.mdx)
-6. [TRPO & A2C — Hai Tiền đề Trực tiếp của PPO và A3C](05-Reinforcement Learning/03-Policy-based/06-trpo-a2c.mdx)
-7. [Policy-based RL — Tổng Kết Dòng Tiến Hóa Và So Sánh Các Thuật Toán](05-Reinforcement Learning/03-Policy-based/07-policy-based-synthesis.mdx)
+2. [Actor-Critic — Thống nhất Value-based và Policy-based trong RL](05-Reinforcement Learning/03-Policy-based/02-actor-critic.mdx)
+3. [TRPO — Cập nhật Policy An toàn Bằng Vùng Tin cậy](05-Reinforcement Learning/03-Policy-based/03-trpo.mdx)
+4. [PPO — Cập nhật Policy An toàn Bằng Clipped Surrogate Objective](05-Reinforcement Learning/03-Policy-based/04-ppo.mdx)
+5. [A3C — Song song hoá Actor-Critic Bằng Nhiều Luồng Độc lập](05-Reinforcement Learning/03-Policy-based/05-a3c.mdx)
+6. [A2C — Biến thể Đồng bộ của A3C, GPU-friendly hơn](05-Reinforcement Learning/03-Policy-based/06-a2c.mdx)
+7. [DDPG & TD3 — Off-policy Policy-based cho Không gian Hành động Liên tục](05-Reinforcement Learning/03-Policy-based/07-ddpg-td3.mdx)
+8. [SAC — Tối đa hoá Cả Reward Lẫn Entropy Để Explore Tốt Hơn](05-Reinforcement Learning/03-Policy-based/08-sac.mdx)
+9. [Policy-based RL — Tổng Kết Dòng Tiến Hóa Và So Sánh Các Thuật Toán](05-Reinforcement Learning/03-Policy-based/09-policy-based-synthesis.mdx)
 
 ### Model-based
 
 1. [Model-based RL — Học Mô hình Môi trường để Lập kế hoạch](05-Reinforcement Learning/04-Model-based/01-model-based-rl.mdx)
 2. [AlphaGo/AlphaZero — MCTS + Self-play, Đỉnh cao Ứng dụng RL](05-Reinforcement Learning/04-Model-based/02-alphago-alphazero.mdx)
+
+### Advanced Topics
+
+1. [Imitation Learning — Học Từ Minh Chứng Thay Vì Thử-sai](05-Reinforcement Learning/05-Advanced Topics/01-imitation-learning.mdx)
+2. [Exploration Trong RL — Từ epsilon-greedy Tới Tò Mò Nội Tại](05-Reinforcement Learning/05-Advanced Topics/02-exploration-deep-dive.mdx)
+3. [Offline RL — Học Chính Sách Từ Dữ Liệu Tĩnh Mà Không Cần Môi Trường](05-Reinforcement Learning/05-Advanced Topics/03-offline-rl.mdx)
+4. [Hierarchical RL — Học Chính Sách Theo Nhiều Cấp Bậc Thời Gian](05-Reinforcement Learning/05-Advanced Topics/04-hierarchical-rl.mdx)
 
 ## Module 6 — Generative Models
 
@@ -207,8 +215,28 @@ module/submodule.
 
 ## Module 8 — Recommendation Systems
 
-1. [Collaborative Filtering & Matrix Factorization — Gợi Ý Từ Hành vi Đám đông](08-Recommendation Systems/01-collaborative-filtering-matrix-factorization.mdx)
-2. [Neural Collaborative Filtering (NeuMF) — Thay Tích Vô Hướng Bằng Mạng Nơ-ron](08-Recommendation Systems/02-neural-collaborative-filtering.mdx)
-3. [DeepFM — Kết hợp Factorization Machines với Deep Learning](08-Recommendation Systems/03-deepfm.mdx)
-4. [Bayesian Personalized Ranking (BPR) — Tối ưu Trực tiếp Cho Xếp hạng](08-Recommendation Systems/04-bayesian-personalized-ranking.mdx)
-5. [AutoRec — Coi Dự đoán Rating Là Bài toán Tái tạo Của Autoencoder](08-Recommendation Systems/05-autorec.mdx)
+### Overview
+
+1. [Recommendation Systems — Bản Đồ Tư Duy Module](08-Recommendation Systems/01-Overview/01-recommendation-systems-overview.mdx)
+
+### Nền tảng Content-based & CF
+
+1. [Content-based Filtering — Gợi ý Từ Đặc điểm Của Chính Item](08-Recommendation Systems/02-Nen-tang-Content-based-va-CF/01-content-based-filtering.mdx)
+2. [Memory-based Collaborative Filtering — So Trực Tiếp Trên Ma Trận Rating](08-Recommendation Systems/02-Nen-tang-Content-based-va-CF/02-memory-based-collaborative-filtering.mdx)
+3. [Collaborative Filtering & Matrix Factorization — Gợi ý Từ Hành vi Đám đông](08-Recommendation Systems/02-Nen-tang-Content-based-va-CF/03-collaborative-filtering-matrix-factorization.mdx)
+
+### Deep Learning cho RS
+
+1. [Neural Collaborative Filtering (NeuMF) — Thay Tích Vô Hướng Bằng Mạng Nơ-ron](08-Recommendation Systems/03-Deep-Learning-cho-RS/01-neural-collaborative-filtering.mdx)
+2. [DeepFM — Kết hợp Factorization Machines với Deep Learning](08-Recommendation Systems/03-Deep-Learning-cho-RS/02-deepfm.mdx)
+3. [AutoRec — Coi Dự đoán Rating Là Bài toán Tái tạo Của Autoencoder](08-Recommendation Systems/03-Deep-Learning-cho-RS/03-autorec.mdx)
+
+### Ranking & Evaluation
+
+1. [Đánh giá Chất lượng Ranking & Vấn đề Cold-start](08-Recommendation Systems/04-Ranking-va-Evaluation/01-evaluation-metrics-cold-start.mdx)
+2. [Bayesian Personalized Ranking (BPR) — Tối ưu Trực tiếp Cho Xếp hạng](08-Recommendation Systems/04-Ranking-va-Evaluation/02-bayesian-personalized-ranking.mdx)
+
+### Sequence-aware & Modern Architectures
+
+1. [Sequence-aware Recommendation — GRU4Rec & SASRec: Gợi ý Theo Trình tự Hành vi](08-Recommendation Systems/05-Sequence-aware-va-Modern-Architectures/01-sequence-aware-recommendation.mdx)
+2. [Two-Tower & Retrieval-Ranking — Kiến trúc Gợi ý Ở Quy mô Công nghiệp](08-Recommendation Systems/05-Sequence-aware-va-Modern-Architectures/02-two-tower-retrieval-ranking.mdx)

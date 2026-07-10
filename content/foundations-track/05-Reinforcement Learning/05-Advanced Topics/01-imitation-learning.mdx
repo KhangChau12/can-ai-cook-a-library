@@ -1,0 +1,183 @@
+---
+title: Imitation Learning — Học Từ Minh Chứng Thay Vì Thử-sai
+track: foundations-track
+module: Reinforcement Learning
+order: 1
+status: stable
+prerequisites: ["02-markov-decision-process", "02-actor-critic"]
+summary: RL thuần (thử-sai) cần rất nhiều tương tác với môi trường — quá tốn kém hoặc nguy hiểm trong nhiều tình huống thực tế. Imitation Learning cho phép agent học từ minh chứng (demonstrations) của chuyên gia thay vì phải tự mò mẫm. Bài này kể dòng tiến hoá từ Behavioral Cloning (đơn giản nhưng yếu) qua DAgger (sửa distribution shift) tới GAIL (kết hợp GAN với RL).
+last_touched_by_task: Tái cấu trúc (2026-07-10) — chuyển từ submodule Overview (nhồi nhét, sai bản chất) sang submodule mới Advanced Topics, đặt sau Model-based vì đây là chủ đề mở rộng cần actor-critic làm nền, không phải kiến thức nền tảng chung. Nội dung không đổi. Nguồn: arxiv DAgger 1011.0686 + arxiv GAIL 1606.03476 + machinelearningmastery.com.
+submodule: Advanced Topics
+---
+
+Toàn bộ module Reinforcement Learning từ đầu tới giờ (Overview, Value-based,
+Policy-based, Model-based) đều dùng
+chung một giả định: agent học policy bằng cách **tương tác thử-sai** với
+môi trường, nhận reward về, và tối ưu hoá dần. Giả định này đúng trong
+nhiều bài toán (game, mô phỏng), nhưng thất bại trong những tình huống
+mà thử-sai quá tốn kém hoặc nguy hiểm: dạy robot đi, xe tự lái, phẫu
+thuật tự động.
+
+**Imitation Learning (IL — học bắt chước)** là một hướng tiếp cận khác:
+thay vì học từ reward, agent học từ **minh chứng (demonstrations)** của
+chuyên gia — giống như một người học việc quan sát thợ lành nghề rồi làm
+theo, thay vì tự mò mẫm.
+
+## Vấn đề: RL thuần quá tốn kém cho nhiều bài toán thực tế
+
+RL dựa trên thử-sai có ba hạn chế cơ bản khi áp dụng vào thế giới thật:
+
+1. **Chi phí thử-sai:** Một robot học đi mà ngã 10.000 lần là hỏng robot
+   trước khi kịp học xong. Trong mô phỏng thì được, ngoài đời thực thì
+   không.
+2. **Reward engineering:** Thiết kế một hàm reward tốt (phản ánh đúng mục
+   tiêu) cho các tác vụ phức tạp là cực kỳ khó — reward quá thưa thì agent
+   không học được, reward quá dày thì agent học "gian lận".
+3. **An toàn:** Trong y tế, tài chính, xe tự lái, agent không có quyền
+   "thử sai" để học.
+
+Imitation Learning giải quyết cả ba vấn đề bằng một ý tưởng đơn giản:
+**nếu đã có người làm được, hãy bắt chước họ.** Dữ liệu minh chứng
+(trajectory của chuyên gia: chuỗi state-action) có thể thu thập trước,
+agent học từ đó mà không cần chạy thử-sai thật.
+
+## Behavioral Cloning — Cách đơn giản nhất
+
+**Behavioral Cloning (BC)** (Pomerleau 1989, ALVINN — xe tự lái đầu tiên
+dùng mạng nơ-ron) coi imitation learning như một bài toán **supervised
+learning** thuần tuý:
+
+```
+Input:  state s (từ minh chứng chuyên gia)
+Output: action a = π_θ(s) (bắt chước hành động chuyên gia)
+Loss:   L(θ) = Σ_i ‖π_θ(s_i) - a_i‖²  (hoặc cross-entropy nếu action rời rạc)
+```
+
+Kiến trúc giống hệt một mạng nơ-ron phân loại/hồi quy thông thường —
+không có gì mới về mặt kỹ thuật. Điểm mới nằm ở **cách đặt bài toán**:
+thay vì tối đa hoá reward kỳ vọng, mô hình chỉ cần bắt chước đúng hành
+động chuyên gia ở mỗi state.
+
+### Vấn đề của BC: distribution shift (covariate shift)
+
+BC có một hạn chế chết người: **distribution shift**. Agent học từ dữ
+liệu chuyên gia, nhưng khi tự chạy, nó sẽ mắc lỗi nhỏ → rơi vào trạng
+thái chưa từng thấy trong training → không biết làm gì → mắc lỗi lớn hơn
+→ lệch xa hơn. Lỗi tích luỹ theo thời gian (compounding error), và tổn
+thất tăng theo bậc hai O(T²) so với độ dài quỹ đạo T.
+
+Ví dụ kinh điển: một chiếc xe tự lái học BC từ 10 giờ lái của chuyên gia.
+Trên đường thật, chỉ cần lệch khỏi làn đường 1 cm ở giây thứ 5 (vì state
+đó không có trong training), đến giây thứ 10 đã leo vỉa hè. Không phải vì
+mô hình dở, mà vì state nó gặp khi tự lái khác hẳn state nó được train.
+
+## DAgger — Gọi chuyên gia khi cần
+
+**DAgger** (Dataset Aggregation, Ross, Gordon & Baird 2011) giải quyết
+distribution shift bằng một ý tưởng đơn giản nhưng mạnh: **chạy policy
+hiện tại, ghi lại các state nó gặp, rồi hỏi chuyên gia xử lý thế nào ở
+các state đó.**
+
+Quy trình DAgger:
+
+```
+1. Train policy π₀ bằng BC trên tập minh chứng D₀
+2. Với mỗi iteration k:
+   a. Chạy π_k trong môi trường, thu thập các state s₁, s₂, ..., s_T
+   b. Hỏi chuyên gia: "ở state s_t này, action đúng là gì?" → a_t
+   c. Thêm cặp (s_t, a_t) vào tập dữ liệu D
+   d. Train lại π_{k+1} trên toàn bộ D (dữ liệu cũ + mới)
+3. Lặp lại tới khi hội tụ
+```
+
+DAgger đảm bảo lý thuyết: policy học được có regret tuyến tính O(T)
+thay vì O(T²) của BC — nghĩa là lỗi không tích luỹ bậc hai theo thời gian.
+
+### Đánh đổi của DAgger
+
+- **Ưu điểm:** Khắc phục triệt để distribution shift, có đảm bảo hội tụ
+  lý thuyết.
+- **Nhược điểm:** Cần **chuyên gia online** — người thật phải ngồi theo
+  dõi từng state agent gặp và đưa ra action đúng. Với robot, việc này
+  cực kỳ tốn kém (cần người vận hành liên tục).
+
+## GAIL — GAN cho Imitation Learning
+
+**GAIL** (Generative Adversarial Imitation Learning, Ho & Ermon 2016)
+đưa ý tưởng đối kháng của [GAN](23-gan.mdx) vào imitation learning, loại bỏ
+nhu cầu chuyên gia online.
+
+### Kiến trúc
+
+GAIL có hai thành phần, giống hệt GAN:
+
+- **Generator (Policy π_θ):** nhận state, sinh action — giống generator
+  trong GAN sinh ảnh.
+- **Discriminator D_ω:** phân biệt cặp (state, action) của chuyên gia
+  vs của agent — giống discriminator trong GAN.
+
+Mục tiêu huấn luyện:
+
+```
+min_θ max_ω E_{(s,a)~π_E}[log D_ω(s,a)] + E_{(s,a)~π_θ}[log(1-D_ω(s,a))]
+```
+
+Trong đó π_E là phân phối của chuyên gia, π_θ là phân phối của agent.
+Khi discriminator không thể phân biệt được đâu là chuyên gia đâu là agent,
+policy của agent đã "bắt chước" thành công phân phối state-action của
+chuyên gia — mà không cần biết reward function.
+
+### Tại sao GAIL không cần chuyên gia online?
+
+Khác với DAgger, GAIL chỉ cần **một tập minh chứng cố định** từ chuyên
+gia (offline). Discriminator học từ tập đó, policy học qua tín hiệu từ
+discriminator — không cần hỏi chuyên gia thêm lần nào.
+
+### Đánh đổi của GAIL
+
+- **Ưu điểm:** Không cần chuyên gia online, học được policy trong không
+  gian state-action phức tạp, không cần reward function.
+- **Nhược điểm:** Huấn luyện đối kháng bất ổn định (y như GAN — mode
+  collapse, khó hội tụ). Nhạy hyperparameter. Tốn kém tính toán hơn BC
+  và DAgger.
+
+## So sánh ba phương pháp
+
+| Phương pháp | Cần chuyên gia online? | Chống distribution shift? | Độ phức tạp |
+|---|---|---|---|
+| **BC** | Không (chỉ cần demo) | Không — lỗi tích luỹ O(T²) | Thấp |
+| **DAgger** | Có (hỏi từng bước) | Có — regret O(T) | Trung bình |
+| **GAIL** | Không (chỉ cần demo) | Có (qua matching phân phối) | Cao |
+
+Không có phương pháp nào "luôn tốt nhất":
+- BC đơn giản, nhanh, nhưng chỉ dùng được khi demonstration bao phủ đầy
+  đủ state space (hiếm khi xảy ra).
+- DAgger mạnh nhất về mặt lý thuyết, nhưng cần chuyên gia online — phù
+  hợp khi có simulator (xe tự lái ảo, game) nhưng không phù hợp robot
+  thật.
+- GAIL linh hoạt nhất (không cần chuyên gia online, không cần reward),
+  nhưng huấn luyện khó và bất ổn.
+
+## Liên hệ lại với các bài trước
+
+- **Imitation Learning vs RL thuần (toàn bộ module cho tới đây):** IL có
+  thể dùng làm bước khởi tạo (pretrain) cho RL — học policy từ minh chứng
+  trước, rồi fine-tune bằng RL thật. Cách này gọi là **RL từ demonstration
+  (RLfD)**, kết hợp ưu điểm của cả hai: IL cho khởi đầu nhanh, RL cho tối
+  ưu hoá tiếp.
+- **GAIL và [GAN](23-gan.mdx):**
+  GAIL dùng trực tiếp kiến trúc GAN (generator + discriminator) nhưng
+  thay đổi mục tiêu: GAN phân biệt ảnh thật/giả, GAIL phân biệt trajectory
+  chuyên gia/agent.
+- **[Actor-Critic](02-actor-critic.mdx):** GAIL's policy có thể được xem
+  như một Actor (sinh action), và discriminator đóng vai trò như một
+  Critic đặc biệt (cho tín hiệu học thay vì ước lượng value).
+- **BC là supervised learning thuần:** giống hệt linear/logistic regression
+  về mặt loss function, chỉ khác ở hậu quả của lỗi (compounding error
+  trong sequential decision making).
+
+## Nguồn tham khảo
+
+- [arXiv — DAgger: A Reduction of Imitation Learning and Structured Prediction to No-Regret Online Learning (Ross, Gordon & Baird, 2011)](https://arxiv.org/abs/1011.0686) — paper gốc DAgger, dùng cho thuật toán iterative query expert + đảm bảo regret tuyến tính O(T).
+- [arXiv — Generative Adversarial Imitation Learning (Ho & Ermon, 2016)](https://arxiv.org/abs/1606.03476) — paper gốc GAIL, dùng cho kiến trúc GAN-style + occupancy measure matching + công thức minimax.
+- [Machine Learning Mastery — A Gentle Introduction to Imitation Learning](https://machinelearningmastery.com/imitation-learning/) — dùng cho tổng quan 3 phương pháp BC/DAgger/GAIL, bảng so sánh và trực giác distribution shift.

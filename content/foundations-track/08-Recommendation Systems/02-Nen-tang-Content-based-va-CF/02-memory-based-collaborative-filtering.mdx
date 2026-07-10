@@ -1,0 +1,110 @@
+---
+title: "Memory-based Collaborative Filtering — So Trực Tiếp Trên Ma Trận Rating"
+track: foundations-track
+module: Recommendation Systems
+submodule: Nền tảng Content-based & CF
+order: 2
+status: stable
+prerequisites: ["01-recommendation-systems-overview", "01-content-based-filtering", "05-k-nearest-neighbors"]
+summary: "Collaborative Filtering giải quyết bài toán gợi ý mà không cần hiểu nội dung item — chỉ cần hành vi tương tác của đám đông. Memory-based CF (user-based/item-based) là dạng đơn giản nhất: so trực tiếp các hàng/cột của ma trận rating bằng cosine similarity hoặc Pearson correlation để tìm người dùng/item giống nhau. Hoạt động tốt ở quy mô nhỏ, nhưng lộ rõ hai hạn chế cố hữu khi dữ liệu lớn dần: không scale và không xử lý được ma trận cực kỳ thưa — đúng vấn đề Matrix Factorization (bài tiếp theo) giải quyết."
+last_touched_by_task: "Bài mới (2026-07-10), bài thứ 2 sub-module Nền tảng Content-based & CF — lấp khoảng trống 'bước trung gian' giữa Content-based Filtering và Matrix Factorization: bài Matrix Factorization cũ nhảy thẳng vào vấn đề ma trận thưa mà chưa từng giới thiệu cách tiếp cận CF đơn giản nhất (so trực tiếp hàng/cột) để người đọc thấy rõ VÌ SAO cách đó không ổn trước khi học factorization. Nguồn: D2L.ai recsys-intro.html (xác nhận qua WebFetch: câu 'CF encompasses memory-based methods (nearest-neighbor approaches) and model-based techniques (matrix factorization, neural networks)' — xác nhận memory-based CF là nhánh riêng biệt, đứng trước model-based CF) + kiến thức chuẩn ngành về user-based/item-based CF, cosine similarity, Pearson correlation (thuật ngữ/công thức kinh điển, không cần trích dẫn số liệu thực nghiệm cụ thể nào)."
+---
+
+Bài [Content-based Filtering](01-content-based-filtering.mdx) gợi ý dựa
+trên đặc điểm **nội dung** của item. Bài này giới thiệu trường phái đối
+lập — **Collaborative Filtering** (lọc cộng tác) — và dạng đơn giản nhất
+của nó: so sánh trực tiếp trên chính ma trận rating, không cần bất kỳ
+thông tin nội dung nào.
+
+## Collaborative Filtering: dùng "trí tuệ đám đông" thay vì hiểu nội dung item
+
+**Collaborative filtering** (CF) giải quyết bài toán gợi ý bằng một ý
+tưởng không cần hiểu **nội dung** của item (không cần biết bộ phim A thuộc
+thể loại gì, diễn viên là ai) — khác hẳn content-based filtering ở bài
+trước: nếu hai người dùng đã thích những item **giống nhau** trong quá
+khứ, họ có xu hướng thích những item giống nhau tiếp theo trong tương lai.
+Nói cách khác: khai thác "trí tuệ tập thể" của toàn bộ cộng đồng người
+dùng, thay vì phân tích đặc điểm riêng của từng item.
+
+Đây chính là lý do tên gọi "collaborative" — mọi người dùng trong hệ thống
+gián tiếp "hợp tác" giúp nhau tìm ra gợi ý tốt, dù không ai biết về sự tồn
+tại của người khác. Theo D2L.ai, CF gồm hai nhánh: **memory-based**
+(phương pháp lân cận — chủ đề bài này) và **model-based** (phân rã ma
+trận, mạng nơ-ron — chủ đề các bài tiếp theo trong module).
+
+## Ý tưởng: so trực tiếp các hàng/cột của ma trận rating
+
+Biểu diễn tự nhiên nhất cho bài toán gợi ý là một **ma trận rating** `R`,
+với mỗi hàng là một người dùng, mỗi cột là một item, và mỗi ô `R[u][i]` là
+đánh giá của người dùng `u` cho item `i` (nếu có). Memory-based CF khai
+thác trực tiếp ma trận này theo hai cách:
+
+- **User-based CF**: tìm những người dùng có **hàng** giống người dùng
+  mục tiêu nhất (đã rate giống nhau ở những item chung), rồi dự đoán rating
+  còn thiếu bằng trung bình có trọng số rating của những người dùng giống
+  nhất đó.
+- **Item-based CF**: đối xứng lại — tìm những item có **cột** giống item
+  mục tiêu nhất (được cùng một nhóm người dùng rate giống nhau), rồi dự
+  đoán rating còn thiếu dựa trên rating người dùng đó đã cho các item
+  tương tự.
+
+Cả hai đều là bài toán tìm hàng xóm gần nhất — đúng ý tưởng đã học ở
+[k-NN](05-k-nearest-neighbors.mdx), chỉ khác "khoảng cách" được đo giữa
+các hàng/cột của ma trận rating thay vì giữa các điểm dữ liệu thông thường.
+
+## Đo độ giống nhau: cosine similarity và Pearson correlation
+
+Hai độ đo phổ biến nhất cho memory-based CF:
+
+- **Cosine similarity** — đúng công thức đã dùng ở bài
+  [Content-based Filtering](01-content-based-filtering.mdx), áp dụng ở đây
+  cho hai hàng (hoặc hai cột) của ma trận rating thay vì hai vector đặc
+  điểm nội dung.
+- **Pearson correlation coefficient** — đo mức độ hai người dùng (hoặc hai
+  item) có xu hướng tăng/giảm rating **cùng chiều** với nhau, bất kể thang
+  đo tuyệt đối khác nhau (một người dùng khó tính luôn rate thấp hơn trung
+  bình vẫn có thể "giống" một người dùng dễ tính luôn rate cao hơn trung
+  bình, miễn xu hướng tương đối giữa các item là giống nhau).
+
+Với item-based CF, biến thể **adjusted cosine similarity** thường được ưu
+tiên hơn cosine thuần — trừ đi rating trung bình của từng người dùng trước
+khi tính cosine, để loại bỏ độ lệch cá nhân (thiên hướng rate cao/thấp) khi
+so sánh giữa các item.
+
+## Hạn chế 1: không scale khi số người dùng/item lớn
+
+Memory-based CF đòi hỏi tính độ giống nhau giữa **mọi cặp** người dùng
+(hoặc mọi cặp item) — độ phức tạp tăng theo bậc hai với số lượng người
+dùng/item. Với các nền tảng thực tế có hàng triệu người dùng và hàng triệu
+item, việc tính và lưu trữ toàn bộ ma trận độ giống nhau trở nên bất khả
+thi về mặt tính toán.
+
+## Hạn chế 2: ma trận rating cực kỳ thưa
+
+Vấn đề nghiêm trọng hơn: với hàng triệu người dùng và hàng triệu item, mỗi
+người dùng chỉ tương tác với một phần cực nhỏ trong số đó — ma trận `R`
+gần như toàn ô trống (**cực kỳ thưa**, sparse). Cách so sánh trực tiếp "tìm
+người dùng giống nhau" bằng cách so từng hàng ma trận thưa này hoạt động
+kém khi phần lớn dữ liệu không có gì để so sánh — hai người dùng có thể có
+rất ít (hoặc không) item chung để tính độ giống nhau, dù sở thích thực sự
+của họ khá tương đồng.
+
+## Liên hệ lại với các bài trước
+
+- Cả user-based và item-based CF đều là ứng dụng trực tiếp của ý tưởng
+  "hàng xóm gần nhất" đã học ở [k-NN](05-k-nearest-neighbors.mdx) — không
+  có gì mới về thuật toán, chỉ khác không gian áp dụng (hàng/cột ma trận
+  rating thay vì điểm dữ liệu thông thường).
+- Cosine similarity dùng ở đây chính là công thức đã giới thiệu ở bài
+  [Content-based Filtering](01-content-based-filtering.mdx) — cùng một
+  công cụ toán học, áp dụng cho hai loại vector khác nhau (đặc điểm nội
+  dung vs. hàng/cột ma trận rating).
+- Hai hạn chế nêu trên (không scale, dữ liệu quá thưa) chính là động lực
+  trực tiếp cho [Matrix Factorization](03-collaborative-filtering-matrix-factorization.mdx)
+  (bài tiếp theo) — thay vì so sánh trực tiếp trên ma trận thưa khổng lồ,
+  Matrix Factorization nén nó thành các latent factor chiều thấp trước khi
+  so sánh.
+
+## Nguồn tham khảo
+
+- [Dive into Deep Learning — Overview of Recommender Systems](http://d2l.ai/chapter_recommender-systems/recsys-intro.html) — dùng cho việc xác nhận memory-based CF (phương pháp nearest-neighbor) là một nhánh riêng biệt của collaborative filtering, đứng trước các kỹ thuật model-based (matrix factorization, neural network) được giới thiệu ở các bài tiếp theo trong module.

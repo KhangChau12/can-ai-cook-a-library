@@ -1,0 +1,135 @@
+---
+title: "Two-Tower & Retrieval-Ranking — Kiến trúc Gợi ý Ở Quy mô Công nghiệp"
+track: foundations-track
+module: Recommendation Systems
+submodule: Sequence-aware & Modern Architectures
+order: 2
+status: stable
+prerequisites: ["02-deepfm", "foundations-track/04-NLP-LLM/06-Ung-dung-Inference-time/02-rag-embedding-agent"]
+summary: "Mọi kỹ thuật deep learning đã học (NeuMF, DeepFM) đều giả định có thể chạy mô hình qua MỌI cặp người dùng-item để xếp hạng — khả thi với hàng nghìn item, bất khả thi với hàng trăm triệu item ở quy mô công nghiệp thật. Giải pháp chuẩn ngành: tách thành pipeline 2 tầng — Retrieval (Two-Tower, thu hẹp hàng trăm triệu item xuống còn vài trăm ứng viên bằng vector search) rồi Ranking (mô hình phức tạp hơn, chỉ xếp hạng trong vài trăm ứng viên đó)."
+last_touched_by_task: "Bài mới (2026-07-10), bài cuối module Recommendation Systems — lấp khoảng trống kiến trúc công nghiệp phổ biến nhất hiện nay, kết nối trực tiếp với vector search/embedding đã học ở RAG (NLP track) và đúc kết toàn bộ module bằng câu hỏi thực tế 'quy mô hàng trăm triệu item thì làm sao mà chạy nổi mọi kỹ thuật đã học'. Nguồn: arxiv 2403.00802 ('Towards a Theoretical Understanding of Two-Stage Recommender Systems', xác nhận qua WebFetch abstract: kiến trúc retrieval+ranking 2 tầng dùng ở Netflix/Pinterest/Amazon, retrieval chiếu user/item vào không gian embedding chung chiều thấp) + D2L.ai chapter_recommender-systems/ctr.html (xác nhận qua WebFetch: vấn đề dữ liệu tương tác thưa/nhiễu cần feature phong phú, framing CTR prediction là bài toán ranking thực tế — dùng làm nguồn bổ trợ cho phần ranking stage, vì paper gốc YouTube DNN (Covington et al. 2016) không có bản arxiv, chỉ có ở venue ACM RecSys ngoài whitelist)."
+---
+
+Module này đã học nhiều kỹ thuật ngày càng phức tạp: từ Matrix
+Factorization tới [NeuMF](../03-Deep-Learning-cho-RS/01-neural-collaborative-filtering.mdx)
+và [DeepFM](../03-Deep-Learning-cho-RS/02-deepfm.mdx). Nhưng có một câu hỏi
+thực tế chưa từng đặt ra: muốn gợi ý cho một người dùng, các kỹ thuật đó
+cần chạy mô hình qua **bao nhiêu** cặp người dùng-item?
+
+## Vấn đề: không thể chạy mô hình phức tạp qua mọi cặp người dùng-item
+
+Với một nền tảng có hàng trăm triệu item (YouTube, Amazon...), việc chạy
+một mạng nơ-ron như DeepFM hay NeuMF qua **từng cặp** người dùng-item để
+xếp hạng toàn bộ kho item là bất khả thi về mặt tính toán — kể cả với hạ
+tầng lớn, độ trễ (latency) để trả về gợi ý theo thời gian thực sẽ quá cao.
+Đây là vấn đề mà mọi kỹ thuật đã học trong module (đều thiết kế theo kiểu
+"cho một cặp người dùng-item, dự đoán điểm số") không giải quyết được khi
+đặt vào quy mô sản xuất thật.
+
+## Giải pháp: pipeline hai tầng — Retrieval rồi Ranking
+
+Các hệ thống gợi ý công nghiệp lớn (Netflix, Pinterest, Amazon, YouTube)
+giải quyết vấn đề này bằng cách tách quy trình gợi ý thành **hai tầng**
+với mục tiêu khác nhau:
+
+```
+Hàng trăm triệu item
+        │
+        ▼
+┌─────────────────┐
+│    RETRIEVAL     │  ← thu hẹp nhanh, mô hình đơn giản
+│  (Two-Tower)      │     (vài trăm ứng viên)
+└─────────────────┘
+        │
+        ▼
+┌─────────────────┐
+│     RANKING       │  ← chính xác cao, mô hình phức tạp
+│ (DeepFM/NeuMF...)  │     (xếp hạng vài trăm ứng viên)
+└─────────────────┘
+        │
+        ▼
+   Top-N gợi ý cuối cùng
+```
+
+- **Retrieval (thu hẹp ứng viên)**: dùng một mô hình **nhẹ, nhanh** để lọc
+  từ hàng trăm triệu item xuống còn một tập nhỏ (vài trăm) ứng viên có khả
+  năng phù hợp cao nhất — không cần chính xác tuyệt đối, chỉ cần đủ nhanh
+  và không bỏ sót ứng viên tốt.
+- **Ranking (xếp hạng chính xác)**: chỉ áp dụng mô hình phức tạp (như
+  DeepFM, NeuMF, hoặc các kiến trúc feature-rich khác đã học) lên đúng tập
+  ứng viên nhỏ đó — vì số lượng đã giảm mạnh, có thể dùng mô hình tốn kém
+  hơn nhiều để đạt độ chính xác cao nhất.
+
+## Two-Tower: kiến trúc retrieval phổ biến nhất
+
+**Two-Tower** (hai tháp) là kiến trúc retrieval được dùng rộng rãi nhất
+trong công nghiệp — DSSM (Microsoft), YouTube DNN (Google), và nhiều hệ
+thống lớn khác đều dựa trên cùng một ý tưởng cốt lõi. Theo phân tích lý
+thuyết của các nghiên cứu gần đây về hệ thống hai tầng, kiến trúc này học
+embedding cho người dùng và item **trong cùng một không gian chiều thấp**,
+qua hai mạng nơ-ron độc lập:
+
+```
+User features          Item features
+      │                       │
+      ▼                       ▼
+  User Tower              Item Tower
+  (mạng nơ-ron)           (mạng nơ-ron)
+      │                       │
+      ▼                       ▼
+ user embedding  ──────  item embedding
+      └──────── inner product ────────┘
+                     │
+                     ▼
+              điểm tương đồng
+```
+
+Điểm mấu chốt: hai "tháp" (tower) này **độc lập** với nhau — không có
+tương tác chéo giữa feature người dùng và feature item trong quá trình
+tính embedding, chỉ hợp nhất ở bước cuối bằng **tích vô hướng** (đúng phép
+tính đơn giản đã gặp ở [Matrix Factorization](../02-Nen-tang-Content-based-va-CF/03-collaborative-filtering-matrix-factorization.mdx)).
+Chính vì độc lập, embedding của **mọi item** có thể được tính **trước**
+(offline) một lần và lưu lại — khi có yêu cầu gợi ý, chỉ cần tính embedding
+của người dùng đó (rất nhanh) rồi tìm những item embedding gần nhất bằng
+**vector search** (approximate nearest neighbor), thay vì phải chạy lại
+toàn bộ mô hình cho mọi item mỗi lần.
+
+## Vì sao đánh đổi độ chính xác lấy tốc độ lại hợp lý
+
+Two-Tower "hy sinh" khả năng biểu diễn so với các kiến trúc như NeuMF/
+DeepFM (không có tương tác phức tạp giữa feature người dùng và item trong
+lúc tính embedding) — nhưng đây là đánh đổi có chủ đích: retrieval không
+cần độ chính xác tuyệt đối, chỉ cần đủ tốt để không bỏ sót ứng viên tiềm
+năng, còn việc "tinh chỉnh" độ chính xác cuối cùng đã có tầng Ranking đảm
+nhiệm. Nếu dùng thẳng DeepFM/NeuMF cho toàn bộ kho item, hệ thống sẽ chính
+xác hơn nhưng không thể chạy được ở quy mô hàng trăm triệu item trong thời
+gian thực.
+
+## Liên hệ lại với các bài trước
+
+- Bước "tìm item embedding gần nhất với user embedding" chính xác là kỹ
+  thuật **vector search** đã học ở bài
+  [RAG, Embedding & Agent](../../04-NLP-LLM/06-Ung-dung-Inference-time/02-rag-embedding-agent.mdx):
+  RAG tìm đoạn văn bản gần nhất trong không gian embedding ngữ nghĩa bằng
+  approximate nearest neighbor, Two-Tower retrieval tìm item gần nhất
+  trong không gian embedding sở thích — cùng một công cụ hạ tầng, khác
+  miền ứng dụng.
+- Hợp nhất hai embedding bằng tích vô hướng ở tầng cuối Two-Tower chính là
+  phép tính cốt lõi của [Matrix Factorization](../02-Nen-tang-Content-based-va-CF/03-collaborative-filtering-matrix-factorization.mdx)
+  — Two-Tower có thể coi là bản mở rộng của Matrix Factorization, thay
+  latent factor học trực tiếp bằng embedding học qua mạng nơ-ron từ nhiều
+  feature phong phú hơn (tương tự cách NeuMF mở rộng Matrix Factorization
+  ở sub-module 3, nhưng động lực ở đây là **tốc độ retrieval**, không phải
+  khả năng biểu diễn).
+- Kiến trúc hai tầng Retrieval → Ranking là lời giải đầy đủ cho câu hỏi đặt
+  ra ở bài [Overview](../01-Overview/01-recommendation-systems-overview.mdx):
+  các kỹ thuật trong module (Matrix Factorization, NeuMF, DeepFM, kỹ thuật
+  sequence-aware) không loại trừ lẫn nhau — chúng thường được **kết hợp**
+  trong cùng một hệ thống thật, mỗi kỹ thuật đảm nhiệm đúng vai trò (Two-
+  Tower cho retrieval nhanh, DeepFM/NeuMF cho ranking chính xác) phù hợp
+  với đặc điểm của nó.
+
+## Nguồn tham khảo
+
+- [arXiv — Towards a Theoretical Understanding of Two-Stage Recommender Systems](https://arxiv.org/abs/2403.00802) — dùng cho kiến trúc pipeline 2 tầng (retrieval + ranking) dùng ở các hệ thống công nghiệp lớn (Netflix, Pinterest, Amazon), và cách retrieval chiếu người dùng/item vào không gian embedding chung chiều thấp để tìm ứng viên hiệu quả.
+- [Dive into Deep Learning — Feature-Rich Recommender Systems](http://d2l.ai/chapter_recommender-systems/ctr.html) — dùng cho bối cảnh thực tế của tầng ranking (dữ liệu tương tác thưa/nhiễu, cần khai thác feature phong phú qua CTR prediction) mà các mô hình như DeepFM (đã học ở sub-module 3) đảm nhiệm sau khi retrieval thu hẹp ứng viên.

@@ -1,0 +1,96 @@
+---
+title: TRPO — Cập nhật Policy An toàn Bằng Vùng Tin cậy
+track: foundations-track
+module: Reinforcement Learning
+submodule: Policy-based
+order: 3
+status: stable
+prerequisites: ["01-policy-gradient", "02-actor-critic"]
+summary: Policy gradient chuẩn cập nhật tham số theo learning rate cố định — nhưng không có cách tự nhiên để biết bước cập nhật "bao nhiêu là quá lớn". Một bước quá lớn có thể phá hỏng policy không thể phục hồi, vì các bước sau lại dùng chính policy đã hỏng để thu thập dữ liệu. Schulman và cộng sự (2015) đề xuất TRPO: ràng buộc trực tiếp khoảng cách (KL divergence) giữa policy mới và cũ thay vì learning rate, đảm bảo monotonic improvement — nhưng cái giá là một pipeline tối ưu hoá phức tạp (Fisher information, conjugate gradient, backtracking line search).
+last_touched_by_task: Tách từ file cũ "07-trpo-a2c.mdx" (2026-07-10) — theo phản hồi người vận hành, bài gộp cũ đặt TRPO SAU PPO khiến PPO phải tự giải thích TRPO ở mức nông rồi bài này giảng lại sâu hơn, gây trùng lặp. Tách TRPO thành bài riêng đặt TRƯỚC PPO (đúng thứ tự thời gian 2015→2017 và đúng mạch tư duy: học đủ TRPO trước, PPO chỉ cần nói "đơn giản hoá nó"). Nội dung kỹ thuật giữ nguyên từ bài gộp cũ. Nguồn: arxiv 1502.05477 (Schulman et al. 2015).
+---
+
+Bài [Actor-Critic](02-actor-critic.mdx) đã học cách kết hợp Actor và
+Critic để giảm phương sai so với REINFORCE thuần — nhưng cả hai vẫn cập
+nhật tham số theo cùng một cách: `θ := θ + α·∇J`, với kích thước bước đi
+do learning rate `α` kiểm soát. Bài này chỉ ra một vấn đề khác của cách
+cập nhật này, và cách **TRPO** giải quyết nó.
+
+## Vấn đề: không có cách tự nhiên để biết "bước cập nhật bao nhiêu là quá lớn"
+
+Learning rate `α` khó chọn đúng: quá nhỏ thì học chậm, quá lớn thì một
+bước cập nhật có thể **phá hỏng policy** — policy mới quá khác policy cũ,
+hành vi đột ngột thay đổi, mất hết những gì đã học được từ trước. Vấn đề
+còn nghiêm trọng hơn ở policy-based RL so với supervised learning thông
+thường: không có cách tự nhiên để biết "bao nhiêu là quá lớn", vì độ nhạy
+của policy với một thay đổi tham số cố định thay đổi theo từng điểm trong
+không gian tham số — cùng một `α`, có chỗ thay đổi policy rất ít, có chỗ
+lại thay đổi rất nhiều.
+
+Hậu quả đặc biệt nguy hiểm trong RL: các bước cập nhật sau đó lại dùng
+chính policy hiện tại (có thể đã hỏng) để thu thập dữ liệu huấn luyện
+tiếp theo — một cập nhật tồi có thể khiến toàn bộ quá trình học sụp đổ và
+khó phục hồi lại được, khác với supervised learning nơi dữ liệu huấn
+luyện không phụ thuộc vào chất lượng của mô hình hiện tại.
+
+## Ý tưởng "vùng tin cậy" (trust region)
+
+**Schulman và cộng sự (2015)**, trong bài báo "Trust Region Policy
+Optimization", đề xuất **TRPO**: thay vì điều khiển kích thước bước cập
+nhật qua `α` (gián tiếp, khó đoán hậu quả), ràng buộc trực tiếp
+**khoảng cách giữa policy mới và policy cũ** — đo bằng **KL divergence**
+`D_KL(π_θ_old ‖ π_θ)`. Cập nhật được phép tối đa hoá surrogate objective
+(cùng dạng PPO sẽ dùng sau), NHƯNG với điều kiện KL không vượt ngưỡng `δ`:
+
+```
+tối đa hoá  E[ (π_θ(a|s) / π_θ_old(a|s)) · A ]
+với điều kiện  E[ D_KL(π_θ_old ‖ π_θ) ] ≤ δ
+```
+
+`δ` nhỏ (thường 0.01) ép policy mới ở **trong vùng lân cận** của policy
+cũ — gọi là "trust region" (vùng tin cậy): trong vùng này, xấp xỉ tuyến
+tính của surrogate objective vẫn đáng tin cậy. TRPO chứng minh được tính
+chất **monotonic improvement**: trong vùng tin cậy, policy mới đảm bảo
+không tệ hơn policy cũ (theo lý thuyết xấp xỉ) — đây là đảm bảo mạnh hiếm
+có trong RL, giải đúng nỗi lo "một bước cập nhật phá policy".
+
+## Vì sao TRPO phức tạp để cài đặt
+
+Ràng buộc KL không dễ cài đặt trực tiếp. TRPO phải:
+
+1. Xấp xỉ KL bằng **Fisher information matrix** (ma trận thông tin Fisher)
+   — đạo hàm cấp 2 của KL, đo độ cong cục bộ của không gian tham số.
+2. Giải bài toán tối ưu có ràng buộc bằng **conjugate gradient** (gradient
+   tự nhiên — bước đi theo hướng tính đến độ cong của không gian tham số,
+   thay vì gradient thường coi mọi hướng như nhau).
+3. **Backtracking line search** để kiểm tra sau mỗi bước rằng KL thực sự
+   ≤ δ (xấp xỉ tuyến tính có thể sai ở bước đi lớn), lùi lại nếu vượt.
+
+Toàn bộ pipeline này phức tạp, khó cài đặt đúng, và chạy chậm hơn nhiều
+so với gradient ascent thông thường — đây chính là cái giá phải trả để có
+đảm bảo monotonic improvement.
+
+## Kết quả và vị trí của TRPO
+
+TRPO đạt hiệu năng tốt và ổn định trên nhiều benchmark continuous control
+(robot mô phỏng) và Atari tại thời điểm công bố, chứng minh ý tưởng
+"ràng buộc trực tiếp khoảng cách policy" hoạt động — nhưng độ phức tạp cài
+đặt khiến nó ít được dùng trực tiếp trong thực hành hiện đại. Giá trị lớn
+nhất của TRPO là đặt nền lý thuyết (trust region, monotonic improvement)
+mà bài [PPO](04-ppo.mdx) (bài tiếp theo) kế thừa ý tưởng nhưng thay pipeline
+phức tạp bằng một phép `clip` đơn giản.
+
+## Liên hệ lại với các bài trước
+
+- TRPO xây trực tiếp trên surrogate objective của
+  [Actor-Critic](02-actor-critic.mdx)/policy gradient — không đổi hàm mục
+  tiêu cốt lõi, chỉ thêm ràng buộc về mức độ thay đổi mỗi bước cập nhật.
+- Đây là ví dụ về đánh đổi "đảm bảo lý thuyết chặt chẽ" (monotonic
+  improvement) lấy "chi phí cài đặt cao" — bài
+  [PPO](04-ppo.mdx) (bài tiếp theo) sẽ cho thấy trong thực hành, một phiên
+  bản đơn giản hơn nhiều (không có đảm bảo chặt bằng) vẫn đạt hiệu năng
+  tương đương với chi phí thấp hơn hẳn.
+
+## Nguồn tham khảo
+
+- [arXiv — Trust Region Policy Optimization (Schulman, Levine, Moritz, Jordan, Abbeel, 2015)](https://arxiv.org/abs/1502.05477) — paper gốc TRPO, dùng cho vấn đề (cập nhật lớn phá policy, learning rate khó chọn), giải pháp (ràng buộc KL divergence `D_KL(π_old‖π)≤δ` tạo trust region, đảm bảo monotonic improvement), và lý do phức tạp (Fisher information matrix + conjugate gradient + backtracking line search).

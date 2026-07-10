@@ -1,0 +1,53 @@
+---
+quiz_for: 04-optimization
+---
+
+## Q1
+Với hàm loss `f(x1, x2) = 0.1*x1^2 + 2*x2^2` (dốc gấp 20 lần theo hướng x2), vì sao gradient descent thuần hội tụ chậm?
+
+- [ ] Vì hàm loss này không khả vi tại một số điểm
+- [x] Learning rate phải đủ nhỏ để không phân kỳ theo hướng dốc (x2), nhưng learning rate đó lại làm hướng thoải (x1) di chuyển chậm không cần thiết
+- [ ] Vì gradient descent chỉ hoạt động với hàm loss lồi tuyệt đối
+- [ ] Vì công thức cập nhật tham số bị sai với hàm 2 biến
+
+> Đây chính là hiện tượng "thung lũng" (ravine): một learning rate an toàn cho hướng dốc lại quá nhỏ cho hướng thoải, khiến quỹ đạo dao động mạnh theo hướng dốc trong khi gần như không nhúc nhích theo hướng thoải.
+
+## Q2
+Momentum (Polyak, 1964) giải quyết vấn đề dao động bằng cách nào?
+
+- [ ] Tăng learning rate lên gấp đôi ở mọi bước
+- [ ] Tính lại gradient trên toàn bộ tập train thay vì minibatch
+- [x] Giữ một "vận tốc" tích luỹ từ các gradient trước — các gradient trái dấu (dao động) triệt tiêu nhau, các gradient cùng dấu (hướng ổn định) cộng hưởng
+- [ ] Bỏ qua hoàn toàn gradient của bước hiện tại, chỉ dùng gradient trước đó
+
+> Trực giác "quả bóng lăn có quán tính": gradient là lực tác động lên vận tốc chứ không trực tiếp quyết định vị trí. Ở hướng hay đổi dấu, các đóng góp triệt tiêu lẫn nhau; ở hướng ổn định, chúng cộng dồn — giúp bước đi tự động chậm ở hướng dao động và nhanh ở hướng ổn định.
+
+## Q3
+AdaGrad (Duchi et al., 2011) có hạn chế gì khiến RMSProp ra đời để khắc phục?
+
+- [x] `s_t` là tổng cộng dồn bình phương gradient tăng đơn điệu mãi mãi, khiến learning rate hiệu dụng có thể co về gần 0 quá sớm
+- [ ] AdaGrad không thể chạy trên GPU
+- [ ] AdaGrad chỉ hoạt động với hàm loss tuyến tính
+- [ ] AdaGrad không có learning rate, chỉ dùng gradient thuần
+
+> Vì `s_t` chỉ tăng không bao giờ giảm, những tham số tích luỹ `s_t` lớn từ giai đoạn đầu train gần như ngừng học ở giai đoạn sau, dù vẫn còn cần điều chỉnh thêm. RMSProp sửa lỗi này bằng trung bình trượt có suy giảm (leaky average) thay vì tổng cộng dồn.
+
+## Q4
+Trong công thức Adam, `m_t` và `v_t` lần lượt đóng vai trò tương ứng với ý tưởng của optimizer nào trong dòng tiến hoá?
+
+- [x] `m_t` giống Momentum (đà quán tính từ gradient), `v_t` giống RMSProp (learning rate thích ứng theo bình phương gradient)
+- [ ] `m_t` giống RMSProp, `v_t` giống Momentum — ngược lại
+- [ ] Cả `m_t` và `v_t` đều là bản sao của AdaGrad, không liên quan Momentum/RMSProp
+- [ ] `m_t` và `v_t` chỉ là hai tên gọi khác nhau của cùng một đại lượng
+
+> Adam (Kingma & Ba, 2015) kết hợp trực tiếp hai ý tưởng đã có: `m_t` là trung bình trượt của gradient (như Momentum, cho hướng đi mượt), `v_t` là trung bình trượt của bình phương gradient (như RMSProp, co giãn learning rate riêng từng tham số).
+
+## Q5
+Vì sao Adam cần bước "hiệu chỉnh độ lệch" (bias correction, chia cho `1 - beta^t`)?
+
+- [ ] Để làm learning rate giảm dần theo thời gian như một lịch trình cố định
+- [ ] Vì công thức gốc bị lỗi toán học cần sửa
+- [x] Vì `m_t` và `v_t` khởi tạo từ 0 nên thiên lệch mạnh về 0 ở những bước đầu (đặc biệt khi beta gần 1) — chia cho `(1 - beta^t)` bù lại phần thiên lệch đó, và tự mất tác dụng khi t đủ lớn
+- [ ] Để tương thích ngược với AdaGrad
+
+> Ở các bước đầu train, trung bình trượt chưa kịp tích luỹ đủ dữ liệu nên còn thiên lệch về giá trị khởi tạo (0). Hệ số hiệu chỉnh `1/(1-beta^t)` nhỏ hơn 1 ở đầu (khuếch đại giá trị) và tiến dần về 1 khi t lớn (hết tác dụng) — đúng cơ chế bù trừ cần thiết.

@@ -1,0 +1,108 @@
+---
+title: Policy-based RL — Tổng Kết Dòng Tiến Hóa Và So Sánh Các Thuật Toán
+track: foundations-track
+module: Reinforcement Learning
+submodule: Policy-based
+order: 9
+status: stable
+prerequisites: ["08-sac"]
+summary: Policy-based RL có 8 thuật toán (Policy Gradient, Actor-Critic, TRPO, PPO, A3C, A2C, DDPG/TD3, SAC) trải dài trên 3 trục: on-policy vs off-policy, discrete vs continuous action, và cách kiểm soát cập nhật. Bài này tổng hợp toàn bộ dòng tiến hoá, so sánh chi tiết, và đưa ra decision tree chọn thuật toán theo bài toán cụ thể.
+last_touched_by_task: Sửa (2026-07-10) — cập nhật sau khi tách TRPO và A2C thành 2 bài riêng (trước đó gộp chung 1 bài "07-trpo-a2c" đặt cuối submodule, gây trùng lặp với phần PPO/A3C đã tự giải thích chúng). TRPO giờ đặt ngay trước PPO (order 03), A2C đặt ngay sau A3C (order 06) — đúng thứ tự đọc thật không còn khái niệm nào bị giảng 2 lần. Sửa sơ đồ dòng tiến hoá + bảng so sánh + toàn bộ link theo order mới.
+---
+
+Bài [Policy Gradient](01-policy-gradient.mdx) mở đầu dòng Policy-based RL
+với REINFORCE — đơn giản, không thiên vị, nhưng phương sai cao. Bài
+[Actor-Critic](02-actor-critic.mdx) ngay sau đó giải quyết đúng vấn đề
+phương sai cao này, trở thành **gốc chung** mà mọi thuật toán còn lại
+trong submodule đều xây tiếp lên. Từ đó, 6 thuật toán tiếp theo ra đời,
+mỗi thuật toán giải quyết một hạn chế cụ thể của Actor-Critic (hoặc của
+nhau). Bài này tổng kết toàn bộ dòng tiến hoá, so sánh các thuật toán
+trên nhiều trục, và giúp bạn chọn đúng thuật toán cho bài toán của mình.
+
+## Dòng tiến hoá
+
+```
+Policy Gradient (REINFORCE) — 1992
+  │  (phương sai cao, Monte Carlo return)
+  ▼
+Actor-Critic — critic học qua TD, giảm phương sai
+  │
+  ├→ TRPO (2015) — trust region KL constraint, safe update
+  │     └→ PPO (2017) — đơn giản hoá TRPO bằng clipped surrogate
+  │
+  ├→ A3C (2016) — parallel actors + advantage, phá tương quan mẫu
+  │     └→ A2C (2016) — đồng bộ hoá A3C, GPU-friendly
+  │
+  └→ DDPG (2016) → TD3 (2018) — off-policy continuous, deterministic
+        └→ SAC (2018) — off-policy + maximum entropy, SOTA continuous control
+```
+
+Ba nhánh chính, tất cả xuất phát từ Actor-Critic:
+1. **Actor-Critic → TRPO → PPO:** giải quyết vấn đề "cập nhật quá lớn phá
+   hỏng policy" (safe update). TRPO đặt nền lý thuyết (trust region), PPO
+   đơn giản hoá bằng clip. Cả hai đều on-policy.
+2. **Actor-Critic → A3C → A2C:** giải quyết vấn đề "tương quan mẫu" (sample
+   correlation) bằng song song hoá. A3C bất đồng bộ, A2C đồng bộ (GPU-
+   friendly).
+3. **Actor-Critic → DDPG → TD3 → SAC:** chuyển từ on-policy sang off-policy
+   để tái sử dụng dữ liệu, và mở rộng sang continuous action. DDPG mở
+   đường, TD3 sửa lỗi overestimation, SAC thêm maximum entropy để ổn định
+   và đạt SOTA cho continuous control.
+
+## Bảng so sánh chi tiết
+
+| Thuật toán | On/Off-policy | Action space | Critic? | Replay buffer? | Entropy? | Ổn định | Sample efficiency |
+|---|---|---|---|---|---|---|---|
+| **REINFORCE** | On | Cả hai | Không | Không | Không | Thấp (var cao) | Rất thấp |
+| **Actor-Critic** | On | Cả hai | Có (V) | Không | Không | Trung bình | Thấp |
+| **TRPO** | On | Cả hai | Có (Advantage) | Không | Không | Trung bình | Thấp |
+| **PPO** | On | Cả hai | Có (Advantage) | Không | Không | Cao | Thấp-trung bình |
+| **A3C** | On | Discrete | Có (Advantage) | Không | Không | Trung bình | Thấp |
+| **A2C** | On | Cả hai | Có (Advantage) | Không | Không | Cao hơn A3C | Thấp |
+| **DDPG** | Off | Continuous | Có (Q) | Có | Không | Thấp (giòn) | Cao |
+| **TD3** | Off | Continuous | Có (2Q) | Có | Không | Cao | Cao |
+| **SAC** | Off | Continuous | Có (2Q+α) | Có | Có (max) | Cao nhất | Cao nhất |
+
+## Decision tree: chọn thuật toán nào?
+
+```
+Bài toán của bạn là gì?
+│
+├─ Action không gian rời rạc (Atari, board game)?
+│   └─ PPO (on-policy, ổn định, dễ implement)
+│      hoặc Rainbow DQN (Value-based)
+│
+├─ Action không gian liên tục (robotics, control)?
+│   ├─ Muốn on-policy, ổn định?
+│   │   └─ PPO (dễ tune, clip an toàn)
+│   ├─ Muốn off-policy, sample efficient?
+│   │   └─ SAC (SOTA, ổn định nhất)
+│   └─ Cần deterministic policy khi deploy?
+│       └─ TD3 (DDPG + twin critics)
+│
+├─ Cần parallel training để tăng tốc?
+│   └─ A3C/A2C (nhiều actor song song)
+│
+└─ Muốn guarantee monotonic improvement?
+    └─ TRPO (KL constraint, nhưng phức tạp)
+```
+
+## Kết nối với các bài khác trong module
+
+- **Value-based (Q-learning, Double/Dueling DQN, PER, Rainbow):** toàn bộ
+  dòng Value-based học Q-function rồi suy ra policy. Policy-based học trực
+  tiếp policy. SAC kết hợp cả hai (actor-critic với replay buffer mượn từ
+  Value-based).
+- **Advanced Topics — Imitation Learning:** có thể dùng policy pretrained
+  bằng IL làm khởi tạo cho Policy-based RL (RLfD).
+- **Advanced Topics — Exploration:** PPO + RND là combination chuẩn cho
+  exploration trong sparse reward (Montezuma's Revenge).
+- **Advanced Topics — Offline RL:** CQL và IQL đều implement trên nền
+  SAC/actor-critic.
+- **Advanced Topics — Hierarchical RL:** FeUdal Manager dùng policy
+  gradient, Worker dùng intrinsic reward.
+
+## Nguồn tham khảo
+
+- [Lilian Weng — Policy Gradient Algorithms (2018)](https://lilianweng.github.io/posts/2018-04-08-policy-gradient/) — dùng cho bảng so sánh tổng quan các thuật toán policy gradient, taxonomy on-policy/off-policy.
+- Các bài Policy Gradient, Actor-Critic, TRPO, PPO, A3C, A2C, DDPG/TD3, SAC trong cùng submodule — dùng cho chi tiết từng thuật toán và trade-off cụ thể.

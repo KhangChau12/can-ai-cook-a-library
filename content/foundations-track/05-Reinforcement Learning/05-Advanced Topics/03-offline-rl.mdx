@@ -1,0 +1,196 @@
+---
+title: Offline RL — Học Chính Sách Từ Dữ Liệu Tĩnh Mà Không Cần Môi Trường
+track: foundations-track
+module: Reinforcement Learning
+order: 3
+status: stable
+prerequisites: ["01-model-based-rl", "08-sac"]
+summary: Toàn bộ RL đã học từ đầu module tới giờ đều là online RL — agent tương tác với môi trường trong quá trình học. Offline RL (batch RL) học policy hoàn toàn từ một dataset tĩnh thu thập trước, không cần tương tác thêm — rất quan trọng cho y tế, tài chính, robotics nơi thử-sai quá rủi ro. Bài này giới thiệu vấn đề distributional shift và 3 giải pháp: BCQ (policy constraint), CQL (value regularization), IQL (implicit).
+last_touched_by_task: Tái cấu trúc (2026-07-10) — chuyển từ submodule Overview (nhồi nhét, sai bản chất) sang submodule mới Advanced Topics, đặt cuối module vì phụ thuộc cả SAC (Policy-based) lẫn Model-based RL — bài phụ thuộc nặng nhất trong module. Nội dung không đổi. Nguồn: arxiv CQL 2006.04779 + arxiv IQL 2110.06169 + machinelearningmastery.com.
+submodule: Advanced Topics
+---
+
+Từ đầu module RL tới giờ, mọi thuật toán đều thuộc **online RL**: agent tương
+tác với môi trường, thu thập dữ liệu mới, học từ dữ liệu đó, rồi tiếp tục
+tương tác — một vòng lặp liên tục. Online RL hoạt động tốt trong game và mô
+phỏng, nhưng thất bại trong nhiều ứng dụng thực tế:
+
+- **Y tế:** không thể cho RL agent "thử" các liều thuốc khác nhau trên bệnh
+  nhân thật để xem liều nào tốt hơn.
+- **Tài chính:** không thể để agent "thử" chiến lược giao dịch thua lỗ hàng
+  triệu đô để học.
+- **Robotics:** mỗi lần robot ngã trong thế giới thật là hỏng robot.
+
+**Offline RL (batch RL)** giải quyết vấn đề này: agent học từ một **dataset
+tĩnh** thu thập trước đó bởi một policy khác (có thể là người, hoặc một
+thuật toán an toàn hơn). Không có tương tác thêm với môi trường trong quá
+trình học. Nếu thành công, đây sẽ là chìa khoá để áp dụng RL vào các lĩnh
+vực rủi ro cao.
+
+## Vấn đề cốt lõi: distributional shift
+
+Khi học offline, thuật toán off-policy thông thường (như [DQN](18-q-learning.mdx)
+hay [SAC](78-sac.mdx)) thất bại thảm hại vì **distributional shift
+(chênh lệch phân phối)**:
+
+1. Policy hiện tại π_θ chọn một action a ở state s
+2. Action a này **không có trong dataset** D (vì policy cũ/người không bao
+   giờ chọn nó)
+3. Q-function ước lượng Q(s,a) cho action "lạ" này rất không chính xác —
+   thường là **overestimated** (đánh giá quá cao) vì mạng nơ-ron không thấy
+   dữ liệu ở vùng đó → tự do "tưởng tượng" giá trị cao
+4. Policy thấy Q(s,a) cao → càng muốn chọn action lạ đó
+5. Khi triển khai thật, action lạ đó hoá ra rất tệ — thảm hoạ
+
+Vấn đề này không xảy ra trong online RL vì khi policy chọn action lạ, môi
+trường trả về reward thật → Q-function được điều chỉnh lại ngay. Trong
+offline RL, không có phản hồi từ môi trường → lỗi overestimation tích luỹ
+và phóng đại qua các lần cập nhật.
+
+## Hướng 1: BCQ — Ràng buộc policy gần với dữ liệu
+
+**BCQ** (Batch Constrained Q-Learning, Fujimoto, Meger & Precup 2019) giải
+quyết distributional shift bằng cách **ràng buộc policy chỉ được chọn action
+gần với những action đã thấy trong dataset**.
+
+### Cách hoạt động
+
+BCQ dùng một **[VAE](03-vae-variational-autoencoder.mdx)**
+(Variational Autoencoder) để học phân phối của behavior policy π_β(a|s)
+— tức là "trong dataset, ở state s thì người ta thường chọn action nào":
+
+1. **VAE học behavior policy:** huấn luyện VAE trên các cặp (s,a) trong
+   dataset để sinh ra action giống dữ liệu nhất.
+2. **Perturbation model:** một mạng nhỏ học cách điều chỉnh action của VAE
+   (cho phép sai lệch nhỏ) để tìm action có Q-value cao nhất.
+3. **Chọn action:**
+   ```
+   a = argmax_{a_i} Q(s, a_i + ξ_θ(s, a_i, Φ))  với a_i ~ VAE(s)
+   ```
+   - Sinh N action từ VAE (gần với dữ liệu)
+   - Thêm nhiễu nhỏ Φ (cho phép cải thiện nhẹ so với behavior policy)
+   - Chọn action có Q cao nhất trong số đó
+
+### Đánh đổi
+
+- **Ưu:** an toàn, không chọn action OOD (out-of-distribution), đơn giản.
+- **Nhược:** quá conservative — không thể "khâu nối" (stitch) các đoạn quỹ
+  đạo tốt từ nhiều trajectory khác nhau thành một policy tốt hơn behavior
+  policy. Nếu dataset toàn hành động dở, policy học được cũng dở.
+
+## Hướng 2: CQL — Hàm Q bảo thủ
+
+**CQL** (Conservative Q-Learning, Kumar, Zhou, Tucker & Levine 2020) giải
+quyết distributional shift bằng cách **học một hàm Q có tính bảo thủ
+(conservative)** — ước lượng Q luôn là **lower bound** (cận dưới) của giá
+trị thật.
+
+### Cách hoạt động
+
+CQL thêm một **regularization term** vào loss function của Q-learning:
+
+```
+L_CQL = α · [ E_{s~D, a~μ}[Q(s,a)] - E_{s~D, a~π_β}[Q(s,a)] ] + L_Bellman
+```
+
+- `E_{s~D, a~μ}[Q(s,a)]` — **đẩy xuống** Q-value của action từ một phân phối
+  μ nào đó (thường là uniform over actions). Action lạ (OOD) bị đẩy xuống.
+- `E_{s~D, a~π_β}[Q(s,a)]` — **đẩy lên** Q-value của action có trong dataset
+  (từ behavior policy).
+- Kết quả: Q(s,a) của action trong dataset là ước lượng chính xác; Q(s,a)
+  của action ngoài dataset bị đẩy xuống thấp → policy không muốn chọn chúng.
+- `α` điều khiển độ conservative: α lớn → rất bảo thủ (ít rủi ro, ít khám
+  phá), α nhỏ → giống SAC/DQN hơn (nhiều rủi ro hơn).
+
+### Khả năng stitching
+
+CQL mạnh hơn BCQ ở khả năng **stitching**: từ nhiều trajectory rời rạc
+(không có trajectory nào hoàn hảo), CQL có thể "khâu" phần đầu của trajectory
+A với phần cuối của trajectory B để tạo ra một policy tốt hơn cả hai. Đây
+là điểm yếu chí tử của BCQ (quá bám behavior policy) và là điểm mạnh của CQL
+(chỉ cần Q-function biết action nào tốt, không cần behavior policy sinh ra
+action đó).
+
+### Đánh đổi
+
+- **Ưu:** stiching mạnh, SOTA trên nhiều benchmark, chỉ cần thêm <20 dòng
+  code trên nền SAC/DQN.
+- **Nhược:** optimization có dạng saddle-point (min-max) — khó tune α, không
+  ổn định bằng IQL.
+
+## Hướng 3: IQL — Q-Learning Ẩn (Implicit)
+
+**IQL** (Implicit Q-Learning, Kostrikov, Nair & Levine 2021) giải quyết
+distributional shift bằng cách **không bao giờ hỏi Q-value của action không
+có trong dataset**.
+
+### Cách hoạt động
+
+IQL thay đổi công thức Bellman optimality. Thay vì:
+
+```
+Q(s,a) ← r + γ · max_{a'} Q(s', a')
+```
+
+(cần tính Q của action tốt nhất ở state s', có thể là action OOD)
+
+IQL dùng:
+
+```
+Q(s,a) ← r + γ · V(s')
+```
+
+trong đó V(s') được ước lượng qua **expectile regression** — một kỹ thuật
+thống kê học "kỳ vọng có điều kiện trên một ngưỡng" mà không cần biết action
+nào dẫn tới V(s') đó.
+
+Expectile regression với tham số τ (thường τ > 0.5, ví dụ τ = 0.7):
+
+```
+L_V = E[ |τ - 1(Q < V)| · (Q - V)² ]
+```
+
+- Khi τ = 0.5: đây là MSE thông thường → V = E[Q] (kỳ vọng)
+- Khi τ → 1.0: V → max Q (học để V là upper expectile của Q)
+- Với τ = 0.7: V xấp xỉ phân vị thứ 70 của Q — nghĩa là V hơi cao hơn kỳ
+  vọng nhưng không phải max, tránh overestimation
+
+IQL hoàn toàn tránh được OOD action vì **không bao giờ tính Q(s', a')** cho
+action không có trong dataset. Expectile regression chỉ dùng Q(s', a') của
+action đã có trong dataset.
+
+### Đánh đổi
+
+- **Ưu:** ổn định nhất trong 3 phương pháp (không có saddle-point optimization),
+  stitching mạnh, SOTA trên AntMaze và Adroit.
+- **Nhược:** expectile τ cần tuning; không có lower-bound guarantee như CQL.
+
+## So sánh ba phương pháp
+
+| Phương pháp | Chiến lược | OOD handling | Stitching | Độ ổn định |
+|---|---|---|---|---|
+| **BCQ** | Ràng buộc policy | Ràng buộc trực tiếp | Yếu | Cao |
+| **CQL** | Value regularization | Lower-bound Q | Mạnh | Trung bình |
+| **IQL** | Implicit | Không hỏi OOD | Mạnh | Cao |
+
+## Liên hệ lại với các bài trước
+
+- **Online RL vs Offline RL:** toàn bộ module cho tới đây là online RL —
+  agent tương tác với môi trường. Offline RL là bước chuyển quan trọng
+  đưa RL ra ứng dụng thực tế.
+- **[SAC](08-sac.mdx):** CQL thường được implement trên nền SAC — chỉ
+  thêm 1 regularization term. SAC thuần thất bại trong offline setting vì
+  distributional shift.
+- **[VAE](03-vae-variational-autoencoder.mdx):**
+  BCQ dùng VAE để học behavior policy distribution — một ứng dụng thú vị
+  của generative model trong RL.
+- **[Model-based RL](01-model-based-rl.mdx):** model-based
+  có thể dùng mô hình môi trường để sinh thêm dữ liệu cho offline RL (mô
+  hình đóng vai trò "môi trường ảo" an toàn).
+
+## Nguồn tham khảo
+
+- [arXiv — Offline Reinforcement Learning: Tutorial, Review, and Perspectives on Open Problems (Levine et al., 2020)](https://arxiv.org/abs/2005.01643) — dùng cho tổng quan offline RL, vấn đề distributional shift, và taxonomy các hướng giải quyết.
+- [arXiv — CQL: Conservative Q-Learning for Offline Reinforcement Learning (Kumar et al., 2020)](https://arxiv.org/abs/2006.04779) — paper gốc CQL, dùng cho conservative regularizer + lower-bound Q và khả năng stitching.
+- [arXiv — IQL: Offline Reinforcement Learning with Implicit Q-Learning (Kostrikov et al., 2021)](https://arxiv.org/abs/2110.06169) — paper gốc IQL, dùng cho expectile regression và so sánh với CQL/BCQ.
+- [Machine Learning Mastery — Offline Reinforcement Learning](https://machinelearningmastery.com/offline-reinforcement-learning/) — dùng cho overview 3 phương pháp và bảng so sánh.

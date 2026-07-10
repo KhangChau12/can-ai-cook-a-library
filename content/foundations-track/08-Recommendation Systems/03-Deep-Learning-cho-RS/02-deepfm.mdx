@@ -1,0 +1,96 @@
+---
+title: DeepFM — Kết hợp Factorization Machines với Deep Learning để Tự động Học Tương tác Feature
+track: foundations-track
+module: Recommendation Systems
+submodule: Deep Learning cho RS
+order: 2
+status: stable
+prerequisites: ["01-neural-collaborative-filtering"]
+summary: Collaborative Filtering/NeuMF chỉ dùng ID người dùng-item, bỏ lỡ thông tin ngữ cảnh phong phú (giới tính, độ tuổi, danh mục sản phẩm...) quan trọng cho bài toán dự đoán tỷ lệ click (CTR). Factorization Machines (FM) mô hình hoá tương tác feature bậc 2 nhưng cần feature engineering thủ công cho tương tác bậc cao/phi tuyến. Guo và cộng sự (2017) giải quyết bằng DeepFM: chạy song song 1 nhánh FM (tương tác bậc thấp) và 1 nhánh deep network (tương tác bậc cao, phi tuyến, tự động), chia sẻ chung input thô, không cần feature engineering thủ công.
+last_touched_by_task: Tái cấu trúc (2026-07-10) — chuyển vào submodule "Deep Learning cho RS" (order 3→2), sửa prerequisite trỏ đúng slug NeuMF sau khi module tách submodule. Nguồn: D2L.ai (chapter_recommender-systems/deepfm.html, xác nhận qua WebFetch: vấn đề CF chỉ dùng ID bỏ lỡ ngữ cảnh, kiến trúc FM/DeepFM song song, ưu điểm tự động học tương tác feature) + arxiv 1703.04247 (paper gốc Guo et al. 2017, xác nhận qua WebFetch abstract: vấn đề các phương pháp trước thiên về bậc thấp/cao hoặc cần feature engineering thủ công, kiến trúc chia sẻ input chung cho phần wide/deep).
+---
+
+Bài [Neural Collaborative Filtering](01-neural-collaborative-filtering.mdx)
+thay tích vô hướng tuyến tính của Matrix Factorization bằng MLP học phi
+tuyến — nhưng cả hai kỹ thuật đó vẫn chỉ dùng đúng **ID** của người dùng
+và item làm input, không khai thác thêm bất kỳ thông tin ngữ cảnh nào
+khác. Bài này kể cách một hướng tiếp cận khác giải quyết đúng hạn chế
+đó.
+
+## Vấn đề: Collaborative Filtering thuần bỏ lỡ thông tin ngữ cảnh phong phú
+
+Trong thực tế, các nền tảng thường có sẵn nhiều thông tin hơn chỉ riêng
+lịch sử tương tác: đặc điểm người dùng (độ tuổi, giới tính, vị trí),
+đặc điểm item (danh mục, giá cả, thương hiệu), và ngữ cảnh của lượt
+tương tác (thời gian trong ngày, loại thiết bị). Đây được gọi là dữ liệu
+**feature-rich** (giàu đặc trưng) — đặc biệt quan trọng cho bài toán dự
+đoán **tỷ lệ nhấp chuột** (CTR — click-through rate), một tác vụ phổ biến
+trong quảng cáo/gợi ý thực tế. Collaborative Filtering thuần (Matrix
+Factorization, NeuMF) chỉ dùng đúng ID, hoàn toàn bỏ qua nguồn thông tin
+phong phú này.
+
+## Bước trung gian: Factorization Machines (FM) — nhưng vẫn giới hạn ở tương tác bậc 2
+
+**Factorization Machines** (FM) là một bước trung gian giải quyết một
+phần vấn đề: mô hình hoá **tương tác giữa các feature** (ví dụ: sự kết
+hợp cụ thể giữa "giới tính nữ" và "danh mục mỹ phẩm" có xu hướng tăng
+khả năng click) bằng một khung công thức **tuyến tính** dựa trên tích
+song tuyến (bilinear interaction). Nhưng FM có hạn chế cụ thể: nó thường
+chỉ nắm bắt được tương tác **bậc hai** (giữa đúng 2 feature một lúc), và
+gặp khó khăn với các mẫu hình tương tác **phức tạp, phi tuyến, bậc cao
+hơn** (kết hợp 3 feature trở lên theo cách không tuyến tính) thường xuất
+hiện trong dữ liệu thực tế.
+
+## Giải pháp: DeepFM — kết hợp song song FM và mạng nơ-ron sâu
+
+**Guo và cộng sự (2017)**, trong bài báo "DeepFM: A Factorization-Machine
+based Neural Network for CTR Prediction", chỉ ra rằng các phương pháp
+trước đó thường **thiên lệch** về một phía: hoặc chỉ giỏi tương tác bậc
+thấp (như FM), hoặc chỉ giỏi tương tác bậc cao nhưng đòi hỏi **feature
+engineering thủ công** tốn công sức. Giải pháp của họ: kết hợp **song
+song hai nhánh** chạy đồng thời trên cùng một input thô, không cần thiết
+kế feature thủ công:
+
+- **Nhánh FM:** giữ nguyên khả năng nắm bắt tương tác **bậc thấp** (bậc
+  hai) đã có từ Factorization Machines.
+- **Nhánh Deep (mạng nơ-ron sâu):** học các tương tác **bậc cao, phi
+  tuyến** một cách tự động từ dữ liệu, không cần con người tự thiết kế
+  các đặc trưng kết hợp.
+
+Kết quả của hai nhánh được **cộng lại** để cho ra dự đoán cuối cùng.
+Điểm mấu chốt về mặt kiến trúc: cả hai nhánh **chia sẻ chung một input**
+— chỉ cần đưa vào các feature thô (ID người dùng/item, đặc điểm nhân
+khẩu học, danh mục...), không cần xây dựng thủ công các tổ hợp feature
+trước khi đưa vào mô hình như nhiều phương pháp trước đó yêu cầu.
+
+## Vì sao đây là bước tiến so với cả FM lẫn Wide & Deep
+
+DeepFM không phải kiến trúc đầu tiên kết hợp một phần "tuyến tính/nông"
+với một phần "sâu/phi tuyến" — nhưng khác với các phương pháp trước (như
+Wide & Deep của Google, cần thiết kế thủ công các đặc trưng riêng cho
+phần "wide"), DeepFM dùng chung **đúng một input thô** cho cả hai nhánh,
+giảm đáng kể công sức feature engineering trong khi vẫn giữ được cả hai
+ưu điểm: khả năng "ghi nhớ" các tương tác bậc thấp rõ ràng (từ FM) và khả
+năng "tổng quát hoá" các mẫu hình phức tạp bậc cao (từ mạng sâu).
+
+## Liên hệ lại với các bài trước
+
+- Kiến trúc "hai nhánh song song, hợp nhất kết quả" của DeepFM (FM +
+  Deep) rất giống cấu trúc đã học ở [NeuMF](01-neural-collaborative-filtering.mdx)
+  (GMF + MLP) — cả hai đều giữ lại một nhánh "tuyến tính/đơn giản" song
+  song với một nhánh "phi tuyến/sâu", rồi hợp nhất kết quả, thay vì chọn
+  hẳn một trong hai. Đây là một mẫu kiến trúc lặp lại phổ biến khi muốn
+  kết hợp ưu điểm của cách tiếp cận cũ (dễ diễn giải, ổn định) với cách
+  tiếp cận mới (biểu diễn mạnh hơn).
+- DeepFM tiếp tục mẫu hình "tự động hoá thay cho thủ công" đã gặp nhiều
+  lần trong track — tương tự cách CNN (bài 11) tự học đặc trưng ảnh thay
+  vì thiết kế đặc trưng thủ công, DeepFM tự học tương tác feature phức
+  tạp thay vì con người tự thiết kế.
+- Vẫn huấn luyện bằng [backpropagation](09-backpropagation.mdx) như mọi
+  mạng nơ-ron khác trong track — điểm mới chỉ nằm ở cách kết hợp 2 nhánh
+  kiến trúc, không phải kỹ thuật tối ưu hoá mới.
+
+## Nguồn tham khảo
+
+- [arXiv — DeepFM: A Factorization-Machine based Neural Network for CTR Prediction](https://arxiv.org/abs/1703.04247) — paper gốc của Guo và cộng sự (2017), dùng cho vấn đề cụ thể (các phương pháp trước thiên lệch bậc thấp/cao hoặc cần feature engineering thủ công) và kiến trúc chia sẻ input chung cho cả 2 nhánh wide/deep.
+- [Dive into Deep Learning — Deep Factorization Machines](http://d2l.ai/chapter_recommender-systems/deepfm.html) — dùng cho vấn đề feature-rich recommendation (CF thuần chỉ dùng ID, bỏ lỡ ngữ cảnh phong phú), giới hạn cụ thể của Factorization Machines (chỉ tương tác bậc 2), và chi tiết kiến trúc DeepFM (nhánh FM + nhánh deep chạy song song, kết quả cộng lại).

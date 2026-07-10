@@ -1,0 +1,120 @@
+---
+title: "Recommendation Systems — Bản Đồ Tư Duy Module"
+track: foundations-track
+module: Recommendation Systems
+submodule: Overview
+order: 1
+status: stable
+prerequisites: ["05-k-nearest-neighbors", "07-k-means-clustering"]
+summary: "Bài mở đầu module Recommendation Systems: vấn đề quá tải thông tin mà hệ thống gợi ý giải quyết, hai trường phái nền tảng (Content-based vs Collaborative Filtering), phân biệt explicit/implicit feedback, và các dạng bài toán khác nhau (rating prediction, ranking, CTR prediction) — bản đồ để đọc đúng thứ tự 5 sub-module tiếp theo."
+last_touched_by_task: "Bài mới (2026-07-10), viết theo yêu cầu tái cấu trúc module Recommendation Systems — module trước đó nhảy thẳng vào Collaborative Filtering mà không giới thiệu bức tranh lớn, khiến câu mở đầu bài CF cũ ('không cần hiểu nội dung item') vô nghĩa vì chưa ai biết có trường phái content-based để so sánh. Nguồn: D2L.ai chapter_recommender-systems/recsys-intro.html (xác nhận qua WebFetch: taxonomy 4 loại bài toán — rating prediction/ranking/CTR/sequence-aware, định nghĩa cold-start, và câu xác nhận CF gồm memory-based + model-based, content-based là hướng bổ trợ)."
+---
+
+Từ bài [k-NN](05-k-nearest-neighbors.mdx) và [K-means](07-k-means-clustering.mdx),
+track đã học cách đo **độ tương đồng** giữa các điểm dữ liệu. **Recommendation
+systems** (hệ thống gợi ý) là một trong những ứng dụng thực tế lớn nhất của
+chính ý tưởng "tìm những gì giống nhau" đó — nhưng áp dụng cho một bài toán
+cụ thể: dự đoán người dùng sẽ thích **item** nào (phim, sản phẩm, bài hát)
+trong hàng triệu lựa chọn, dựa trên lịch sử tương tác của chính họ và/hoặc
+đặc điểm của item.
+
+## Vấn đề: quá nhiều lựa chọn, không thể tự tìm bằng tay
+
+Các nền tảng hiện đại (Netflix, YouTube, Amazon...) cung cấp một lượng item
+khổng lồ — vượt xa khả năng một người dùng tự duyệt qua hết để tìm thứ mình
+thích. Đây là vấn đề **quá tải thông tin** (information overload): không
+phải thiếu lựa chọn, mà thừa lựa chọn tới mức không ai tự tìm nổi thứ phù
+hợp nếu không có hệ thống lọc thông minh.
+
+## Dữ liệu đầu vào: explicit vs implicit feedback
+
+- **Explicit feedback** (phản hồi tường minh): người dùng chủ động đánh giá
+  — sao trên IMDb, like/dislike trên YouTube. Ưu điểm: rõ ràng, đúng ý người
+  dùng. Nhược điểm: phần lớn người dùng không chịu đánh giá, nên dữ liệu này
+  rất thưa (sparse).
+- **Implicit feedback** (phản hồi ngầm định): suy ra từ hành vi — đã mua, đã
+  click, đã xem. Ưu điểm: có sẵn rất nhiều (không cần người dùng làm gì
+  thêm). Nhược điểm: nhiễu hơn nhiều — xem xong một bộ phim không nhất thiết
+  nghĩa là thích nó.
+
+Đa số hệ thống thực tế (Netflix, YouTube, Amazon) dựa chủ yếu vào implicit
+feedback vì nó dồi dào hơn hẳn — đây là lý do các bài sau trong module này
+(NeuMF, BPR) đều thiết kế riêng cho trường hợp implicit.
+
+## Hai trường phái nền tảng: Content-based vs Collaborative Filtering
+
+Mọi kỹ thuật gợi ý, dù phức tạp tới đâu, đều bắt nguồn từ một trong hai (hoặc
+kết hợp cả hai) ý tưởng cốt lõi sau:
+
+- **Content-based Filtering** (lọc theo nội dung): gợi ý dựa trên **đặc
+  điểm/nội dung** của chính item — nếu người dùng thích phim hành động có
+  diễn viên A, gợi ý phim hành động khác cũng có diễn viên A. Cần hiểu rõ
+  đặc điểm item (thể loại, diễn viên, mô tả...) và xây hồ sơ sở thích riêng
+  cho từng người dùng.
+- **Collaborative Filtering** (lọc cộng tác): gợi ý dựa trên **hành vi của
+  đám đông** — không cần biết item chứa nội dung gì, chỉ cần biết "ai đã
+  thích gì giống ai". Nếu hai người dùng thích những item giống nhau trong
+  quá khứ, họ có xu hướng thích những item giống nhau tiếp theo.
+
+Hai trường phái này bù trừ điểm yếu cho nhau — content-based hoạt động tốt
+ngay cả khi item hoàn toàn mới (chưa ai tương tác, chỉ cần biết đặc điểm của
+nó), trong khi collaborative filtering hoạt động tốt ngay cả khi không có
+mô tả nội dung nào (chỉ cần dữ liệu tương tác) nhưng lại bó tay với item/
+người dùng hoàn toàn mới (xem thêm bài
+[Evaluation & Cold-start](../04-Ranking-va-Evaluation/01-evaluation-metrics-cold-start.mdx)).
+Thực tế, nhiều hệ thống lớn kết hợp cả hai (**hybrid**) để tận dụng ưu điểm
+của cả hai phía — module này giới thiệu từng trường phái riêng trước
+(sub-module 2), rồi mới tới các kỹ thuật deep learning mở rộng collaborative
+filtering (sub-module 3), vì collaborative filtering là trường phái được
+nghiên cứu sâu nhất và có nhiều bước tiến hoá kiến trúc nhất trong lịch sử
+recommendation systems hiện đại.
+
+## Các dạng bài toán: không phải lúc nào cũng là "dự đoán điểm số"
+
+Một điểm dễ nhầm lẫn với người mới: "recommendation" không phải một bài
+toán duy nhất, mà là một họ bài toán với mục tiêu khác nhau:
+
+- **Rating prediction** (dự đoán điểm số): dự đoán chính xác explicit rating
+  người dùng sẽ cho một item (ví dụ 4.5/5 sao) — đây là bài toán **hồi quy**.
+  Matrix Factorization gốc (sub-module 2) giải đúng bài toán này.
+- **Ranking / Top-N recommendation** (xếp hạng): không cần đúng điểm số
+  tuyệt đối, chỉ cần xếp đúng **thứ tự** — item nào nên đưa lên đầu danh
+  sách gợi ý. Đây mới là mục tiêu thực sự của phần lớn hệ thống gợi ý thực
+  tế (sub-module 4 dành riêng cho hướng này).
+- **Click-through rate (CTR) prediction**: dự đoán xác suất người dùng sẽ
+  click vào một item/quảng cáo cụ thể — bài toán **phân loại nhị phân**,
+  thường tận dụng nhiều loại feature ngoài ID (nhân khẩu học, ngữ cảnh) —
+  xem bài DeepFM (sub-module 3).
+- **Sequence-aware recommendation**: tận dụng **thứ tự thời gian** của
+  tương tác (không chỉ "đã tương tác gì" mà còn "theo trình tự nào") để dự
+  đoán hành động tiếp theo — xem sub-module 5.
+
+Phân biệt đúng 4 dạng bài toán này quan trọng vì chúng dùng **hàm mục tiêu
+khác nhau**: tối ưu tốt cho rating prediction không đảm bảo tối ưu tốt cho
+ranking (chi tiết ở bài [Bayesian Personalized Ranking](../04-Ranking-va-Evaluation/02-bayesian-personalized-ranking.mdx)).
+
+## Vấn đề kinh điển: cold-start
+
+Mọi kỹ thuật dựa trên dữ liệu tương tác lịch sử (collaborative filtering)
+đều gặp chung một vấn đề: **cold-start** — không có gì để gợi ý cho một
+người dùng mới (chưa từng tương tác) hoặc một item mới (chưa từng được ai
+tương tác). Đây là lý do content-based filtering vẫn giữ vai trò quan trọng
+trong các hệ thống hybrid hiện đại, và cũng là chủ đề riêng ở sub-module 4.
+
+## Cách đọc module này
+
+1. **Overview** (đang đọc) — bức tranh chung.
+2. **Nền tảng Content-based & CF** — hai trường phái cổ điển: Content-based
+   Filtering, Memory-based CF (user-based/item-based), rồi Matrix
+   Factorization (model-based CF, nền cho toàn bộ sub-module 3).
+3. **Deep Learning cho RS** — dòng tiến hoá mở rộng Matrix Factorization
+   bằng mạng nơ-ron: NeuMF, DeepFM, AutoRec.
+4. **Ranking & Evaluation** — đổi trục từ "dự đoán điểm" sang "xếp hạng
+   đúng" (BPR), cách đo chất lượng ranking, và cold-start.
+5. **Sequence-aware & Modern Architectures** — xu hướng hiện đại, kết nối
+   với RNN/Transformer đã học ở NLP track: gợi ý theo chuỗi hành vi và
+   kiến trúc retrieval-ranking hai tầng dùng trong công nghiệp.
+
+## Nguồn tham khảo
+
+- [Dive into Deep Learning — Overview of Recommender Systems](http://d2l.ai/chapter_recommender-systems/recsys-intro.html) — dùng cho vấn đề quá tải thông tin, phân biệt explicit/implicit feedback, taxonomy các dạng bài toán (rating prediction, ranking, CTR prediction, sequence-aware), câu xác nhận CF gồm memory-based + model-based và content-based là hướng bổ trợ, và định nghĩa cold-start recommendation.

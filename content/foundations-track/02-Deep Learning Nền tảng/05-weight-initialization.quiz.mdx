@@ -1,0 +1,53 @@
+---
+quiz_for: 05-weight-initialization
+---
+
+## Q1
+Vì sao khởi tạo mọi trọng số trong một lớp bằng 0 (hoặc cùng một hằng số) khiến mạng không học được?
+
+- [ ] Vì phép nhân ma trận với 0 luôn gây lỗi runtime
+- [x] Mọi neuron trong lớp nhận cùng input, tính cùng output, và nhận cùng gradient khi lan truyền ngược — chúng cập nhật giống hệt nhau mãi mãi, không bao giờ tự phá vỡ được đối xứng
+- [ ] Vì gradient descent chỉ hoạt động với trọng số dương
+- [ ] Vì 0 không phải số thực hợp lệ cho phép toán ma trận
+
+> Đây là "vấn đề đối xứng": các neuron cùng lớp khởi tạo giống hệt nhau sẽ mãi mãi giống hệt nhau qua mọi bước cập nhật, lãng phí hoàn toàn khả năng biểu diễn mà nhiều neuron lẽ ra mang lại.
+
+## Q2
+Khởi tạo ngẫu nhiên nhưng không kiểm soát phương sai gây ra vấn đề gì ở mạng nhiều lớp?
+
+- [ ] Không có vấn đề gì, ngẫu nhiên luôn đủ tốt
+- [ ] Mạng sẽ học nhanh hơn vì có nhiều tính ngẫu nhiên hơn
+- [x] Phương sai activation/gradient có thể trôi dần (tăng gây exploding, giảm gây vanishing) qua từng lớp, và bị khuếch đại theo cấp số nhân do có rất nhiều lớp nhân liên tiếp
+- [ ] Chỉ ảnh hưởng tốc độ tính toán, không ảnh hưởng khả năng học
+
+> Nhân liên tiếp nhiều ma trận có phương sai hơi lệch khỏi mức "trung tính" (dù chỉ một chút) sẽ bị khuếch đại theo cấp số nhân qua nhiều lớp — đây chính là gốc rễ của vanishing/exploding gradient liên quan tới khởi tạo.
+
+## Q3
+Công thức Xavier/Glorot dựa trên giả định gì về activation, và giả định đó khớp tốt nhất với activation nào?
+
+- [x] Giả định activation gần tuyến tính/đối xứng qua gốc toạ độ — khớp tốt với tanh, activation phổ biến khi Xavier ra đời (2010)
+- [ ] Giả định activation luôn là ReLU
+- [ ] Không có giả định nào về activation, Xavier hoạt động như nhau với mọi hàm
+- [ ] Giả định activation luôn trả về giá trị trong khoảng (0, 1)
+
+> Phép suy ra công thức Xavier dựa trên một mạng chỉ có biến đổi tuyến tính (không activation phi tuyến) — ngầm giả định activation hoạt động gần giống hàm tuyến tính đối xứng, khớp với tanh hơn là ReLU.
+
+## Q4
+Vì sao Xavier initialization không còn tối ưu khi dùng với ReLU, và He initialization sửa vấn đề đó như thế nào?
+
+- [x] ReLU triệt tiêu khoảng một nửa tín hiệu (mọi giá trị âm về 0), làm phương sai thực tế truyền qua chỉ còn một nửa so với giả định của Xavier — He bù lại bằng cách nhân đôi hệ số phương sai thành 2/n
+- [ ] ReLU không tương thích với bất kỳ cách khởi tạo ngẫu nhiên nào
+- [ ] He initialization dùng phương sai nhỏ hơn Xavier để tránh exploding gradient
+- [ ] Xavier và He thực chất là cùng một công thức, chỉ khác tên gọi
+
+> Vì đạo hàm ReLU chỉ là 0 hoặc 1 với xác suất xấp xỉ bằng nhau, khoảng nửa tín hiệu forward pass bị triệt tiêu — phá vỡ giả định tuyến tính của Xavier. He initialization nhân đôi hệ số (Var(w) = 2/n thay vì công thức fan-in tương ứng của Xavier) để bù đúng phần mất đó.
+
+## Q5
+Weight initialization và Optimizer (bài trước) khác nhau ở điểm nào về vai trò trong quá trình huấn luyện?
+
+- [ ] Cả hai đều làm chính xác một việc, chỉ khác tên gọi
+- [ ] Optimizer chỉ chạy một lần duy nhất trước khi train, còn initialization chạy ở mọi bước
+- [x] Weight initialization chỉ tác động đúng một lần (tại bước khởi đầu, trước khi train), trong khi optimizer cải thiện cách cập nhật trọng số lặp lại qua nhiều bước suốt quá trình train
+- [ ] Weight initialization thay thế hoàn toàn nhu cầu dùng optimizer
+
+> Initialization quyết định điểm xuất phát; optimizer quyết định cách di chuyển từ điểm đó qua nhiều bước. Chọn sai điểm khởi đầu (ví dụ gradient đã vanishing/exploding từ đầu) có thể khiến ngay cả optimizer tốt nhất cũng khó cứu vãn được.

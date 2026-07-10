@@ -1,0 +1,123 @@
+---
+title: "Content-based Filtering — Gợi ý Từ Đặc điểm Của Chính Item"
+track: foundations-track
+module: Recommendation Systems
+submodule: Nền tảng Content-based & CF
+order: 1
+status: stable
+prerequisites: ["01-recommendation-systems-overview", "02-word2vec"]
+summary: "Content-based Filtering là trường phái gợi ý nền tảng thứ nhất: xây hồ sơ sở thích người dùng và biểu diễn item bằng chính đặc điểm/nội dung của nó (thể loại, mô tả, thuộc tính), rồi gợi ý item có đặc điểm gần với hồ sơ đó nhất — không cần biết người dùng khác đã làm gì. Giải quyết tốt cold-start cho item mới, nhưng bị giới hạn trong 'vùng an toàn' của sở thích đã biết."
+last_touched_by_task: "Bài mới (2026-07-10), bài đầu sub-module Nền tảng Content-based & CF — lấp lỗ hổng module Recommendation Systems thiếu hẳn trường phái content-based, khiến câu mở đầu bài Collaborative Filtering cũ ('không cần hiểu nội dung item, khác với...') không có gì để so sánh. Nguồn: D2L.ai recsys-intro.html (xác nhận CF vs content-based là 2 trường phái, content-based dùng 'content descriptions of items/users') + arxiv 1912.08932 'Collaborative Filtering vs. Content-Based Filtering: differences and similarities' (xác nhận qua WebFetch abstract: 2 trường phái nổi bật nhất cho recommendation, tính bổ trợ lẫn nhau giữa 2 hướng)."
+---
+
+Bài [Overview](../01-Overview/01-recommendation-systems-overview.mdx) giới
+thiệu hai trường phái nền tảng của recommendation systems: **Content-based
+Filtering** và **Collaborative Filtering**. Bài này đi sâu vào trường phái
+thứ nhất — trường phái không cần biết gì về hành vi của người dùng khác,
+chỉ cần hiểu **nội dung** của item.
+
+## Ý tưởng cốt lõi: gợi ý item "giống" những gì người dùng đã thích
+
+**Content-based Filtering** hoạt động theo một nguyên lý rất trực quan: nếu
+một người dùng đã thích item A, và item B có đặc điểm/nội dung **tương tự**
+item A, người dùng đó nhiều khả năng cũng thích item B. Khác hẳn
+collaborative filtering (dựa vào hành vi đám đông), content-based filtering
+chỉ cần **một** người dùng và đặc điểm của các item — không cần biết bất kỳ
+người dùng nào khác từng làm gì.
+
+Ba thành phần chính của một hệ thống content-based:
+
+1. **Content Analyzer** (bộ phân tích nội dung): trích xuất đặc điểm có thể
+   dùng để so sánh từ mỗi item — ví dụ với phim: thể loại, đạo diễn, diễn
+   viên, tóm tắt cốt truyện; với bài báo: từ khoá, chủ đề.
+2. **Profile Learner** (bộ học hồ sơ): xây dựng một **hồ sơ sở thích**
+   (user profile) cho từng người dùng, tổng hợp từ đặc điểm của những item
+   người dùng đó đã thích trong quá khứ.
+3. **Filtering Component** (bộ lọc): so khớp hồ sơ người dùng với đặc điểm
+   của các item chưa xem, xếp hạng theo độ tương đồng, rồi gợi ý những item
+   gần nhất.
+
+## Biểu diễn nội dung: từ văn bản/thuộc tính sang vector
+
+Muốn so sánh "độ giống nhau" giữa hồ sơ người dùng và đặc điểm item bằng
+toán học, cả hai phải được biểu diễn dưới dạng **vector số** — đúng vấn đề
+"làm sao biến dữ liệu thô thành vector mang nghĩa" đã gặp ở bài
+[word2vec](../../04-NLP-LLM/01-Tokenization/02-word2vec.mdx). Với dữ liệu
+dạng văn bản (mô tả phim, tóm tắt bài báo), kỹ thuật kinh điển nhất là
+**TF-IDF** (Term Frequency – Inverse Document Frequency): biến mỗi item
+thành một vector trọng số từ, trong đó từ càng **đặc trưng** cho item đó
+(xuất hiện nhiều trong item này, nhưng hiếm ở các item khác) càng có trọng
+số cao — khác với one-hot encoding thuần (đã biết là không mang nghĩa gì,
+xem bài word2vec), TF-IDF ít nhất phản ánh được từ nào "quan trọng" cho
+từng item cụ thể, dù vẫn không nắm bắt được quan hệ ngữ nghĩa sâu như
+word2vec/embedding học được.
+
+Hồ sơ người dùng thường được xây bằng cách **lấy trung bình** (hoặc trung
+bình có trọng số theo rating) vector đặc trưng của mọi item người dùng đã
+thích — kết quả là một vector nằm "ở giữa" các item ưa thích, đại diện cho
+xu hướng sở thích chung. Trong các hệ thống hiện đại hơn, vector TF-IDF có
+thể được thay bằng chính embedding học được (word2vec hoặc mạnh hơn) để
+nắm bắt ngữ nghĩa tốt hơn — nhưng nguyên lý "trung bình hoá vector các item
+đã thích thành hồ sơ người dùng" vẫn giữ nguyên.
+
+## Đo độ tương đồng: cosine similarity
+
+Sau khi có vector cho hồ sơ người dùng và vector cho từng item ứng viên,
+bước gợi ý chỉ đơn giản là tính **cosine similarity** giữa chúng — đo góc
+giữa hai vector thay vì khoảng cách tuyệt đối (khác với khoảng cách Euclid
+đã dùng ở [k-NN](05-k-nearest-neighbors.mdx)), phù hợp hơn với vector
+TF-IDF vì không bị lệch bởi độ dài văn bản khác nhau giữa các item:
+
+```
+cosine_similarity(u, i) = (u · i) / (||u|| × ||i||)
+```
+
+Trong đó `u` là vector hồ sơ người dùng, `i` là vector đặc điểm item. Giá
+trị càng gần 1, hai vector càng "cùng hướng" — item càng phù hợp với sở
+thích đã biết của người dùng. Xếp hạng mọi item ứng viên theo giá trị này,
+gợi ý những item có điểm cao nhất.
+
+## Ưu điểm: không cần dữ liệu người dùng khác, giải quyết tốt cold-start cho item mới
+
+Vì chỉ dựa vào đặc điểm item và lịch sử của chính người dùng đó,
+content-based filtering có một ưu điểm mà collaborative filtering không có:
+gợi ý được ngay cả khi item **hoàn toàn mới**, chưa từng có ai tương tác —
+chỉ cần trích xuất được đặc điểm nội dung của nó. Đây là lý do content-based
+vẫn giữ vai trò quan trọng trong các hệ thống hybrid hiện đại, dù
+collaborative filtering thường cho chất lượng gợi ý tổng thể tốt hơn khi đủ
+dữ liệu tương tác.
+
+## Hạn chế: giới hạn trong "vùng an toàn", cần đặc điểm item chất lượng
+
+Content-based filtering có hai hạn chế cố hữu:
+
+- **Thiếu đa dạng/bất ngờ** (low diversity, low serendipity): vì luôn gợi ý
+  item "giống" những gì đã thích, hệ thống có xu hướng lặp lại trong một
+  vùng sở thích hẹp, khó giới thiệu thứ mới lạ mà người dùng chưa biết là
+  mình thích — trái ngược với collaborative filtering, có thể gợi ý item
+  "khác biệt về nội dung" nhưng vẫn phù hợp nhờ người dùng tương tự đã
+  thích nó.
+- **Phụ thuộc chất lượng đặc điểm item**: nếu không trích xuất được đặc
+  điểm nội dung tốt (item chỉ có ID, không có mô tả/thuộc tính đủ chi tiết),
+  content-based filtering không có gì để hoạt động — đây chính xác là tình
+  huống mà collaborative filtering (bài tiếp theo) giải quyết được.
+
+## Liên hệ lại với các bài trước
+
+- Vấn đề "biến dữ liệu thô thành vector mang nghĩa" đã gặp ở bài
+  [word2vec](../../04-NLP-LLM/01-Tokenization/02-word2vec.mdx) — TF-IDF là
+  một kỹ thuật vector hoá đơn giản hơn word2vec (dựa thuần trên tần suất
+  xuất hiện từ, không học qua mạng nơ-ron), nhưng cùng mục tiêu: biến văn
+  bản thành vector so sánh được.
+- Bước "so khớp hồ sơ người dùng với item gần nhất" về bản chất là bài toán
+  tìm hàng xóm gần nhất đã học ở [k-NN](05-k-nearest-neighbors.mdx) — chỉ
+  khác không gian feature là không gian nội dung (TF-IDF/embedding) thay vì
+  feature số cho sẵn, và dùng cosine similarity thay vì khoảng cách Euclid.
+- Bài tiếp theo, [Memory-based Collaborative Filtering](02-memory-based-collaborative-filtering.mdx),
+  giới thiệu trường phái đối lập: không cần hiểu nội dung item, chỉ cần
+  hành vi tương tác của đám đông người dùng.
+
+## Nguồn tham khảo
+
+- [Dive into Deep Learning — Overview of Recommender Systems](http://d2l.ai/chapter_recommender-systems/recsys-intro.html) — dùng cho việc xác nhận content-based là một trong hai hướng tiếp cận nền tảng của recommendation systems, bổ trợ cho collaborative filtering bằng cách khai thác "content descriptions of items/users".
+- [arXiv — Collaborative Filtering vs. Content-Based Filtering: differences and similarities](https://arxiv.org/abs/1912.08932) — dùng cho việc xác nhận content-based filtering và collaborative filtering là hai hướng tiếp cận nổi bật nhất cho recommendation, và tính chất bổ trợ (complementary) giữa hai hướng khi kết hợp trong hệ thống hybrid.

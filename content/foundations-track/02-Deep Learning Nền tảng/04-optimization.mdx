@@ -1,0 +1,217 @@
+---
+title: "Optimizer — Từ SGD tới Adam"
+track: foundations-track
+module: "Deep Learning Nền tảng"
+order: 4
+status: stable
+prerequisites: ["02-backpropagation"]
+summary: "Backpropagation cho gradient, nhưng gradient descent thuần chạy chậm và dễ dao động trên loss landscape hình 'thung lũng'. Dòng tiến hoá 4 bước: Momentum (Polyak, 1964) dùng đà quán tính để vượt dao động, AdaGrad/RMSProp (Hinton, 2012) tự điều chỉnh learning rate theo từng tham số, và Adam (Kingma & Ba, 2015) kết hợp cả hai ý tưởng thành optimizer mặc định phổ biến nhất hiện nay."
+last_touched_by_task: "Viết mới — lấp khoảng trống module Deep Learning Nền tảng (chỉ có Perceptron/Backprop/Regularization, dừng ở gradient descent thuần). Bài dòng tiến hoá SGD→Momentum→AdaGrad→RMSProp→Adam, dùng 3 nguồn: d2l.ai (công thức + bối cảnh AdaGrad/RMSProp), distill.pub (trực giác momentum + condition number), arxiv.org 1412.6980 (paper gốc Adam, đối chiếu epsilon=1e-8 khác d2l.ai nêu 1e-6)."
+---
+
+Bài [Backpropagation](02-backpropagation.mdx) giải quyết bài toán **tính**
+gradient hiệu quả cho mạng nhiều lớp. Nhưng có gradient rồi vẫn còn một câu
+hỏi khác: **dùng gradient đó để cập nhật tham số như thế nào**? Từ đầu tới
+giờ, mọi bài đều dùng đúng một công thức — gradient descent thuần:
+
+```
+tham_so := tham_so - learning_rate * gradient
+```
+
+Công thức này đúng, nhưng chạy chậm và bất ổn trên loss landscape thực tế
+của mạng nơ-ron. Bài này kể dòng tiến hoá 4 bước mà cộng đồng deep learning
+đã đi qua để khắc phục: **Momentum → AdaGrad → RMSProp → Adam** — mỗi bước
+giải quyết đúng một hạn chế cụ thể của bước trước.
+
+## Vấn đề của gradient descent thuần: loss landscape hình thung lũng
+
+Xét một hàm loss đơn giản có độ cong khác nhau ở hai hướng, ví dụ
+`f(x1, x2) = 0.1*x1^2 + 2*x2^2` — hướng `x2` dốc gấp 20 lần hướng `x1`.
+Với gradient descent thuần, learning rate phải đủ nhỏ để bước theo hướng
+`x2` (dốc) không bị phân kỳ (nhảy qua nhảy lại quanh đáy) — nhưng learning
+rate nhỏ đó lại khiến việc di chuyển theo hướng `x1` (thoải) chậm một cách
+không cần thiết. Kết quả: quỹ đạo tối ưu hoá dao động qua lại theo hướng
+dốc, trong khi gần như không nhúc nhích theo hướng thoải — một hình dạng
+thường được gọi là "thung lũng" (ravine) hay "khe núi".
+
+Nhìn tổng quát hơn qua độ đo **condition number** (κ — tỷ lệ giữa độ cong
+lớn nhất và nhỏ nhất của hàm loss tại một điểm): tốc độ hội tụ của gradient
+descent thuần tỷ lệ với κ, và κ càng lớn (loss landscape càng "méo",
+thường gặp ở mạng nơ-ron thực tế) thì càng hội tụ chậm.
+
+Thêm một vấn đề riêng khi huấn luyện bằng **minibatch** (chỉ dùng một phần
+nhỏ dữ liệu train mỗi bước, không phải toàn bộ): gradient tính từ minibatch
+là một ước lượng nhiễu (noisy) của gradient thật trên toàn bộ tập train —
+quỹ đạo tối ưu hoá vì vậy dao động ngẫu nhiên thêm một lớp nữa, không chỉ
+dao động do hình dạng loss landscape.
+
+## Momentum: thêm đà quán tính để vượt dao động
+
+**Polyak (1964)** đề xuất ý tưởng đầu tiên trong dòng tiến hoá này — mượn
+trực giác từ vật lý: thay vì cập nhật tham số chỉ dựa vào gradient tại bước
+hiện tại, giữ lại một **vận tốc** (velocity) tích luỹ từ các gradient trước
+đó:
+
+```
+v_t = beta * v_(t-1) + g_t          -- v: vận tốc, g: gradient tại bước t
+x_t = x_(t-1) - learning_rate * v_t
+```
+
+`beta` (thường 0.9) đóng vai trò như hệ số "ma sát" — điều khiển việc vận
+tốc "ghi nhớ" bao nhiêu phần đóng góp từ các gradient cũ. Trực giác vật lý:
+tưởng tượng một quả bóng lăn xuống thung lũng — gradient đóng vai trò lực
+tác động lên vận tốc, chứ không trực tiếp quyết định vị trí; quả bóng có
+quán tính nên không đổi hướng đột ngột chỉ vì một bước có gradient hơi khác.
+
+Vì sao điều này giải quyết đúng vấn đề "thung lũng": ở hướng dốc (dao động
+qua lại), các gradient liên tiếp có dấu trái ngược nhau — khi cộng dồn vào
+vận tốc, chúng **triệt tiêu lẫn nhau**. Ở hướng thoải (di chuyển đều một
+chiều), các gradient liên tiếp cùng dấu — khi cộng dồn, chúng **cộng hưởng**
+làm vận tốc lớn dần. Kết quả: bước di chuyển tự động chậm lại ở hướng hay
+dao động, và tự động nhanh lên ở hướng ổn định — về mặt lý thuyết, cải
+thiện tốc độ hội tụ từ tỷ lệ κ xuống tỷ lệ √κ.
+
+**Đánh đổi:** cửa sổ trung bình hoá hiệu dụng của vận tốc xấp xỉ
+`1/(1-beta)` — `beta` càng lớn (nhớ càng lâu), learning rate càng cần nhỏ
+tương ứng để giữ ổn định. Ngoài ra, trong chế độ nhiễu (gradient minibatch
+noisy), tăng `beta` không chỉ khuếch đại tín hiệu hữu ích mà còn khuếch đại
+cả nhiễu — không có lựa chọn `beta`/`learning_rate` nào tối ưu cho mọi giai
+đoạn huấn luyện.
+
+## AdaGrad: mỗi tham số một learning rate riêng — nhưng suy giảm quá nhanh
+
+Momentum xử lý dao động, nhưng chưa xử lý một vấn đề khác: các tham số
+khác nhau trong mạng có thể cần learning rate khác nhau (tham số nhận
+gradient lớn thường xuyên nên "bước" nhỏ hơn, tham số nhận gradient nhỏ
+thường xuyên nên "bước" lớn hơn) — dùng chung một learning rate cho mọi
+tham số là một giả định thô.
+
+**Duchi, Hazan, và Singer (2011)** đề xuất AdaGrad: tích luỹ tổng bình
+phương gradient của **từng tham số riêng** từ đầu quá trình train, rồi chia
+learning rate cho căn bậc hai của tổng đó:
+
+```
+s_t = s_(t-1) + g_t^2
+x_t = x_(t-1) - (learning_rate / sqrt(s_t + epsilon)) * g_t
+```
+
+Tham số nào liên tục nhận gradient lớn sẽ có `s_t` lớn dần, khiến learning
+rate hiệu dụng của riêng nó tự động co lại — đúng ý tưởng "learning rate
+thích ứng theo từng tham số" (adaptive per-parameter learning rate).
+
+**Hạn chế:** `s_t` là tổng cộng dồn **đơn điệu tăng** suốt quá trình train,
+không bao giờ giảm. Vì vậy learning rate hiệu dụng chỉ giảm dần theo thời
+gian và có thể co lại gần bằng 0 quá sớm — mô hình gần như ngừng học ở
+những tham số đã tích luỹ `s_t` lớn từ giai đoạn đầu, dù giai đoạn sau vẫn
+còn cần điều chỉnh thêm.
+
+## RMSProp: thay tổng cộng dồn bằng trung bình trượt có suy giảm
+
+**Tieleman và Hinton (2012)**, giới thiệu qua bài giảng Coursera "Neural
+Networks for Machine Learning" (không có paper chính thức — chỉ tồn tại
+dưới dạng slide bài giảng), sửa đúng hạn chế đó bằng một thay đổi nhỏ nhưng
+hiệu quả: thay tổng cộng dồn vô hạn bằng một **trung bình trượt có suy
+giảm** (leaky average/exponential moving average) của bình phương gradient:
+
+```
+s_t = gamma * s_(t-1) + (1 - gamma) * g_t^2
+x_t = x_(t-1) - (learning_rate / sqrt(s_t + epsilon)) * g_t
+```
+
+Vì `s_t` giờ là trung bình có trọng số suy giảm dần theo thời gian (đóng
+góp của gradient càng cũ càng bị "quên" dần, tương tự cách `v_t` của
+momentum quên dần gradient cũ), tổng này không còn tăng đơn điệu mãi mãi —
+learning rate hiệu dụng của mỗi tham số co giãn theo mức độ biến động gần
+đây, không bị "đóng băng" chỉ vì đã tích luỹ nhiều từ rất sớm.
+
+**Đánh đổi:** RMSProp giải quyết đúng vấn đề suy giảm sai của AdaGrad,
+nhưng không loại bỏ nhu cầu chọn learning rate cơ sở — người dùng vẫn phải
+tự đặt và tinh chỉnh `learning_rate`, RMSProp chỉ tự động hoá phần điều
+chỉnh **tương đối** giữa các tham số.
+
+## Adam: kết hợp Momentum và RMSProp trong cùng một công thức
+
+**Kingma và Ba (2015)**, công bố tại hội nghị ICLR 2015 (nộp lên arXiv
+tháng 12/2014), đặt câu hỏi: tại sao phải chọn giữa "đà quán tính" (Momentum)
+và "learning rate thích ứng theo tham số" (RMSProp) khi có thể dùng cả hai
+cùng lúc? **Adam** (Adaptive Moment Estimation) duy trì song song hai đại
+lượng:
+
+```
+m_t = beta1 * m_(t-1) + (1 - beta1) * g_t        -- ước lượng bậc 1 (giống Momentum)
+v_t = beta2 * v_(t-1) + (1 - beta2) * g_t^2        -- ước lượng bậc 2 (giống RMSProp)
+
+m_hat_t = m_t / (1 - beta1^t)                       -- hiệu chỉnh độ lệch
+v_hat_t = v_t / (1 - beta2^t)                       -- hiệu chỉnh độ lệch
+
+theta_t = theta_(t-1) - alpha * m_hat_t / (sqrt(v_hat_t) + epsilon)
+```
+
+`m_t` đóng đúng vai trò vận tốc của Momentum — trung bình trượt của chính
+gradient, cho hướng đi mượt hơn. `v_t` đóng đúng vai trò `s_t` của RMSProp
+— trung bình trượt của bình phương gradient, dùng để co giãn learning rate
+riêng cho từng tham số. Giá trị mặc định theo paper gốc: `beta1 = 0.9`,
+`beta2 = 0.999`, `epsilon = 1e-8`, `alpha = 0.001`.
+
+**Vì sao cần "hiệu chỉnh độ lệch" (bias correction):** `m_t` và `v_t` đều
+khởi tạo từ 0. Ở những bước đầu tiên (đặc biệt khi `beta1`, `beta2` gần 1),
+giá trị trung bình trượt còn thiên lệch mạnh về phía 0 — chưa kịp "tích
+luỹ" đủ để phản ánh đúng gradient thật. Chia cho `(1 - beta^t)` (một số
+nhỏ hơn 1 ở các bước đầu, tiến dần về 1 khi `t` lớn) khuếch đại lại giá trị
+ở giai đoạn đầu để bù đúng phần thiên lệch do khởi tạo từ 0, và tự động mất
+tác dụng khi `t` đủ lớn.
+
+**Đánh đổi:** Adam thêm 2 hyperparameter mới (`beta1`, `beta2`) cần
+tinh chỉnh (dù giá trị mặc định thường hoạt động tốt trong đa số trường
+hợp), và cần lưu thêm bộ nhớ cho cả `m_t` lẫn `v_t` cho mỗi tham số (gấp
+đôi so với chỉ dùng Momentum hoặc chỉ dùng RMSProp). Một số biến thể sau
+này (ví dụ Yogi) chỉnh lại cách cập nhật `v_t` vì Adam đôi khi kiểm soát
+phương sai (variance) không tốt, dẫn tới hội tụ không ổn định trong một số
+bài toán cụ thể.
+
+## Dòng tiến hoá: mỗi bước sửa đúng một hạn chế
+
+```
+Gradient Descent thuần
+   → dao động mạnh trên loss landscape hình thung lũng (κ lớn)
+Momentum (Polyak, 1964)
+   → thêm quán tính, triệt tiêu dao động, cộng hưởng hướng ổn định
+   → nhưng mọi tham số vẫn dùng chung 1 learning rate
+AdaGrad (Duchi et al., 2011)
+   → learning rate thích ứng riêng từng tham số
+   → nhưng learning rate suy giảm đơn điệu, có thể "chết" quá sớm
+RMSProp (Tieleman & Hinton, 2012)
+   → thay tổng cộng dồn bằng trung bình trượt có suy giảm
+   → nhưng vẫn thiếu "đà quán tính" như Momentum
+Adam (Kingma & Ba, 2015)
+   → kết hợp cả hai: m_t (đà quán tính) + v_t (learning rate thích ứng)
+```
+
+Trong thực hành, Adam thường là lựa chọn mặc định hợp lý để bắt đầu — không
+phải vì nó luôn tốt nhất tuyệt đối cho mọi bài toán, mà vì nó ít nhạy cảm
+với việc chọn sai learning rate ban đầu hơn so với gradient descent thuần
+hoặc Momentum đơn thuần.
+
+## Liên hệ lại với các bài trước
+
+- Đây không phải một cách tính gradient mới — [Backpropagation](02-backpropagation.mdx)
+  vẫn đảm nhiệm việc tính `g_t` (gradient của loss theo mỗi tham số) y hệt
+  như trước. Bài này chỉ thay đổi **cách dùng** `g_t` đã tính được để cập
+  nhật tham số.
+- Cả 4 optimizer trong dòng tiến hoá này đều là phần mở rộng trực tiếp của
+  công thức `tham_so := tham_so - learning_rate * gradient` đã học từ bài
+  [Linear Regression](02-linear-regression.mdx) — không thay khung sườn
+  "đi ngược chiều gradient", chỉ thay cách tính "bước đi" mỗi lần.
+- Việc chọn optimizer là một quyết định độc lập với các kỹ thuật chống
+  overfitting đã học ở bài [Regularization](03-regularization.mdx) (weight
+  decay, dropout, early stopping) — hai nhóm kỹ thuật này không loại trừ
+  nhau, một mô hình thực tế thường dùng cả optimizer thích ứng (ví dụ Adam)
+  lẫn regularization cùng lúc.
+
+## Nguồn tham khảo
+
+- [Dive into Deep Learning — Momentum](https://d2l.ai/chapter_optimization/momentum.html) — dùng cho ví dụ hàm loss `0.1*x1^2 + 2*x2^2` minh hoạ vấn đề "thung lũng", công thức Momentum, và trích dẫn Polyak (1964).
+- [Dive into Deep Learning — Adagrad](https://d2l.ai/chapter_optimization/adagrad.html) — dùng cho công thức AdaGrad và hạn chế suy giảm learning rate đơn điệu, trích dẫn Duchi, Hazan, Singer (2011).
+- [Dive into Deep Learning — RMSProp](https://d2l.ai/chapter_optimization/rmsprop.html) — dùng cho công thức RMSProp (trung bình trượt có suy giảm thay tổng cộng dồn) và bối cảnh Tieleman & Hinton (2012, bài giảng Coursera, không có paper chính thức).
+- [Distill — Why Momentum Really Works](https://distill.pub/2017/momentum/) — dùng cho trực giác condition number (κ), lập luận tốc độ hội tụ cải thiện từ κ xuống √κ, và góc nhìn "quả bóng lăn xuống thung lũng có ma sát".
+- [arXiv — Adam: A Method for Stochastic Optimization (Kingma & Ba, 2014/2015)](https://arxiv.org/abs/1412.6980) — dùng làm nguồn chính cho công thức Adam đầy đủ (m_t, v_t, bias correction), giá trị mặc định hyperparameter (beta1=0.9, beta2=0.999, epsilon=1e-8), và lý do cần hiệu chỉnh độ lệch do khởi tạo từ 0.

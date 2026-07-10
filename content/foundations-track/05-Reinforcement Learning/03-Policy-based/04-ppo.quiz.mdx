@@ -1,0 +1,43 @@
+---
+quiz_for: 04-ppo
+---
+
+## Q1
+Vấn đề cụ thể mà PPO giải quyết là gì?
+
+- [x] Policy gradient chuẩn chỉ dùng mỗi batch dữ liệu cho đúng 1 lần cập nhật (kém hiệu quả dữ liệu), và cập nhật quá lớn có thể phá hỏng policy không thể phục hồi
+- [ ] Policy gradient chuẩn không thể chạy trên GPU
+- [ ] Policy gradient chuẩn chỉ hoạt động với action rời rạc, không hoạt động với action liên tục
+- [ ] Policy gradient chuẩn không có khái niệm reward
+
+> Đây là 2 vấn đề PPO giải quyết: hiệu quả sử dụng dữ liệu (data efficiency) và ổn định huấn luyện (tránh cập nhật quá lớn phá hỏng policy).
+
+## Q2
+TRPO giải quyết vấn đề "cập nhật quá lớn" bằng cách nào, và PPO đơn giản hoá điều đó ra sao?
+
+- [x] TRPO dùng ràng buộc KL-divergence bậc hai phức tạp để giới hạn khoảng cách giữa policy mới và cũ; PPO thay bằng một phép "clip" đơn giản trực tiếp trong hàm mục tiêu
+- [ ] TRPO và PPO dùng chính xác cùng một cơ chế, không có khác biệt
+- [ ] TRPO không giải quyết được vấn đề này, chỉ PPO mới giải quyết được
+- [ ] PPO phức tạp hơn TRPO vì cần tính toán nhiều hơn
+
+> PPO giữ lại ý tưởng cốt lõi của TRPO (không để policy đi quá xa mỗi bước) nhưng thay ràng buộc toán học phức tạp bằng một hàm clip() đơn giản — dễ cài đặt hơn nhiều.
+
+## Q3
+Trong công thức clipped surrogate objective, `r(θ)` đo điều gì, và vai trò của việc "clip" nó là gì?
+
+- [x] `r(θ)` là tỷ lệ xác suất giữa policy mới và policy cũ cho cùng 1 hành động; clip giới hạn r(θ) trong khoảng [1-ε, 1+ε] để loại bỏ động lực cập nhật đi quá xa nếu policy đã thay đổi nhiều
+- [ ] `r(θ)` là learning rate của thuật toán, clip để tránh learning rate âm
+- [ ] `r(θ)` là reward tích luỹ của 1 episode, clip để giới hạn giá trị reward tối đa
+- [ ] `r(θ)` là số lượng epoch huấn luyện, clip để giới hạn số epoch
+
+> r(θ) = π_θ(a|s) / π_θ_old(a|s) — nếu tỷ lệ này vượt ra ngoài [1-ε, 1+ε], nghĩa là policy mới đã thay đổi đáng kể, và clip sẽ "cắt" giá trị lại để không khuyến khích thay đổi thêm theo hướng đó.
+
+## Q4
+Nhờ cơ chế clipping, PPO có thể làm gì mà policy gradient chuẩn không làm được?
+
+- [x] Chạy nhiều epoch cập nhật minibatch an toàn trên cùng một tập dữ liệu đã thu thập, thay vì chỉ dùng đúng 1 lần rồi bỏ
+- [ ] Học mà không cần bất kỳ dữ liệu tương tác nào với environment
+- [ ] Loại bỏ hoàn toàn khái niệm reward khỏi quá trình huấn luyện
+- [ ] Chạy được trên dữ liệu có nhãn như supervised learning thông thường
+
+> Vì clipping đã tự giới hạn mức độ thay đổi của policy, PPO an toàn tái sử dụng cùng dữ liệu cho nhiều lần cập nhật — cải thiện đáng kể hiệu quả sử dụng dữ liệu so với policy gradient chuẩn (on-policy, chỉ dùng dữ liệu 1 lần).

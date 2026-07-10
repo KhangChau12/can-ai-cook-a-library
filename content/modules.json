@@ -44,12 +44,13 @@
       }
     },
     "Reinforcement Learning": {
-      "description": "Học tăng cường: Cơ chế Agent-Environment, Markov Decision Process và 3 trường phái thuật toán RL (Value-based, Policy-based, Model-based).",
+      "description": "Học tăng cường: Cơ chế Agent-Environment, Markov Decision Process, 3 trường phái thuật toán RL (Value-based, Policy-based, Model-based), và các chủ đề mở rộng.",
       "submodules": {
-        "Value-based": "Thuật toán dựa trên giá trị: Q-learning, DQN và các biến thể (Double/Dueling, PER, Rainbow).",
-        "Policy-based": "Thuật toán dựa trên chiến sách: Policy Gradient, Actor-Critic, PPO và off-policy cho action liên tục (DDPG/TD3/SAC).",
+        "Overview": "Nền tảng chung đọc trước mọi nhánh: Framework Agent/Environment/Reward, Markov Decision Process.",
+        "Value-based": "Thuật toán dựa trên giá trị: Q-learning, DQN và các biến thể (Double/Dueling, PER, Rainbow, Distributional RL).",
+        "Policy-based": "Thuật toán dựa trên chiến sách: Policy Gradient, Actor-Critic (hợp lưu Value-based + Policy-based), TRPO/PPO (cập nhật an toàn), A3C/A2C (song song hoá), DDPG/TD3/SAC (off-policy cho action liên tục).",
         "Model-based": "Học mô hình môi trường để lập kế hoạch: Dyna-Q, AlphaZero (MCTS) và MuZero (latent dynamics).",
-        "Overview": "Nền tảng chung: Framework, MDP, Actor-Critic, Imitation Learning, Exploration, Offline RL, Hierarchical RL."
+        "Advanced Topics": "Chủ đề mở rộng cần nền cả 3 trường phái trên: Imitation Learning, Exploration nâng cao, Offline RL, Hierarchical RL."
       }
     },
     "Generative Models": {
@@ -71,8 +72,14 @@
       }
     },
     "Recommendation Systems": {
-      "description": "Hệ thống gợi ý: Collaborative Filtering, Neural CF, DeepFM và tối ưu Bayesian Personalized Ranking.",
-      "submodules": {}
+      "description": "Hệ thống gợi ý: hai trường phái nền tảng (Content-based, Collaborative Filtering), dòng tiến hoá deep learning mở rộng CF, tối ưu ranking và cách đo, và kiến trúc hiện đại kết nối với NLP (sequence-aware, retrieval).",
+      "submodules": {
+        "Overview": "Bản đồ tư duy module: vấn đề quá tải thông tin, 2 trường phái nền tảng, explicit/implicit feedback, các dạng bài toán (rating prediction, ranking, CTR, sequence-aware).",
+        "Nền tảng Content-based & CF": "Hai trường phái cổ điển: Content-based Filtering (TF-IDF/cosine trên đặc điểm item), Memory-based CF (user-based/item-based trên ma trận rating), rồi Matrix Factorization (model-based CF, nén ma trận thưa thành latent factor).",
+        "Deep Learning cho RS": "Dòng tiến hoá mở rộng Matrix Factorization bằng mạng nơ-ron: NeuMF (thay tích vô hướng bằng MLP), DeepFM (feature-rich, CTR prediction), AutoRec (Autoencoder cho rating prediction).",
+        "Ranking & Evaluation": "Đổi trục từ 'dự đoán điểm' sang 'xếp hạng đúng': cách đo chất lượng ranking (Precision@K, Recall@K, NDCG) và cold-start, rồi Bayesian Personalized Ranking (tối ưu trực tiếp cho ranking).",
+        "Sequence-aware & Modern Architectures": "Xu hướng hiện đại kết nối với RNN/Transformer đã học ở NLP: gợi ý theo chuỗi hành vi (GRU4Rec, SASRec) và kiến trúc retrieval-ranking hai tầng (Two-Tower) dùng ở quy mô công nghiệp."
+      }
     }
   }
 }

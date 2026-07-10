@@ -1,0 +1,53 @@
+---
+quiz_for: 06-normalization
+---
+
+## Q1
+Normalization (BatchNorm/LayerNorm) khác Weight Initialization ở điểm nào về THỜI ĐIỂM tác động?
+
+- [ ] Cả hai chỉ tác động đúng một lần lúc khởi tạo mạng
+- [x] Weight initialization chỉ tác động một lần lúc khởi tạo, còn normalization tác động liên tục ở mọi bước train — vì phân phối activation tiếp tục trôi dạt khi trọng số thay đổi qua từng bước
+- [ ] Normalization chỉ tác động một lần, còn initialization tác động liên tục
+- [ ] Cả hai đều không liên quan tới phân phối activation
+
+> Weight initialization giải quyết đúng một thời điểm (khởi đầu). Nhưng trọng số tiếp tục thay đổi trong suốt quá trình train, nên phân phối activation cũng trôi dạt theo — normalization chuẩn hoá liên tục để giữ ổn định xuyên suốt, không chỉ ở bước đầu.
+
+## Q2
+Trong công thức BatchNorm, vai trò của `gamma` và `beta` là gì?
+
+- [ ] Là hằng số cố định do người dùng chọn thủ công, không thay đổi khi train
+- [x] Là tham số học được qua backpropagation — sau khi chuẩn hoá về trung bình 0/phương sai 1, mạng vẫn được phép tự học lại mức scale và shift phù hợp nếu có lợi cho tối ưu hoá
+- [ ] Là chỉ số đo internal covariate shift
+- [ ] Chỉ dùng trong lúc inference, không dùng lúc train
+
+> `gamma` (scale) và `beta` (shift) được cập nhật cùng mọi trọng số khác qua backpropagation và optimizer — chúng cho mạng quyền linh hoạt không bị ép cứng luôn phải có phân phối chuẩn hoá tuyệt đối.
+
+## Q3
+Vì sao BatchNorm hoạt động kém hoặc thất bại khi batch size quá nhỏ (ví dụ = 1)?
+
+- [x] Thống kê mu_B và sigma_B^2 được tính trực tiếp từ các ví dụ trong batch — với batch size 1, sau khi trừ trung bình (chính là giá trị đó), mọi hidden unit nhận giá trị 0, không còn gì để học
+- [ ] Vì BatchNorm chỉ được thiết kế cho ảnh, không dùng được với dữ liệu khác
+- [ ] Vì batch size nhỏ làm chậm tốc độ tính toán, không liên quan tới công thức
+- [ ] BatchNorm không có vấn đề gì với batch size nhỏ
+
+> Đây là hạn chế cốt lõi của việc phụ thuộc thống kê theo batch: với batch = 1, trung bình batch trùng khớp chính giá trị đó, khiến kết quả sau chuẩn hoá luôn là 0.
+
+## Q4
+LayerNorm giải quyết đúng hạn chế nào của BatchNorm, và bằng cách nào?
+
+- [x] Giải quyết sự phụ thuộc vào batch size — bằng cách tính thống kê theo chiều feature trên MỘT ví dụ duy nhất, thay vì gộp nhiều ví dụ theo chiều batch
+- [ ] Giải quyết vấn đề tốc độ tính toán — bằng cách bỏ hoàn toàn bước chuẩn hoá
+- [ ] Giải quyết vấn đề overfitting — bằng cách thêm nhiễu ngẫu nhiên như dropout
+- [ ] LayerNorm và BatchNorm dùng chung một công thức, không có khác biệt
+
+> LayerNorm tính mu và sigma^2 từ chính các giá trị trong CÙNG một ví dụ (theo chiều feature), không phụ thuộc ví dụ nào khác trong batch — nên output không đổi dù batch size là bao nhiêu.
+
+## Q5
+Vì sao LayerNorm là lựa chọn tự nhiên hơn BatchNorm cho RNN/Transformer (dữ liệu dạng chuỗi)?
+
+- [ ] Vì LayerNorm chạy nhanh hơn BatchNorm trên GPU
+- [x] LayerNorm tính thống kê riêng biệt tại từng bước thời gian của từng ví dụ, không cần các ví dụ khác trong batch có cùng độ dài chuỗi — trong khi BatchNorm cần gộp thống kê theo batch, vốn khó định nghĩa nhất quán khi độ dài chuỗi khác nhau
+- [ ] Vì RNN không thể dùng bất kỳ dạng chuẩn hoá nào khác ngoài LayerNorm
+- [ ] Vì LayerNorm không cần tham số gamma/beta như BatchNorm
+
+> Paper LayerNorm nêu rõ: phương pháp áp dụng đơn giản cho RNN bằng cách tính thống kê chuẩn hoá riêng ở từng bước thời gian — mỗi ví dụ tự chuẩn hoá độc lập, không phụ thuộc các ví dụ khác hay độ dài chuỗi của chúng trong cùng batch.

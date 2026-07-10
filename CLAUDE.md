@@ -14,44 +14,36 @@
 
 ## 1. STATUS (đọc đầu mỗi task, không ngoại lệ)
 
-- **Version:** v9.2
-- **Phiên gần nhất:** TÁCH SUBMODULE CHO "NỀN TẢNG TOÁN & ML CỔ ĐIỂN"
-  (2026-07-09) — theo phản hồi người vận hành: module này (9 bài, phẳng)
-  gộp lẫn nhiều nhóm bản chất khác nhau (toán nền, supervised, unsupervised,
-  ensemble), và "Dimensionality Reduction" (module riêng, 3 bài) thực chất
-  chỉ là một nhánh kỹ thuật unsupervised ML cổ điển, không đáng đứng
-  ngang hàng CV/NLP/RL. Tách "Nền tảng Toán & ML cổ điển" thành 4
-  sub-module: Overview (1 bài, Xác suất & thống kê) → Supervised Learning
-  (6 bài: Linear/Logistic Regression, Decision Tree, k-NN, SVM, chuyển
-  Naive Bayes từ cuối track vào đây vì cũng là supervised) → Unsupervised
-  Learning (4 bài: K-means + PCA/t-SNE/UMAP chuyển từ module
-  Dimensionality Reduction đã xoá vào đây, cùng nhánh "học không giám
-  sát") → Ensemble Methods (1 bài, đứng riêng vì là kỹ thuật tổ hợp mô
-  hình chứ không phải 1 thuật toán đơn). Module "Deep Learning Nền tảng"
-  giữ nguyên (đã đúng vai trò nền chung, chỉ là tên gọi không cần đổi).
-  Đã renumber toàn bộ file trong module + sửa frontmatter
-  (submodule/order/prerequisites) + sửa `quiz_for` của 12 file quiz +
-  cross-track links (exam-track → Linear Regression/Ensemble Methods).
-  Phát hiện quan trọng trong task: `src/lib/renderMarkdown.ts` resolve
-  link nội bộ `.mdx` bằng cách khớp **filename sau khi bỏ số thứ tự đầu**
-  (không quan tâm path/thư mục thật) qua map toàn track — nghĩa là link
-  `(02-linear-regression.mdx)` vẫn tự động trỏ đúng dù file thật đã đổi
-  thành `01-linear-regression.mdx`, miễn bare-slug (`linear-regression`)
-  không đổi và không trùng với bài khác trong track. Việc sửa path tường
-  minh trong các bài không di chuyển là không bắt buộc cho build đúng,
-  chỉ giúp dễ đọc source — không cần quét lại toàn track cho việc này.
-- **Tổng số bài hiện có:** 119 (11 exam-track + 108 foundations-track) —
+- **Version:** v9.9
+- **Phiên gần nhất:** TÁI CẤU TRÚC MODULE "RECOMMENDATION SYSTEMS" THÀNH 5
+  SUB-MODULE (2026-07-10) — theo yêu cầu người vận hành rà lại mạch tư duy
+  module này cho người mới: module cũ (5 bài, phẳng, không sub-module)
+  nhảy thẳng vào Collaborative Filtering mà chưa giới thiệu bức tranh
+  chung, khiến câu mở đầu bài CF cũ ("không cần hiểu nội dung item") vô
+  nghĩa vì chưa có trường phái content-based nào được nhắc để so sánh.
+  Viết mới 6 bài (Overview, Content-based Filtering, Memory-based CF,
+  Evaluation & Cold-start, Sequence-aware Recommendation, Two-Tower &
+  Retrieval-Ranking) kèm quiz, di chuyển 5 bài cũ vào đúng vị trí trong
+  5 sub-module mới (Overview/Nền tảng Content-based & CF/Deep Learning
+  cho RS/Ranking & Evaluation/Sequence-aware & Modern Architectures), sửa
+  toàn bộ prerequisites/link chéo và `quiz_for` bị lệch do đổi số thứ tự,
+  cập nhật `content/modules.json` và `_index.mdx`.
+- **Tổng số bài hiện có:** 130 (11 exam-track + 119 foundations-track) —
   tổ chức thành **8 module** cho foundations-track:
   ML cổ điển (12 bài, 4 sub-module: Overview 1/Supervised Learning 6/
-  Unsupervised Learning 4/Ensemble Methods 1), DL Nền tảng (3, phẳng),
+  Unsupervised Learning 4/Ensemble Methods 1), DL Nền tảng (7, phẳng),
   Computer Vision (17 bài, 3 sub-module: Cơ bản 8/Detection 4/Segmentation 5),
   NLP & LLM (25 bài, 7 sub-module: Overview 1/Tokenization 3/RNN Family 5/
   Transformer Architecture 5/Pretrained Language Models 4/Huấn luyện &
   Alignment 6/Ứng dụng & Inference-time 2),
-  Reinforcement Learning (21 bài, 4 sub-module: Overview 7/Value-based 5/Policy-based 7/Model-based 2),
+  Reinforcement Learning (22 bài, 5 sub-module: Overview 2/Value-based 5/
+  Policy-based 9 (Policy Gradient, Actor-Critic, TRPO, PPO, A3C, A2C,
+  DDPG/TD3, SAC, Synthesis)/Model-based 2/Advanced Topics 4),
   Generative Models (14 bài, 3 sub-module: Overview 5/GAN Family 5/Diffusion Models 4),
-  Audio (10, 5 sub-module: Overview 1/Biểu diễn âm thanh 2/STT 2/TTS 3/Audio-Understanding 2), Recommendation
-  Systems (5)
+  Audio (10, 5 sub-module: Overview 1/Biểu diễn âm thanh 2/STT 2/TTS 3/Audio-Understanding 2),
+  Recommendation Systems (11 bài, 5 sub-module: Overview 1/Nền tảng
+  Content-based & CF 3/Deep Learning cho RS 3/Ranking & Evaluation 2/
+  Sequence-aware & Modern Architectures 2)
 - **Số bài cần review/cải thiện lại (flagged):** 0 — toàn bộ đạt `stable`
 
 ### 1.1 Việc phải làm ngay (nếu đúng, bỏ qua chọn task ở mục 3, làm luôn)
@@ -73,6 +65,11 @@
 2. Đào sâu 3 module RL/Generative Models/Audio — Phase 1 (coherence fixes)
    đã xong. Phase 2-4: viết bài mới bắt đầu từ order 97 (Imitation Learning),
    mỗi bài kèm quiz. Xem plan file `C:\Users\Admin\.claude\plans\iridescent-forging-wombat.md`.
+2b. Module "Deep Learning Nền tảng" (7 bài, phẳng) đủ lớn để cân nhắc tách
+   sub-module (ví dụ: Overview/Kiến trúc cơ bản — Perceptron/Backprop;
+   Huấn luyện ổn định — Regularization/Weight Init/Normalization; Tối ưu
+   hoá — Optimizer/LR Schedule) — theo mục 2.1 chỉ tách khi ranh giới bản
+   chất rõ, cần người vận hành xác nhận trước khi tách (không tự làm).
 3. Khi viết bài mới nhưng nguồn không đủ chất lượng: ưu tiên kiểm tra
    xem có bài cũ đang thiếu đúng nguồn academic gốc đó không, cải thiện
    bài đó thay vì ép viết bài mới yếu.
@@ -162,14 +159,21 @@ mục 4, hoặc đọc trực tiếp `content/modules.json` + thư mục bài):
   tham số) — 7 sub-module theo đúng thứ tự pipeline; module này gộp 2
   module cũ "Sequence Model" + "LLM" (2026-07-09) vì cùng một mạch tiến
   hoá liền (RNN → Transformer → BERT/GPT → LLM hiện đại)
-- **Reinforcement Learning**: "Value-based" / "Policy-based" /
-  "Model-based" (bài 16-17 là nền tảng chung, giữ phẳng không gán
-  `submodule`)
+- **Reinforcement Learning**: "Overview" (Framework, MDP — nền tảng chung
+  đọc trước mọi nhánh) / "Value-based" / "Policy-based" (gồm cả
+  Actor-Critic, hợp lưu 2 trường phái) / "Model-based" / "Advanced Topics"
+  (Imitation Learning, Exploration, Offline RL, Hierarchical RL — cần nền
+  cả 3 trường phái trên, đặt cuối module)
 - **Generative Models**: "GAN Family" / "Diffusion Models" (2 nhánh song
   song, khác bản chất: đối kháng vs khuếch tán)
 - **Audio**: "Biểu diễn âm thanh" / "Speech-to-Text" / "Text-to-Speech"
-- Các module còn lại (ML cổ điển, Recommendation Systems) chưa tách —
-  xem mục 1.2 để tiếp tục đánh giá.
+- **Recommendation Systems**: "Overview" (2 trường phái nền tảng, rating
+  vs ranking) / "Nền tảng Content-based & CF" (Content-based Filtering,
+  Memory-based CF, Matrix Factorization) / "Deep Learning cho RS" (NeuMF,
+  DeepFM, AutoRec) / "Ranking & Evaluation" (metric đo ranking + cold-start,
+  BPR) / "Sequence-aware & Modern Architectures" (GRU4Rec/SASRec,
+  Two-Tower — kết nối RNN/Transformer/vector search đã học ở NLP track)
+- Module còn lại chưa tách (ML cổ điển) — xem mục 1.2 để tiếp tục đánh giá.
 
 Khi cân nhắc tách sub-module hoặc tạo module mới: nếu 1 mảng con đã có
 module tương ứng ở nơi khác trong track, trả về module đó thay vì tạo
@@ -484,21 +488,23 @@ bài này bị sửa mà không phải vì nó sai.
 - `"Hướng dẫn dùng nền tảng"` — bài 1-3
 - `"Kỹ thuật thi đấu nâng cao"` — bài 4-11
 
-### foundations-track — 108 bài, 8 module
+### foundations-track — 119 bài, 8 module
 
 1. `"Nền tảng Toán & ML cổ điển"` — 12 bài, 4 sub-module: Overview 1
    (Xác suất & thống kê)/Supervised Learning 6 (Linear/Logistic
    Regression, Decision Tree, k-NN, SVM, Naive Bayes)/Unsupervised
    Learning 4 (K-means, PCA, t-SNE, UMAP)/Ensemble Methods 1
-2. `"Deep Learning Nền tảng"` — 3 bài, phẳng
+2. `"Deep Learning Nền tảng"` — 7 bài, phẳng (Perceptron/Backpropagation/
+   Regularization/Optimizer/Weight Initialization/Normalization/
+   Learning Rate Schedule)
 3. `"Computer Vision"` — 17 bài, 3 sub-module: Cơ bản 8/Detection 4/Segmentation 5
 4. `"NLP & LLM"` — 25 bài, 7 sub-module: Overview 1/Tokenization 3/RNN Family 5/Transformer Architecture 5/Pretrained Language Models 4/Huấn luyện & Alignment 6/Ứng dụng & Inference-time 2
-5. `"Reinforcement Learning"` — 21 bài, 4 sub-module: Overview 7/Value-based 5/Policy-based 7/Model-based 2
+5. `"Reinforcement Learning"` — 22 bài, 5 sub-module: Overview 2/Value-based 5/Policy-based 9 (Policy Gradient, Actor-Critic, TRPO, PPO, A3C, A2C, DDPG/TD3, SAC, Synthesis)/Model-based 2/Advanced Topics 4
 6. `"Generative Models"` — 14 bài, 3 sub-module: Overview 5 (gồm
    Autoencoder → VAE → Flow-based → VQ-VAE, mạch tiến hoá "nén → sinh dữ
    liệu")/GAN Family 5/Diffusion Models 4
 7. `"Audio"` — 10 bài, 5 sub-module: Overview 1/Biểu diễn âm thanh 2/STT 2/TTS 3/Audio-Understanding 2
-8. `"Recommendation Systems"` — 5 bài, phẳng
+8. `"Recommendation Systems"` — 11 bài, 5 sub-module: Overview 1/Nền tảng Content-based & CF 3 (Content-based Filtering, Memory-based CF, Matrix Factorization)/Deep Learning cho RS 3 (NeuMF, DeepFM, AutoRec)/Ranking & Evaluation 2 (metric ranking + cold-start, BPR)/Sequence-aware & Modern Architectures 2 (GRU4Rec/SASRec, Two-Tower)
 
 **Trạng thái review:** 0 bài `needs-review` trên cả 2 track — toàn bộ đã
 đạt `stable`. Lý do cụ thể "vì sao mỗi bài đạt stable" nằm trong

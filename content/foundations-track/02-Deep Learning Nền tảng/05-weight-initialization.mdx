@@ -1,0 +1,151 @@
+---
+title: "Weight Initialization — Từ Xavier tới He"
+track: foundations-track
+module: "Deep Learning Nền tảng"
+order: 5
+status: stable
+prerequisites: ["02-backpropagation"]
+summary: "Khởi tạo trọng số sai làm mạng nơ-ron không học được ngay từ bước đầu tiên: khởi tạo về 0 gây vấn đề đối xứng, khởi tạo ngẫu nhiên thô gây vanishing/exploding gradient. Xavier/Glorot (2010) giữ phương sai activation ổn định qua các lớp cho mạng tuyến tính/tanh, He (2015) sửa lại hệ số cho ReLU — vì ReLU triệt tiêu một nửa tín hiệu, phá vỡ đúng giả định của Xavier."
+last_touched_by_task: "Viết mới — tiếp nối bài Optimizer, lấp khoảng trống 'vì sao cần chọn điểm khởi đầu đúng trước khi tối ưu hoá'. Nguồn: d2l.ai (symmetry problem, vanishing/exploding gradient demo, công thức Xavier đầy đủ), cs231n.github.io (công thức He, liên kết trực tiếp paper He et al.), arxiv.org 1502.01852 (paper gốc He, đúng đoạn suy ra hệ số 2 từ việc ReLU triệt tiêu nửa tín hiệu). Xác nhận: paper Glorot & Bengio 2010 không nằm trên arxiv.org (ở proceedings.mlr.press, ngoài whitelist) — trích qua d2l.ai/cs231n theo đúng mô tả nội dung, không tự bịa công thức."
+---
+
+Bài [Backpropagation](02-backpropagation.mdx) giải thích cách **tính**
+gradient, và bài [Optimizer](04-optimization.mdx) giải thích cách **dùng**
+gradient đó để cập nhật tham số. Nhưng có một câu hỏi đứng trước cả hai:
+**bắt đầu từ đâu?** — trước khi chạy bước cập nhật đầu tiên, mọi trọng số
+trong mạng cần một giá trị khởi tạo. Chọn sai điểm khởi đầu có thể khiến
+mạng không học được gì, bất kể optimizer tốt tới đâu.
+
+## Vấn đề đầu tiên: khởi tạo về 0 gây đối xứng, mạng "đóng băng"
+
+Trực giác đơn giản nhất — khởi tạo mọi trọng số bằng 0 (hoặc bất kỳ hằng số
+nào giống nhau) — thất bại theo một cách rất cụ thể: mọi neuron trong cùng
+một lớp nhận đúng cùng input, cùng trọng số, nên tính ra đúng cùng output.
+Khi backpropagation lan truyền ngược, mọi neuron trong lớp đó cũng nhận
+đúng cùng gradient, nên được cập nhật giống hệt nhau ở mọi bước. Kết quả:
+các neuron trong cùng một lớp **không bao giờ tự phá vỡ được sự đối xứng
+này** — chúng mãi mãi giống hệt nhau, dù train bao lâu, làm lãng phí hoàn
+toàn khả năng biểu diễn mà nhiều neuron lẽ ra phải mang lại.
+
+## Vấn đề thứ hai: khởi tạo ngẫu nhiên thô gây vanishing/exploding gradient
+
+Khởi tạo ngẫu nhiên (ví dụ lấy mẫu từ phân phối Gaussian chuẩn) phá vỡ được
+tính đối xứng, nhưng chưa đủ — nếu không kiểm soát **độ lớn** (phương sai)
+của giá trị khởi tạo, một vấn đề khác xuất hiện khi mạng có nhiều lớp.
+
+Xét việc nhân liên tiếp nhiều ma trận ngẫu nhiên (đúng những gì xảy ra khi
+gradient lan truyền qua nhiều lớp bằng chain rule): nếu mỗi ma trận có
+phương sai hơi lớn hơn mức "trung tính", tích của hàng chục ma trận như
+vậy có thể **bùng nổ** (exploding) tới giá trị cực lớn; ngược lại nếu
+phương sai hơi nhỏ hơn mức trung tính, tích đó có thể **tiêu biến**
+(vanishing) về gần 0. Vì mạng sâu có rất nhiều lớp nhân liên tiếp, ngay cả
+một độ lệch rất nhỏ so với mức "trung tính" ở mỗi lớp cũng bị khuếch đại
+theo cấp số nhân qua toàn mạng.
+
+Nhìn theo một góc khác: với một neuron ngẫu nhiên chưa được kiểm soát,
+**phương sai của giá trị output tăng dần theo số lượng input** (fan-in) của
+neuron đó — nếu không có gì bù trừ, phương sai của activation sẽ trôi dần
+(tăng hoặc giảm) một cách mất kiểm soát qua từng lớp, thay vì giữ ổn định.
+Đây chính xác là điều Xavier và He được thiết kế để triệt tiêu.
+
+## Xavier/Glorot initialization: giữ phương sai ổn định cho activation tuyến tính
+
+**Glorot và Bengio (2010)** đề xuất một cách khởi tạo giữ cho phương sai
+của activation (ở forward pass) và phương sai của gradient (ở backward
+pass) xấp xỉ không đổi qua các lớp, bằng cách chọn phương sai của trọng số
+phụ thuộc vào cả số lượng input (`n_in`, fan-in) lẫn số lượng output
+(`n_out`, fan-out) của lớp đó:
+
+```
+-- Lấy mẫu Gaussian:
+sigma = sqrt(2 / (n_in + n_out))
+
+-- Hoặc lấy mẫu Uniform:
+w ~ Uniform(-sqrt(6/(n_in+n_out)), sqrt(6/(n_in+n_out)))
+```
+
+Ý tưởng cốt lõi: nếu chỉ cân bằng theo `n_in` (giữ phương sai forward pass
+ổn định) hoặc chỉ theo `n_out` (giữ phương sai backward pass ổn định) thì
+thường không thể thoả mãn cả hai cùng lúc trừ khi `n_in = n_out` — công
+thức Xavier lấy trung bình hai ràng buộc đó thành một công thức đối xứng
+duy nhất, đánh đổi để cả hai chiều đều "tương đối" ổn định, dù không hoàn
+hảo tuyệt đối cho chiều nào.
+
+**Giả định quan trọng đứng sau công thức này:** phép suy ra Xavier dựa trên
+một mạng chỉ có phép biến đổi **tuyến tính** (không có activation phi
+tuyến) — nói cách khác, ngầm giả định activation hoạt động gần giống một
+hàm tuyến tính đối xứng qua gốc toạ độ (khớp tốt với `tanh`, activation phổ
+biến nhất khi Xavier ra đời năm 2010). Chính nhóm tác giả cũng thừa nhận
+giả định này "dễ bị vi phạm" trong mạng nơ-ron thực tế — nhưng công thức
+vẫn hoạt động tốt trong thực hành với các activation gần tuyến tính/đối
+xứng.
+
+## He initialization: sửa lại hệ số cho ReLU
+
+Vấn đề xuất hiện khi **ReLU** (`max(0, z)`, xem lại bài
+[Perceptron & MLP](01-perceptron-va-mang-no-ron.mdx)) trở thành activation
+mặc định phổ biến nhất: giả định "tuyến tính/đối xứng" mà Xavier dựa vào
+**không còn đúng** với ReLU, vì ReLU đưa mọi giá trị âm về đúng 0 — output
+của nó không còn đối xứng quanh 0 và không còn giữ nguyên trung bình 0 như
+input.
+
+**He, Zhang, Ren, và Sun (2015)** chỉ ra chính xác mức độ sai lệch đó: vì
+đạo hàm của ReLU chỉ nhận giá trị 0 hoặc 1 với xác suất xấp xỉ bằng nhau
+(khoảng một nửa input trước ReLU dương, một nửa âm), **khoảng một nửa tín
+hiệu bị triệt tiêu về 0** ở mỗi lần đi qua ReLU trong forward pass. Điều
+này khiến phương sai tín hiệu thực tế truyền qua chỉ còn bằng **một nửa**
+so với phương sai mà công thức Xavier (dựa trên giả định tuyến tính) ngầm
+định — nếu không bù lại, tín hiệu sẽ suy giảm theo cấp số nhân qua các lớp
+ReLU liên tiếp, dù đã dùng Xavier.
+
+He initialization bù đúng phần bị mất đó bằng cách **nhân đôi** hệ số
+phương sai so với phần fan-in của Xavier:
+
+```
+Var(w) = 2 / n          -- n = n_in (fan-in)
+std(w) = sqrt(2/n)
+```
+
+Việc nhân đôi hệ số này khôi phục lại đúng tính chất "phương sai không đổi
+qua các lớp" mà Xavier hướng tới, nhưng lần này tính đúng cho ReLU thay vì
+cho activation tuyến tính. Paper gốc báo cáo: đây là điều kiện cần thiết
+để huấn luyện thành công những mạng ReLU rất sâu (hơn 30 lớp) — dùng Xavier
+cho mạng sâu như vậy khiến tín hiệu suy giảm quá nhanh để học được.
+
+## Chọn công thức nào cho activation nào
+
+```
+Activation gần tuyến tính/đối xứng (tanh, sigmoid)  →  Xavier/Glorot
+Activation ReLU và các biến thể (Leaky ReLU, v.v.)  →  He
+```
+
+Đây không phải hai kỹ thuật cạnh tranh nhau để chọn "cái tốt hơn" — chúng
+giải quyết đúng bài toán tương ứng với giả định về activation đang dùng.
+Dùng sai (ví dụ Xavier cho mạng ReLU rất sâu) không gây lỗi ngay lập tức,
+nhưng làm mạng học chậm hơn hoặc khó hội tụ hơn do phương sai tín hiệu
+trôi dần qua các lớp — một lỗi âm thầm, khó phát hiện nếu không biết để
+kiểm tra.
+
+## Liên hệ lại với các bài trước
+
+- Vấn đề vanishing/exploding gradient ở đây cùng gốc với lý do
+  [Regularization](03-regularization.mdx) và [Optimizer](04-optimization.mdx)
+  cần tồn tại: mạng nơ-ron nhiều tham số xếp lồng nhau tạo ra những hiệu
+  ứng khuếch đại/suy giảm theo cấp số nhân mà mô hình tuyến tính đơn giản
+  (bài [Linear Regression](02-linear-regression.mdx)) không gặp phải.
+- Khác với [Optimizer](04-optimization.mdx) (cải thiện **cách cập nhật**
+  trọng số qua nhiều bước), weight initialization chỉ tác động **đúng một
+  lần** — tại bước đầu tiên trước khi train bắt đầu. Nhưng chọn sai điểm
+  khởi đầu có thể khiến ngay cả optimizer tốt nhất cũng khó cứu vãn được,
+  vì gradient ở những bước đầu đã bị vanishing/exploding từ trước khi kịp
+  cập nhật.
+- Framework thực tế (PyTorch, TensorFlow) đã tự động áp dụng Xavier/He làm
+  mặc định cho hầu hết loại lớp phổ biến — hiểu cơ chế đứng sau giúp nhận
+  ra khi nào cần override mặc định đó (ví dụ kiến trúc khác thường, hoặc
+  activation tuỳ chỉnh).
+
+## Nguồn tham khảo
+
+- [Dive into Deep Learning — Numerical Stability and Initialization](https://d2l.ai/chapter_multilayer-perceptrons/numerical-stability-and-init.html) — dùng cho vấn đề đối xứng khi khởi tạo 0, minh hoạ vanishing/exploding gradient (thực nghiệm nhân liên tiếp ma trận Gaussian), và công thức Xavier đầy đủ kèm giả định tuyến tính.
+- [CS231n — Neural Networks Part 2: Setting up the Data and the Loss](https://cs231n.github.io/neural-networks-2/) — dùng cho lập luận phương sai output tăng theo fan-in khi chưa kiểm soát, công thức He initialization, và liên kết trực tiếp tới paper He et al. (2015).
+- [arXiv — Delving Deep into Rectifiers (He, Zhang, Ren, Sun, 2015)](https://arxiv.org/abs/1502.01852) — dùng làm nguồn chính cho lý do Xavier sai với ReLU (ReLU triệt tiêu khoảng một nửa tín hiệu, phá vỡ giả định tuyến tính) và cách suy ra hệ số nhân đôi `2/n`.

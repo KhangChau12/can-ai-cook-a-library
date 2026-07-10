@@ -81,7 +81,7 @@ Nếu chỉ khai thác (exploitation) những gì đã biết, agent có thể b
 chiến lược tốt hơn chưa từng thử; nếu chỉ khám phá (exploration) liên tục,
 agent lãng phí reward vào những hành động đã biết là kém. Cân bằng hai
 thứ này là một chủ đề trung tâm xuyên suốt các thuật toán RL cụ thể sẽ học
-ở các bài sau — từ cách đơn giản nhất (ε-greedy trong bài 18 Q-learning) tới các kỹ thuật có cấu trúc hơn như UCB, Thompson sampling, và curiosity-driven exploration (bài 18.5 Exploration trong RL).
+ở các bài sau — từ cách đơn giản nhất (ε-greedy trong bài [Q-learning](18-q-learning.mdx)) tới các kỹ thuật có cấu trúc hơn như UCB, Thompson sampling, và curiosity-driven exploration (bài [Exploration trong RL](18-exploration-deep-dive.mdx)).
 
 ## Liên hệ lại với các bài trước
 
@@ -101,19 +101,21 @@ thứ này là một chủ đề trung tâm xuyên suốt các thuật toán RL 
 ## Bản đồ module RL
 
 Module này gồm 3 trường phái thuật toán chính, tất cả đều xây dựng trên nền
-framework RL và MDP (bài 16-17):
+framework RL và MDP (bài này + bài sau), cộng thêm 1 submodule mở rộng ở
+cuối:
 
 1. **Value-based** (học giá trị → suy ra policy): [Q-learning](18-q-learning.mdx)
    → [Double/Dueling DQN](71-double-dueling-dqn.mdx) → [Prioritized Experience
-   Replay](82-prioritized-experience-replay.mdx) → [Rainbow DQN](83-rainbow-dqn.mdx).
+   Replay](82-prioritized-experience-replay.mdx) → [Rainbow DQN](83-rainbow-dqn.mdx)
+   → [Distributional RL](18-distributional-rl.mdx).
 2. **Policy-based** (học trực tiếp policy): [Policy Gradient](19-policy-gradient.mdx)
-   → [TRPO/A2C](85-trpo-a2c.mdx) → [A3C](77-a3c.mdx) → [PPO](47-ppo.mdx)
-   → [DDPG/TD3](84-ddpg-td3.mdx) → [SAC](78-sac.mdx).
+   → [Actor-Critic](96-actor-critic.mdx) (hợp lưu Value-based + Policy-based)
+   → [PPO](47-ppo.mdx) → [A3C](77-a3c.mdx) → [DDPG/TD3](84-ddpg-td3.mdx)
+   → [SAC](78-sac.mdx) → [TRPO/A2C](85-trpo-a2c.mdx) → tổng kết.
 3. **Model-based** (học mô hình môi trường để lập kế hoạch): [Model-based RL tổng
    quan](86-model-based-rl.mdx) → [AlphaGo/AlphaZero](87-alphago-alphazero.mdx).
-
-Bài [Actor-Critic](96-actor-critic.mdx) là cầu nối tổng hợp giữa Value-based
-và Policy-based, nền tảng cho hầu hết thuật toán RL hiện đại.
+4. **Advanced Topics** (mở rộng, cần nền cả 3 trường phái trên): Imitation
+   Learning, Exploration nâng cao, Offline RL, Hierarchical RL.
 
 ## Nguồn tham khảo
 

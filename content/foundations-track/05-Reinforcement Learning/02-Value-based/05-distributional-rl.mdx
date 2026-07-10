@@ -10,8 +10,8 @@ summary: Q-learning (bài 18) và mọi biến thể DQN chỉ học kỳ vọng
 last_touched_by_task: Bài mới (2026-07-08): Phase 2.4 đào sâu RL — Distributional RL, hoàn thiện dòng Value-based sau Rainbow. Nguồn: arXiv C51 1710.10044 + arXiv IQN 1806.06923 + lilianweng.github.io.
 ---
 
-Toàn bộ các thuật toán Value-based từ đầu module tới giờ (bài 18 Q-learning,
-71 Double/Dueling, 82 PER, 83 Rainbow) đều học một **giá trị kỳ vọng duy
+Toàn bộ các thuật toán Value-based từ đầu module tới giờ (Q-learning,
+Double/Dueling DQN, PER, Rainbow DQN) đều học một **giá trị kỳ vọng duy
 nhất**: Q(s,a) = E[return | s,a] — con số trung bình của tổng reward tích
 luỹ nếu chọn action a ở state s. Cách này bỏ qua toàn bộ thông tin về
 **phân phối** của return.
@@ -178,12 +178,13 @@ target. Loss là quantile regression trên các cặp (τ_i, τ'_j).
 
 ## Liên hệ lại với các bài trước
 
-- **Rainbow DQN (bài 83):** C51 là một trong 6 thành phần của Rainbow.
-  Rainbow ablation cho thấy C51 đóng góp nhiều thứ hai sau PER. Bài này
-  đào sâu C51 và các biến thể mới hơn (QR-DQN, IQN).
-- **Q-learning (bài 18):** từ scalar Q(s,a) → phân phối Z(s,a) là một bước
-  tổng quát hoá lớn. Công thức Bellman trên phân phối thay vì scalar.
-- **Distributional RL và Imitation Learning (bài 97):** GAIL cũng học phân
+- **[Rainbow DQN](83-rainbow-dqn.mdx):** C51 là một trong 6 thành phần của
+  Rainbow. Rainbow ablation cho thấy C51 đóng góp nhiều thứ hai sau PER.
+  Bài này đào sâu C51 và các biến thể mới hơn (QR-DQN, IQN).
+- **[Q-learning](18-q-learning.mdx):** từ scalar Q(s,a) → phân phối Z(s,a)
+  là một bước tổng quát hoá lớn. Công thức Bellman trên phân phối thay vì
+  scalar.
+- **Distributional RL và [Imitation Learning](01-imitation-learning.mdx):** GAIL cũng học phân
   phối (occupancy measure) — cùng triết lý "học phân phối thay vì kỳ vọng"
   nhưng ở context khác.
 

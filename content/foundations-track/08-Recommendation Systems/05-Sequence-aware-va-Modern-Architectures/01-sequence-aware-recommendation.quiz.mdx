@@ -1,0 +1,43 @@
+---
+quiz_for: 01-sequence-aware-recommendation
+---
+
+## Q1
+Điểm chung mà Matrix Factorization, NeuMF và DeepFM đều bỏ qua khi xử lý lịch sử tương tác của người dùng là gì?
+
+- [x] Trình tự thời gian của các hành động — chúng coi lịch sử là một tập hợp không thứ tự
+- [ ] Điểm số rating của người dùng
+- [ ] ID của người dùng và item
+- [ ] Thông tin ngữ cảnh (context) của tương tác
+
+> Cả ba kỹ thuật đều coi lịch sử tương tác là tập hợp {item đã tương tác}, không quan tâm chúng xảy ra theo thứ tự nào — bỏ lỡ thông tin rằng thứ tự hành vi có thể mang ý nghĩa (ví dụ xem Tập 1 rồi Tập 2 khác hẳn ngược lại).
+
+## Q2
+GRU4Rec giải quyết vấn đề "dữ liệu chỉ có một phiên (session) ngắn, không có lịch sử dài hạn" bằng cách nào?
+
+- [x] Dùng GRU xử lý tuần tự toàn bộ phiên, cập nhật hidden state sau mỗi item để dự đoán item tiếp theo
+- [ ] Bỏ qua các phiên ngắn, chỉ dùng dữ liệu người dùng có lịch sử dài
+- [ ] Dùng Matrix Factorization với latent factor lớn hơn
+- [ ] Kết hợp nhiều phiên của các người dùng khác nhau thành một ma trận rating
+
+> GRU4Rec mô hình hoá toàn bộ phiên như một chuỗi, dùng GRU cập nhật hidden state sau mỗi bước — không cần lịch sử dài hạn, chỉ cần trình tự tương tác trong phiên hiện tại.
+
+## Q3
+Theo Kang & McAuley, đánh đổi cố hữu giữa Markov Chain và RNN cho bài toán sequential recommendation là gì?
+
+- [x] Markov Chain hoạt động tốt trên dữ liệu thưa nhưng bỏ lỡ ngữ cảnh dài hạn; RNN nắm bắt ngữ cảnh dài hạn nhưng cần nhiều dữ liệu/tính toán hơn
+- [ ] Markov Chain không thể dùng cho recommendation, chỉ RNN mới dùng được
+- [ ] RNN luôn chính xác hơn Markov Chain trong mọi trường hợp
+- [ ] Markov Chain và RNN có cùng độ phức tạp tính toán
+
+> Đây chính là đánh đổi mà SASRec giải quyết: self-attention giữ được khả năng nắm bắt ngữ cảnh dài hạn như RNN, nhưng dự đoán dựa trên tương đối ít hành động liên quan nhất — giống cách Markov Chain hoạt động hiệu quả trên dữ liệu thưa.
+
+## Q4
+Ưu điểm tính toán của SASRec so với GRU4Rec, tương tự lợi thế Transformer mang lại so với RNN trong xử lý văn bản, là gì?
+
+- [x] Self-attention xử lý toàn bộ chuỗi cùng lúc, song song hoá được tốt hơn RNN xử lý tuần tự từng bước
+- [ ] Self-attention không cần huấn luyện qua backpropagation
+- [ ] Self-attention chỉ cần một phần dữ liệu so với RNN
+- [ ] Self-attention không có tham số cần học
+
+> Vì self-attention không xử lý tuần tự từng bước như GRU/RNN mà nhìn toàn bộ chuỗi cùng lúc, SASRec song song hoá được tốt hơn khi huấn luyện — đúng lợi thế mà Transformer đã mang lại so với RNN cho bài toán xử lý văn bản.

@@ -1,0 +1,151 @@
+---
+title: "Normalization — Từ Batch Normalization tới Layer Normalization"
+track: foundations-track
+module: "Deep Learning Nền tảng"
+order: 6
+status: stable
+prerequisites: ["05-weight-initialization"]
+summary: "Weight initialization chỉ giữ phương sai ổn định tại bước khởi đầu — Batch Normalization (Ioffe & Szegedy, 2015) chuẩn hoá activation liên tục trong suốt quá trình train, giúp mạng sâu ổn định và hội tụ nhanh hơn nhiều, nhưng phụ thuộc thống kê theo batch nên yếu với batch nhỏ và lúng túng với dữ liệu chuỗi. Layer Normalization (Ba, Kiros, Hinton, 2016) chuẩn hoá theo từng ví dụ độc lập, không phụ thuộc batch — trở thành lựa chọn mặc định cho RNN/Transformer."
+last_touched_by_task: "Viết mới — nối tiếp bài Weight Initialization, cùng chủ đề 'ổn định phân phối activation qua các lớp' nhưng ở giai đoạn train liên tục thay vì chỉ lúc khởi tạo. Nguồn: d2l.ai (công thức BatchNorm, phê bình khái niệm internal covariate shift, giới hạn batch nhỏ), arxiv.org 1502.03167 (paper gốc BatchNorm, định nghĩa ICS nguyên văn), arxiv.org 1607.06450 (paper gốc LayerNorm, công thức + lý do áp dụng tốt cho RNN + không phân biệt train/inference). Đã kiểm tra: paper Santurkar et al. 2018 (phản biện ICS) chỉ xác nhận qua kết quả tìm kiếm arxiv, không fetch sâu — không trích chi tiết nội dung chưa đọc trực tiếp."
+---
+
+Bài [Weight Initialization](05-weight-initialization.mdx) giải quyết vấn đề
+phương sai activation trôi dạt qua các lớp — nhưng chỉ tại **đúng một
+thời điểm**: lúc khởi tạo, trước khi train bắt đầu. Trong suốt quá trình
+train, trọng số liên tục thay đổi, và phân phối activation ở mỗi lớp cũng
+liên tục thay đổi theo — dù khởi tạo đúng, phân phối đó vẫn có thể trôi
+dạt trở lại khi train tiến triển. **Normalization** là nhóm kỹ thuật giải
+quyết đúng vấn đề đó: chuẩn hoá activation **liên tục**, ở mọi bước train,
+không chỉ một lần lúc khởi đầu.
+
+## Batch Normalization: chuẩn hoá theo thống kê của cả batch
+
+**Ioffe và Szegedy (2015)** đề xuất Batch Normalization (BatchNorm/BN):
+chèn một bước chuẩn hoá ngay trong mạng, tính toán trên từng minibatch lúc
+train. Với một batch gồm `m` ví dụ, tại một lớp cụ thể:
+
+```
+mu_B    = (1/m) * sum(x_i)                     -- trung bình theo batch
+sigma_B^2 = (1/m) * sum((x_i - mu_B)^2)        -- phương sai theo batch
+x_hat_i = (x_i - mu_B) / sqrt(sigma_B^2 + eps) -- chuẩn hoá về trung bình 0, phương sai 1
+y_i     = gamma * x_hat_i + beta               -- scale/shift có thể học được
+```
+
+`gamma` và `beta` là hai tham số **học được** (không cố định) — sau khi
+chuẩn hoá về đúng trung bình 0/phương sai 1, mạng vẫn được phép tự học lại
+một mức scale và shift phù hợp nếu điều đó có lợi cho việc tối ưu hoá, thay
+vì bị ép cứng luôn phải có phân phối chuẩn hoá tuyệt đối.
+
+**Lý do được nêu trong paper gốc:** Ioffe và Szegedy mô tả vấn đề họ muốn
+giải quyết là **internal covariate shift** (ICS) — định nghĩa nguyên văn:
+"sự thay đổi trong phân phối của activation mạng do sự thay đổi của tham
+số mạng trong quá trình train". Trực giác: khi trọng số ở lớp đầu thay
+đổi, phân phối input mà lớp sau nhận được cũng thay đổi theo — lớp sau
+phải liên tục "đuổi theo" một phân phối input di động, làm chậm quá trình
+học.
+
+**Lưu ý quan trọng — khái niệm ICS gây tranh cãi:** dù đây là lý do được
+nêu trong paper gốc, các phân tích sau này (ví dụ d2l.ai) chỉ ra "sự trôi
+dạt này rất khác với khái niệm covariate shift, khiến cái tên trở thành
+một cách gọi sai" và giải thích ICS "chỉ đưa ra một trực giác chưa được
+đặc tả rõ ràng" — vì sao BatchNorm thực sự hiệu quả vẫn là một câu hỏi mở,
+dù bản thân kỹ thuật này hoạt động rất tốt trong thực hành.
+
+## Hạn chế của BatchNorm: phụ thuộc thống kê theo batch
+
+Vì `mu_B` và `sigma_B^2` được tính trực tiếp từ các ví dụ **trong cùng một
+batch**, hiệu quả của BatchNorm phụ thuộc vào việc batch đó có đủ lớn để
+ước lượng thống kê đáng tin cậy hay không. Trường hợp cực đoan: nếu batch
+chỉ có đúng 1 ví dụ, sau khi trừ đi trung bình (chính bằng giá trị đó),
+mọi hidden unit sẽ nhận giá trị 0 — không còn gì để học. Nói chung, việc
+chọn batch size với BatchNorm trở thành một quyết định **quan trọng hơn**
+so với khi không dùng BatchNorm.
+
+Một hạn chế khác lộ rõ khi áp dụng cho dữ liệu dạng chuỗi (như RNN, xem
+module NLP sau này): độ dài chuỗi khác nhau giữa các ví dụ trong cùng
+batch khiến thống kê theo batch tại mỗi bước thời gian không ổn định hoặc
+khó định nghĩa nhất quán — BatchNorm không tự nhiên khớp với cấu trúc dữ
+liệu chuỗi.
+
+**Khác biệt hành vi train/inference:** lúc train, BatchNorm dùng thống kê
+của batch hiện tại. Lúc inference (dự đoán), không có "batch" để tính thống
+kê nữa (có thể chỉ dự đoán 1 mẫu tại một thời điểm) — BatchNorm giải quyết
+bằng cách duy trì một **ước lượng chạy** (running average) của `mu` và
+`sigma^2` trong suốt quá trình train, rồi dùng cố định ước lượng đó lúc
+inference thay vì tính lại theo batch. Điều này khiến output ở inference
+chỉ phụ thuộc vào chính input đó, không phụ thuộc ví dụ nào khác trong
+"batch" (nếu có).
+
+## Layer Normalization: chuẩn hoá theo từng ví dụ, không phụ thuộc batch
+
+**Ba, Kiros, và Hinton (2016)** đề xuất Layer Normalization (LayerNorm/LN)
+để giải quyết trực tiếp điểm yếu "phụ thuộc batch" của BatchNorm: thay vì
+tính thống kê theo chiều batch (gộp nhiều ví dụ lại), LayerNorm tính thống
+kê theo chiều **feature/hidden**, trên **một ví dụ duy nhất**:
+
+```
+-- Với một ví dụ, gộp toàn bộ giá trị các đơn vị trong CÙNG một lớp:
+mu    = trung bình của mọi giá trị input tới các neuron trong lớp đó
+sigma^2 = phương sai của mọi giá trị input tới các neuron trong lớp đó
+-- Sau đó chuẩn hoá và scale/shift giống BatchNorm (gamma, beta học được)
+```
+
+Vì thống kê được tính hoàn toàn từ chính ví dụ đang xét — không gộp với ví
+dụ nào khác trong batch — output của LayerNorm **không phụ thuộc vào batch
+size hay các ví dụ khác trong batch** theo bất kỳ cách nào. Đây là lý do
+paper gốc phát biểu trực tiếp: hiệu quả của BatchNorm "phụ thuộc vào kích
+thước minibatch", còn LayerNorm thì không.
+
+**Vì sao khớp tự nhiên với RNN/Transformer:** paper LayerNorm nêu rõ
+phương pháp này "áp dụng đơn giản cho mạng nơ-ron hồi quy bằng cách tính
+thống kê chuẩn hoá riêng biệt tại từng bước thời gian" — giải quyết đúng
+điểm BatchNorm lúng túng: với LayerNorm, mỗi bước thời gian của mỗi ví dụ
+tự chuẩn hoá độc lập, không cần quan tâm các ví dụ khác trong batch có
+cùng độ dài chuỗi hay không. Đây là lý do LayerNorm trở thành lựa chọn mặc
+định trong kiến trúc Transformer (sẽ gặp lại ở module NLP & LLM).
+
+**Không có khác biệt train/inference:** khác với BatchNorm, LayerNorm
+"thực hiện đúng cùng một phép tính ở cả lúc train lẫn lúc test" — không
+cần duy trì running average nào, vì thống kê luôn được tính trực tiếp từ
+chính ví dụ đang xử lý, dù đang ở giai đoạn train hay inference.
+
+## So sánh trực tiếp: cùng mục tiêu, khác chiều tính thống kê
+
+```
+BatchNorm: chuẩn hoá theo CHIỀU BATCH (gộp nhiều ví dụ, 1 feature cố định)
+   → hiệu quả cao khi batch đủ lớn, phổ biến trong CNN
+   → yếu khi batch nhỏ, lúng túng với chuỗi độ dài thay đổi
+   → cần running average riêng cho inference
+
+LayerNorm: chuẩn hoá theo CHIỀU FEATURE (gộp nhiều feature, 1 ví dụ cố định)
+   → không phụ thuộc batch size, khớp tự nhiên với RNN/Transformer
+   → hành vi giống hệt nhau ở train và inference
+```
+
+Cả hai không phải "cái sau thay thế hoàn toàn cái trước" — BatchNorm vẫn
+là lựa chọn phổ biến và hiệu quả cho các kiến trúc CNN xử lý ảnh (batch
+size thường đủ lớn, không có vấn đề chuỗi độ dài thay đổi), trong khi
+LayerNorm là lựa chọn mặc định cho kiến trúc xử lý chuỗi.
+
+## Liên hệ lại với các bài trước
+
+- Cùng mục tiêu với [Weight Initialization](05-weight-initialization.mdx)
+  — giữ phân phối activation ổn định qua các lớp — nhưng normalization
+  tác động **liên tục trong suốt quá trình train**, còn initialization chỉ
+  tác động **một lần** tại bước khởi đầu. Hai kỹ thuật bổ trợ nhau, không
+  thay thế nhau.
+- `gamma` và `beta` trong cả BatchNorm lẫn LayerNorm là tham số học được
+  qua chính [Backpropagation](02-backpropagation.mdx) và cập nhật bằng
+  [Optimizer](04-optimization.mdx) — không phải hằng số cố định, mà là một
+  phần của mô hình được huấn luyện cùng mọi trọng số khác.
+- Cả BatchNorm lẫn LayerNorm không nhằm chống overfitting trực tiếp (mục
+  tiêu của [Regularization](03-regularization.mdx)) — mục tiêu chính là
+  **ổn định và tăng tốc quá trình tối ưu hoá**, dù trong thực hành
+  BatchNorm đôi khi cũng có tác dụng regularization phụ do nhiễu ngẫu
+  nhiên từ việc thống kê thay đổi theo từng batch khác nhau.
+
+## Nguồn tham khảo
+
+- [Dive into Deep Learning — Batch Normalization](https://d2l.ai/chapter_convolutional-modern/batch-norm.html) — dùng cho công thức BatchNorm đầy đủ, phê bình khái niệm internal covariate shift, giới hạn khi batch nhỏ (batch size = 1), và khác biệt hành vi train/inference.
+- [arXiv — Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift (Ioffe & Szegedy, 2015)](https://arxiv.org/abs/1502.03167) — dùng làm nguồn chính cho định nghĩa nguyên văn "internal covariate shift" và công thức chuẩn hoá theo batch gốc.
+- [arXiv — Layer Normalization (Ba, Kiros, Hinton, 2016)](https://arxiv.org/abs/1607.06450) — dùng làm nguồn chính cho công thức LayerNorm (chuẩn hoá theo chiều feature trên từng ví dụ), lý do áp dụng tự nhiên cho RNN (tính riêng theo từng bước thời gian), và xác nhận không có khác biệt train/inference.

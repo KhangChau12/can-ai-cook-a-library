@@ -69,11 +69,12 @@ mean mà **dịch khối xác suất** giữa các atom (projection).
 Lợi ích thực tế: gradient từ distributional loss giàu thông tin hơn (cả
 dạng phân phối, không chỉ 1 con số), giúp học ổn định hơn — đặc biệt hữu
 ích khi reward có nhiều phương sai. Đây cũng là lý do C51 một mình đã
-cải thiện đáng kể trên Atari.
+cải thiện đáng kể trên Atari. Bài [Distributional RL](05-distributional-rl.mdx)
+(bài tiếp theo) đào sâu cơ chế C51 và 2 biến thể sau đó (QR-DQN, IQN).
 
 ## Noisy Networks: khám phá qua nhiễu tham số
 
-DQN gốc khám phá (exploration) bằng ε-greedy (bài 18) — với xác suất ε,
+DQN gốc khám phá (exploration) bằng ε-greedy ([Q-learning](18-q-learning.mdx)) — với xác suất ε,
 chọn action ngẫu nhiên. Hạn chế: ε-greedy "mù" — chọn ngẫu nhiên không
 phụ thuộc trạng thái, nên ở những trạng thái đã rõ ràng an toàn/không
 cần khám phá, agent vẫn đôi khi chọn action ngẫu nhiên vô nghĩa.

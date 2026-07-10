@@ -1,0 +1,114 @@
+---
+title: "Sequence-aware Recommendation — GRU4Rec & SASRec: Gợi ý Theo Trình tự Hành vi"
+track: foundations-track
+module: Recommendation Systems
+submodule: Sequence-aware & Modern Architectures
+order: 1
+status: stable
+prerequisites: ["01-neural-collaborative-filtering", "02-lstm-gru", "02-transformer"]
+summary: "Mọi kỹ thuật CF đã học (Matrix Factorization, NeuMF, DeepFM) coi lịch sử tương tác của người dùng là một TẬP HỢP không thứ tự — bỏ qua hoàn toàn TRÌNH TỰ hành động. Nhưng thứ tự thực sự quan trọng: xem tập 1 rồi tập 2 khác hẳn ý nghĩa xem tập 2 rồi tập 1. Hidasi và cộng sự (2015) giải quyết bằng GRU4Rec — dùng GRU mô hình hoá cả phiên (session) tương tác như một chuỗi. Kang & McAuley (2018) cải tiến bằng SASRec — thay GRU bằng self-attention, giữ được ngữ cảnh dài hạn như RNN nhưng dự đoán dựa trên ít hành động liên quan nhất, giống Markov Chain."
+last_touched_by_task: "Bài mới (2026-07-10), bài đầu sub-module Sequence-aware & Modern Architectures — mở nhánh hiện đại kết nối module Recommendation Systems với RNN/Transformer đã học ở NLP track, đúng khoảng trống 'gợi ý theo chuỗi hành vi' được nhắc ở bài Overview nhưng module cũ chưa có bài nào khai thác. Nguồn: arxiv 1511.06939 (paper gốc Hidasi, Karatzoglou, Baltrunas, Tikk 2015 'Session-based Recommendations with Recurrent Neural Networks', xác nhận qua WebFetch abstract: vấn đề session-based data thiếu lịch sử dài hạn khiến MF thất bại, giải pháp dùng RNN mô hình hoá toàn phiên) + arxiv 1808.09781 (paper gốc Kang & McAuley 2018 'Self-Attentive Sequential Recommendation', xác nhận qua WebFetch abstract: đánh đổi Markov Chain (dữ liệu thưa, ít ngữ cảnh) vs RNN (nhiều ngữ cảnh, cần nhiều dữ liệu/tính toán hơn), giải pháp SASRec dùng self-attention cân bằng cả hai) — đủ 2 nguồn academic theo chuẩn bài 'dòng tiến hoá' mục 2.1."
+---
+
+Mọi kỹ thuật Collaborative Filtering đã học trong module này — Matrix
+Factorization, [NeuMF](../03-Deep-Learning-cho-RS/01-neural-collaborative-filtering.mdx),
+DeepFM — coi lịch sử tương tác của một người dùng là một **tập hợp** rating/
+click, không quan tâm chúng xảy ra theo **trình tự** nào. Bài này kể cách
+một hạn chế cụ thể của giả định đó được giải quyết.
+
+## Vấn đề: trình tự hành vi mang thông tin, nhưng bị bỏ qua hoàn toàn
+
+Trực giác: một người dùng xem "Tập 1" rồi "Tập 2" của một series đang có xu
+hướng xem tiếp "Tập 3" — nhưng nếu chỉ coi lịch sử là **tập hợp** {Tập 1,
+Tập 2}, mọi thông tin về thứ tự xem (cái nào trước, cái nào sau) hoàn toàn
+biến mất. Tệ hơn, nhiều tình huống thực tế (người dùng vãng lai, chưa đăng
+nhập) chỉ có dữ liệu của **một phiên** (session) ngắn, không có lịch sử dài
+hạn để Matrix Factorization khai thác — **Hidasi và cộng sự (2015)**, trong
+bài báo "Session-based Recommendations with Recurrent Neural Networks",
+chỉ ra rằng các hệ thống gợi ý thực tế thường phải dựa vào đúng dữ liệu
+phiên ngắn đó, khiến các phương pháp dựa trên lịch sử dài (như Matrix
+Factorization) hoạt động kém.
+
+## Giải pháp 1: GRU4Rec — dùng RNN mô hình hoá cả phiên tương tác
+
+Giải pháp của Hidasi và cộng sự: thay vì coi lịch sử là tập hợp, coi nó là
+một **chuỗi** — dùng [GRU](../../04-NLP-LLM/02-RNN-Family/02-lstm-gru.mdx)
+(đã học ở track NLP) xử lý tuần tự từng item trong phiên, cập nhật hidden
+state sau mỗi bước, rồi dự đoán item **tiếp theo** dựa trên hidden state đó
+— đúng bài toán "dự đoán token tiếp theo" quen thuộc từ RNN cho văn bản,
+chỉ khác "token" ở đây là item thay vì từ.
+
+```
+item_1 → item_2 → item_3 → ...
+   │        │         │
+   ▼        ▼         ▼
+  GRU  →   GRU   →   GRU   → dự đoán item tiếp theo
+   │        │         │
+  h_1  →   h_2   →   h_3
+```
+
+Vì mô hình hoá **toàn bộ phiên** thay vì chỉ dựa vào latent factor tĩnh
+của người dùng, GRU4Rec nắm bắt được cả những thay đổi ý định **trong**
+một phiên (ví dụ người dùng đổi hướng tìm kiếm giữa chừng) — điều Matrix
+Factorization không thể làm vì nó chỉ có một vector latent factor cố định
+cho mỗi người dùng.
+
+## Vấn đề của GRU4Rec: đánh đổi giữa Markov Chain và RNN
+
+**Kang và McAuley (2018)**, trong bài báo "Self-Attentive Sequential
+Recommendation", chỉ ra một đánh đổi cố hữu giữa hai họ phương pháp sequence
+hoá trước SASRec: **Markov Chain** (chỉ dựa vào một vài hành động gần nhất
+để dự đoán) hoạt động tốt trên dữ liệu **thưa** nhưng bỏ lỡ ngữ cảnh dài
+hạn; **RNN** (như GRU4Rec) nắm bắt được ngữ cảnh dài hạn nhưng đòi hỏi
+**nhiều dữ liệu và chi phí tính toán hơn** để huấn luyện hiệu quả — đúng
+hạn chế chung của RNN đã biết từ track NLP (xử lý tuần tự, khó song song
+hoá, xem bài [Transformer](../../04-NLP-LLM/03-Transformer-Architecture/02-transformer.mdx)).
+
+## Giải pháp 2: SASRec — thay GRU bằng self-attention
+
+Giải pháp của Kang và McAuley: dùng **self-attention** (đã học ở
+[Transformer](../../04-NLP-LLM/03-Transformer-Architecture/02-transformer.mdx))
+thay cho GRU để xử lý chuỗi tương tác. Self-attention cho phép mô hình
+"nhìn" toàn bộ chuỗi lịch sử cùng lúc (không xử lý tuần tự từng bước như
+RNN) và tự học **item nào trong quá khứ liên quan nhất** tới việc dự đoán
+item tiếp theo — theo đúng lời tác giả, SASRec giữ được khả năng nắm bắt
+ngữ cảnh dài hạn như RNN, nhưng đưa ra dự đoán dựa trên tương đối ít hành
+động thực sự liên quan, giống cách Markov Chain hoạt động hiệu quả trên dữ
+liệu thưa.
+
+```
+[item_1, item_2, item_3, ..., item_t]
+              │
+     Self-Attention (nhìn toàn bộ chuỗi cùng lúc,
+     tự học trọng số liên quan giữa các item)
+              │
+              ▼
+      dự đoán item tiếp theo
+```
+
+Vì không xử lý tuần tự từng bước như RNN, SASRec cũng **song song hoá**
+được tốt hơn khi huấn luyện — cùng lợi thế mà Transformer đã mang lại so
+với RNN cho bài toán xử lý văn bản.
+
+## Liên hệ lại với các bài trước
+
+- GRU4Rec → SASRec đi đúng con đường tiến hoá **RNN → Transformer/
+  self-attention** đã học ở track NLP ([RNN/GRU](../../04-NLP-LLM/02-RNN-Family/02-lstm-gru.mdx)
+  → [Attention/Transformer](../../04-NLP-LLM/03-Transformer-Architecture/02-transformer.mdx))
+  — cùng một mẫu hình tiến hoá kiến trúc, chỉ khác miền ứng dụng (văn bản
+  vs chuỗi hành vi người dùng).
+- Bài toán "dự đoán item tiếp theo từ chuỗi lịch sử" có cùng cấu trúc toán
+  học với bài toán "dự đoán từ tiếp theo" mà mọi mô hình ngôn ngữ (từ RNN
+  tới GPT) giải quyết — chỉ khác "từ vựng" ở đây là tập hợp toàn bộ item
+  của nền tảng thay vì từ vựng ngôn ngữ.
+- Khác với [NeuMF](../03-Deep-Learning-cho-RS/01-neural-collaborative-filtering.mdx)/
+  [DeepFM](../03-Deep-Learning-cho-RS/02-deepfm.mdx) (coi input là ID/feature
+  tĩnh không thứ tự), sequence-aware recommendation là dòng kỹ thuật đầu
+  tiên trong module thực sự khai thác **chiều thời gian** của dữ liệu
+  tương tác — đúng dạng bài toán "sequence-aware recommendation" đã nhắc
+  qua ở bài [Overview](../01-Overview/01-recommendation-systems-overview.mdx).
+
+## Nguồn tham khảo
+
+- [arXiv — Session-based Recommendations with Recurrent Neural Networks](https://arxiv.org/abs/1511.06939) — paper gốc của Hidasi và cộng sự (2015), dùng cho vấn đề cụ thể (dữ liệu session-based thiếu lịch sử dài hạn khiến Matrix Factorization hoạt động kém) và giải pháp GRU4Rec (mô hình hoá toàn bộ phiên bằng RNN/GRU thay vì chỉ dựa vào latent factor tĩnh).
+- [arXiv — Self-Attentive Sequential Recommendation](https://arxiv.org/abs/1808.09781) — paper gốc của Kang và McAuley (2018), dùng cho đánh đổi cụ thể giữa Markov Chain (dữ liệu thưa, ít ngữ cảnh) và RNN (nhiều ngữ cảnh, cần nhiều dữ liệu/tính toán hơn), và giải pháp SASRec (self-attention cân bằng cả hai ưu điểm).

@@ -1,0 +1,43 @@
+---
+quiz_for: 02-memory-based-collaborative-filtering
+---
+
+## Q1
+Item-based CF khác user-based CF ở điểm nào?
+
+- [ ] Item-based CF không cần ma trận rating
+- [x] Item-based CF tìm item có cột giống nhau, user-based CF tìm người dùng có hàng giống nhau
+- [ ] Item-based CF chỉ dùng được với explicit feedback
+- [ ] Item-based CF không cần tính độ tương đồng
+
+> User-based CF so sánh các hàng (người dùng) của ma trận rating, còn item-based CF so sánh các cột (item) — cả hai đều là ứng dụng của ý tưởng "hàng xóm gần nhất" nhưng theo chiều khác nhau.
+
+## Q2
+Vì sao Pearson correlation đôi khi được ưu tiên hơn cosine similarity thuần khi so sánh hai người dùng?
+
+- [x] Vì Pearson correlation loại bỏ được độ lệch cá nhân (thiên hướng rate cao/thấp), chỉ đo xu hướng tương đối
+- [ ] Vì Pearson correlation tính toán nhanh hơn cosine similarity
+- [ ] Vì cosine similarity không hoạt động được với ma trận thưa
+- [ ] Vì Pearson correlation chỉ dùng được cho item-based CF
+
+> Một người dùng khó tính luôn rate thấp hơn trung bình vẫn có thể "giống" người dùng dễ tính luôn rate cao hơn, miễn xu hướng tương đối giữa các item giống nhau. Pearson correlation đo đúng xu hướng tương đối đó, bỏ qua độ lệch tuyệt đối.
+
+## Q3
+Hạn chế nào của Memory-based CF khiến nó khó áp dụng trực tiếp ở quy mô hàng triệu người dùng/item?
+
+- [x] Độ phức tạp tính độ giống nhau tăng theo bậc hai với số lượng người dùng/item
+- [ ] Memory-based CF không thể dùng cosine similarity
+- [ ] Memory-based CF chỉ hoạt động với dữ liệu content-based
+- [ ] Memory-based CF không tương thích với implicit feedback
+
+> Memory-based CF đòi hỏi tính độ giống nhau giữa mọi cặp người dùng (hoặc mọi cặp item) — với hàng triệu người dùng/item, việc này trở nên bất khả thi về mặt tính toán và lưu trữ.
+
+## Q4
+Vấn đề "ma trận rating cực kỳ thưa" ảnh hưởng thế nào đến Memory-based CF?
+
+- [x] Hai người dùng có thể có rất ít hoặc không có item chung để tính độ giống nhau, dù sở thích thực sự tương đồng
+- [ ] Ma trận thưa khiến Memory-based CF chạy nhanh hơn
+- [ ] Ma trận thưa chỉ ảnh hưởng đến content-based filtering, không ảnh hưởng CF
+- [ ] Ma trận thưa làm tăng độ chính xác của cosine similarity
+
+> Với hàng triệu item, mỗi người dùng chỉ tương tác với một phần rất nhỏ — nên khi so sánh trực tiếp hai hàng/cột của ma trận thưa, phần lớn dữ liệu không có gì để so sánh, dù hai người dùng có thể thực sự giống nhau về sở thích.

@@ -1,0 +1,53 @@
+---
+quiz_for: 07-learning-rate-schedule
+---
+
+## Q1
+Vì sao một learning rate cố định luôn là một đánh đổi, ngay cả khi chọn được một giá trị "vừa phải"?
+
+- [ ] Vì learning rate cố định luôn gây phân kỳ ngay từ bước đầu tiên
+- [x] Giai đoạn đầu cần bước lớn để tiến nhanh, nhưng khi tham số đã gần điểm tối ưu, chính bước lớn đó lại khiến tham số dao động qua lại quanh điểm tối ưu thay vì hội tụ chính xác
+- [ ] Vì learning rate cố định không tương thích với bất kỳ optimizer nào
+- [ ] Vì learning rate cố định chỉ hoạt động được với gradient descent thuần, không dùng được với Adam
+
+> Không có một giá trị learning rate nào tối ưu cho mọi giai đoạn train — đây là lý do cốt lõi cho sự tồn tại của learning rate schedule: bước lớn hữu ích lúc đầu nhưng có hại lúc gần hội tụ.
+
+## Q2
+Cosine annealing (Loshchilov & Hutter, 2016) khác step decay ở điểm nào về CÁCH giảm learning rate?
+
+- [ ] Cosine annealing giảm đột ngột tại các mốc cố định, step decay giảm mượt liên tục
+- [x] Step decay giảm đột ngột theo bậc thang tại vài mốc thời gian rời rạc, còn cosine annealing giảm mượt liên tục theo hình dạng nửa chu kỳ cosine
+- [ ] Hai kỹ thuật này thực chất giống hệt nhau, chỉ khác tên gọi
+- [ ] Cosine annealing chỉ áp dụng được cho batch size lớn
+
+> Step decay nhân learning rate với một hệ số tại các mốc rời rạc (ví dụ epoch 5, 10, 20). Cosine annealing dùng công thức `eta_T + (eta_0-eta_T)/2 * (1+cos(pi*t/T))` để tạo một đường giảm mượt, không có bước nhảy đột ngột.
+
+## Q3
+"Warm restart" trong SGDR giải quyết vấn đề gì của quá trình tối ưu hoá mạng nơ-ron?
+
+- [x] Loss landscape non-convex có nhiều điểm cực tiểu cục bộ chất lượng khác nhau — định kỳ tăng learning rate trở lại giúp quá trình tối ưu hoá có cơ hội thoát khỏi một vùng cực tiểu kém, khám phá lại landscape
+- [ ] Giải quyết vấn đề tràn bộ nhớ khi train mạng quá sâu
+- [ ] Giải quyết vấn đề overfitting bằng cách thêm nhiễu vào dữ liệu train
+- [ ] Warm restart chỉ là một cách gọi khác của warmup, không có gì khác biệt
+
+> Vì mạng nơ-ron có loss landscape phi lồi, quá trình tối ưu hoá có thể "kẹt" ở một điểm cực tiểu cục bộ không tốt. Định kỳ đặt lại learning rate về mức cao (thay vì chỉ giảm dần một lần duy nhất) cho phép trình tối ưu hoá thử khám phá lại landscape.
+
+## Q4
+Vì sao warmup (tăng dần learning rate ở giai đoạn đầu) lại cần thiết, đặc biệt với mạng rất sâu?
+
+- [x] Ngay sau khi khởi tạo trọng số ngẫu nhiên, trọng số còn "thô" chưa có định hướng tốt — một learning rate lớn ngay từ bước đầu dễ gây phân kỳ nghiêm trọng thay vì hội tụ
+- [ ] Vì warmup giúp mô hình học nhanh hơn gấp đôi tốc độ bình thường
+- [ ] Vì warmup thay thế hoàn toàn nhu cầu dùng weight initialization đúng cách
+- [ ] Warmup chỉ cần thiết khi dùng CPU, không cần khi dùng GPU
+
+> Vấn đề "phân kỳ do khởi tạo ngẫu nhiên" mà warmup giải quyết cùng gốc với vấn đề vanishing/exploding gradient ở bài Weight Initialization — mạng sâu rất nhạy cảm ở giai đoạn đầu train, trước khi tham số kịp ổn định vào vùng hợp lý.
+
+## Q5
+Trong công thức warmup của Transformer (`d_model^(-0.5) * min(step_num^(-0.5), step_num * warmup_steps^(-1.5))`), điều gì xảy ra trước và sau mốc `warmup_steps`?
+
+- [ ] Learning rate giữ nguyên không đổi trước và sau mốc đó
+- [x] Trước mốc warmup_steps, learning rate tăng tuyến tính theo step_num; sau mốc đó, learning rate giảm dần tỷ lệ nghịch với căn bậc hai của số bước
+- [ ] Learning rate giảm dần trước mốc, rồi tăng dần sau mốc — ngược lại với warmup thông thường
+- [ ] Công thức này chỉ áp dụng cho giai đoạn inference, không dùng lúc train
+
+> Công thức kết hợp cả hai giai đoạn: `step_num * warmup_steps^(-1.5)` (tăng tuyến tính) chiếm ưu thế khi step_num còn nhỏ (dưới warmup_steps), rồi `step_num^(-0.5)` (giảm dần) chiếm ưu thế sau đó — đúng cơ chế warmup rồi decay trong cùng một công thức.

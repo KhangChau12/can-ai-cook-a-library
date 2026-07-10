@@ -1,0 +1,43 @@
+---
+quiz_for: 02-two-tower-retrieval-ranking
+---
+
+## Q1
+Vì sao không thể chạy trực tiếp một mô hình như DeepFM qua mọi cặp người dùng-item ở quy mô hàng trăm triệu item?
+
+- [x] Chi phí tính toán và độ trễ (latency) sẽ quá lớn để trả về gợi ý theo thời gian thực
+- [ ] DeepFM không hỗ trợ implicit feedback
+- [ ] DeepFM chỉ hoạt động với dữ liệu content-based
+- [ ] DeepFM không thể huấn luyện với hơn 1000 item
+
+> Chạy một mạng nơ-ron phức tạp qua từng cặp người dùng-item trong kho hàng trăm triệu item là bất khả thi về mặt tính toán — đây là lý do các hệ thống công nghiệp tách thành pipeline hai tầng.
+
+## Q2
+Trong pipeline hai tầng Retrieval → Ranking, vai trò của tầng Retrieval là gì?
+
+- [x] Dùng mô hình nhẹ, nhanh để thu hẹp từ hàng trăm triệu item xuống còn vài trăm ứng viên
+- [ ] Đưa ra điểm số cuối cùng chính xác nhất cho từng item
+- [ ] Thay thế hoàn toàn tầng Ranking
+- [ ] Chỉ hoạt động với content-based filtering
+
+> Retrieval không cần chính xác tuyệt đối, chỉ cần đủ nhanh và không bỏ sót ứng viên tốt. Việc xếp hạng chính xác cuối cùng được tầng Ranking (mô hình phức tạp hơn) đảm nhiệm trên tập ứng viên đã thu hẹp.
+
+## Q3
+Vì sao kiến trúc Two-Tower cho phép tính trước (precompute offline) embedding của mọi item?
+
+- [x] Vì user tower và item tower độc lập nhau, không có tương tác chéo giữa feature người dùng và item khi tính embedding
+- [ ] Vì Two-Tower không cần huấn luyện
+- [ ] Vì item embedding luôn giống nhau cho mọi item
+- [ ] Vì Two-Tower chỉ hoạt động với dữ liệu tĩnh
+
+> Vì hai tháp độc lập, chỉ hợp nhất ở bước tích vô hướng cuối cùng, item embedding không phụ thuộc vào người dùng cụ thể nào — có thể tính trước và lưu lại, chỉ cần tính user embedding và tìm kiếm khi có yêu cầu gợi ý.
+
+## Q4
+Two-Tower "hy sinh" điều gì so với NeuMF/DeepFM để đổi lấy tốc độ retrieval?
+
+- [x] Khả năng biểu diễn — không có tương tác phức tạp giữa feature người dùng và item trong lúc tính embedding
+- [ ] Khả năng hoạt động với implicit feedback
+- [ ] Khả năng huấn luyện qua backpropagation
+- [ ] Khả năng dùng cho bài toán CTR prediction
+
+> Two-Tower chỉ hợp nhất hai embedding bằng tích vô hướng ở bước cuối, không có tương tác chéo phức tạp như DeepFM/NeuMF. Đây là đánh đổi có chủ đích: retrieval không cần độ chính xác tuyệt đối vì tầng Ranking sẽ tinh chỉnh sau.

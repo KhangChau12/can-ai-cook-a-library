@@ -1,0 +1,58 @@
+---
+quiz_for: 08-sac
+---
+
+## Q1
+Điểm khác biệt cốt lõi giữa SAC và toàn bộ dòng Policy Gradient → A3C →
+PPO đã học trước đó là gì?
+
+- [ ] SAC không dùng mạng nơ-ron, chỉ dùng bảng tra cứu Q-value
+- [x] SAC là off-policy (tái sử dụng dữ liệu cũ qua replay buffer), trong khi Policy Gradient/A3C/PPO đều là on-policy (chỉ dùng dữ liệu từ chính policy hiện tại)
+- [ ] SAC chỉ hoạt động với không gian action rời rạc, còn PPO chỉ hoạt động với action liên tục
+- [ ] SAC không có khái niệm policy, chỉ học value function
+
+> Toàn bộ dòng Policy Gradient/A3C/PPO đều on-policy — dữ liệu thu thập
+> chỉ dùng được cho một số lần cập nhật giới hạn rồi phải bỏ. SAC là
+> off-policy, dùng lại được dữ liệu cũ qua replay buffer (giống cơ chế
+> của DQN ở nhánh Value-based), hiệu quả dữ liệu hơn nhiều.
+
+## Q2
+Mục tiêu "maximum entropy" của SAC nghĩa là gì cụ thể?
+
+- [ ] Chỉ tối đa hoá entropy, bỏ qua hoàn toàn reward
+- [x] Tối đa hoá ĐỒNG THỜI reward kỳ vọng và entropy (độ ngẫu nhiên) của policy — thành công ở nhiệm vụ nhưng vẫn giữ hành động đa dạng nhất có thể
+- [ ] Giảm entropy xuống mức thấp nhất có thể để policy trở nên tất định
+- [ ] Tối đa hoá số lượng action khả dĩ trong không gian action
+
+> SAC không chỉ tối đa hoá reward như các phương pháp trước — nó thêm
+> một thành phần entropy vào mục tiêu, khuyến khích policy giữ một mức độ
+> ngẫu nhiên nhất định thay vì hội tụ cứng nhắc vào một hành động cố định
+> cho mỗi state, miễn là vẫn đạt reward tốt.
+
+## Q3
+Vì sao mục tiêu maximum entropy giúp SAC khám phá (explore) tốt hơn mà
+không cần cơ chế khám phá thủ công như epsilon-greedy ở Q-learning?
+
+- [ ] Vì SAC dùng chính xác cùng thuật toán epsilon-greedy nhưng đổi tên
+- [x] Vì bản thân mục tiêu huấn luyện đã khuyến khích sự đa dạng trong hành động — policy giữ xác suất đáng kể cho nhiều hành động gần-tối-ưu thay vì chỉ một hành động cố định
+- [ ] Vì SAC không cần khám phá — nó luôn biết trước hành động tối ưu
+- [ ] Vì SAC dùng ba mạng nơ-ron thay vì một, nên tự động khám phá nhiều hơn
+
+> Epsilon-greedy thêm khám phá NGOÀI mục tiêu huấn luyện (một xác suất
+> ngẫu nhiên chọn action bất kỳ). SAC tích hợp thẳng động lực khám phá
+> VÀO mục tiêu: vì entropy cao được thưởng, policy tự nhiên giữ sự đa
+> dạng trong hành động mà không cần cơ chế ngoài lề nào thêm vào.
+
+## Q4
+Theo Haarnoja và cộng sự, off-policy method trước SAC (như DDPG) có
+nhược điểm gì mà SAC khắc phục?
+
+- [ ] DDPG không thể dùng cho continuous control, chỉ dùng được cho action rời rạc
+- [x] DDPG có tính chất "hội tụ giòn" — nhạy cảm cao với lựa chọn hyperparameter, kết quả dao động mạnh giữa các lần chạy với random seed khác nhau
+- [ ] DDPG không dùng được replay buffer nên không thể off-policy
+- [ ] DDPG chỉ hoạt động khi có đúng một mạng nơ-ron duy nhất
+
+> SAC giữ ưu điểm off-policy (tái sử dụng dữ liệu qua replay buffer) của
+> DDPG nhưng khắc phục điểm yếu "brittle convergence" của nó — kết quả
+> thực nghiệm cho thấy SAC ổn định nhất quán hơn nhiều qua các random
+> seed khác nhau, nhờ mục tiêu maximum entropy.

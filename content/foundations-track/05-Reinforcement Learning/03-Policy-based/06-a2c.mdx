@@ -1,0 +1,78 @@
+---
+title: A2C — Biến thể Đồng bộ của A3C, GPU-friendly hơn
+track: foundations-track
+module: Reinforcement Learning
+submodule: Policy-based
+order: 6
+status: stable
+prerequisites: ["05-a3c"]
+summary: A3C dùng nhiều worker cập nhật bất đồng bộ vào tham số chung — tận dụng CPU đa nhân, nhưng gây race condition gradient và không tận dụng được GPU (không gộp được batch lớn). A2C (Mnih et al. 2016, cùng paper A3C) đơn giản hoá: một coordinator đợi tất cả worker xong, gộp thành 1 batch lớn, cập nhật đồng bộ 1 lần — không còn race condition, tận dụng GPU tốt hơn, và trong hạ tầng hiện đại (GPU phổ biến) thường ngang hoặc tốt hơn A3C.
+last_touched_by_task: Tách từ file cũ "07-trpo-a2c.mdx" (2026-07-10) — theo phản hồi người vận hành, bài gộp cũ đặt A2C SAU A3C khá xa (2 bài DDPG/TD3, SAC chen giữa dòng tiến hoá on-policy), khiến A2C bị tách rời khỏi ngữ cảnh A3C vừa học. Tách A2C thành bài riêng đặt NGAY SAU A3C (đúng mạch: học xong vấn đề + giải pháp bất đồng bộ của A3C, lập tức thấy biến thể đồng bộ). Nội dung kỹ thuật giữ nguyên từ bài gộp cũ. Nguồn: arxiv 1602.01783 (Mnih et al. 2016, cùng paper đề xuất cả A3C và A2C).
+---
+
+Bài [A3C](05-a3c.mdx) giải quyết vấn đề tương quan mẫu bằng cách chạy
+nhiều actor-learner độc lập, cập nhật **bất đồng bộ** vào một bộ tham số
+chung. Cách này tận dụng tốt CPU đa nhân, nhưng bất đồng bộ tự nó cũng có
+hai vấn đề riêng — bài này kể vì sao, và cách A2C sửa.
+
+## Vấn đề: bất đồng bộ có race condition và không tận dụng được GPU
+
+**Race condition gradient**: nhiều worker ghi đè lên cùng tham số chung
+cùng lúc (kỹ thuật này gọi là Hogwild!), gradient có thể **stale** —
+worker tính gradient dựa trên một phiên bản tham số, nhưng tham số đã bị
+worker khác cập nhật giữa chừng trước khi gradient đó kịp áp dụng. Về lý
+thuyết đây là một xấp xỉ không hoàn toàn chính xác, dù thực nghiệm A3C
+vẫn hoạt động tốt.
+
+**Không GPU-friendly**: mỗi worker cập nhật lẻ tẻ, không gộp được thành
+batch lớn — trong khi GPU chỉ phát huy hiệu quả khi xử lý song song một
+batch lớn cùng lúc. Chạy nhiều luồng CPU độc lập không khai thác được ưu
+thế phần cứng này.
+
+## Giải pháp: đợi tất cả worker xong rồi cập nhật đồng bộ một lần
+
+**A2C** (Advantage Actor-Critic, bỏ chữ "Asynchronous" so với A3C) — cùng
+paper gốc của Mnih và cộng sự (2016) đề xuất — đơn giản hoá bằng cách
+dùng một **bộ điều phối** (coordinator): tất cả worker vẫn chạy song song
+trên các bản sao môi trường riêng, nhưng coordinator đợi **tất cả** thu
+thập đủ experience rồi mới gộp thành **một batch lớn**, cập nhật tham số
+chung đúng **một lần**, rồi mới cho tất cả worker chạy tiếp.
+
+Lợi ích trực tiếp:
+
+- **Không còn race condition** — chỉ có đúng một lần cập nhật tham số mỗi
+  vòng, không có nhiều worker ghi đè cùng lúc.
+- **Mọi worker luôn xuất phát từ đúng cùng một phiên bản policy** — nhất
+  quán hơn A3C, nơi các worker có thể tạm thời dùng các phiên bản tham số
+  hơi khác nhau do cập nhật bất đồng bộ xen kẽ.
+- **Tận dụng GPU tốt hơn** — batch lớn từ nhiều worker gộp lại đúng là
+  dạng dữ liệu GPU xử lý hiệu quả nhất.
+
+Đánh đổi: phải đợi worker chậm nhất hoàn thành trước khi cập nhật (mất một
+chút thời gian chờ), nhưng bù lại bằng tốc độ xử lý batch nhanh hơn nhiều
+trên GPU.
+
+## Kết quả: ngang hoặc tốt hơn A3C trong hạ tầng hiện đại
+
+Thực nghiệm cho thấy A2C thường **ngang hoặc tốt hơn A3C** trên nhiều
+benchmark, đặc biệt khi có GPU — chi phí chờ đồng bộ không bù được lợi
+ích từ việc xử lý batch lớn. A3C vẫn có giá trị khi chỉ có CPU đa nhân
+(không GPU), nhưng trong hạ tầng huấn luyện hiện đại (GPU phổ biến), A2C
+là lựa chọn mặc định — đơn giản hơn để cài đặt và debug (không có race
+condition khó tái hiện), đồng thời tận dụng phần cứng tốt hơn.
+
+## Liên hệ lại với các bài trước
+
+- A2C không đổi nguyên lý cốt lõi của [A3C](05-a3c.mdx) — vẫn dùng nhiều
+  worker song song, vẫn dùng advantage function đã học ở
+  [Actor-Critic](02-actor-critic.mdx). Điểm khác duy nhất là **cách đồng
+  bộ hoá việc cập nhật tham số chung**.
+- Đây là ví dụ khác của mẫu hình "đơn giản hoá bằng cách bớt song song
+  triệt để" — giống cách [PPO](04-ppo.mdx) đơn giản hoá
+  [TRPO](03-trpo.mdx) bằng cách bỏ ràng buộc toán học phức tạp, đổi lấy
+  chi phí cài đặt thấp hơn với hiệu năng tương đương hoặc tốt hơn trong
+  thực hành.
+
+## Nguồn tham khảo
+
+- [arXiv — Asynchronous Methods for Deep Reinforcement Learning (Mnih et al., 2016)](https://arxiv.org/abs/1602.01783) — paper gốc đề xuất cả A3C và A2C, dùng cho vấn đề của bất đồng bộ (race condition Hogwild!, không GPU-friendly) và cơ chế A2C (coordinator đợi tất cả worker, gộp batch lớn, cập nhật đồng bộ một lần).

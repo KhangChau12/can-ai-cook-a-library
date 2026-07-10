@@ -1,0 +1,190 @@
+---
+title: "Learning Rate Schedule — Điều chỉnh Tốc độ Học Theo Thời gian"
+track: foundations-track
+module: "Deep Learning Nền tảng"
+order: 7
+status: stable
+prerequisites: ["04-optimization"]
+summary: "Learning rate cố định luôn là một đánh đổi: đủ lớn để học nhanh thì dễ dao động quanh điểm tối ưu, đủ nhỏ để hội tụ ổn định thì học chậm suốt quá trình. Learning rate schedule giải quyết bằng cách thay đổi learning rate theo thời gian train: step/exponential decay giảm dần cho hội tụ tinh, cosine annealing (Loshchilov & Hutter, 2016) giảm mượt theo hình cos kèm warm restart để thoát vùng tối ưu kém, và warmup (dùng trong Transformer, Vaswani et al. 2017) tăng dần learning rate ở giai đoạn đầu để tránh phân kỳ khi khởi tạo ngẫu nhiên."
+last_touched_by_task: "Viết mới — hoàn thiện bộ 3 bài mở rộng module Deep Learning Nền tảng (Optimizer → Weight Init → Normalization → LR Schedule), nối trực tiếp từ Optimizer ('vẫn cần tự chọn learning rate cơ sở'). Nguồn: d2l.ai (core tension, step/factor scheduler, công thức cosine đầy đủ, warmup), cs231n.github.io (step/exponential/1-over-t decay dạng liên tục), arxiv.org 1608.03983 (SGDR — chỉ xác nhận qua abstract, KHÔNG fetch được full-text formula trực tiếp, đã flag rõ trong bài), arxiv.org 1706.03762 (Transformer paper, công thức warmup chính xác từ §5.3), arxiv.org 1908.03265 (RAdam — chỉ xác nhận claim mức abstract 'variance lớn giai đoạn đầu', không khẳng định cơ chế chi tiết chưa đọc được full-text)."
+---
+
+Bài [Optimizer](04-optimization.mdx) giới thiệu Momentum, RMSProp, và Adam
+— nhưng dù dùng optimizer nào, vẫn còn một hyperparameter phải tự chọn:
+**learning rate** cơ sở (`alpha` trong công thức Adam, `learning_rate`
+trong mọi công thức trước đó). Tới giờ, mọi bài đều ngầm giả định learning
+rate này **cố định** suốt quá trình train. Bài này chỉ ra vì sao giả định
+đó là một đánh đổi không tối ưu, và ba kỹ thuật cụ thể để điều chỉnh
+learning rate **theo thời gian train**.
+
+## Đánh đổi cố hữu của một learning rate cố định
+
+Learning rate quá lớn: quá trình tối ưu hoá có thể **phân kỳ** (không hội
+tụ, giá trị loss dao động ngày càng lớn thay vì giảm dần). Learning rate
+quá nhỏ: quá trình train **quá chậm**, hoặc dừng lại ở một kết quả chưa
+đủ tốt trong thời gian huấn luyện cho phép.
+
+Ngay cả khi chọn được một learning rate "vừa phải", vẫn còn vấn đề ở gần
+cuối quá trình train: khi tham số đã tới gần điểm tối ưu, một learning
+rate đủ lớn để học nhanh ở giai đoạn đầu lại khiến tham số **dao động qua
+lại quanh điểm tối ưu** thay vì hội tụ chính xác vào đó — giống hệt vấn đề
+"thung lũng" đã gặp ở bài Optimizer, nhưng ở đây xảy ra dọc theo toàn bộ
+quá trình train chứ không phải chỉ do hình dạng loss landscape.
+
+Ý tưởng cốt lõi của learning rate schedule: **không có một giá trị learning
+rate nào tối ưu cho mọi giai đoạn train** — giai đoạn đầu cần bước lớn để
+tiến nhanh, giai đoạn cuối cần bước nhỏ để hội tụ chính xác. Learning rate
+nên **thay đổi theo thời gian**, không cố định.
+
+## Step decay: giảm theo bậc thang tại các mốc cố định
+
+Cách đơn giản nhất: chọn trước một vài mốc thời điểm (ví dụ epoch 5, 10,
+20), và nhân learning rate với một hệ số `alpha < 1` (ví dụ giảm một nửa)
+mỗi khi train chạm mốc đó:
+
+```
+Nếu t thuộc tập mốc {5, 10, 20, ...}:
+    learning_rate := learning_rate * alpha
+```
+
+Trực giác: để quá trình tối ưu hoá "ổn định" tại một vùng nhất định trước
+(tham số không còn thay đổi nhiều qua các bước), rồi mới giảm learning
+rate để tinh chỉnh sâu hơn vào một điểm tối ưu tốt hơn trong vùng đó — thay
+vì cứ giữ bước lớn khiến tham số nhảy qua nhảy lại quanh vùng tối ưu mà
+không bao giờ "định cư" chính xác. Một biến thể thực dụng: theo dõi loss
+trên validation set, giảm learning rate mỗi khi thấy loss đó **chững lại**
+(plateau) thay vì giảm theo mốc thời gian cố định trước.
+
+## Exponential decay và 1/t decay: giảm liên tục thay vì theo bậc thang
+
+Thay vì giảm đột ngột tại vài mốc rời rạc, có thể giảm **liên tục** theo
+một công thức mượt theo thời gian `t`:
+
+```
+Exponential decay:  learning_rate_t = learning_rate_0 * exp(-k*t)
+1/t decay:           learning_rate_t = learning_rate_0 / (1 + k*t)
+```
+
+`k` là hyperparameter điều khiển tốc độ suy giảm. Cả hai dạng đều giảm dần
+về 0 theo thời gian, chỉ khác tốc độ giảm (exponential giảm nhanh hơn theo
+cấp số nhân, 1/t giảm chậm hơn theo cấp số cộng nghịch đảo). Trong thực
+hành, step decay thường được ưa chuộng hơn hai dạng liên tục này vì
+hyperparameter của nó (mốc thời gian + hệ số nhân) dễ diễn giải và tinh
+chỉnh trực quan hơn so với việc chọn đúng `k`.
+
+## Cosine annealing và warm restart: giảm mượt theo hình cos, thỉnh thoảng "khởi động lại"
+
+**Loshchilov và Hutter (2016)** đề xuất một dạng lịch trình khác — thay vì
+giảm tuyến tính hay theo cấp số nhân, learning rate giảm theo đúng nửa chu
+kỳ của hàm cosine:
+
+```
+learning_rate_t = eta_T + (eta_0 - eta_T)/2 * (1 + cos(pi*t/T))    -- với t trong [0, T]
+```
+
+`eta_0` là learning rate khởi đầu, `eta_T` là learning rate mục tiêu tại
+thời điểm `T`. Dạng cos tạo ra một đường giảm mượt: giảm chậm lúc đầu,
+giảm nhanh ở giữa, rồi giảm chậm dần khi tới gần `eta_T` — khác với step
+decay giảm đột ngột tại từng mốc rời rạc.
+
+Điểm đặc biệt của paper này (có tên đầy đủ là **SGDR — Stochastic Gradient
+Descent with Warm Restarts**) không dừng ở công thức cosine, mà còn đề
+xuất **"khởi động lại ấm"** (warm restart): thay vì chỉ giảm dần rồi dừng,
+định kỳ **đặt lại** learning rate về một giá trị cao, rồi lại cho giảm dần
+theo hình cos một lần nữa — lặp lại nhiều chu kỳ như vậy trong suốt quá
+trình train, thay vì chỉ một đường giảm dần duy nhất từ đầu tới cuối. Ý
+tưởng mượn từ các kỹ thuật restart đã có trong tối ưu hoá không dùng
+gradient, mang vào ngữ cảnh huấn luyện mạng nơ-ron bằng SGD.
+
+Lý do warm restart có ích: loss landscape của mạng nơ-ron không lồi
+(non-convex), có thể có nhiều điểm cực tiểu cục bộ với "chất lượng" khác
+nhau. Việc định kỳ tăng learning rate trở lại giúp quá trình tối ưu hoá có
+cơ hội **thoát khỏi** một vùng cực tiểu không tốt, thử khám phá lại
+landscape, thay vì bị "kẹt" mãi ở điểm hội tụ đầu tiên tìm được — đồng thời
+mỗi lần learning rate giảm về gần `eta_T`, mô hình tại thời điểm đó cũng đã
+là một điểm huấn luyện tương đối tốt có thể dùng được, không cần đợi tới
+tận cuối toàn bộ quá trình train.
+
+## Warmup: tăng dần learning rate trước khi bắt đầu giảm
+
+Ba kỹ thuật trên đều giả định learning rate bắt đầu ở mức cao nhất rồi
+giảm dần. Nhưng có một vấn đề ở chính giai đoạn khởi đầu: ngay sau khi
+khởi tạo trọng số ngẫu nhiên (xem bài
+[Weight Initialization](05-weight-initialization.mdx)), một learning rate
+lớn ngay từ bước đầu tiên có thể gây **phân kỳ nghiêm trọng**, đặc biệt
+với mạng rất sâu — trọng số còn "thô", chưa có định hướng tốt, nên một
+bước cập nhật lớn dễ đẩy tham số ra xa khỏi vùng có ích thay vì tới gần
+hơn.
+
+**Warmup** giải quyết bằng cách đảo ngược trực giác thông thường ở giai
+đoạn đầu: thay vì bắt đầu ngay ở mức learning rate cao nhất, **tăng dần**
+từ một giá trị nhỏ lên tới mức mục tiêu trong vài bước/epoch đầu tiên, chỉ
+sau đó mới áp dụng lịch trình giảm dần (step/cosine/...) như bình thường.
+
+**Công thức cụ thể trong Transformer** (Vaswani và cộng sự, 2017, paper
+"Attention Is All You Need" — sẽ gặp lại kiến trúc này ở module NLP & LLM):
+
+```
+learning_rate = d_model^(-0.5) * min(step_num^(-0.5), step_num * warmup_steps^(-1.5))
+```
+
+Với `warmup_steps = 4000` trong paper gốc: ở `warmup_steps` bước đầu tiên,
+learning rate **tăng tuyến tính** theo `step_num`; sau mốc đó, learning
+rate **giảm dần** tỷ lệ nghịch với căn bậc hai của số bước — kết hợp cả
+warmup lẫn một dạng decay liên tục trong cùng một công thức.
+
+**Vì sao warmup đặc biệt quan trọng khi dùng optimizer thích ứng (Adam):**
+paper "On the Variance of the Adaptive Learning Rate and Beyond" (Liu và
+cộng sự, 2019) chỉ ra optimizer thích ứng như Adam có **phương sai lớn**
+ở giai đoạn đầu train — nhóm tác giả đề xuất rằng warmup thực chất đóng
+vai trò như một kỹ thuật **giảm phương sai** (variance reduction) trong
+giai đoạn đầu đó, dù cơ chế chi tiết vì sao phương sai lớn ở giai đoạn đầu
+không được trình bày đầy đủ ở đây — đây là hướng nghiên cứu riêng nếu muốn
+đào sâu hơn (paper này còn đề xuất RAdam, một biến thể Adam tự động sửa
+vấn đề phương sai thay vì cần warmup thủ công).
+
+## Bốn kỹ thuật, thường phối hợp trong cùng một lần train
+
+```
+Warmup (vài bước/epoch đầu)
+   → tăng dần learning rate, tránh phân kỳ do khởi tạo ngẫu nhiên
+      ↓
+Giai đoạn train chính
+   → learning rate giảm dần theo step/exponential/cosine decay
+      ↓ (tuỳ chọn, nếu dùng warm restart)
+Định kỳ tăng learning rate trở lại
+   → giúp thoát khỏi điểm cực tiểu cục bộ kém, khám phá lại landscape
+```
+
+Trong thực hành hiện đại (đặc biệt khi train Transformer/LLM), warmup kết
+hợp với một dạng decay liên tục (thường là cosine) là lựa chọn phổ biến
+nhất — không phải vì mỗi kỹ thuật đứng riêng là đủ, mà vì chúng giải quyết
+hai giai đoạn khác nhau của cùng một quá trình train: warmup bảo vệ giai
+đoạn khởi đầu bất ổn, decay tinh chỉnh hội tụ ở giai đoạn cuối.
+
+## Liên hệ lại với các bài trước
+
+- Đây là bài cuối cùng trong bộ 4 bài (Optimizer → Weight Initialization →
+  Normalization → Learning Rate Schedule) cùng trả lời một câu hỏi lớn:
+  làm sao huấn luyện một mạng nơ-ron nhiều tham số một cách **ổn định và
+  hiệu quả** — mỗi bài giải quyết đúng một khía cạnh khác nhau của câu hỏi
+  đó (cách cập nhật tham số, điểm khởi đầu, ổn định phân phối activation,
+  và tốc độ học theo thời gian).
+- Learning rate schedule không thay thế các optimizer thích ứng
+  ([Adam, RMSProp](04-optimization.mdx)) — chúng hoạt động **cùng lúc**:
+  optimizer quyết định hướng và độ lớn bước đi tương đối giữa các tham số,
+  learning rate schedule quyết định độ lớn bước đi tuyệt đối đó thay đổi
+  ra sao theo thời gian.
+- Vấn đề "phân kỳ do khởi tạo ngẫu nhiên" mà warmup giải quyết cùng gốc
+  với vấn đề vanishing/exploding gradient đã gặp ở bài
+  [Weight Initialization](05-weight-initialization.mdx) — cả hai đều là
+  hệ quả của việc mạng nơ-ron sâu rất nhạy cảm ở giai đoạn đầu train,
+  trước khi tham số kịp "ổn định" vào một vùng hợp lý.
+
+## Nguồn tham khảo
+
+- [Dive into Deep Learning — Learning Rate Scheduling](https://d2l.ai/chapter_optimization/lr-scheduler.html) — dùng cho lập luận đánh đổi learning rate cố định, step/factor scheduler, công thức cosine annealing đầy đủ (trích dẫn Loshchilov & Hutter, 2016), và khái niệm warmup.
+- [CS231n — Neural Networks Part 3: Learning and Evaluation](https://cs231n.github.io/neural-networks-3/) — dùng cho công thức exponential decay và 1/t decay dạng liên tục, và nhận định thực dụng "step decay dễ diễn giải hơn" trong thực hành.
+- [arXiv — SGDR: Stochastic Gradient Descent with Warm Restarts (Loshchilov & Hutter, 2016)](https://arxiv.org/abs/1608.03983) — dùng cho ý tưởng warm restart (định kỳ đặt lại learning rate) và lý do liên quan tới loss landscape non-convex/đa cực tiểu cục bộ; xác nhận qua abstract, không fetch được toàn văn công thức chi tiết của bài.
+- [arXiv — Attention Is All You Need (Vaswani et al., 2017)](https://arxiv.org/abs/1706.03762) — dùng làm nguồn chính cho công thức warmup chính xác của Transformer (mục 5.3 Optimizer), bao gồm `warmup_steps = 4000`.
+- [arXiv — On the Variance of the Adaptive Learning Rate and Beyond (Liu et al., 2019)](https://arxiv.org/abs/1908.03265) — dùng cho nhận định warmup hoạt động như kỹ thuật giảm phương sai cho optimizer thích ứng ở giai đoạn đầu train (xác nhận ở mức abstract của paper).

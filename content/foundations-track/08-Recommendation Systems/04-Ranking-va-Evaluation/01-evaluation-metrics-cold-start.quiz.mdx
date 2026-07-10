@@ -1,0 +1,43 @@
+---
+quiz_for: 01-evaluation-metrics-cold-start
+---
+
+## Q1
+Vì sao RMSE không đủ để đánh giá chất lượng của một hệ thống gợi ý top-N?
+
+- [x] RMSE đo sai số từng cặp dự đoán riêng lẻ, không nói lên chất lượng thứ tự của cả danh sách gợi ý
+- [ ] RMSE chỉ dùng được với implicit feedback
+- [ ] RMSE luôn cho kết quả bằng 0 với recommendation systems
+- [ ] RMSE không thể tính được trên ma trận rating thưa
+
+> Một mô hình có RMSE thấp không đảm bảo xếp đúng thứ tự — ngược lại một mô hình dự đoán rating lệch khá xa vẫn có thể giữ đúng thứ tự tương đối giữa các item. Ranking cần metric đo trực tiếp chất lượng danh sách top-K.
+
+## Q2
+Một hệ thống gợi ý 10 item (K=10), trong đó 6 item thực sự liên quan đến người dùng. Precision@10 là bao nhiêu?
+
+- [ ] 10%
+- [x] 60%
+- [ ] 40%
+- [ ] Không tính được nếu thiếu Recall@10
+
+> Precision@K = (số item liên quan trong top-K) / K = 6/10 = 60%.
+
+## Q3
+Điểm khác biệt cốt lõi giữa NDCG và Precision@K/Recall@K là gì?
+
+- [x] NDCG tính đến VỊ TRÍ của item liên quan trong danh sách, không coi mọi vị trí như nhau
+- [ ] NDCG chỉ áp dụng được cho explicit feedback
+- [ ] NDCG không cần tập item liên quan (relevant items) để tính
+- [ ] NDCG luôn cho giá trị lớn hơn 1
+
+> Precision@K/Recall@K coi mọi vị trí trong top-K như nhau. NDCG gán trọng số giảm dần theo vị trí — item liên quan xếp càng gần đầu danh sách đóng góp điểm càng cao, phản ánh đúng hành vi người dùng thực tế (thường chỉ xem vài kết quả đầu).
+
+## Q4
+Tại sao content-based filtering vẫn giữ vai trò quan trọng trong các hệ thống hybrid hiện đại, dù thường cho chất lượng gợi ý tổng thể kém hơn collaborative filtering?
+
+- [x] Vì nó giải quyết được item cold-start — gợi ý được item mới ngay cả khi chưa ai từng tương tác
+- [ ] Vì nó luôn nhanh hơn collaborative filtering
+- [ ] Vì nó không cần bất kỳ dữ liệu nào để hoạt động
+- [ ] Vì nó có độ chính xác cao hơn Matrix Factorization
+
+> Collaborative filtering cần lịch sử tương tác để hoạt động, nên bó tay với item hoàn toàn mới (item cold-start). Content-based filtering chỉ cần đặc điểm nội dung của item, nên vẫn gợi ý được ngay từ đầu.

@@ -1,0 +1,43 @@
+---
+quiz_for: 01-content-based-filtering
+---
+
+## Q1
+Thành phần nào trong hệ thống content-based filtering có nhiệm vụ tổng hợp đặc điểm của các item mà một người dùng đã thích thành một hồ sơ sở thích?
+
+- [ ] Content Analyzer
+- [x] Profile Learner
+- [ ] Filtering Component
+- [ ] Similarity Matcher
+
+> Profile Learner xây dựng hồ sơ sở thích (user profile) từ đặc điểm của những item người dùng đã thích trong quá khứ — thường bằng cách lấy trung bình vector đặc trưng của các item đó.
+
+## Q2
+Vì sao cosine similarity thường được ưu tiên hơn khoảng cách Euclid khi so sánh vector TF-IDF giữa hai item?
+
+- [x] Vì cosine đo góc giữa hai vector, không bị lệch bởi độ dài văn bản khác nhau giữa các item
+- [ ] Vì cosine similarity tính toán nhanh hơn nhiều so với khoảng cách Euclid
+- [ ] Vì khoảng cách Euclid chỉ dùng được cho dữ liệu số nguyên
+- [ ] Vì TF-IDF luôn cho ra vector có độ dài bằng nhau
+
+> Vector TF-IDF của các item có thể khác nhau về độ dài (văn bản dài/ngắn khác nhau). Cosine similarity đo hướng của vector thay vì khoảng cách tuyệt đối, nên không bị ảnh hưởng bởi sự khác biệt độ dài này.
+
+## Q3
+Ưu điểm nổi bật nhất của content-based filtering so với collaborative filtering là gì?
+
+- [ ] Luôn cho chất lượng gợi ý tổng thể tốt hơn
+- [ ] Không cần bất kỳ dữ liệu nào về item
+- [x] Gợi ý được ngay cả khi item hoàn toàn mới, chưa từng có ai tương tác
+- [ ] Không cần tính toán độ tương đồng
+
+> Vì chỉ dựa vào đặc điểm nội dung của chính item (không cần lịch sử tương tác), content-based filtering giải quyết tốt item cold-start — item mới chỉ cần có đặc điểm nội dung là gợi ý được ngay.
+
+## Q4
+Hạn chế "thiếu đa dạng" (low diversity) của content-based filtering nghĩa là gì?
+
+- [x] Hệ thống có xu hướng lặp lại gợi ý trong một vùng sở thích hẹp, khó giới thiệu thứ mới lạ
+- [ ] Hệ thống không thể gợi ý nhiều hơn một item cùng lúc
+- [ ] Hệ thống chỉ hoạt động với một loại item duy nhất
+- [ ] Hệ thống cần quá nhiều bộ nhớ để lưu trữ đặc điểm item
+
+> Vì luôn gợi ý item "giống" những gì đã thích, content-based filtering dễ mắc kẹt trong một vùng sở thích hẹp — khác với collaborative filtering có thể gợi ý item khác biệt về nội dung nhưng vẫn phù hợp nhờ người dùng tương tự đã thích.

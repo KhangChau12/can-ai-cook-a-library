@@ -1,0 +1,43 @@
+---
+quiz_for: 02-bayesian-personalized-ranking
+---
+
+## Q1
+Vấn đề cụ thể mà BPR giải quyết so với cách huấn luyện Matrix Factorization thông thường là gì?
+
+- [x] MF tối ưu dự đoán chính xác giá trị rating (tiêu chí gián tiếp cho ranking), và với implicit feedback, mọi cặp chưa quan sát bị coi như nhau dù thực ra lẫn lộn giữa "không thích thật sự" và "chưa từng thấy"
+- [ ] MF không thể chạy được với dữ liệu có hơn 1000 người dùng
+- [ ] MF chỉ hoạt động với dữ liệu rating tường minh, không hoạt động với bất kỳ dữ liệu nào khác
+- [ ] MF yêu cầu phải biết trước số lượng item chính xác
+
+> Đây là 2 vấn đề liên quan chặt: tối ưu sai tiêu chí (dự đoán điểm thay vì xếp hạng), và mất tín hiệu quan trọng khi coi mọi cặp chưa quan sát như nhau.
+
+## Q2
+BPR xây dựng dữ liệu huấn luyện như thế nào?
+
+- [x] Bộ ba (u, i, j): u là người dùng, i là item đã tương tác (positive), j là item chưa quan sát (lấy mẫu ngẫu nhiên) — giả định người dùng thích i hơn j
+- [ ] Chỉ dùng đúng 1 item duy nhất cho mỗi người dùng, bỏ qua mọi item khác
+- [ ] Yêu cầu người dùng phải tự đánh giá rating từ 1-5 cho mọi item
+- [ ] Ghép cặp 2 người dùng khác nhau cùng thích 1 item
+
+> Đây chính là cách BPR chuyển bài toán từ "dự đoán điểm tuyệt đối" sang "so sánh tương đối theo cặp" (pairwise) — đúng bản chất bài toán xếp hạng.
+
+## Q3
+Trong công thức BPR-Opt, hàm sigmoid đóng vai trò gì?
+
+- [x] Biến đổi hiệu số điểm dự đoán (ŷ_ui - ŷ_uj) thành một xác suất trong khoảng (0,1), biểu diễn khả năng người dùng thích item i hơn item j
+- [ ] Chuẩn hoá rating về khoảng 1-5 sao
+- [ ] Tính khoảng cách Euclid giữa 2 vector latent factor
+- [ ] Loại bỏ hoàn toàn các item có rating thấp khỏi dữ liệu huấn luyện
+
+> Tối đa hoá log của xác suất này khuyến khích mô hình đẩy điểm dự đoán của item đã thích cao hơn hẳn item chưa quan sát.
+
+## Q4
+Kết luận quan trọng nhất từ kết quả thực nghiệm của BPR là gì?
+
+- [x] Tối ưu đúng tiêu chí (ở đây là xếp hạng tương đối) quan trọng không kém việc chọn đúng mô hình — cùng Matrix Factorization, đổi cách tối ưu hoá đã cải thiện đáng kể hiệu năng cho đúng bài toán cần giải
+- [ ] Matrix Factorization hoàn toàn vô dụng cho bài toán xếp hạng, cần thay bằng mô hình khác
+- [ ] BPR chỉ hoạt động tốt hơn khi có ít hơn 10 người dùng trong hệ thống
+- [ ] Hinge loss luôn tốt hơn BPR-Opt trong mọi trường hợp, không có ngoại lệ
+
+> Đây là bài học tổng quát: BPR không thay đổi mô hình (vẫn dùng MF hay k-NN), chỉ thay đổi hàm mục tiêu huấn luyện để khớp đúng tiêu chí cần tối ưu.

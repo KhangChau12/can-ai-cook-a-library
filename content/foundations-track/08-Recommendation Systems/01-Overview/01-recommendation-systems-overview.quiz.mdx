@@ -1,0 +1,43 @@
+---
+quiz_for: 01-recommendation-systems-overview
+---
+
+## Q1
+Vấn đề cốt lõi mà recommendation systems giải quyết là gì?
+
+- [ ] Thiếu dữ liệu về sở thích người dùng
+- [x] Quá tải thông tin — quá nhiều lựa chọn để người dùng tự tìm bằng tay
+- [ ] Không đủ item để gợi ý
+- [ ] Người dùng không biết cách tìm kiếm
+
+> Đây là vấn đề "information overload" — các nền tảng có lượng item khổng lồ vượt xa khả năng một người dùng tự duyệt hết. Không phải thiếu lựa chọn mà là thừa lựa chọn tới mức cần hệ thống lọc thông minh.
+
+## Q2
+Một hệ thống chỉ dựa vào lịch sử "đã mua", "đã click" (không có rating tường minh) đang dùng loại feedback nào?
+
+- [ ] Explicit feedback
+- [x] Implicit feedback
+- [ ] Content-based feedback
+- [ ] Collaborative feedback
+
+> Implicit feedback suy ra sở thích từ hành vi (mua, click, xem) thay vì người dùng chủ động đánh giá. Ưu điểm là có sẵn nhiều dữ liệu hơn, nhưng nhiễu hơn vì hành vi không luôn phản ánh đúng sở thích.
+
+## Q3
+Một hệ thống gợi ý phim dựa trên "phim này có cùng đạo diễn/thể loại với phim bạn đã thích" — không cần biết người dùng khác đã xem gì — thuộc trường phái nào?
+
+- [ ] Collaborative Filtering
+- [x] Content-based Filtering
+- [ ] Sequence-aware Recommendation
+- [ ] Two-Tower Retrieval
+
+> Content-based Filtering gợi ý dựa trên đặc điểm/nội dung của chính item, không cần dữ liệu hành vi từ người dùng khác — khác với Collaborative Filtering, dựa vào "trí tuệ đám đông".
+
+## Q4
+Tại sao "rating prediction" và "ranking" được coi là hai dạng bài toán khác nhau, dù cùng thuộc recommendation systems?
+
+- [x] Vì tối ưu tốt cho dự đoán điểm số tuyệt đối không đảm bảo xếp đúng thứ tự tương đối giữa các item
+- [ ] Vì ranking chỉ dùng được với implicit feedback, còn rating prediction chỉ dùng được với explicit feedback
+- [ ] Vì ranking không cần huấn luyện mô hình
+- [ ] Vì rating prediction chỉ áp dụng cho content-based filtering
+
+> Rating prediction là bài toán hồi quy (dự đoán đúng con số), còn ranking chỉ cần xếp đúng thứ tự. Một mô hình có thể dự đoán sai lệch về điểm số tuyệt đối nhưng vẫn giữ đúng thứ tự tương đối — nên cần hàm mục tiêu khác nhau cho từng bài toán.
