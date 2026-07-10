@@ -2,19 +2,21 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import SiteHeader from '../components/SiteHeader.astro';
 import ModuleCard from '../components/ModuleCard.astro';
-import { getAllModuleGroups, LEVEL_LABELS } from '../lib/content';
+import { getHomeSections, LEVEL_LABELS } from '../lib/content';
 
-const byLevel = await getAllModuleGroups();
+const { examGroups, byLevel } = await getHomeSections();
 const levels = (['foundation', 'intermediate', 'advanced'] as const).map((level) => ({
   level,
   label: LEVEL_LABELS[level],
   groups: byLevel[level],
 }));
 
-const totalLessons = Object.values(byLevel)
-  .flat()
-  .reduce((n, g) => n + g.lessons.length + g.submodules.reduce((m, s) => m + s.lessons.length, 0), 0);
-const totalModules = Object.values(byLevel).flat().length;
+const allGroups = [...examGroups, ...Object.values(byLevel).flat()];
+const totalLessons = allGroups.reduce(
+  (n, g) => n + g.lessons.length + g.submodules.reduce((m, s) => m + s.lessons.length, 0),
+  0,
+);
+const totalModules = allGroups.length;
 
 const levelHint: Record<string, string> = {
   foundation: 'Xuất phát điểm — không cần biết gì trước.',
@@ -41,17 +43,24 @@ const levelHint: Record<string, string> = {
       </p>
     </div>
 
-    <div class="sticky top-[57px] z-20 -mx-5 mt-10 border-y border-border-default/80 bg-bg-primary/90 px-5 py-3 backdrop-blur sm:static sm:mx-0 sm:mt-14 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0 sm:backdrop-blur-none">
-      <div id="track-filter" class="flex items-center justify-center gap-1.5 rounded-full border border-border-default bg-bg-surface p-1 sm:mx-auto sm:w-fit">
-        <button type="button" data-filter="all" class="filter-pill rounded-full px-4 py-1.5 text-[13px] font-semibold transition" aria-pressed="true">Tất cả</button>
-        <button type="button" data-filter="foundations-track" class="filter-pill rounded-full px-4 py-1.5 text-[13px] font-semibold transition" aria-pressed="false">Nền tảng</button>
-        <button type="button" data-filter="exam-track" class="filter-pill rounded-full px-4 py-1.5 text-[13px] font-semibold transition" aria-pressed="false">Bổ trợ thi đấu</button>
-      </div>
-    </div>
-
-    <div class="mt-10 flex flex-col gap-14 sm:mt-12">
+    <div class="mt-10 flex flex-col gap-14 sm:mt-14">
+      {examGroups.length > 0 && (
+        <section id="exam-track">
+          <div class="mb-5 flex items-baseline justify-between gap-3">
+            <h2 class="flex items-center gap-2.5 text-xl font-extrabold tracking-tight text-text-primary">
+              Bổ trợ thi đấu
+            </h2>
+            <span class="text-[12.5px] text-text-disabled">Áp dụng ngay vào bài nộp thật trên The Noders platform.</span>
+          </div>
+          <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {examGroups.map((group) => (
+              <ModuleCard track={group.track} group={group} />
+            ))}
+          </div>
+        </section>
+      )}
       {levels.map(({ level, label, groups }) => groups.length > 0 && (
-        <section data-level-section={level}>
+        <section>
           <div class="mb-5 flex items-baseline justify-between gap-3">
             <h2 class="flex items-center gap-2.5 text-xl font-extrabold tracking-tight text-text-primary">
               {label}
@@ -60,28 +69,13 @@ const levelHint: Record<string, string> = {
           </div>
           <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {groups.map((group) => (
-              <div data-track-item={group.track}>
-                <ModuleCard track={group.track} group={group} showTrackChip />
-              </div>
+              <ModuleCard track={group.track} group={group} />
             ))}
           </div>
         </section>
       ))}
     </div>
   </main>
-
-  <style>
-    .filter-pill {
-      color: var(--color-text-tertiary);
-    }
-    .filter-pill[aria-pressed='true'] {
-      background: var(--color-primary-blue);
-      color: white;
-    }
-    .filter-pill:not([aria-pressed='true']):hover {
-      color: var(--color-text-primary);
-    }
-  </style>
 
   <script>
     import { getAllProgress } from '../lib/progress';
@@ -101,37 +95,5 @@ const levelHint: Record<string, string> = {
         }
       });
     });
-
-    const pills = document.querySelectorAll<HTMLButtonElement>('.filter-pill');
-    const items = document.querySelectorAll<HTMLElement>('[data-track-item]');
-    const sections = document.querySelectorAll<HTMLElement>('[data-level-section]');
-
-    function applyFilter(filter: string) {
-      items.forEach((item) => {
-        const show = filter === 'all' || item.dataset.trackItem === filter;
-        item.classList.toggle('hidden', !show);
-      });
-      sections.forEach((section) => {
-        const visible = Array.from(section.querySelectorAll<HTMLElement>('[data-track-item]')).some(
-          (item) => !item.classList.contains('hidden'),
-        );
-        section.classList.toggle('hidden', !visible);
-      });
-    }
-
-    pills.forEach((pill) => {
-      pill.addEventListener('click', () => {
-        pills.forEach((p) => p.setAttribute('aria-pressed', String(p === pill)));
-        applyFilter(pill.dataset.filter!);
-        history.replaceState(null, '', pill.dataset.filter === 'all' ? location.pathname : `#${pill.dataset.filter}`);
-      });
-    });
-
-    const hashFilter = location.hash.slice(1);
-    if (hashFilter === 'foundations-track' || hashFilter === 'exam-track') {
-      const target = document.querySelector<HTMLButtonElement>(`.filter-pill[data-filter="${hashFilter}"]`);
-      target?.click();
-      document.getElementById('track-filter')?.scrollIntoView({ block: 'start', behavior: 'instant' as ScrollBehavior });
-    }
   </script>
 </BaseLayout>

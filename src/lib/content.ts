@@ -23,7 +23,7 @@ export function trackLabel(track: Track): string {
 export type ModuleLevel = 'foundation' | 'intermediate' | 'advanced';
 
 export const LEVEL_LABELS: Record<ModuleLevel, string> = {
-  foundation: 'Nền tảng',
+  foundation: 'Kiến thức',
   intermediate: 'Trung cấp',
   advanced: 'Nâng cao',
 };
@@ -191,22 +191,30 @@ export async function getModuleGroup(track: Track, moduleSlug: string): Promise<
 }
 
 // All modules across both tracks, in level order (foundation -> intermediate
-// -> advanced) for the unified home page. Within a level, tracks interleave
-// in their own curriculum order (exam-track modules first since it's the
-// shorter, entry-point track).
+// -> advanced) for the unified home page's "kiến thức" side. exam-track is
+// shown as its own section ahead of the level tiers (see getHomeSections),
+// not folded into them.
 const LEVEL_ORDER: ModuleLevel[] = ['foundation', 'intermediate', 'advanced'];
 
 export async function getAllModuleGroups(): Promise<Record<ModuleLevel, ModuleGroup[]>> {
-  const [examGroups, foundationGroups] = await Promise.all([
-    getModuleGroups('exam-track'),
-    getModuleGroups('foundations-track'),
-  ]);
-  const all = [...examGroups, ...foundationGroups];
+  const foundationGroups = await getModuleGroups('foundations-track');
   const byLevel = {} as Record<ModuleLevel, ModuleGroup[]>;
   for (const level of LEVEL_ORDER) {
-    byLevel[level] = all.filter((g) => g.level === level);
+    byLevel[level] = foundationGroups.filter((g) => g.level === level);
   }
   return byLevel;
+}
+
+export interface HomeSections {
+  examGroups: ModuleGroup[];
+  byLevel: Record<ModuleLevel, ModuleGroup[]>;
+}
+
+// Home page data: exam-track rendered as its own section first, then
+// foundations-track split into level tiers.
+export async function getHomeSections(): Promise<HomeSections> {
+  const [examGroups, byLevel] = await Promise.all([getModuleGroups('exam-track'), getAllModuleGroups()]);
+  return { examGroups, byLevel };
 }
 
 // Flattened reading order for a track (module -> submodule -> lesson,
