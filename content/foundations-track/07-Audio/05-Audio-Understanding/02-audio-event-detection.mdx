@@ -2,45 +2,100 @@
 title: Phân Loại Sự Kiện Âm Thanh — Nhận Diện Tiếng Động Môi Trường
 track: foundations-track
 module: Audio
+submodule: Audio-Understanding
 order: 2
 status: stable
 prerequisites: ["01-bieu-dien-am-thanh", "01-cnn"]
-summary: Nhận diện các sự kiện âm thanh không phải giọng nói: tiếng chó sủa, còi xe, mưa rơi. Ứng dụng: giám sát an ninh, hỗ trợ người khiếm thính, smart home. Bài này giới thiệu AudioSet (632 lớp), YAMNet (MobileNet, real-time), và PANNs (CNN pre-trained, transfer learning).
-last_touched_by_task: Bài mới (2026-07-08): Phase 4.3 đào sâu Audio — Audio Event Detection. Nguồn: arxiv AudioSet 1705.02034 + arxiv PANNs 2002.01277.
-submodule: Audio-Understanding
+summary: Nhận diện các sự kiện âm thanh không phải giọng nói: tiếng chó sủa, còi xe, mưa rơi. Ứng dụng: giám sát an ninh, hỗ trợ người khiếm thính, smart home. Bài này giới thiệu AudioSet (632 lớp), rồi đối chiếu trade-off giữa YAMNet (nhẹ, real-time trên di động) và PANNs (mạng lớn hơn, chính xác hơn, không real-time trên thiết bị yếu).
+last_touched_by_task: "Sửa (2026-07-10): thêm trade-off rõ ràng YAMNet (tốc độ) vs PANNs (độ chính xác) thay vì chỉ liệt kê khác biệt kiến trúc bề mặt, thêm mục Liên hệ lại với các bài trước. Nguồn cũ (AudioSet, PANNs) giữ nguyên."
 ---
 
-Các bài trước trong module Audio tập trung vào giọng nói (ASR, TTS). Audio
-event detection (AED — phát hiện sự kiện âm thanh) là bài toán nhận diện
-các âm thanh không phải giọng nói: tiếng chó sủa, tiếng còi xe, tiếng mưa,
-tiếng cưa máy.
+Bài [Audio Source Separation](01-audio-source-separation.mdx) tách một
+bản ghi hỗn hợp thành các nguồn riêng. **Audio event detection** (AED —
+phát hiện sự kiện âm thanh) là bài toán khác trong cùng nhóm "phân tích
+audio": thay vì tách nguồn, AED **nhận diện loại** âm thanh không phải
+giọng nói đang xảy ra — tiếng chó sủa, tiếng còi xe, tiếng mưa, tiếng
+cưa máy.
 
 ## Vấn đề: âm thanh môi trường đa dạng, có thể chồng lấn
 
 Khác với ASR (chỉ có giọng người), AED phải xử lý đồng thời nhiều sự kiện:
 một video đường phố có thể có tiếng còi xe (giao thông) + tiếng chim hót
-(động vật) + tiếng người nói (giọng) → multi-label classification.
+(động vật) + tiếng người nói (giọng) → đây là bài toán **multi-label
+classification** (một clip có thể mang nhiều nhãn cùng lúc), khác hẳn
+bài toán phân loại 1 nhãn/clip đơn giản đã nhắc ở bài
+[Overview](../01-Overview/01-audio-ml-overview.mdx).
 
 ## AudioSet — Dataset chuẩn
 
-AudioSet (Gemmeke et al. 2017, Google): 632 lớp sự kiện âm thanh, 2.1M clips
-từ YouTube, mỗi clip có thể có nhiều nhãn (multi-label). 527 lớp dùng cho
-eval. Dataset lớn nhất cho AED.
+AudioSet (Gemmeke và cộng sự, 2017, Google): 632 lớp sự kiện âm thanh,
+2.1M clips từ YouTube, mỗi clip có thể có nhiều nhãn (multi-label). 527
+lớp dùng cho eval. Đây là dataset lớn nhất cho AED, đóng vai trò tương tự
+ImageNet cho phân loại ảnh — hầu hết mô hình AED hiện đại đều pretrain
+trên AudioSet trước khi fine-tune cho tác vụ cụ thể.
 
-## YAMNet — MobileNet trên Spectrogram
+## YAMNet — Nhẹ, nhanh, đánh đổi độ chính xác
 
-YAMNet (Google 2019): dùng MobileNet (depthwise separable convolution, bài
-38) trên log-mel spectrogram, 521 lớp AudioSet. Chạy real-time trên thiết
-bị di động. Mã nguồn mở, dùng làm feature extractor cho AED.
+YAMNet (Google, 2019): dùng
+[MobileNet](../../03-Computer%20Vision/01-Co-ban/05-mobilenet.mdx)
+(depthwise separable convolution — tách tích chập thường thành 2 bước
+nhẹ hơn nhiều lần, đã học ở module Computer Vision) trên log-mel
+spectrogram, phân loại 521 lớp AudioSet.
 
-## PANNs — Pre-trained Audio Neural Networks
+**Động cơ thiết kế:** YAMNet nhắm tới chạy **real-time trên thiết bị di
+động** (điện thoại, thiết bị IoT) — đúng đánh đổi mà MobileNet đã chọn ở
+bài CV: giảm mạnh số phép tính bằng depthwise separable convolution, đổi
+lại chấp nhận độ chính xác thấp hơn các mạng CNN đầy đủ (như ResNet).
+Với AED, đánh đổi này hợp lý vì nhiều ứng dụng thực tế (trợ lý ảo phát
+hiện "Hey Siri" nền, thiết bị an ninh gia đình) cần phản hồi tức thời
+hơn là độ chính xác tuyệt đối.
 
-PANNs (Kong et al. 2020): huấn luyện CNN (CNN10, CNN14) trên AudioSet.
-Khác YAMNet: dùng mạng lớn hơn (ResNet-style), wavelet thay log-mel, và
-transfer learning — feature học từ AudioSet có thể fine-tune sang các tác
-vụ AED khác. SOTA trên nhiều benchmark AED.
+## PANNs — Mạng lớn hơn, chính xác hơn, đánh đổi tốc độ
+
+PANNs (Pre-trained Audio Neural Networks, Kong và cộng sự, 2020): huấn
+luyện các kiến trúc CNN lớn hơn (CNN10, CNN14 — theo kiểu ResNet, nhiều
+tầng tích chập đầy đủ hơn MobileNet) trên toàn bộ AudioSet.
+
+**Động cơ thiết kế — ngược lại YAMNet:** PANNs không nhắm tới thiết bị
+di động, mà nhắm tới **độ chính xác cao nhất có thể** và khả năng
+**transfer learning** tốt — feature học được từ AudioSet quy mô lớn có
+thể fine-tune sang nhiều tác vụ AED khác nhau (tương tự tinh thần
+pretrain-rồi-fine-tune đã gặp ở SSL Audio và BERT), đạt SOTA trên nhiều
+benchmark. Đánh đổi: mạng lớn hơn, chậm hơn nhiều so với YAMNet, không
+phù hợp chạy real-time trên thiết bị tài nguyên hạn chế.
+
+## Trade-off tổng kết: tốc độ vs độ chính xác
+
+| | YAMNet | PANNs |
+|---|---|---|
+| Kiến trúc | MobileNet (depthwise separable) | CNN10/CNN14 (ResNet-style, đầy đủ) |
+| Mục tiêu thiết kế | Real-time trên di động | Độ chính xác cao nhất + transfer learning tốt |
+| Tốc độ | Rất nhanh | Chậm hơn nhiều |
+| Độ chính xác | Thấp hơn | SOTA trên nhiều benchmark |
+| Dùng khi | Ứng dụng edge, cần phản hồi tức thời | Server-side, cần độ chính xác cao, có thể fine-tune |
+
+Đây là mẫu hình lặp lại quen thuộc trong track: không có kiến trúc nào
+"tốt nhất tuyệt đối" — lựa chọn phụ thuộc vào ràng buộc triển khai thực
+tế (giống đánh đổi one-stage/two-stage detection ở module Computer
+Vision, hay CTC/encoder-decoder ở bài Speech-to-Text).
+
+## Liên hệ lại với các bài trước
+
+- YAMNet dùng lại chính xác kiến trúc
+  [MobileNet](../../03-Computer%20Vision/01-Co-ban/05-mobilenet.mdx) đã
+  học ở Computer Vision — một ví dụ rõ cho việc kiến trúc CV hiệu quả
+  cũng áp dụng tốt cho spectrogram (dữ liệu dạng lưới 2D tương tự ảnh).
+- PANNs dùng chiến lược pretrain-rồi-transfer giống tinh thần SSL Audio
+  (bài [SSL cho Âm thanh](../02-Biểu%20diễn%20âm%20thanh/03-ssl-audio.mdx)) —
+  khác ở chỗ PANNs vẫn dùng nhãn (supervised pretraining trên AudioSet
+  có nhãn), còn SSL Audio học hoàn toàn không nhãn.
+- Bài toán multi-label classification khác biệt rõ so với phân loại
+  single-label đã học ở
+  [CNN](../../03-Computer%20Vision/01-Co-ban/01-cnn.mdx) — mỗi clip cần
+  một vector xác suất độc lập cho từng lớp (dùng sigmoid cho mỗi lớp,
+  không phải softmax chọn 1 lớp duy nhất).
 
 ## Nguồn tham khảo
 
 - [arXiv — AudioSet: An Ontology and Human-Labeled Dataset for Audio Events (Gemmeke et al., 2017)](https://arxiv.org/abs/1705.02034) — paper gốc AudioSet, dùng cho 632 lớp, 2.1M clips, multi-label ontology.
-- [arXiv — PANNs: Large-Scale Pretrained Audio Neural Networks for Audio Pattern Recognition (Kong et al., 2020)](https://arxiv.org/abs/2002.01277) — paper gốc PANNs, dùng cho CNN14/CNN10, transfer learning, benchmark SOTA.
+- [arXiv — PANNs: Large-Scale Pretrained Audio Neural Networks for Audio Pattern Recognition (Kong et al., 2020)](https://arxiv.org/abs/2002.01277) — paper gốc PANNs, dùng cho CNN14/CNN10, transfer learning, benchmark SOTA, và động cơ thiết kế ưu tiên độ chính xác.

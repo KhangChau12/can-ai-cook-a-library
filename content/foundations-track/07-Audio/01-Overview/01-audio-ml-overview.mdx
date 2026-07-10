@@ -4,9 +4,9 @@ track: foundations-track
 module: Audio
 order: 1
 status: stable
-prerequisites: ["02-autoencoder"]
-summary: Bài mở đầu module Audio — tổng quan về các bài toán ML trên dữ liệu âm thanh (phân loại âm thanh, ASR, TTS, speaker recognition, music analysis), pipeline xử lý từ waveform tới mô hình, và các thách thức đặc thù so với ảnh và văn bản.
-last_touched_by_task: Bài mới (2026-07-08): mở đầu module Audio — làm rõ bức tranh toàn cảnh trước khi đi vào từng kỹ thuật cụ thể (biểu diễn, STT, TTS). Nguồn: d2l.ai chapter introduction + machinelearningmastery.com audio overview.
+prerequisites: ["foundations-track/06-Generative Models/01-Overview/02-autoencoder"]
+summary: Bài mở đầu module Audio — tổng quan về các bài toán ML trên dữ liệu âm thanh (phân loại âm thanh, ASR, TTS, speaker recognition, audio segmentation, sinh âm thanh), pipeline xử lý từ waveform tới mô hình, và bản đồ 5 sub-module của module.
+last_touched_by_task: "Sửa (2026-07-10): viết lại toàn bộ mục 'Module Audio có gì?' cho khớp đúng 5 sub-module thật (bài cũ nói 3, thiếu SSL và Audio-Understanding), sửa toàn bộ link nội bộ trỏ đúng tên file thật (bài cũ dùng số thứ tự cũ 30/31/32/90/91/92 không tồn tại). Module giờ có đủ bài cho cả 6 bài toán đã liệt kê ở mục 'Các bài toán chính' (trước đây thiếu Speaker Recognition và Audio Segmentation, giờ đã có 2 bài mới lấp đúng khoảng trống này thay vì hạ thấp lời hứa)."
 submodule: Overview
 ---
 
@@ -43,42 +43,48 @@ chuỗi, hay một tín hiệu mới) và **nguồn âm** (tiếng nói, nhạc,
 môi trường).
 
 **1. Phân loại âm thanh (Sound Classification)**
-Đầu ra: một nhãn duy nhất cho toàn bộ clip. Ví dụ:
+Đầu ra: một nhãn duy nhất (hoặc nhiều nhãn — multi-label) cho toàn bộ
+clip. Ví dụ:
 - Nhận dạng từ khoá (keyword spotting): "Hey Siri", "OK Google"
 - Phân loại tiếng động: tiếng chó sủa, tiếng mưa, tiếng xe cộ
-- Phân loại thể loại nhạc: pop, rock, jazz, classical
-- Đây là bài toán **đơn giản nhất** — thường dùng CNN trên spectrogram
+- Đây là bài toán **đơn giản nhất** — thường dùng CNN trên spectrogram,
+  xem [Audio Event Detection](../05-Audio-Understanding/02-audio-event-detection.mdx)
 
 **2. Nhận dạng giọng nói tự động (ASR — Automatic Speech Recognition)**
 Đầu ra: một chuỗi văn bản từ một đoạn ghi âm giọng nói.
 - Ví dụ: "xin chào" → text "xin chào"
 - Kiến trúc phổ biến: CTC, encoder-decoder với attention, Whisper
-- Đây là bài toán **trung tâm** của audio ML — xem [bài 31](31-speech-to-text.mdx)
+- Đây là bài toán **trung tâm** của audio ML — xem
+  [Speech-to-Text](../03-Speech-to-Text/01-speech-to-text.mdx)
 
 **3. Tổng hợp giọng nói (TTS — Text-to-Speech)**
 Đầu vào: văn bản. Đầu ra: waveform âm thanh.
 - Ngược hoàn toàn với ASR
 - Hai giai đoạn: text → spectrogram (Tacotron 2, FastSpeech) → waveform
-  (vocoder như WaveNet, HiFi-GAN) — xem [bài 32](32-text-to-speech.mdx)
+  (vocoder như WaveNet, HiFi-GAN) — xem
+  [Text-to-Speech](../04-Text-to-Speech/01-text-to-speech.mdx)
 
 **4. Nhận dạng người nói (Speaker Recognition)**
 Đầu ra: ai đang nói (xác thực hoặc định danh).
 - **Speaker verification:** "giọng này có đúng là người X không?" (1:1)
 - **Speaker identification:** "giọng này là ai trong danh sách N người?" (1:N)
 - Kỹ thuật: embedding giọng nói (d-vector, x-vector), so sánh cosine
-  similarity — giống ý tưởng face recognition nhưng trên giọng nói
+  similarity — xem
+  [Speaker Recognition](../05-Audio-Understanding/03-speaker-recognition.mdx)
 
 **5. Phân đoạn âm thanh (Audio Segmentation)**
 Chia một đoạn ghi âm dài thành các đoạn nhỏ hơn theo tiêu chí:
-- **Speaker diarization:** "ai nói lúc nào" trong một cuộc họp nhiều người
 - **Voice activity detection (VAD):** "lúc nào có tiếng nói, lúc nào im lặng"
-- **Music segmentation:** đâu là intro, verse, chorus
+- **Speaker diarization:** "ai nói lúc nào" trong một cuộc họp nhiều người
+- Xem [Audio Segmentation](../05-Audio-Understanding/04-audio-segmentation-vad-diarization.mdx)
 
 **6. Sinh âm thanh (Audio Generation)**
-Tạo ra âm thanh mới — có thể là nhạc (MusicLM), tiếng nói (TTS), hoặc
-hiệu ứng âm thanh cho video. Đây là mảng đang phát triển nhanh nhờ diffusion
-models (DiffWave, AudioLDM) — xem [bài 49](49-diffusion-models.mdx) cho nền
-tảng diffusion.
+Tạo ra âm thanh mới. TTS (mục 3) là một trường hợp riêng — sinh giọng
+nói có điều kiện theo văn bản. Vocoder (WaveNet, HiFi-GAN — phần của
+TTS) và tách nguồn/tái tạo audio (xem
+[Audio Source Separation](../05-Audio-Understanding/01-audio-source-separation.mdx))
+cũng thuộc nhóm sinh dữ liệu audio, cùng tinh thần generative models
+(Autoencoder, GAN) đã học ở module trước, áp dụng cho modality mới.
 
 ## Pipeline xử lý âm thanh điển hình
 
@@ -92,53 +98,73 @@ Dù bài toán là gì, hầu hết pipeline đều có chung các bước:
 - Resample về sample rate chuẩn (thường 16kHz cho giọng nói)
 - Chuyển về mono nếu có nhiều kênh
 - Chuẩn hoá biên độ (volume)
-- Cắt/tỉa khoảng im lặng ở đầu/cuối
+- Cắt/tỉa khoảng im lặng ở đầu/cuối (voice activity detection — xem mục 5)
 
 **2. Feature extraction — chuyển âm thanh thô thành feature có cấu trúc:**
 - **Waveform:** giữ nguyên tín hiệu thô — dùng khi mô hình có thể tự học
-  feature (WaveNet, SincNet, wav2vec 2.0)
+  feature (WaveNet, Conv-TasNet, wav2vec 2.0)
 - **Spectrogram:** biến đổi Fourier cửa sổ trượt (STFT) — biểu diễn tần
   số theo thời gian, dùng cho CNN (coi spectrogram như ảnh 1 chiều)
 - **Mel-spectrogram:** spectrogram nén về thang mel (phi tuyến, mô phỏng
   cảm nhận tần số của tai người) — feature phổ biến nhất cho ASR/TTS
 - **MFCC:** nén thêm mel-spectrogram bằng DCT — phổ biến cho ASR truyền
   thống nhưng dần bị thay thế bởi mel-spectrogram thô trong DL
+- **Embedding học được:** SSL (wav2vec 2.0, HuBERT, WavLM) học feature
+  trực tiếp từ dữ liệu thay vì công thức cố định
 
-Xem chi tiết ở [bài 30](30-bieu-dien-am-thanh.mdx).
+Xem chi tiết ở [Biểu diễn Âm thanh](../02-Biểu%20diễn%20âm%20thanh/01-bieu-dien-am-thanh.mdx).
 
 **3. Mô hình — tuỳ bài toán:**
 - CNN + spectrogram cho phân loại âm thanh
 - CTC/RNN-T cho ASR
 - Encoder-decoder + vocoder cho TTS
-- Transformer/ Whisper cho ASR hiện đại
+- Transformer/Whisper cho ASR hiện đại
+- Embedding + cosine similarity cho speaker recognition/diarization
 
 **4. Hậu xử lý:**
 - Với ASR: giải mã beam search, kết hợp language model
 - Với TTS: vocoder sinh waveform từ spectrogram
 - Với phân loại: ngưỡng quyết định, majority voting
+- Với diarization: phân cụm (clustering) embedding theo thời gian
 
 ## Module Audio có gì?
 
-Module Audio được tổ chức thành 3 sub-module:
+Module Audio được tổ chức thành 5 sub-module, theo đúng thứ tự đọc từ
+dễ tới khó:
 
 **Sub-module: Biểu diễn âm thanh** (nền tảng cho mọi bài toán audio):
-- [Biểu diễn Âm thanh cho ML](30-bieu-dien-am-thanh.mdx) — waveform,
+- [Biểu diễn Âm thanh cho ML](../02-Biểu%20diễn%20âm%20thanh/01-bieu-dien-am-thanh.mdx) — waveform,
   spectrogram, mel-spectrogram, MFCC, STFT
+- [Self-Supervised Learning — Ý tưởng chung](../02-Biểu%20diễn%20âm%20thanh/02-self-supervised-learning-co-ban.mdx) —
+  contrastive learning, masked prediction, vì sao audio cần quantization
+- [SSL cho Âm thanh](../02-Biểu%20diễn%20âm%20thanh/03-ssl-audio.mdx) — wav2vec 2.0,
+  HuBERT, WavLM: học biểu diễn từ audio thô không nhãn
 
 **Sub-module: Speech-to-Text** (nghe và hiểu):
-- [Speech-to-Text](31-speech-to-text.mdx) — CTC loss, kiến trúc ASR,
+- [Speech-to-Text](../03-Speech-to-Text/01-speech-to-text.mdx) — CTC loss, kiến trúc ASR,
   encoder-decoder, WER
-- [Whisper](90-whisper.mdx) — đào sâu kiến trúc multitask decode của
+- [Whisper](../03-Speech-to-Text/02-whisper.mdx) — đào sâu kiến trúc multitask decode của
   OpenAI Whisper
 
 **Sub-module: Text-to-Speech** (nói từ văn bản):
-- [Text-to-Speech](32-text-to-speech.mdx) — pipeline 2 giai đoạn, WaveNet
-- [Tacotron 2 & FastSpeech](91-tacotron-fastspeech.mdx) — đào sâu sinh
+- [Text-to-Speech](../04-Text-to-Speech/01-text-to-speech.mdx) — pipeline 2 giai đoạn, WaveNet
+- [Tacotron 2 & FastSpeech](../04-Text-to-Speech/02-tacotron-fastspeech.mdx) — đào sâu sinh
   spectrogram, autoregressive vs non-autoregressive
-- [HiFi-GAN](92-hifigan-neural-vocoder.mdx) — đào sâu neural vocoder,
+- [HiFi-GAN](../04-Text-to-Speech/03-hifigan-neural-vocoder.mdx) — đào sâu neural vocoder,
   kết nối GAN Family
 
-Với bản đồ tư duy này, bạn đã sẵn sàng đi vào [bài 30](30-bieu-dien-am-thanh.mdx)
+**Sub-module: Audio-Understanding** (phân tích, nhận diện, không sinh mới):
+- [Audio Source Separation](../05-Audio-Understanding/01-audio-source-separation.mdx) —
+  tách nguồn âm (Conv-TasNet, Demucs)
+- [Audio Event Detection](../05-Audio-Understanding/02-audio-event-detection.mdx) —
+  nhận diện sự kiện âm thanh (YAMNet, PANNs)
+- [Speaker Recognition](../05-Audio-Understanding/03-speaker-recognition.mdx) —
+  nhận diện người nói (d-vector, x-vector)
+- [Audio Segmentation](../05-Audio-Understanding/04-audio-segmentation-vad-diarization.mdx) —
+  VAD và speaker diarization
+
+Với bản đồ tư duy này, bạn đã sẵn sàng đi vào
+[Biểu diễn Âm thanh](../02-Biểu%20diễn%20âm%20thanh/01-bieu-dien-am-thanh.mdx)
 — hiểu cách biến âm thanh thô thành dữ liệu mà mạng nơ-ron có thể học.
 
 ## Nguồn tham khảo

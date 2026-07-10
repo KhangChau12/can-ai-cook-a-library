@@ -62,13 +62,13 @@
       }
     },
     "Audio": {
-      "description": "Xử lý âm thanh số: cách biểu diễn âm thanh, nhận dạng giọng nói (Speech-to-Text) và tổng hợp giọng nói (Text-to-Speech).",
+      "description": "Xử lý âm thanh số: cách biểu diễn âm thanh (gồm cả học biểu diễn tự giám sát), nhận dạng giọng nói (Speech-to-Text), tổng hợp giọng nói (Text-to-Speech), và phân tích/nhận diện audio nói chung.",
       "submodules": {
-        "Biểu diễn âm thanh": "Nền tảng chung: waveform, STFT/spectrogram, mel-spectrogram, MFCC — cách đưa âm thanh vào mô hình ML.",
+        "Overview": "Giới thiệu chung: bài toán ML cho âm thanh, pipeline xử lý, bản đồ 5 sub-module.",
+        "Biểu diễn âm thanh": "Nền tảng chung: waveform, STFT/spectrogram, mel-spectrogram, MFCC (đặc trưng tính cố định) và self-supervised learning — wav2vec 2.0/HuBERT/WavLM (đặc trưng học được từ dữ liệu thô không nhãn).",
         "Speech-to-Text": "Nhận dạng giọng nói: CTC, encoder-decoder (Whisper), beam search decoding, đánh giá WER.",
         "Text-to-Speech": "Tổng hợp giọng nói: text→spectrogram (Tacotron 2, FastSpeech) + vocoder (WaveNet, HiFi-GAN), đánh giá MOS.",
-        "Overview": "Giới thiệu chung: bài toán ML cho âm thanh, pipeline xử lý.",
-        "Audio-Understanding": "Phân tích âm thanh nâng cao: source separation và event detection."
+        "Audio-Understanding": "Phân tích/nhận diện audio nói chung: tách nguồn (Conv-TasNet, Demucs), phát hiện sự kiện (YAMNet, PANNs), nhận diện người nói (d-vector, x-vector), và phân đoạn theo người nói (VAD, speaker diarization)."
       }
     },
     "Recommendation Systems": {

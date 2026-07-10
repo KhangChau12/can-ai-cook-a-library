@@ -1,0 +1,43 @@
+---
+quiz_for: 04-audio-segmentation-vad-diarization
+---
+
+## Q1
+Vì sao hệ thống thực tế thường dùng VAD để lọc trước, thay vì đưa thẳng toàn bộ bản ghi dài vào mô hình ASR/Speaker Recognition?
+
+- [x] Vì các mô hình downstream (ASR, Speaker Recognition) tốn chi phí tính toán đáng kể — chạy suốt bản ghi dài trong khi phần lớn là khoảng lặng sẽ lãng phí tài nguyên và có thể sinh lỗi giả
+- [ ] Vì ASR không thể xử lý audio dài quá 1 giây
+- [ ] Vì VAD luôn chính xác 100%, không cần các mô hình khác nữa
+- [ ] Vì Speaker Recognition không hoạt động được nếu không có VAD trước
+
+> VAD là bước lọc rẻ (mạng nhẹ, phân loại nhị phân frame-level) chạy trước để chỉ đưa các đoạn thực sự có tiếng nói vào các mô hình downstream tốn kém hơn — đúng nguyên tắc pipeline "tầng rẻ lọc trước tầng đắt".
+
+## Q2
+Speaker diarization khác Speaker Recognition (Verification/Identification) ở điểm cốt lõi nào?
+
+- [ ] Diarization không dùng embedding, chỉ dùng ngưỡng năng lượng tín hiệu
+- [x] Diarization thường không biết trước có bao nhiêu người trong bản ghi và không có mẫu giọng đăng ký sẵn — đây là bài toán phân cụm không giám sát (unsupervised clustering) theo thời gian, khác Speaker Recognition (biết trước danh sách N người, có mẫu giọng đăng ký, bài toán có giám sát)
+- [ ] Diarization chỉ áp dụng được cho 1 người nói duy nhất
+- [ ] Diarization không cần VAD, chỉ cần speaker embedding
+
+> Vì không biết trước số người và không có "vector đại diện" đã đăng ký cho ai, diarization phải phân cụm (clustering) các embedding theo độ giống nhau, thay vì so khớp trực tiếp với vector đã biết như verification/identification.
+
+## Q3
+Pipeline điển hình của speaker diarization gồm những bước nào, theo đúng thứ tự?
+
+- [ ] Phân cụm → VAD → trích embedding → gán nhãn
+- [x] VAD lọc đoạn có tiếng nói → chia cửa sổ ngắn → trích embedding (d-vector/x-vector) cho mỗi cửa sổ → phân cụm các embedding → gán nhãn người nói theo cụm
+- [ ] Trích embedding toàn bộ bản ghi một lần → phân loại N lớp cố định
+- [ ] Chỉ cần 1 bước: chạy trực tiếp mô hình end-to-end diarization từ đầu
+
+> Diarization không huấn luyện 1 mô hình end-to-end mới, mà ghép nối các thành phần đã học riêng: VAD (lọc), speaker embedding (biểu diễn "ai"), và clustering (thuật toán cổ điển không cần huấn luyện, ví dụ agglomerative/spectral clustering) để nhóm các cửa sổ cùng người nói lại với nhau.
+
+## Q4
+Vì sao diarization được gọi là bài toán "tổng hợp" của cả module Audio thay vì giới thiệu kiến trúc hoàn toàn mới?
+
+- [ ] Vì nó phát minh ra một mạng nơ-ron chưa từng gặp trong module
+- [x] Vì nó ghép lại các khối kiến thức đã học trong module: biểu diễn âm thanh (mel-spectrogram), phân loại frame-level (VAD, cùng tinh thần CTC), và speaker embedding (từ bài Speaker Recognition) — thành một pipeline giải bài toán thực tế phức tạp hơn từng phần riêng lẻ
+- [ ] Vì nó không liên quan gì đến các bài trước trong module
+- [ ] Vì nó chỉ dùng lại đúng 1 kỹ thuật duy nhất, không kết hợp gì thêm
+
+> Diarization là ví dụ rõ nhất cho việc giải bài toán phức tạp bằng cách kết hợp các thành phần đã huấn luyện/học riêng (VAD, embedding, clustering), thay vì thiết kế kiến trúc end-to-end hoàn toàn mới cho mọi bài toán.

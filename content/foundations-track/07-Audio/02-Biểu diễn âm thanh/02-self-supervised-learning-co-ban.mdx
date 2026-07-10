@@ -1,0 +1,119 @@
+---
+title: Học Biểu diễn Tự giám sát (Self-Supervised Learning) — Ý tưởng chung
+track: foundations-track
+module: Audio
+submodule: Biểu diễn âm thanh
+order: 2
+status: stable
+prerequisites: ["01-bieu-dien-am-thanh", "foundations-track/04-NLP-LLM/01-bert"]
+summary: Bài đệm trước khi vào SSL cho audio — dạy ý tưởng chung của self-supervised learning bằng ví dụ phi-audio trước. Hai họ mục tiêu SSL chính, contrastive learning (kéo gần positive, đẩy xa negative, kiểu SimCLR) và masked prediction (đoán phần bị che, kiểu BERT), và vì sao SSL trên tín hiệu liên tục (audio, ảnh) cần một bước "rời rạc hoá" mà SSL trên văn bản (vốn đã rời rạc) không cần.
+last_touched_by_task: "Bài mới (2026-07-10): bài đệm lấp khoảng trống trước bài SSL Audio — người đọc gặp Gumbel softmax/NCE loss ngay sau bài mel-spectrogram cơ bản mà chưa từng học contrastive learning/SSL nói chung ở đâu trong track. Nguồn: lilianweng.github.io (tổng hợp contrastive learning) + arxiv SimCLR 2002.05709."
+---
+
+Bài [Biểu diễn Âm thanh](01-bieu-dien-am-thanh.mdx) dạy cách trích đặc
+trưng từ audio bằng công thức toán cố định — STFT, mel-scale, DCT. Bài
+tiếp theo trong module ([SSL cho Âm thanh](03-ssl-audio.mdx)) chuyển
+hẳn sang một hướng khác: **học** đặc trưng từ dữ liệu, thay vì tính bằng
+công thức cố định. Trước khi vào chi tiết audio, bài này xây trực giác
+chung của cách tiếp cận đó — **self-supervised learning (SSL)** — bằng
+ví dụ đơn giản, không liên quan âm thanh, để phần công thức ở bài sau
+(quantization, contrastive loss) không còn xa lạ.
+
+## Vấn đề chung: dữ liệu có nhãn đắt, dữ liệu thô thì rẻ và nhiều
+
+Mọi mô hình supervised học từ bài đầu track (Linear Regression, CNN,
+BERT fine-tune...) đều cần **nhãn** — ảnh cần gán nhãn "chó"/"mèo", câu
+văn cần gán nhãn cảm xúc, audio ASR cần transcript chính xác từng từ.
+Gán nhãn tốn công người rất lớn, trong khi dữ liệu **thô không nhãn**
+(ảnh trên Internet, văn bản trên Wikipedia, audio trên YouTube) có sẵn
+với số lượng khổng lồ, gần như miễn phí.
+
+**Self-supervised learning** giải quyết đúng chênh lệch này: tự tạo ra
+"bài tập" và "đáp án" từ chính dữ liệu thô, không cần con người gán
+nhãn. Mô hình học một biểu diễn (representation) tổng quát từ khối dữ
+liệu khổng lồ này, sau đó chỉ cần một lượng nhỏ dữ liệu có nhãn thật để
+**fine-tune** cho tác vụ cụ thể — ý tưởng này áp dụng được cho mọi loại
+dữ liệu (ảnh, văn bản, audio), không phải kỹ thuật riêng của bất kỳ
+modality nào.
+
+Bạn đã gặp một ví dụ SSL cụ thể rồi, chỉ chưa được gọi tên: **BERT**
+(bài [BERT](../../04-NLP-LLM/04-Pretrained-Language-Models/01-bert.mdx))
+tự tạo bài tập bằng cách che (mask) ngẫu nhiên một số từ trong câu, rồi
+bắt mô hình đoán lại đúng từ bị che — "đáp án" chính là từ thật đã có
+sẵn trong câu, không cần ai gán nhãn thêm. Đây là một trong hai họ mục
+tiêu SSL chính, gọi là **masked prediction**.
+
+## Họ mục tiêu SSL thứ hai: Contrastive Learning
+
+Cách tiếp cận thứ hai, phổ biến khi dữ liệu là tín hiệu liên tục (ảnh,
+audio) hơn là chuỗi rời rạc sẵn có (từ trong câu): **contrastive
+learning** — thay vì đoán đúng một giá trị bị che, mô hình học **phân
+biệt** một cặp dữ liệu "giống nhau" (positive pair) với nhiều mẫu "khác
+nhau" (negative).
+
+**Ví dụ trực giác, phi-audio (kiểu SimCLR — Chen và cộng sự, 2020,
+Google):** lấy một ảnh con mèo, tạo ra 2 phiên bản **augmentation**
+khác nhau của cùng ảnh đó (một bản xoay nhẹ, một bản crop góc khác) —
+đây là **positive pair**, vì cả hai vẫn cùng biểu diễn "con mèo này".
+Lấy thêm hàng loạt ảnh khác trong batch (chó, xe, người...) làm
+**negative** — các mẫu này phải bị đẩy ra xa trong không gian biểu diễn.
+Mô hình được huấn luyện để: biểu diễn của 2 bản augmentation cùng 1 ảnh
+phải **gần nhau**, còn biểu diễn của ảnh khác phải **xa nhau**. Không
+cần biết ảnh đó thực sự là "con mèo" theo nhãn nào — mô hình chỉ cần
+học được "cái gì giống nhau, cái gì khác nhau", nhưng biểu diễn học
+được từ bài tập tưởng chừng đơn giản này hoá ra chứa đựng thông tin ngữ
+nghĩa rất phong phú, đủ tốt để fine-tune cho phân loại ảnh thật với rất
+ít dữ liệu có nhãn.
+
+Loss được dùng phổ biến cho contrastive learning là **NCE (Noise
+Contrastive Estimation)** — công thức chung:
+
+```
+L = -log( sim(anchor, positive) / (sim(anchor, positive) + Σ sim(anchor, negative_k)) )
+```
+
+Trực giác của công thức: `sim(anchor, positive)` (độ giống giữa mẫu
+đang xét và đúng cặp của nó) phải **lớn hơn hẳn** tổng độ giống với mọi
+`negative_k` (các mẫu sai) — loss giảm khi mô hình tách biệt rõ đúng/sai,
+và không giảm nếu mô hình nhầm lẫn positive với negative. Bài
+[SSL cho Âm thanh](03-ssl-audio.mdx) áp dụng đúng công thức này cho
+audio — chỉ khác ở chỗ "positive"/"negative" được định nghĩa từ các
+đoạn audio liền kề nhau theo thời gian, thay vì các phiên bản
+augmentation của một ảnh.
+
+## Vì sao cần "rời rạc hoá" tín hiệu liên tục — vấn đề riêng của audio/ảnh
+
+BERT che một **từ** — vốn đã là một đơn vị rời rạc (một token trong từ
+điển hữu hạn), nên "đáp án đúng" luôn là một lựa chọn rõ ràng trong tập
+từ vựng. Nhưng audio (và ảnh) là tín hiệu **liên tục** — một đoạn
+mel-spectrogram không có "đáp án đúng" rời rạc nào để mô hình dự đoán
+bằng cross-entropy như BERT.
+
+Đây là lý do các mô hình SSL cho audio (wav2vec 2.0, sẽ gặp ở bài sau)
+cần thêm một bước **quantization** (lượng tử hoá) — ép một biểu diễn
+liên tục về một tập hữu hạn các "mã" rời rạc, tạo ra một "từ điển giả"
+để mô hình có thể học theo kiểu giống BERT (dự đoán đúng mã nào) hoặc
+theo kiểu contrastive (phân biệt đúng mã thật với các mã nhiễu).
+Kỹ thuật cụ thể (Gumbel-softmax — một cách lấy mẫu từ phân phối rời rạc
+mà vẫn giữ được gradient để lan truyền ngược, thay vì dùng `argmax`
+cứng làm mất khả năng học) sẽ được trình bày chi tiết ở bài tiếp theo —
+ở đây chỉ cần nắm trực giác: **audio cần một bước ép về rời rạc mà văn
+bản không cần**, vì văn bản vốn sẵn rời rạc còn audio vốn sẵn liên tục.
+
+## Liên hệ lại với các bài trước
+
+- **BERT** là ví dụ SSL theo hướng masked prediction, dùng được ngay vì
+  văn bản vốn rời rạc — không cần bước quantization.
+- **Biểu diễn Âm thanh** (mel-spectrogram, MFCC) là đặc trưng **tính
+  bằng công thức cố định** — SSL học đặc trưng **từ dữ liệu**, một
+  hướng đi khác biệt hẳn về triết lý dù cùng mục tiêu "biến audio thành
+  vector số cho mô hình học".
+- Contrastive learning (kéo gần positive, đẩy xa negative) là một mẫu
+  hình sẽ còn gặp lại ở nhiều nơi trong track — cùng tinh thần với cách
+  GAN (module Generative Models) học phân biệt "thật" và "giả", dù cơ
+  chế huấn luyện khác nhau (đối kháng hai mạng vs một mục tiêu duy nhất).
+
+## Nguồn tham khảo
+
+- [Lil'Log — Contrastive Representation Learning](https://lilianweng.github.io/posts/2021-05-31-contrastive/) — dùng cho trực giác chung về contrastive learning, công thức NCE loss, và vai trò của positive/negative pairs.
+- [arXiv — A Simple Framework for Contrastive Learning of Visual Representations (Chen et al., 2020)](https://arxiv.org/abs/2002.05709) — paper gốc SimCLR, dùng cho ví dụ cụ thể augmentation tạo positive pair và cách huấn luyện contrastive trên ảnh.

@@ -1,0 +1,43 @@
+---
+quiz_for: 02-self-supervised-learning-co-ban
+---
+
+## Q1
+Self-supervised learning giải quyết vấn đề gì?
+
+- [ ] Mô hình học hoàn toàn không cần dữ liệu
+- [x] Tận dụng lượng lớn dữ liệu thô không nhãn (rẻ, sẵn có) bằng cách tự tạo "bài tập" và "đáp án" từ chính dữ liệu đó, thay vì phụ thuộc vào dữ liệu gán nhãn thủ công (đắt, khan hiếm)
+- [ ] Chỉ áp dụng được cho văn bản, không áp dụng được cho ảnh hay audio
+- [ ] Thay thế hoàn toàn nhu cầu fine-tune sau này
+
+> SSL học biểu diễn tổng quát từ dữ liệu thô khổng lồ, sau đó chỉ cần một lượng nhỏ dữ liệu có nhãn để fine-tune cho tác vụ cụ thể — áp dụng được cho mọi modality (ảnh, văn bản, audio).
+
+## Q2
+BERT là ví dụ của họ mục tiêu SSL nào, và vì sao nó không cần bước "quantization"?
+
+- [x] Masked prediction — vì văn bản vốn đã là chuỗi token rời rạc, "đáp án đúng" khi che 1 từ luôn là 1 lựa chọn rõ ràng trong từ điển hữu hạn
+- [ ] Contrastive learning — vì BERT so sánh 2 câu văn với nhau
+- [ ] Masked prediction — vì BERT dùng ảnh làm input
+- [ ] Contrastive learning — vì văn bản là tín hiệu liên tục
+
+> BERT che một từ (đã rời rạc sẵn) và dự đoán lại bằng cross-entropy trên từ điển hữu hạn. Audio/ảnh là tín hiệu liên tục, không có "đáp án rời rạc" tự nhiên — đây là lý do SSL cho audio cần thêm bước quantization (ép về mã rời rạc) trước khi áp dụng kiểu masked prediction.
+
+## Q3
+Trong contrastive learning kiểu SimCLR, "positive pair" được tạo ra như thế nào?
+
+- [ ] Lấy 2 ảnh ngẫu nhiên bất kỳ trong batch
+- [x] Tạo 2 phiên bản augmentation khác nhau (ví dụ xoay nhẹ, crop góc khác) từ cùng một ảnh gốc — cả hai vẫn biểu diễn cùng một đối tượng
+- [ ] Lấy ảnh đã có nhãn "giống nhau" do con người gán
+- [ ] Ghép ngẫu nhiên ảnh từ 2 batch khác nhau
+
+> Positive pair là 2 augmentation của cùng 1 ảnh — mô hình học kéo gần biểu diễn của cặp này, đồng thời đẩy xa biểu diễn so với các ảnh khác trong batch (negative), không cần biết nhãn ngữ nghĩa thật.
+
+## Q4
+Công thức NCE loss `L = -log(sim(anchor, positive) / (sim(anchor, positive) + Σ sim(anchor, negative_k)))` giảm khi nào?
+
+- [ ] Khi mô hình nhầm lẫn positive với negative
+- [x] Khi độ giống giữa anchor và đúng positive lớn hơn hẳn tổng độ giống với mọi negative — tức mô hình tách biệt rõ đúng/sai
+- [ ] Khi tất cả các cặp đều có độ giống bằng nhau
+- [ ] Khi không có negative nào trong batch
+
+> Loss này ép sim(anchor, positive) áp đảo so với tổng sim(anchor, negative_k) — mô hình học để phân biệt rõ ràng "cặp đúng" khỏi "các mẫu nhiễu", đúng tinh thần Noise Contrastive Estimation.

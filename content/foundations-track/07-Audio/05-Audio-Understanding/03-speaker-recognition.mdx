@@ -1,0 +1,112 @@
+---
+title: Speaker Recognition — Nhận diện Người nói qua Giọng nói
+track: foundations-track
+module: Audio
+submodule: Audio-Understanding
+order: 3
+status: stable
+prerequisites: ["01-bieu-dien-am-thanh", "02-audio-event-detection"]
+summary: Xác định ai đang nói từ giọng nói — verification (1:1, "có đúng là người X không?") và identification (1:N, "là ai trong N người?"). Cả hai quy về cùng một kỹ thuật nền tảng — d-vector/x-vector embedding + cosine similarity — thay vì huấn luyện riêng một bộ phân loại cho từng người, vì danh sách người cần nhận diện luôn thay đổi.
+last_touched_by_task: "Bài mới (2026-07-10): lấp khoảng trống Overview đã hứa nhưng module chưa có bài — Speaker Recognition là 1 trong 6 bài toán chính được liệt kê ở Overview. Nguồn: arxiv x-vector 1810.04960 + arxiv d-vector/GE2E 1710.10467."
+---
+
+Bài [Audio Event Detection](02-audio-event-detection.mdx) nhận diện
+**loại** âm thanh đang xảy ra (tiếng chó sủa, còi xe...). **Speaker
+recognition** là một bài toán nhận diện khác, riêng cho giọng nói: xác
+định **ai** đang nói, không phải nội dung họ nói gì (khác Speech-to-Text)
+hay loại âm thanh gì (khác Audio Event Detection).
+
+## Hai dạng bài toán: Verification và Identification
+
+- **Speaker verification (1:1):** "giọng này có đúng là người X không?"
+  — bài toán xác thực, dùng trong mở khoá bằng giọng nói, xác minh danh
+  tính qua điện thoại.
+- **Speaker identification (1:N):** "giọng này là ai trong danh sách N
+  người đã biết?" — dùng trong phân loại người gọi, gắn nhãn người nói
+  trong một cuộc họp.
+
+## Vấn đề: không thể huấn luyện một bộ phân loại riêng cho mỗi người
+
+Cách tiếp cận ngây thơ cho identification: huấn luyện một mạng phân loại
+N lớp, mỗi lớp là một người. Vấn đề: danh sách người cần nhận diện luôn
+**thay đổi** — thêm người dùng mới nghĩa là phải huấn luyện lại toàn bộ
+mạng từ đầu, với rất ít mẫu giọng nói cho người mới (thường chỉ vài giây
+ghi âm đăng ký). Đây là bài toán **few-shot** — không đủ dữ liệu để
+huấn luyện một bộ phân loại riêng mỗi khi có người dùng mới.
+
+## Giải pháp: học một không gian embedding chung, so sánh bằng khoảng cách
+
+Thay vì phân loại trực tiếp, speaker recognition hiện đại học một hàm
+biến giọng nói thành một **vector embedding** cố định chiều (ví dụ 256
+chiều) sao cho: embedding của **cùng một người** (dù nói câu khác nhau,
+lúc khác nhau) nằm **gần nhau**, còn embedding của **người khác nhau**
+nằm **xa nhau** trong không gian vector — đúng chính xác ý tưởng
+**contrastive learning** đã học ở bài
+[Self-Supervised Learning — Ý tưởng chung](../02-Biểu%20diễn%20âm%20thanh/02-self-supervised-learning-co-ban.mdx),
+chỉ khác ở "positive pair" giờ là 2 đoạn giọng nói của cùng 1 người, còn
+"negative" là giọng của người khác.
+
+**Ưu điểm quyết định:** một khi đã học được không gian embedding tốt,
+nhận diện người mới không cần huấn luyện lại — chỉ cần tính embedding
+cho vài giây giọng nói đăng ký của người đó (gọi là "enrollment"), lưu
+lại làm "vector đại diện", rồi so sánh **cosine similarity** (đo góc
+giữa 2 vector — giá trị càng gần 1 nghĩa là 2 vector càng cùng hướng,
+càng giống nhau) giữa embedding giọng nói mới với vector đã lưu:
+
+- **Verification:** so 1 embedding mới với 1 vector đã đăng ký của
+  người X — cosine similarity vượt ngưỡng → xác nhận đúng người X.
+- **Identification:** so 1 embedding mới với **N** vector đã đăng ký —
+  chọn người có cosine similarity cao nhất.
+
+Cả 2 bài toán quy về **cùng một bước huấn luyện** (học không gian
+embedding tốt) — chỉ khác cách dùng embedding lúc suy luận.
+
+## d-vector và x-vector: hai thế hệ embedding
+
+**d-vector** (Variani và cộng sự, 2014; cải tiến với GE2E loss —
+Generalized End-to-End loss, Wan và cộng sự, 2018): dùng mạng DNN/LSTM
+nhận đầu vào là các frame đặc trưng (MFCC/mel-spectrogram, bài
+[Biểu diễn Âm thanh](../02-Biểu%20diễn%20âm%20thanh/01-bieu-dien-am-thanh.mdx)),
+lấy trung bình các frame-level embedding thành 1 vector đại diện cho
+toàn bộ đoạn audio. GE2E loss là một dạng contrastive loss chuyên biệt
+cho speaker embedding: trong một batch gồm nhiều người, mỗi người nhiều
+câu, loss kéo embedding các câu cùng người lại gần **tâm** (centroid)
+của người đó, đẩy xa tâm của người khác — hiệu quả hơn so sánh từng cặp
+đơn lẻ vì tận dụng được cấu trúc "nhiều câu/người" trong một lần tính
+loss.
+
+**x-vector** (Snyder và cộng sự, 2018): thay kiến trúc DNN/LSTM bằng
+**TDNN** (Time-Delay Neural Network — một dạng 1D CNN với dilated
+convolution, cùng nguyên lý đã gặp ở WaveNet/Conv-TasNet) kết hợp một
+lớp **statistics pooling** — tính trung bình và độ lệch chuẩn của các
+frame-level feature qua toàn bộ thời gian, nén một chuỗi độ dài thay đổi
+thành một vector cố định chiều duy nhất. x-vector huấn luyện với
+softmax loss (phân loại người nói trong tập huấn luyện) rồi lấy lớp ẩn
+trước lớp phân loại cuối làm embedding — embedding này tổng quát hoá
+tốt sang người nói **chưa từng thấy** khi huấn luyện, đúng yêu cầu của
+bài toán few-shot đã nêu ở trên. x-vector hiện là chuẩn thực hành phổ
+biến hơn d-vector nhờ độ ổn định và hiệu năng tốt hơn trên nhiều điều
+kiện ghi âm khác nhau (nhiễu, kênh truyền khác nhau).
+
+## Liên hệ lại với các bài trước
+
+- Toàn bộ cách tiếp cận (học embedding, so bằng cosine similarity, thay
+  vì phân loại N lớp cố định) là ứng dụng trực tiếp **contrastive
+  learning** đã học ở bài
+  [Self-Supervised Learning](../02-Biểu%20diễn%20âm%20thanh/02-self-supervised-learning-co-ban.mdx) —
+  điểm khác: ở đây vẫn dùng nhãn người nói lúc huấn luyện (không phải
+  self-supervised hoàn toàn), nhưng mục tiêu huấn luyện (kéo gần
+  positive, đẩy xa negative) giống hệt.
+- TDNN của x-vector dùng dilated convolution — cùng nguyên lý đã gặp ở
+  WaveNet và Conv-TasNet (bài
+  [Audio Source Separation](01-audio-source-separation.mdx)): mở rộng
+  receptive field theo thời gian mà không cần quá nhiều lớp.
+- Bài toán "học embedding rồi so khoảng cách thay vì phân loại cố định"
+  là một mẫu hình chung, không riêng audio — cùng tinh thần face
+  recognition (học embedding khuôn mặt, so cosine similarity) trong thị
+  giác máy tính.
+
+## Nguồn tham khảo
+
+- [arXiv — X-Vectors: Robust DNN Embeddings for Speaker Recognition (Snyder et al., 2018)](https://arxiv.org/abs/1810.04960) — paper gốc x-vector, dùng cho kiến trúc TDNN + statistics pooling, huấn luyện bằng softmax rồi lấy embedding từ lớp ẩn.
+- [arXiv — Generalized End-to-End Loss for Speaker Verification (Wan et al., 2018)](https://arxiv.org/abs/1710.10467) — dùng cho GE2E loss cải tiến d-vector, cơ chế kéo gần centroid cùng người/đẩy xa centroid người khác.

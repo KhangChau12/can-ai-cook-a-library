@@ -14,21 +14,20 @@
 
 ## 1. STATUS (đọc đầu mỗi task, không ngoại lệ)
 
-- **Version:** v9.9
-- **Phiên gần nhất:** TÁI CẤU TRÚC MODULE "RECOMMENDATION SYSTEMS" THÀNH 5
-  SUB-MODULE (2026-07-10) — theo yêu cầu người vận hành rà lại mạch tư duy
-  module này cho người mới: module cũ (5 bài, phẳng, không sub-module)
-  nhảy thẳng vào Collaborative Filtering mà chưa giới thiệu bức tranh
-  chung, khiến câu mở đầu bài CF cũ ("không cần hiểu nội dung item") vô
-  nghĩa vì chưa có trường phái content-based nào được nhắc để so sánh.
-  Viết mới 6 bài (Overview, Content-based Filtering, Memory-based CF,
-  Evaluation & Cold-start, Sequence-aware Recommendation, Two-Tower &
-  Retrieval-Ranking) kèm quiz, di chuyển 5 bài cũ vào đúng vị trí trong
-  5 sub-module mới (Overview/Nền tảng Content-based & CF/Deep Learning
-  cho RS/Ranking & Evaluation/Sequence-aware & Modern Architectures), sửa
-  toàn bộ prerequisites/link chéo và `quiz_for` bị lệch do đổi số thứ tự,
-  cập nhật `content/modules.json` và `_index.mdx`.
-- **Tổng số bài hiện có:** 130 (11 exam-track + 119 foundations-track) —
+- **Version:** v10.1
+- **Phiên gần nhất:** RÀ SOÁT + HOÀN THIỆN MODULE "AUDIO" (2026-07-10) —
+  theo yêu cầu người vận hành đọc lại toàn bộ 13 bài module Audio (đọc
+  nội dung thật, không suy luận từ tên file) ở 2 tầng: cấu trúc/mạch và
+  chiều sâu nội dung cho người mới. Phát hiện + sửa (đã người vận hành
+  duyệt phạm vi trước khi làm): (1) 3 bài chưa được rà trong đợt sửa
+  trước (Whisper, Tacotron/FastSpeech, HiFi-GAN) còn tham chiếu "bài NN"
+  bằng số thứ tự cũ dạng plain text và link hiển thị số ảo — đổi hết
+  sang link theo tên bài; (2) câu chốt cuối bài Audio Segmentation đếm
+  sai "4 sub-module" (đúng là 5, tự mâu thuẫn với chính Overview nó dẫn
+  link tới) — sửa lại; (3) viết quiz cho 4 bài còn thiếu (Overview, SSL —
+  Ý tưởng chung, Speaker Recognition, Audio Segmentation) — nay đủ
+  quiz cho toàn bộ 13/13 bài nội dung của module.
+- **Tổng số bài hiện có:** 133 (11 exam-track + 122 foundations-track) —
   tổ chức thành **8 module** cho foundations-track:
   ML cổ điển (12 bài, 4 sub-module: Overview 1/Supervised Learning 6/
   Unsupervised Learning 4/Ensemble Methods 1), DL Nền tảng (7, phẳng),
@@ -40,7 +39,10 @@
   Policy-based 9 (Policy Gradient, Actor-Critic, TRPO, PPO, A3C, A2C,
   DDPG/TD3, SAC, Synthesis)/Model-based 2/Advanced Topics 4),
   Generative Models (14 bài, 3 sub-module: Overview 5/GAN Family 5/Diffusion Models 4),
-  Audio (10, 5 sub-module: Overview 1/Biểu diễn âm thanh 2/STT 2/TTS 3/Audio-Understanding 2),
+  Audio (13 bài, 5 sub-module: Overview 1/Biểu diễn âm thanh 3 (waveform/
+  spectrogram, SSL — Ý tưởng chung, SSL cho Âm thanh)/STT 2/TTS 3/
+  Audio-Understanding 4 (Source Separation, Event Detection, Speaker
+  Recognition, Audio Segmentation)),
   Recommendation Systems (11 bài, 5 sub-module: Overview 1/Nền tảng
   Content-based & CF 3/Deep Learning cho RS 3/Ranking & Evaluation 2/
   Sequence-aware & Modern Architectures 2)
@@ -488,7 +490,7 @@ bài này bị sửa mà không phải vì nó sai.
 - `"Hướng dẫn dùng nền tảng"` — bài 1-3
 - `"Kỹ thuật thi đấu nâng cao"` — bài 4-11
 
-### foundations-track — 119 bài, 8 module
+### foundations-track — 122 bài, 8 module
 
 1. `"Nền tảng Toán & ML cổ điển"` — 12 bài, 4 sub-module: Overview 1
    (Xác suất & thống kê)/Supervised Learning 6 (Linear/Logistic
@@ -503,7 +505,7 @@ bài này bị sửa mà không phải vì nó sai.
 6. `"Generative Models"` — 14 bài, 3 sub-module: Overview 5 (gồm
    Autoencoder → VAE → Flow-based → VQ-VAE, mạch tiến hoá "nén → sinh dữ
    liệu")/GAN Family 5/Diffusion Models 4
-7. `"Audio"` — 10 bài, 5 sub-module: Overview 1/Biểu diễn âm thanh 2/STT 2/TTS 3/Audio-Understanding 2
+7. `"Audio"` — 13 bài, 5 sub-module: Overview 1/Biểu diễn âm thanh 3 (waveform/spectrogram, SSL — Ý tưởng chung, SSL cho Âm thanh)/STT 2/TTS 3/Audio-Understanding 4 (Source Separation, Event Detection, Speaker Recognition, Audio Segmentation)
 8. `"Recommendation Systems"` — 11 bài, 5 sub-module: Overview 1/Nền tảng Content-based & CF 3 (Content-based Filtering, Memory-based CF, Matrix Factorization)/Deep Learning cho RS 3 (NeuMF, DeepFM, AutoRec)/Ranking & Evaluation 2 (metric ranking + cold-start, BPR)/Sequence-aware & Modern Architectures 2 (GRU4Rec/SASRec, Two-Tower)
 
 **Trạng thái review:** 0 bài `needs-review` trên cả 2 track — toàn bộ đã

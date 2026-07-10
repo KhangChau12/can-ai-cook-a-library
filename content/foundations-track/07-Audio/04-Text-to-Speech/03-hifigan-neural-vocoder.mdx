@@ -6,19 +6,19 @@ submodule: Text-to-Speech
 order: 3
 status: stable
 prerequisites: ["01-text-to-speech", "01-gan"]
-summary: Bài 32 giới thiệu HiFi-GAN ở mức tổng quan (nhanh hơn WaveNet hàng nghìn lần). Bài này đào sâu kiến trúc cụ thể: generator dùng transposed convolution + multi-receptive field fusion (nhiều nhánh kernel/dilation song song, bắt đặc trưng đa độ phân giải thời gian), 2 discriminator chuyên biệt (multi-period bắt tính tuần hoàn của giọng nói, multi-scale bắt cấu trúc nhiều độ phân giải), huấn luyện bằng 3 loss kết hợp (adversarial + mel-spectrogram loss + feature matching loss) — không chỉ GAN loss thuần như DCGAN.
-last_touched_by_task: Bài mới (Task 116, 2026-07-07) — Phase 3 Audio HOÀN THÀNH: đào sâu HiFi-GAN (đã giới thiệu sơ ở bài 32) vào đúng submodule Text-to-Speech, kết nối trực tiếp GAN Family (bài 23). Trọng tâm: 2 discriminator chuyên biệt cho audio (khác ảnh) + tổ hợp 3 loss thay vì chỉ minimax loss thuần. Nguồn: arxiv (paper liên quan HiFi-GAN xác nhận qua WebSearch whitelist: kiến trúc MRF, multi-period/multi-scale discriminator, 3 loss).
+summary: Bài Text-to-Speech giới thiệu HiFi-GAN ở mức tổng quan (nhanh hơn WaveNet hàng nghìn lần). Bài này đào sâu kiến trúc cụ thể: generator dùng transposed convolution + multi-receptive field fusion (nhiều nhánh kernel/dilation song song, bắt đặc trưng đa độ phân giải thời gian), 2 discriminator chuyên biệt (multi-period bắt tính tuần hoàn của giọng nói, multi-scale bắt cấu trúc nhiều độ phân giải), huấn luyện bằng 3 loss kết hợp (adversarial + mel-spectrogram loss + feature matching loss) — không chỉ GAN loss thuần như DCGAN.
+last_touched_by_task: "Sửa (2026-07-10): dọn các tham chiếu 'bài NN' bằng số thứ tự cũ (plain text và link hiển thị số ảo) sang link markdown theo tên bài, khớp chuẩn hiện tại. Nội dung kỹ thuật không đổi."
 ---
 
-Bài [Text-to-Speech](32-text-to-speech.mdx) giới thiệu HiFi-GAN ở mức
+Bài [Text-to-Speech](01-text-to-speech.mdx) giới thiệu HiFi-GAN ở mức
 tổng quan: vocoder dựa trên GAN, nhanh hơn WaveNet hàng nghìn lần. Bài
 này đào sâu kiến trúc cụ thể — vì sao HiFi-GAN cần **2 discriminator
 chuyên biệt** và **3 loss function** kết hợp, khác hẳn GAN thuần đã học
-ở bài [23](23-gan.mdx).
+ở bài [GAN](23-gan.mdx).
 
 ## Vấn đề: waveform audio có cấu trúc khác ảnh
 
-GAN cho ảnh (DCGAN, bài [46](46-dcgan.mdx)) dùng 1 discriminator CNN
+GAN cho ảnh (DCGAN, bài [DCGAN](46-dcgan.mdx)) dùng 1 discriminator CNN
 đánh giá "ảnh này thật hay giả". Nhưng waveform audio có đặc điểm mà
 discriminator CNN thuần không bắt tốt: **tính tuần hoàn** (giọng nói có
 cao độ — pitch — lặp lại theo chu kỳ) và **cấu trúc đa độ phân giải thời
@@ -30,7 +30,8 @@ downsample). HiFi-GAN (Kong, Kim, Bae 2020) thiết kế kiến trúc riêng cho
 
 Generator nhận mel-spectrogram, phải **upsample** (tăng độ phân giải
 thời gian) tới đúng độ dài waveform mục tiêu (mel-spectrogram đã nén
-theo hop_length ở bài [30](30-bieu-dien-am-thanh.mdx), giờ cần giải nén
+theo hop_length ở bài
+[Biểu diễn Âm thanh](../02-Biểu%20diễn%20âm%20thanh/01-bieu-dien-am-thanh.mdx), giờ cần giải nén
 ngược lại):
 
 - **Transposed convolution** (tích chập chuyển vị — đã gặp ở
@@ -39,7 +40,7 @@ ngược lại):
 - **Multi-Receptive Field Fusion (MRF)**: sau mỗi lần upsample, thay vì
   1 khối tích chập đơn, dùng **nhiều nhánh residual block song song**,
   mỗi nhánh có **kernel size và dilation rate khác nhau** (giống tinh
-  thần dilated convolution của WaveNet, bài 32, nhưng tổ chức song song
+  thần dilated convolution của WaveNet, bài [Text-to-Speech](01-text-to-speech.mdx), nhưng tổ chức song song
   thay vì xếp chồng tuần tự). Output của MRF là **tổng** output các
   nhánh — mỗi nhánh "nhìn" một phạm vi thời gian (receptive field) khác
   nhau, kết hợp lại bắt được đặc trưng ở nhiều độ phân giải cùng lúc
@@ -68,12 +69,12 @@ downsample).
 2 discriminator bổ sung nhau: MPD bắt tính tuần hoàn (đặc thù giọng
 nói), MSD bắt cấu trúc đa tỷ lệ (tổng quát cho mọi tín hiệu). Cùng dùng
 kiến trúc "nhiều discriminator con chuyên biệt" — mẫu hình tương tự
-multi-head trong attention (bài [14](14-attention.mdx)), mỗi "đầu" nhìn
+multi-head trong attention (bài [Attention](14-attention.mdx)), mỗi "đầu" nhìn
 một khía cạnh khác nhau.
 
 ## Ba loss kết hợp — không chỉ minimax thuần
 
-GAN gốc (bài 23) chỉ có 1 minimax loss. HiFi-GAN kết hợp **3 loss**:
+GAN gốc (bài [GAN](23-gan.mdx)) chỉ có 1 minimax loss. HiFi-GAN kết hợp **3 loss**:
 
 1. **Adversarial loss** (dạng least-squares GAN — biến thể ổn định hơn
    minimax gốc, tránh vấn đề gradient bão hoà đã nhắc ở

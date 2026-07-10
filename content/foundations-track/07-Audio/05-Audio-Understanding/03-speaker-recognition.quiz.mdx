@@ -1,0 +1,43 @@
+---
+quiz_for: 03-speaker-recognition
+---
+
+## Q1
+Vì sao speaker recognition hiện đại không huấn luyện một bộ phân loại N lớp (mỗi lớp là 1 người) để nhận diện người nói?
+
+- [ ] Vì phân loại N lớp không thể huấn luyện được với mạng nơ-ron
+- [x] Vì danh sách người cần nhận diện luôn thay đổi — thêm người mới sẽ cần huấn luyện lại toàn bộ mạng, trong khi chỉ có rất ít mẫu giọng (vài giây) cho người mới, đây là bài toán few-shot
+- [ ] Vì giọng nói của mỗi người luôn giống hệt nhau
+- [ ] Vì phân loại N lớp chỉ áp dụng được cho ảnh, không áp dụng được cho audio
+
+> Cách tiếp cận N lớp không mở rộng được (không scale) khi danh sách người thay đổi liên tục. Giải pháp: học một không gian embedding chung, không cần huấn luyện lại khi có người mới — chỉ cần tính embedding cho vài giây giọng đăng ký.
+
+## Q2
+Trong không gian embedding học được cho speaker recognition, "gần nhau" và "xa nhau" được đo bằng gì, và ý nghĩa là gì?
+
+- [ ] Khoảng cách Euclid; gần nhau nghĩa là 2 người nói cùng nội dung
+- [x] Cosine similarity; embedding của cùng một người (dù nói câu khác nhau, lúc khác nhau) phải gần nhau, embedding của người khác nhau phải xa nhau
+- [ ] Accuracy; gần nhau nghĩa là mô hình dự đoán đúng
+- [ ] WER; gần nhau nghĩa là phát âm giống nhau
+
+> Đây là ứng dụng trực tiếp của contrastive learning: kéo gần positive (cùng người), đẩy xa negative (khác người) trong không gian vector, đo bằng cosine similarity (góc giữa 2 vector).
+
+## Q3
+x-vector khác d-vector ở điểm kiến trúc nào?
+
+- [ ] x-vector không dùng embedding, chỉ dùng phân loại trực tiếp
+- [x] x-vector dùng TDNN (Time-Delay Neural Network, dạng 1D CNN với dilated convolution) kết hợp statistics pooling (trung bình + độ lệch chuẩn qua thời gian) để nén chuỗi độ dài thay đổi thành 1 vector cố định chiều, thay vì DNN/LSTM lấy trung bình frame-level như d-vector
+- [ ] x-vector chỉ hoạt động với văn bản, không hoạt động với audio
+- [ ] x-vector không cần huấn luyện, chỉ cần công thức toán cố định
+
+> d-vector dùng DNN/LSTM + trung bình frame-level embedding. x-vector dùng TDNN + statistics pooling (mean + std), huấn luyện bằng softmax loss rồi lấy lớp ẩn trước lớp phân loại cuối làm embedding — tổng quát hoá tốt hơn sang người nói chưa từng thấy.
+
+## Q4
+Speaker verification (1:1) và speaker identification (1:N) khác nhau ở bước nào khi suy luận?
+
+- [ ] Verification không cần embedding, identification thì cần
+- [x] Verification so 1 embedding mới với 1 vector đã đăng ký của một người cụ thể (ngưỡng cosine similarity để xác nhận/từ chối); identification so 1 embedding mới với N vector đã đăng ký, chọn người có cosine similarity cao nhất
+- [ ] Verification dùng softmax, identification dùng cosine similarity
+- [ ] Cả hai đều huấn luyện lại mô hình từ đầu mỗi lần dùng
+
+> Cả hai dùng chung một bước huấn luyện (học không gian embedding tốt) — chỉ khác cách dùng embedding lúc suy luận: so 1:1 (verification) hay so 1:N rồi chọn max (identification).

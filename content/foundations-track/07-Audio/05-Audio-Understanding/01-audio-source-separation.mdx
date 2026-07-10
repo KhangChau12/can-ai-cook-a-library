@@ -2,16 +2,24 @@
 title: Audio Source Separation — Tách Âm Thanh Thành Các Nguồn Thành Phần
 track: foundations-track
 module: Audio
+submodule: Audio-Understanding
 order: 1
 status: stable
 prerequisites: ["01-bieu-dien-am-thanh"]
-summary: Tách một bản ghi âm hỗn hợp (nhiều người nói cùng lúc, nhạc + giọng hát) thành các track riêng. Bài này kể hai nhánh: speech separation (Conv-TasNet, time-domain mask) và music separation (Spleeter, Demucs, hybrid spectrogram+waveform).
-last_touched_by_task: Bài mới (2026-07-08): Phase 4.2 đào sâu Audio — Audio Source Separation. Nguồn: arxiv Conv-TasNet 1809.07454 + arxiv Demucs 1909.01108 + machinelearningmastery.com.
-submodule: Audio-Understanding
+summary: Tách một bản ghi âm hỗn hợp (nhiều người nói cùng lúc, nhạc + giọng hát) thành các track riêng. Bài này kể hai nhánh: speech separation (Conv-TasNet, time-domain mask, tránh vấn đề mất pha của spectrogram-masking cũ) và music separation (Spleeter thuần spectrogram, Demucs hybrid kết hợp cả 2 domain).
+last_touched_by_task: "Sửa (2026-07-10): thêm đoạn mở đầu nối mạch (module chuyển từ nghe-hiểu/nói sang phân tích audio nói chung), giải thích rõ tại sao Conv-TasNet time-domain tốt hơn time-frequency masking cũ (vấn đề mất pha), tại sao Demucs hybrid tốt hơn Spleeter thuần spectrogram, thêm mục Liên hệ lại với các bài trước. Nguồn cũ (Conv-TasNet, Demucs) giữ nguyên, không đổi."
 ---
 
-Audio source separation là bài toán tách một bản ghi âm hỗn hợp thành các
-nguồn âm thanh riêng biệt. Có hai nhánh chính:
+Các bài trước trong module Audio đi theo hai chiều đối lập của giọng
+nói: **nghe hiểu** (Speech-to-Text) và **nói** (Text-to-Speech). Phần
+còn lại của module chuyển sang một nhóm bài toán khác — không phải sinh
+ra hay dịch giọng nói, mà là **phân tích** một đoạn audio đã có sẵn để
+rút ra thông tin: audio này gồm những nguồn âm nào (bài này), sự kiện gì
+đang xảy ra (bài sau), ai đang nói (Speaker Recognition), và lúc nào ai
+nói (Audio Segmentation).
+
+**Audio source separation** là bài toán tách một bản ghi âm hỗn hợp
+thành các nguồn âm thanh riêng biệt. Có hai nhánh chính:
 
 1. **Speech separation:** tách giọng nhiều người nói cùng lúc — cocktail
    party problem. Ví dụ: 2 người nói cùng lúc → track giọng người A, track
@@ -24,37 +32,115 @@ nguồn âm thanh riêng biệt. Có hai nhánh chính:
 Con người có khả năng tập trung vào một giọng nói trong đám đông (hiệu ứng
 cocktail party). Nhưng với máy tính, đây là bài toán cực kỳ khó: hai người
 nói cùng lúc → tín hiệu audio trong cùng một khoảng thời gian là tổng của
-cả hai → không có cách nào tách riêng bằng xử lý tín hiệu tuyến tính.
+cả hai → không có cách nào tách riêng bằng xử lý tín hiệu tuyến tính đơn
+giản (cộng hai tín hiệu là phép biến đổi không thể đảo ngược một cách
+tường minh nếu không biết thêm gì về từng nguồn).
 
-## Conv-TasNet — Time-domain Mask
+## Cách tiếp cận cũ: Time-Frequency Masking trên spectrogram — và vấn đề mất pha
 
-Conv-TasNet (Luo & Mesgarani 2019) giải quyết speech separation trong
-time-domain (không cần spectrogram), dùng fully convolutional architecture.
+Trước Conv-TasNet, cách tiếp cận phổ biến là làm việc trên
+**spectrogram** (bài [Biểu diễn Âm thanh](../02-Biểu%20diễn%20âm%20thanh/01-bieu-dien-am-thanh.mdx)):
+tính STFT của tín hiệu hỗn hợp, dự đoán một **mask** (mặt nạ, giá trị
+0-1) cho từng nguồn tại mỗi ô thời gian-tần số — mask gần 1 nghĩa là ô
+đó chủ yếu thuộc về nguồn này, gần 0 nghĩa là thuộc nguồn khác. Nhân mask
+với spectrogram hỗn hợp, rồi dùng vocoder/Griffin-Lim (đã học ở bài
+[Text-to-Speech](../04-Text-to-Speech/01-text-to-speech.mdx)) để chuyển
+ngược lại thành waveform.
+
+**Vấn đề cốt lõi:** STFT chỉ giữ **biên độ** (magnitude) trong
+spectrogram thông thường — thông tin **pha** (phase) của tín hiệu gốc bị
+bỏ qua khi mask được áp dụng trên magnitude. Khi tái tạo lại waveform,
+hệ thống phải "đoán" lại pha (thường dùng pha của tín hiệu hỗn hợp gốc,
+vốn không hoàn toàn đúng cho từng nguồn riêng lẻ) — gây méo tiếng, đặc
+biệt rõ khi 2 nguồn có biên độ gần bằng nhau tại cùng một tần số (mask
+khó quyết định dứt khoát thuộc về ai, dẫn tới rò rỉ nguồn này sang track
+kia).
+
+## Conv-TasNet — Time-domain Mask, giải đúng vấn đề mất pha
+
+Conv-TasNet (Luo & Mesgarani, 2019) giải quyết đúng hạn chế trên bằng
+cách **bỏ hẳn bước chuyển qua spectrogram** — xử lý toàn bộ trực tiếp
+trên **waveform** (time-domain), dùng kiến trúc fully convolutional.
 
 ### Kiến trúc
 
-1. **Encoder:** 1D convolution biến audio raw thành feature representation
-2. **Separation module:** stacked 1D dilated convolution blocks (temporal
-   convolution network — TCN) sinh ra mask cho từng nguồn
-3. **Decoder:** 1D transposed convolution tái tạo audio từ masked feature
+1. **Encoder:** một lớp 1D convolution học được (không phải STFT cố
+   định) biến audio raw thành một biểu diễn ẩn — vai trò tương tự
+   spectrogram nhưng được **học** để tối ưu trực tiếp cho việc tách
+   nguồn, thay vì một phép biến đổi tổng quát cố định.
+2. **Separation module:** các khối 1D dilated convolution xếp chồng
+   (temporal convolution network — TCN, cùng nguyên lý dilated
+   convolution đã gặp ở WaveNet, bài Text-to-Speech) sinh ra một mask
+   cho từng nguồn — nhưng lần này mask áp dụng trực tiếp lên biểu diễn
+   waveform đã encode, không phải lên magnitude spectrogram.
+3. **Decoder:** 1D transposed convolution tái tạo waveform trực tiếp từ
+   biểu diễn đã mask — vì không đi qua spectrogram, **không có bước nào
+   làm mất thông tin pha** để phải đoán lại sau đó.
 
-### SI-SNRi
+Đây chính là lý do Conv-TasNet "surpassing ideal time-frequency
+magnitude masking" (tên gọi trong tiêu đề paper gốc) — nó vượt qua cả
+giới hạn lý thuyết của cách tiếp cận time-frequency masking, vì đã loại
+bỏ tận gốc nguồn gây lỗi (mất pha) thay vì cải thiện cách đoán pha.
 
-Metric đánh giá: SI-SNRi (Scale-Invariant Signal-to-Noise Ratio improvement)
-— đo mức độ cải thiện tỷ lệ tín hiệu/nhiễu sau khi tách. Conv-TasNet đạt
-15.3 dB trên WSJ0-2mix (2 speakers).
+**Đánh đổi:** biểu diễn học được (thay vì spectrogram diễn giải được)
+khiến mô hình khó "nhìn" trực tiếp xem nó đang tách theo tiêu chí gì —
+đổi lại chất lượng tách tốt hơn hẳn.
 
-## Spleeter và Demucs — Music Separation
+### Đánh giá: SI-SNRi
 
-**Spleeter** (Deezer 2020): dùng U-Net trên spectrogram, sinh ra 5 stems
-(vocals, bass, drums, piano, other). Nhanh, dễ dùng, mã nguồn mở.
+Metric đánh giá: **SI-SNRi** (Scale-Invariant Signal-to-Noise Ratio
+improvement) — đo mức độ cải thiện tỷ lệ tín hiệu/nhiễu sau khi tách so
+với trước khi tách, không phụ thuộc vào việc scale biên độ tín hiệu dự
+đoán khác biên độ tín hiệu gốc bao nhiêu (vì việc tách nguồn thường
+không phục hồi đúng tuyệt đối biên độ gốc). Conv-TasNet đạt 15.3 dB trên
+WSJ0-2mix (2 speakers) — cao hơn hẳn các phương pháp time-frequency
+masking trước đó.
 
-**Demucs** (Défossez et al. 2019/2021): hybrid architecture — kết hợp
-time-domain (giống Conv-TasNet) và spectrogram domain (U-Net). State-of-
-the-art trong music separation.
+## Music Separation: Spleeter (thuần spectrogram) và Demucs (hybrid)
+
+**Spleeter** (Deezer, 2020): dùng
+[U-Net](../../03-Computer%20Vision/03-Segmentation/02-unet.mdx) (module
+Computer Vision) trên spectrogram, sinh ra 5 stems (vocals, bass, drums,
+piano, other). Vẫn là time-frequency masking — kế thừa đúng vấn đề mất
+pha đã nêu ở trên, nhưng bù lại đơn giản, nhanh, dễ dùng, mã nguồn mở —
+đủ tốt cho nhiều ứng dụng thực tế không đòi hỏi chất lượng âm thanh cao
+nhất.
+
+**Demucs** (Défossez và cộng sự, 2019/2021): giải quyết đánh đổi giữa
+Conv-TasNet (time-domain, không mất pha nhưng khó bắt cấu trúc tần số
+rõ ràng — một số đặc trưng âm nhạc như hoà âm, cao độ dễ nhận biết hơn
+nhiều trên biểu diễn tần số) và Spleeter (spectrogram, bắt cấu trúc tần
+số tốt nhưng mất pha) bằng kiến trúc **hybrid**: xử lý song song cả
+nhánh time-domain (giống Conv-TasNet) và nhánh spectrogram-domain
+(giống Spleeter/U-Net), rồi kết hợp lại. Ý tưởng cốt lõi: mỗi domain có
+điểm mạnh riêng — time-domain giữ nguyên vẹn thông tin pha, spectrogram
+domain dễ học các pattern hoà âm/tần số — hybrid không phải chọn một
+trong hai mà lấy ưu điểm của cả hai cùng lúc. Đánh đổi: kiến trúc phức
+tạp hơn, chi phí tính toán cao hơn cả hai phương pháp thuần. Demucs là
+state-of-the-art trong music separation nhờ đánh đổi này.
+
+## Liên hệ lại với các bài trước
+
+- Vấn đề mất pha khi dùng spectrogram lặp lại đúng hạn chế đã gặp ở
+  vocoder (bài [Text-to-Speech](../04-Text-to-Speech/01-text-to-speech.mdx)) —
+  mel-spectrogram không đủ để tái tạo waveform trực tiếp vì thiếu thông
+  tin pha; ở đây vấn đề còn nghiêm trọng hơn vì phải tách đúng pha cho
+  từng nguồn riêng biệt.
+- Dilated convolution của Conv-TasNet dùng lại đúng nguyên lý đã gặp ở
+  WaveNet (bài Text-to-Speech) — mở rộng receptive field mà không cần
+  quá nhiều lớp.
+- U-Net của Spleeter là kiến trúc đã gặp ở bài
+  [U-Net](../../03-Computer%20Vision/03-Segmentation/02-unet.mdx) (module
+  Computer Vision) — một ví dụ khác cho việc kiến trúc thiết kế cho ảnh
+  (encoder-decoder với skip connection) áp dụng tốt cho spectrogram, vì
+  bản chất đều là dữ liệu dạng lưới 2D.
+- Kiến trúc hybrid của Demucs cùng tinh thần với việc kết hợp nhiều biểu
+  diễn bổ trợ nhau — mẫu hình sẽ gặp lại ở bài
+  [HiFi-GAN](../04-Text-to-Speech/03-hifigan-neural-vocoder.mdx) (kết
+  hợp loss trực tiếp + loss đối kháng) dù cơ chế kết hợp khác nhau.
 
 ## Nguồn tham khảo
 
-- [arXiv — Conv-TasNet: Surpassing Ideal Time-Frequency Magnitude Masking for Speech Separation (Luo & Mesgarani, 2019)](https://arxiv.org/abs/1809.07454) — paper gốc Conv-TasNet, dùng cho time-domain mask, fully convolutional, SI-SNRi.
-- [arXiv — Hybrid Spectrogram and Waveform Source Separation (Défossez et al., 2019)](https://arxiv.org/abs/1909.01108) — paper gốc Demucs, dùng cho hybrid time-domain + spectrogram, U-Net architecture.
-- [machinelearningmastery.com — Overview of music source separation](https://machinelearningmastery.com/music-source-separation/) — dùng cho tổng quan cocktail party problem và NMF truyền thống.
+- [arXiv — Conv-TasNet: Surpassing Ideal Time-Frequency Magnitude Masking for Speech Separation (Luo & Mesgarani, 2019)](https://arxiv.org/abs/1809.07454) — paper gốc Conv-TasNet, dùng cho time-domain mask, fully convolutional, SI-SNRi, và lý do vượt qua giới hạn của time-frequency masking (vấn đề mất pha).
+- [arXiv — Hybrid Spectrogram and Waveform Source Separation (Défossez et al., 2019)](https://arxiv.org/abs/1909.01108) — paper gốc Demucs, dùng cho hybrid time-domain + spectrogram, U-Net architecture, và động cơ kết hợp 2 domain.
+- [machinelearningmastery.com — Overview of music source separation](https://machinelearningmastery.com/music-source-separation/) — dùng cho tổng quan cocktail party problem và bối cảnh time-frequency masking truyền thống.

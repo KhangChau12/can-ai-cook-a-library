@@ -1,0 +1,117 @@
+---
+title: Audio Segmentation — Voice Activity Detection & Speaker Diarization
+track: foundations-track
+module: Audio
+submodule: Audio-Understanding
+order: 4
+status: stable
+prerequisites: ["01-bieu-dien-am-thanh", "03-speaker-recognition"]
+summary: Chia một bản ghi âm dài thành các đoạn nhỏ theo tiêu chí thời gian — VAD (lúc nào có tiếng nói, lúc nào im lặng) và speaker diarization ("ai nói lúc nào" trong cuộc họp nhiều người, kết hợp VAD với speaker embedding đã học ở bài trước). Bài cuối module Audio, khép lại nhóm bài toán phân tích audio.
+last_touched_by_task: "Bài mới (2026-07-10): lấp khoảng trống Overview đã hứa nhưng module chưa có bài — Audio Segmentation là 1 trong 6 bài toán chính được liệt kê ở Overview. Nguồn: arxiv pyannote.audio 1911.01255 + machinelearningmastery.com VAD overview."
+---
+
+Bài [Speaker Recognition](03-speaker-recognition.mdx) trả lời câu hỏi
+"giọng này là ai" cho **một đoạn audio đã cắt sẵn**. Bài cuối cùng của
+module Audio giải quyết một câu hỏi khác: cho một bản ghi âm **dài,
+chưa cắt** (một cuộc họp 1 giờ, một cuộc gọi), làm sao biết **lúc nào**
+có chuyện gì xảy ra — lúc nào có tiếng nói, lúc nào ai đang nói.
+
+## Voice Activity Detection (VAD): lúc nào có tiếng nói
+
+**VAD** là bài toán đơn giản nhất trong nhóm segmentation: với mỗi
+khung thời gian ngắn (ví dụ mỗi 10-30ms, cùng độ dài frame đã dùng ở
+STFT — bài [Biểu diễn Âm thanh](../02-Biểu%20diễn%20âm%20thanh/01-bieu-dien-am-thanh.mdx)),
+phân loại nhị phân: có giọng nói hay chỉ có im lặng/nhiễu nền.
+
+**Vì sao cần VAD riêng, không đưa thẳng audio vào ASR/Speaker
+Recognition:** các mô hình downstream (Speech-to-Text, Speaker
+Recognition) tốn chi phí tính toán đáng kể mỗi lần chạy — chạy suốt một
+bản ghi 1 giờ trong khi phần lớn là khoảng lặng sẽ lãng phí tài nguyên
+và có thể sinh lỗi giả (mô hình ASR "nghe ra" từ ngữ vô nghĩa trong
+đoạn chỉ có nhiễu nền). VAD lọc trước, chỉ đưa các đoạn thực sự có tiếng
+nói vào các mô hình downstream tốn kém hơn — đúng nguyên tắc pipeline
+đã nêu ở bài [Overview](../01-Overview/01-audio-ml-overview.mdx): xử lý
+theo tầng, tầng rẻ lọc trước tầng đắt.
+
+**Cách tiếp cận:** VAD cổ điển dùng ngưỡng năng lượng tín hiệu (đơn
+giản nhưng nhạy nhiễu). VAD hiện đại dùng một mạng nhỏ (CNN/RNN nhẹ)
+trên đặc trưng mel-spectrogram, huấn luyện phân loại nhị phân frame-level
+— đây là bài toán dễ hơn nhiều so với ASR hay speaker recognition (chỉ
+cần phân biệt "có giọng người" hay không, không cần biết nói gì hay ai
+nói), nên có thể dùng mạng rất nhẹ, chạy real-time liên tục.
+
+## Speaker Diarization: "ai nói lúc nào"
+
+**Speaker diarization** giải quyết bài toán khó hơn: trong một cuộc họp
+nhiều người, xác định không chỉ "lúc nào có tiếng nói" (VAD) mà còn
+"lúc đó **ai** đang nói" — đầu ra là một chuỗi nhãn theo thời gian kiểu
+"0:00-0:15 Người A, 0:15-0:22 Người B, 0:22-0:40 Người A...".
+
+**Vấn đề riêng:** không giống Speaker Recognition (biết trước danh sách
+N người, có mẫu giọng đăng ký), diarization thường **không biết trước**
+có bao nhiêu người trong cuộc họp, và không có mẫu giọng đăng ký sẵn
+cho ai cả — đây là bài toán **phân cụm không giám sát** (unsupervised
+clustering) theo thời gian, không phải phân loại có giám sát.
+
+**Pipeline điển hình (kết hợp mọi kỹ thuật đã học trong module):**
+
+1. **VAD** lọc ra các đoạn có tiếng nói (bỏ khoảng lặng).
+2. **Chia nhỏ** các đoạn có tiếng nói thành các cửa sổ ngắn (ví dụ 1.5
+   giây, có overlap).
+3. **Trích embedding** cho mỗi cửa sổ bằng đúng mô hình speaker
+   embedding (d-vector/x-vector) đã học ở bài
+   [Speaker Recognition](03-speaker-recognition.mdx) — mỗi cửa sổ giờ
+   là một vector trong không gian "ai đang nói".
+4. **Phân cụm** (thường dùng agglomerative clustering hoặc spectral
+   clustering) các embedding này thành các nhóm — mỗi nhóm tương ứng
+   một người nói, dựa trên khoảng cách cosine similarity giữa các
+   embedding (embedding gần nhau → khả năng cùng một người cao).
+5. **Gán nhãn** lại theo thời gian: mỗi cửa sổ thuộc cụm nào thì gán
+   nhãn "Người 1/2/3..." theo cụm đó.
+
+Điểm mấu chốt: diarization không huấn luyện một mô hình end-to-end mới
+từ đầu, mà **ghép nối** VAD + speaker embedding (đã học riêng) +
+clustering (thuật toán cổ điển không cần huấn luyện) — một ví dụ rõ cho
+việc giải quyết bài toán phức tạp bằng cách kết hợp các thành phần đã
+có, thay vì thiết kế một kiến trúc end-to-end mới cho mọi bài toán.
+
+**Công cụ thực hành phổ biến:** pyannote.audio (Bredin và cộng sự) là
+thư viện mã nguồn mở triển khai đúng pipeline VAD + embedding +
+clustering này, thường dùng làm baseline chuẩn cho diarization.
+
+## Vì sao đây là bài cuối cùng của module Audio
+
+Speaker Diarization là ví dụ tổng hợp rõ nhất của module: nó dùng lại
+biểu diễn âm thanh (mel-spectrogram), kỹ thuật phân loại frame-level
+(VAD, giống tinh thần CTC ở Speech-to-Text — dự đoán tại mỗi frame), và
+speaker embedding (Speaker Recognition) — không giới thiệu kiến trúc
+hoàn toàn mới, mà cho thấy các khối kiến thức đã học trong module ghép
+lại với nhau để giải một bài toán thực tế phức tạp hơn từng phần riêng
+lẻ.
+
+## Liên hệ lại với các bài trước
+
+- VAD là một dạng phân loại frame-level đơn giản hơn nhiều so với CTC
+  (bài [Speech-to-Text](../03-Speech-to-Text/01-speech-to-text.mdx)) —
+  cùng ý tưởng "dự đoán tại mỗi frame" nhưng chỉ 2 lớp thay vì cả bảng
+  chữ cái.
+- Speaker diarization dùng lại trực tiếp embedding + cosine similarity
+  đã học ở [Speaker Recognition](03-speaker-recognition.mdx) — khác ở
+  bước cuối là phân cụm không giám sát thay vì so khớp với vector đã
+  đăng ký trước.
+- Việc ghép nhiều thành phần đã huấn luyện riêng (VAD, embedding,
+  clustering) thành một pipeline hoàn chỉnh cùng tinh thần với việc tách
+  2 giai đoạn của TTS (text→spectrogram, spectrogram→waveform, bài
+  [Text-to-Speech](../04-Text-to-Speech/01-text-to-speech.mdx)) — chia
+  bài toán phức tạp thành các bước con dễ huấn luyện/debug hơn.
+
+Với bài này, module Audio khép lại đủ 5 sub-module: bản đồ tư duy
+(Overview), biểu diễn dữ liệu (Biểu diễn âm thanh), nghe hiểu
+(Speech-to-Text), nói (Text-to-Speech), và phân tích/nhận diện
+(Audio-Understanding) — đúng bức tranh toàn cảnh đã đặt ra ở bài
+[Overview](../01-Overview/01-audio-ml-overview.mdx).
+
+## Nguồn tham khảo
+
+- [arXiv — pyannote.audio: neural building blocks for speaker diarization (Bredin et al., 2019)](https://arxiv.org/abs/1911.01255) — dùng cho pipeline VAD + embedding + clustering, công cụ thực hành chuẩn cho diarization.
+- [machinelearningmastery.com — Voice Activity Detection overview](https://machinelearningmastery.com/) — dùng cho động cơ và cách tiếp cận VAD cổ điển vs hiện đại.

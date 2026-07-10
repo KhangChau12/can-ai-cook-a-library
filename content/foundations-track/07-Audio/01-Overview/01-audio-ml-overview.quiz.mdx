@@ -1,0 +1,43 @@
+---
+quiz_for: 01-audio-ml-overview
+---
+
+## Q1
+Điểm chung duy nhất giữa âm thanh và văn bản (so với ảnh) là gì?
+
+- [ ] Cả hai đều có cấu trúc lưới 2 chiều
+- [x] Cả hai đều là dữ liệu tuần tự (sequential) — thứ tự theo thời gian là quan trọng
+- [ ] Cả hai đều đã sẵn ở dạng rời rạc, không cần biến đổi
+- [ ] Cả hai đều không cần mô hình học sâu để xử lý
+
+> Âm thanh và văn bản đều là chuỗi có thứ tự theo thời gian, khác ảnh (lưới 2D không có "thời gian"). Đây là lý do RNN, LSTM, Transformer dùng được cho cả hai modality — dù âm thanh vẫn khác văn bản ở chỗ là tín hiệu liên tục, tần số lấy mẫu cao hơn nhiều so với số token trong câu.
+
+## Q2
+Vì sao Speaker Verification và Speaker Identification được coi là hai biến thể của cùng một bài toán, không phải hai bài toán tách biệt?
+
+- [ ] Vì cả hai đều dùng chung một mô hình phân loại N lớp cố định
+- [x] Vì cả hai đều dựa trên kỹ thuật nền tảng giống nhau — embedding giọng nói (d-vector/x-vector) và so sánh cosine similarity — chỉ khác ở cách dùng lúc suy luận (so 1:1 hay so 1:N)
+- [ ] Vì cả hai đều không cần huấn luyện trước
+- [ ] Vì cả hai đều chỉ áp dụng được cho một người nói duy nhất
+
+> Verification (1:1, "đúng người X không?") và Identification (1:N, "là ai trong N người?") cùng dùng một không gian embedding đã học — verification so với 1 vector đã đăng ký, identification so với N vector, chọn cái gần nhất.
+
+## Q3
+Trong pipeline xử lý âm thanh điển hình, vì sao bước "feature extraction" (chuyển waveform thành spectrogram/mel-spectrogram) thường xuất hiện trước khi đưa vào mô hình, thay vì luôn dùng waveform thô?
+
+- [ ] Vì waveform thô không thể lưu trữ được dưới dạng số
+- [x] Vì spectrogram/mel-spectrogram biến bài toán âm thanh thành bài toán xử lý ảnh 2D, cho phép tái sử dụng kiến trúc CNN đã có, và nén thông tin gọn hơn nhiều so với waveform thô
+- [ ] Vì waveform thô chỉ dùng được cho Text-to-Speech, không dùng được cho các bài toán khác
+- [ ] Vì mô hình luôn bắt buộc phải nhận input dạng ảnh, không có ngoại lệ
+
+> Mel-spectrogram nén 16.000 mẫu waveform (1 giây, 16kHz) xuống còn khoảng 80×32 = 2.560 số mà vẫn giữ đủ thông tin lời nói — vừa dễ học hơn (cấu trúc không gian cục bộ giống ảnh) vừa nhỏ gọn hơn. Một số mô hình hiện đại (WaveNet, wav2vec 2.0) vẫn làm việc trực tiếp trên waveform khi cần giữ toàn bộ thông tin (kể cả pha).
+
+## Q4
+Bài toán nào sau đây thuộc nhóm "phân đoạn âm thanh" (Audio Segmentation), khác với "phân loại âm thanh" (Sound Classification)?
+
+- [ ] Nhận diện tiếng chó sủa hay tiếng mưa cho toàn bộ 1 clip ngắn
+- [x] Xác định "ai nói lúc nào" trong một cuộc họp nhiều người (speaker diarization)
+- [ ] Dịch một câu tiếng Việt sang tiếng Anh
+- [ ] Xác thực xem giọng nói có đúng là người X không (1:1)
+
+> Audio Segmentation chia một bản ghi dài theo trục thời gian (VAD: lúc nào có tiếng nói; diarization: ai nói lúc nào) — khác Sound Classification (1 nhãn cho toàn clip) và Speaker Verification (so khớp 1:1, không quan tâm mốc thời gian).
