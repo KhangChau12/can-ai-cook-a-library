@@ -4,9 +4,9 @@ track: foundations-track
 module: Generative Models
 order: 1
 status: stable
-prerequisites: ["02-autoencoder"]
+prerequisites: []
 summary: Bài mở đầu module Generative Models — phân biệt generative vs discriminative, vì sao sinh dữ liệu khó hơn phân loại, và 3 trường phái chính (likelihood-based, implicit, energy-based) với trade-off giữa chất lượng ảnh, độ bao phủ và tốc độ sinh.
-last_touched_by_task: Bài mới (2026-07-08): mở đầu module Generative Models — làm rõ người đọc cần bản đồ tư duy trước khi đi vào từng kỹ thuật cụ thể (GAN, VAE, Diffusion). Nguồn: Lilian Weng taxonomy diagram + d2l.ai introduction chapter + CS231n generative models notes.
+last_touched_by_task: Sửa (2026-07-11, review chiều sâu module): mục "Module này có gì?" viết lại theo cấu trúc 6 sub-module (GAN Family thu hẹp về đúng thuần đối kháng; PixelCNN/PixelRNN + VQ-VAE/VQ-GAN tách sang sub-module mới "Autoregressive & Hybrid Models" vì cả hai không mang tính đối kháng).
 submodule: Overview
 ---
 
@@ -117,8 +117,13 @@ lượng cho video.
 **Trong giáo trình này, chúng ta tập trung vào hai trường phái chính:**
 **Implicit (Generative Adversarial Network Family)** và **Likelihood-based dạng Diffusion** — vì
 đây là hai hướng đang chi phối sinh ảnh hiện đại (GAN cho chất lượng/speed,
-Diffusion cho SOTA quality + mode coverage). VAE sẽ được học như nền tảng
-cho khái niệm ELBO và latent space, có ảnh hưởng trực tiếp tới Diffusion.
+Diffusion cho SOTA quality + mode coverage). Autoencoder, VAE và Flow-based
+Models sẽ được học trước như nền tảng likelihood-based (ELBO, latent space
+có cấu trúc, exact likelihood), có ảnh hưởng trực tiếp tới Diffusion. Một
+mô hình autoregressive (PixelCNN) và một cầu nối vision-language (CLIP)
+cũng được học ở giữa dòng — cả hai không sinh ảnh cạnh tranh trực tiếp với
+GAN/Diffusion, nhưng là thành phần bắt buộc cho các kỹ thuật hiện đại nhất
+(VQ-VAE dùng PixelCNN làm prior, Stable Diffusion dùng CLIP để hiểu text).
 
 ## Trade-off giữa các trường phái
 
@@ -140,28 +145,59 @@ distillation).
 
 ## Module này có gì?
 
-Module Generative Models được tổ chức thành ba nhánh:
+Module Generative Models được tổ chức thành 6 sub-module, theo đúng thứ
+tự học:
 
-**Sub-module: Generative Adversarial Network Family** — dòng tiến hoá sinh đối kháng:
-- [GAN (Goodfellow 2014)](../02-Generative-Adversarial-Network-Family/01-gan.mdx) — ý tưởng gốc:
+**Sub-module: Likelihood-based Models** — mạch nén dữ liệu → sinh dữ
+liệu, không dùng đối kháng:
+- [Autoencoder](../02-Likelihood-based-Models/01-autoencoder.mdx) — nén
+  dữ liệu vào bottleneck, chưa sinh được dữ liệu mới
+- [VAE (Kingma & Welling 2014)](../02-Likelihood-based-Models/02-vae-variational-autoencoder.mdx) —
+  nén thành phân phối xác suất, ELBO, sinh được dữ liệu mới
+- [Flow-based Models (NICE→RealNVP→Glow)](../02-Likelihood-based-Models/03-flow-based-models.mdx) —
+  exact likelihood, sinh 1 pass
+
+**Sub-module: Generative Adversarial Network Family** — dòng tiến hoá
+sinh đối kháng thuần (mọi bài đều có discriminator, huấn luyện minimax):
+- [GAN (Goodfellow 2014)](../03-Generative-Adversarial-Network-Family/01-gan.mdx) — ý tưởng gốc:
   discriminator thay hàm loss
-- [DCGAN (2015)](../02-Generative-Adversarial-Network-Family/02-dcgan.mdx) — ổn định hoá bằng kiến
+- [DCGAN (2015)](../03-Generative-Adversarial-Network-Family/02-dcgan.mdx) — ổn định hoá bằng kiến
   trúc convolutional
-- [WGAN & StyleGAN (2017-2019)](../02-Generative-Adversarial-Network-Family/03-wgan-stylegan.mdx) —
+- [WGAN & StyleGAN (2017-2019)](../03-Generative-Adversarial-Network-Family/03-wgan-stylegan.mdx) —
   2 hướng nâng cấp: Wasserstein distance cải thiện ổn định, style-based
   cho kiểm soát ảnh
+- [Conditional GAN (cGAN/pix2pix/CycleGAN)](../03-Generative-Adversarial-Network-Family/04-conditional-gan.mdx) —
+  sinh ảnh có điều kiện
+- [GAN Family — Tổng kết](../03-Generative-Adversarial-Network-Family/05-gan-family-synthesis.mdx) —
+  timeline, bảng so sánh, kèm Progressive GAN/BigGAN (quy mô huấn luyện)
+
+**Sub-module: Autoregressive & Hybrid Models** — hai kỹ thuật ra đời
+cùng giai đoạn với GAN Family nhưng không mang tính đối kháng:
+- [PixelCNN & PixelRNN](../04-Autoregressive-and-Hybrid-Models/01-pixelcnn-pixelrnn.mdx) —
+  autoregressive, exact likelihood, dùng làm prior cho VQ-VAE
+- [VQ-VAE & VQ-GAN](../04-Autoregressive-and-Hybrid-Models/02-vq-vae-vq-gan.mdx) —
+  discrete latent; VQ-VAE thuần VAE-lineage, VQ-GAN thêm adversarial loss
+  — điểm hội tụ VAE + GAN, nền tảng Stable Diffusion
+
+**Sub-module: Vision-Language Bridge** — cầu nối bắt buộc trước
+Diffusion Models có điều kiện text:
+- [CLIP (Radford 2021)](../05-Vision-Language-Bridge/01-clip.mdx) —
+  contrastive pretraining, học chung embedding space ảnh-text
 
 **Sub-module: Diffusion Models** — dòng tiến hoá khuếch tán:
-- [Diffusion Models (DDPM, Ho 2020)](../03-Diffusion-Models/01-diffusion-models.mdx) —
+- [Diffusion Models (DDPM, Ho 2020)](../06-Diffusion-Models/01-diffusion-models.mdx) —
   quy trình forward/reverse + loss MSE
-- [DDIM (Song 2020)](../03-Diffusion-Models/02-ddim.mdx) — sinh nhanh
+- [DDIM (Song 2020)](../06-Diffusion-Models/02-ddim.mdx) — sinh nhanh
   10-50 lần + classifier-free guidance cho conditional generation
-- [Latent Diffusion (Rombach 2022)](../03-Diffusion-Models/03-latent-diffusion.mdx) —
-  nén vào latent space, text-to-image thực tế (Stable Diffusion)
+- [Latent Diffusion (Rombach 2022)](../06-Diffusion-Models/03-latent-diffusion.mdx) —
+  nén vào latent space + CLIP, text-to-image thực tế (Stable Diffusion)
+- [Score Function & Langevin Dynamics](../06-Diffusion-Models/04-score-function-langevin-dynamics.mdx) —
+  bài đệm toán nền cho Score-based Models
+- [Score-based Models (Song & Ermon)](../06-Diffusion-Models/05-score-based-models.mdx) —
+  góc nhìn SDE thống nhất DDPM và score matching
 
-**Bài tiếp theo: Autoencoder rồi VAE** — nền tảng likelihood-based, giải
-thích ELBO và latent space có cấu trúc, là cầu nối giữa Autoencoder và
-Diffusion Models (sắp học).
+**Bài tiếp theo: Autoencoder** — mở đầu sub-module Likelihood-based
+Models, nền tảng trực tiếp cho VAE.
 
 ## Nguồn tham khảo
 

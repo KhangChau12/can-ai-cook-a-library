@@ -5,12 +5,12 @@ module: Generative Models
 submodule: Diffusion Models
 order: 3
 status: stable
-prerequisites: ["02-ddim", "02-autoencoder"]
-summary: DDPM/DDIM (bài 49/70) khử nhiễu trực tiếp trong pixel space — tốn tính toán tỷ lệ với độ phân giải ảnh (256×256×3 = 196K chiều). Rombach và cộng sự (2022) giải bằng Latent Diffusion: nén ảnh qua autoencoder (perceptual compression) vào latent space nhỏ hơn ~64× (f=8), chạy diffusion trong latent space + CLIP text conditioning + cross-attention → text-to-image thực tế. Bản phát hành công khai (Stable Diffusion) chạy được trên GPU người dùng, dân chủ hoá sinh ảnh AI.
-last_touched_by_task: Bài mới (Task 109, 2026-07-07) — Phase 2 Generative HOÀN THÀNH: viết bài `89-latent-diffusion.mdx` (Diffusion Models) — chạm tới text-to-image thực tế. Dòng tiến hoá diffusion: DDPM pixel space (49) → DDIM sample nhanh (70) → Latent Diffusion latent space + text (89). Bài kết nối Autoencoder (22, perceptual compression) + classifier-free guidance (70). 2 nguồn: arxiv 2112.10752 (Rombach 2022 LDM) + Lil'Log diffusion (đã dùng).
+prerequisites: ["02-ddim", "01-autoencoder", "01-clip"]
+summary: DDPM/DDIM khử nhiễu trực tiếp trong pixel space — tốn tính toán tỷ lệ với độ phân giải ảnh (256×256×3 = 196K chiều). Rombach và cộng sự (2022) giải bằng Latent Diffusion: nén ảnh qua autoencoder (perceptual compression) vào latent space nhỏ hơn ~64× (f=8), chạy diffusion trong latent space + CLIP text conditioning + cross-attention → text-to-image thực tế. Bản phát hành công khai (Stable Diffusion) chạy được trên GPU người dùng, dân chủ hoá sinh ảnh AI.
+last_touched_by_task: Sửa (2026-07-11, review chiều sâu module): thêm prerequisite CLIP (bài mới, sub-module Vision-Language Bridge) — bài này dùng CLIP như khái niệm đã biết nhưng trước đó track chưa từng dạy contrastive vision-language pretraining. Xoá đoạn văn bị lặp 2 lần (lỗi copy-paste cũ). Sửa toàn bộ link nội bộ theo vị trí file thật sau khi tách sub-module Likelihood-based Models.
 ---
 
-Bài [DDPM](49-diffusion-models.mdx) và [DDIM](70-ddim.mdx) đã làm
+Bài [DDPM](01-diffusion-models.mdx) và [DDIM](02-ddim.mdx) đã làm
 diffusion ổn định + sample nhanh — nhưng cả 2 vẫn khử nhiễu trực tiếp
 trong **pixel space**. Bài này kể vì sao điều đó là nút thắt cho text-to-
 image quy mô lớn, và cách Latent Diffusion (Stable Diffusion) giải.
@@ -27,8 +27,6 @@ gần như không khả thi.
 Hơn nữa, chi tiết pixel dư thừa — phần lớn thông tin pixel là chi tiết
 tần số cao (texture) mà diffusion tốn effort khôi phục, dù không cần
 thiết cho cấu trúc ngữ nghĩa cấp cao (đó là cái gì: mèo, xe, người).
-(texture) mà diffusion tốn effort khôi phục, dù không cần thiết cho cấu
-trúc ngữ nghĩa cấp cao (đó là cái gì: mèo, xe, người).
 
 ## Giải pháp: 2 giai đoạn — nén latent rồi diffusion
 
@@ -36,7 +34,7 @@ trúc ngữ nghĩa cấp cao (đó là cái gì: mèo, xe, người).
 Latent Diffusion Models", tách bài toán thành 2 giai đoạn:
 
 **1. Perceptual compression (autoencoder).** Huấn luyện trước một
-[autoencoder](../01-Overview/02-autoencoder.mdx) nén ảnh vào **latent space nhỏ hơn** —
+[autoencoder](../02-Likelihood-based-Models/01-autoencoder.mdx) nén ảnh vào **latent space nhỏ hơn** —
 thường downsampling factor `f = 8` (ảnh 256×256×3 → latent 32×32×4, giảm
 ~64 lần số chiều). Autoencoder này không phải nén lossless — nó học giữ
 lại **đặc điểm cảm nhận** (perceptual) quan trọng, bỏ chi tiết pixel tần
@@ -46,7 +44,7 @@ VQ regularization ép latent space có cấu trúc (gần Gaussian hoặc rời 
 — quan trọng để diffusion làm việc được.
 
 **2. Latent diffusion.** Chạy diffusion **trong latent space nhỏ** thay
-vì pixel space. Mọi công thức DDPM/DDIM (bài 49/70) giữ nguyên — forward
+vì pixel space. Mọi công thức DDPM/DDIM giữ nguyên — forward
 process thêm nhiễu Gaussian, reverse process học khử nhiễu — chỉ khác
 nó thao tác trên tensor 32×32×4 thay vì 256×256×3. Lợi ích tính toán:
 **giảm ~64 lần** (vì chi phí tỷ lệ số chiều), huấn luyện + sinh đều nhanh
@@ -62,15 +60,16 @@ Latent diffusion giải bài toán **tốc độ** — nhưng để thành text-
 cần **điều khiển bằng text**. 3 thành phần kết hợp:
 
 **1. CLIP text encoder.** Prompt text ("mèo ngồi trên xe") được mã hoá
-qua [CLIP](https://arxiv.org/abs/2103.00020) (model encode text thành
-vector ngữ nghĩa, học đối ngẫu text-image) thành vector điều kiện `c`.
+qua [CLIP](../05-Vision-Language-Bridge/01-clip.mdx) (bài trước) — text
+encoder của CLIP, đã học chung không gian embedding với ảnh qua
+contrastive pretraining, biến câu prompt thành vector điều kiện `c`.
 
 **2. Cross-attention.** U-Net của diffusion thêm **cross-attention layer**
 — query từ latent, key/value từ text embedding `c`. Cơ chế attention (đã
-học ở bài [14](14-attention.mdx)) cho phép mỗi vùng ảnh "chú ý" tới đúng
+học ở bài [Attention](../../04-NLP/03-Transformer-Architecture/01-attention.mdx)) cho phép mỗi vùng ảnh "chú ý" tới đúng
 từ ngữ prompt liên quan — vùng vẽ mèo chú ý tới "mèo", vùng xe tới "xe".
 
-**3. Classifier-free guidance** (đã học bài [70](70-ddim.mdx)). Khi
+**3. Classifier-free guidance** (đã học ở bài [DDIM](02-ddim.mdx)). Khi
 sample, dùng `ε̂ = (1+w)·ε(x_t, c) − w·ε(x_t, ∅)` để đẩy ảnh về sát
 prompt — guidance scale `w ≈ 7.5` là mặc định của Stable Diffusion. Không
 có classifier-free guidance, text-to-image diffusion bám prompt quá yếu.
@@ -88,8 +87,9 @@ mô hình mở năm 2022. Điểm thay đổi cuộc chơi:
 - **Chạy được trên GPU người dùng** (8GB VRAM) — không cần cluster, ai
   cũng sinh ảnh tại nhà.
 - **Mô hình mở** — trọng số phát hành công khai, cộng đồng tinh chỉnh
-  (LoRA bài [80](80-lora.mdx), textual inversion, ControlNet) tạo hệ sinh
-  thái khổng lồ.
+  (LoRA — xem bài [LoRA](../../04b-LLM/04-Huan-luyen-Alignment/05-lora.mdx)
+  module Large Language Models, textual inversion, ControlNet) tạo hệ
+  sinh thái khổng lồ.
 - **Chất lượng cao** — sinh ảnh 512×512/1024×1024 sắc nét, bám prompt,
   vượt GAN về đa dạng + chất lượng.
 
@@ -101,21 +101,24 @@ khác — Stable Diffusion là đầu tiên dân chủ hoá hoàn toàn.
 
 ## Liên hệ lại với các bài trước
 
-- Latent Diffusion kết nối 2 mảng đã học: [Autoencoder](../01-Overview/02-autoencoder.mdx)
-  (nén latent) + diffusion (bài trước). Đây là minh chứng cho mẫu hình
-  "kết hợp 2 kỹ thuật đã có giải bài toán mới" — không phải phát minh từ
+- Latent Diffusion kết nối 3 mảng đã học: [Autoencoder](../02-Likelihood-based-Models/01-autoencoder.mdx)
+  (nén latent), [CLIP](../05-Vision-Language-Bridge/01-clip.mdx) (hiểu
+  text), và diffusion (bài trước). Đây là minh chứng cho mẫu hình "kết
+  hợp nhiều kỹ thuật đã có giải bài toán mới" — không phải phát minh từ
   số 0, mà lắp ghép đúng chỗ.
 - Cross-attention cho text conditioning là cùng cơ chế attention đã học ở
-  bài [14](14-attention.mdx) và kiến trúc Transformer (bài
-  [15](15-transformer.mdx)) — attention là công cụ đa năng inject điều
+  bài [Attention](../../04-NLP/03-Transformer-Architecture/01-attention.mdx) và kiến trúc
+  [Transformer](../../04-NLP/03-Transformer-Architecture/02-transformer.mdx) — attention là công cụ đa năng inject điều
   kiện, không chỉ cho sequence.
 - Latent space của LDM có cùng tinh thần bottleneck của
-  [Autoencoder](../01-Overview/02-autoencoder.mdx) — nén vào không gian
+  [Autoencoder](../02-Likelihood-based-Models/01-autoencoder.mdx) — nén vào không gian
   thấp chiều để thao tác hiệu quả, rồi giải mã ra. Khác biệt: LDM không
   decode ngay, mà chạy diffusion trong latent trước khi decode.
-- Stable Diffusion + LoRA (bài [80](80-lora.mdx)) là cặp phổ biến — người
-  dùng fine-tune Stable Diffusion bằng LoRA (hạng thấp) để thêm style/nhân
-  vật riêng mà không cần huấn luyện lại toàn bộ. Liên hệ trực tiếp 2 bài.
+- Stable Diffusion + LoRA (xem bài
+  [LoRA](../../04b-LLM/04-Huan-luyen-Alignment/05-lora.mdx) module Large
+  Language Models) là cặp phổ biến — người dùng fine-tune Stable
+  Diffusion bằng LoRA (hạng thấp) để thêm style/nhân vật riêng mà không
+  cần huấn luyện lại toàn bộ. Liên hệ trực tiếp 2 bài.
 
 ## Nguồn tham khảo
 

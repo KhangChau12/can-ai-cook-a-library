@@ -36,8 +36,8 @@ const { headings } = Astro.props;
     const setActive = (id: string) => {
       links.forEach((l) => {
         const active = l.dataset.tocLink === id;
-        l.classList.toggle('text-accent-blue', active);
-        l.classList.toggle('border-accent-blue', active);
+        l.classList.toggle('text-accent-cyan-bright', active);
+        l.classList.toggle('border-accent-cyan-bright', active);
         l.classList.toggle('font-semibold', active);
       });
     };

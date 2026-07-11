@@ -23,7 +23,7 @@ export function trackLabel(track: Track): string {
 export type ModuleLevel = 'foundation' | 'intermediate' | 'advanced';
 
 export const LEVEL_LABELS: Record<ModuleLevel, string> = {
-  foundation: 'Kiến thức',
+  foundation: 'Cơ bản',
   intermediate: 'Trung cấp',
   advanced: 'Nâng cao',
 };
@@ -191,7 +191,7 @@ export async function getModuleGroup(track: Track, moduleSlug: string): Promise<
 }
 
 // All modules across both tracks, in level order (foundation -> intermediate
-// -> advanced) for the unified home page's "kiến thức" side. exam-track is
+// -> advanced) for the unified home page's "Cơ bản" side. exam-track is
 // shown as its own section ahead of the level tiers (see getHomeSections),
 // not folded into them.
 const LEVEL_ORDER: ModuleLevel[] = ['foundation', 'intermediate', 'advanced'];

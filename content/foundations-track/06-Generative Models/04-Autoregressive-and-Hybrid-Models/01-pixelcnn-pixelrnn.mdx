@@ -1,0 +1,138 @@
+---
+title: PixelCNN & PixelRNN — Sinh Ảnh Bằng Cách Dự Đoán Từng Pixel Tuần Tự
+track: foundations-track
+module: Generative Models
+submodule: Autoregressive & Hybrid Models
+order: 1
+status: stable
+prerequisites: ["04-conditional-gan"]
+summary: GAN/VAE/Flow đều sinh toàn bộ ảnh trong một lần (hoặc vài bước cố định). PixelRNN/PixelCNN (van den Oord 2016) đi theo hướng hoàn toàn khác — autoregressive: phân rã p(x) thành tích các xác suất có điều kiện theo từng pixel bằng chain rule, sinh ảnh bằng cách dự đoán tuần tự pixel-by-pixel. Đổi lại exact likelihood tính được trực tiếp (không cần ELBO như VAE), nhưng sinh ảnh rất chậm — đây là bài đệm giải thích ý tưởng autoregressive mà bài VQ-VAE/VQ-GAN (bài tiếp theo) cần dùng làm "prior học riêng" cho discrete latent code.
+last_touched_by_task: Bài đệm mới (2026-07-11), sau đó tách khỏi sub-module GAN Family sang sub-module riêng "Autoregressive & Hybrid Models" (2026-07-11, review chiều sâu module) — PixelCNN không mang tính đối kháng, gộp chung GAN Family gây hiểu lầm dù bài tự giải thích rõ. Nguồn: arxiv PixelRNN 1601.06759 + arxiv Gated PixelCNN 1606.05328 + Lilian Weng (trực giác).
+---
+
+Ba trường phái đã học trong module này — GAN, VAE, Flow-based — đều sinh
+một ảnh **hoàn chỉnh cùng lúc**: GAN forward 1 lần qua generator, VAE
+decode 1 lần từ latent, Flow biến đổi 1 lần qua chuỗi bijector. **PixelRNN
+và PixelCNN** (van den Oord và cộng sự, DeepMind 2016) đi theo hướng hoàn
+toàn khác — **autoregressive**: sinh ảnh bằng cách dự đoán **từng pixel
+một, tuần tự**, mỗi pixel dựa trên tất cả pixel đã sinh trước nó.
+
+## Ý tưởng: phân rã p(x) bằng chain rule
+
+Với một ảnh `x` gồm `n` pixel `(x_1, x_2, ..., x_n)` (đọc theo thứ tự
+raster — trái sang phải, trên xuống dưới), xác suất phân phối đầy đủ
+`p(x)` được phân rã đúng bằng **chain rule** của xác suất (đã học ở bài
+[Xác suất & Thống kê cơ bản](../../../01-Nền%20tảng%20Toán%20&%20ML%20cổ%20điển/01-Overview/01-xac-suat-thong-ke-co-ban.mdx)):
+
+```
+p(x) = p(x_1) · p(x_2 | x_1) · p(x_3 | x_1, x_2) · ... · p(x_n | x_1, ..., x_{n-1})
+```
+
+Không có xấp xỉ, không có lower bound — đây là phân rã **chính xác** theo
+đúng định nghĩa xác suất có điều kiện. Nếu học được chính xác mọi thừa số
+`p(x_i | x_1, ..., x_{i-1})`, ta có **exact likelihood** của `p(x)` — điều
+VAE không có (chỉ có ELBO, một cận dưới) và GAN cũng không có (không định
+nghĩa likelihood).
+
+**Sinh ảnh mới:** bắt đầu từ pixel đầu tiên (lấy mẫu từ `p(x_1)`), rồi
+lấy mẫu từng pixel tiếp theo dựa trên các pixel đã sinh, tuần tự cho tới
+hết ảnh. Mỗi bước chỉ cần một mô hình dự đoán phân phối của pixel tiếp
+theo từ các pixel đã biết.
+
+## PixelRNN: dùng RNN quét qua ảnh như một chuỗi
+
+Cách trực tiếp nhất để mô hình hoá `p(x_i | x_1, ..., x_{i-1})` là dùng
+một [RNN](../../../04-NLP/02-Recurrent-Neural-Network-Family/01-rnn.mdx)
+(đã học ở module Natural Language Processing) — coi ảnh 2D như một chuỗi
+1D dài `n` pixel, RNN quét qua từng pixel, trạng thái ẩn tại bước `i` tổng
+hợp thông tin của toàn bộ `x_1, ..., x_{i-1}` để dự đoán `x_i`.
+
+**Hạn chế:** RNN xử lý tuần tự — không thể tính song song (parallelize)
+các bước huấn luyện, vì trạng thái ẩn bước `i` phụ thuộc trực tiếp vào
+bước `i-1`. Với ảnh có hàng chục nghìn pixel, huấn luyện PixelRNN rất
+chậm.
+
+## PixelCNN: thay RNN bằng convolution có mặt nạ (masked convolution)
+
+**PixelCNN** giải quyết đúng hạn chế tốc độ huấn luyện của PixelRNN: thay
+RNN bằng [CNN](../../../03-Computer%20Vision/01-Co-ban/01-cnn.mdx) — nhưng
+không phải CNN thông thường, vì CNN chuẩn nhìn được toàn bộ receptive
+field xung quanh (kể cả pixel "trong tương lai" theo thứ tự raster, phá
+vỡ tính autoregressive).
+
+**Masked convolution** giải quyết bằng cách **che (mask) bằng 0** các
+trọng số của kernel ứng với vị trí pixel chưa được sinh (bên phải và bên
+dưới pixel hiện tại, theo thứ tự raster) — đảm bảo tính **causality**:
+dự đoán `x_i` chỉ được phép dùng thông tin từ `x_1, ..., x_{i-1}`, không
+"nhìn trộm" được các pixel sinh sau. Vì convolution có thể tính song song
+trên toàn ảnh trong lúc huấn luyện (biết trước toàn bộ ảnh thật), PixelCNN
+huấn luyện nhanh hơn PixelRNN rất nhiều, trong khi vẫn giữ chất lượng
+tương đương.
+
+**Đánh đổi vẫn còn:** dù huấn luyện nhanh hơn, **sinh ảnh mới** (inference)
+vẫn phải tuần tự — mỗi pixel mới cần convolution chạy lại dựa trên các
+pixel đã sinh trước, không thể sinh song song. Đây là hạn chế cốt lõi của
+mọi mô hình autoregressive: **huấn luyện có thể song song, sinh dữ liệu
+thì không** — khác hẳn GAN (sinh 1 pass) hay VAE (decode 1 pass).
+
+## Gated PixelCNN: sửa "điểm mù" (blind spot) của masked convolution
+
+Bản PixelCNN gốc có một lỗi kiến trúc: masking theo cả 2 hướng (ngang và
+dọc) đồng thời tạo ra một vùng **"điểm mù"** (blind spot) — một số pixel
+đã sinh trước đó nhưng kiến trúc masked convolution vô tình không cho
+phép mô hình nhìn thấy, dù về lý thuyết đáng lẽ phải nhìn thấy được (làm
+giảm chất lượng dự đoán một cách không cần thiết).
+
+Van den Oord và cộng sự (2016b) sửa bằng **Gated PixelCNN** — tách kernel
+convolution thành 2 luồng riêng (một quét theo chiều ngang, một theo
+chiều dọc) kết hợp qua **gating mechanism** (cơ chế cổng, cùng tinh thần
+với cổng quên/cổng nhớ đã học ở
+[LSTM](../../../04-NLP/02-Recurrent-Neural-Network-Family/02-lstm-gru.mdx))
+— đảm bảo mọi pixel đã sinh trước đều được nhìn thấy đầy đủ, không còn
+điểm mù. Kết quả: Gated PixelCNN đạt chất lượng ngang PixelRNN trên
+ImageNet với chi phí tính toán thấp hơn nhiều.
+
+**Conditional generation:** Gated PixelCNN cũng cho phép thêm một vector
+điều kiện bất kỳ (class label, hoặc embedding lấy từ mạng khác) vào mỗi
+lớp gated convolution — mở đường cho sinh ảnh có điều kiện (ví dụ: sinh
+đúng loại vật thể theo nhãn lớp), cùng tinh thần với
+[Conditional GAN](../03-Generative-Adversarial-Network-Family/04-conditional-gan.mdx)
+(sub-module trước) nhưng bằng cơ chế autoregressive thay vì adversarial.
+
+## Vì sao bài này quan trọng cho VQ-VAE/VQ-GAN (bài tiếp theo)
+
+PixelCNN tự nó là một generative model độc lập cho ảnh pixel space, nhưng
+ứng dụng quan trọng nhất trong module này là làm **prior** cho không gian
+latent rời rạc: sau khi một mô hình khác (VQ-VAE) đã nén ảnh thành một
+lưới các discrete index, PixelCNN có thể học phân phối của **chuỗi index
+đó** (ngắn hơn nhiều so với ảnh gốc, nên bài toán autoregressive khả thi
+hơn) — đây chính xác là điều bài tiếp theo dùng.
+
+## Liên hệ lại với các bài trước
+
+- PixelCNN là trường phái **likelihood-based thứ tư** (bên cạnh VAE, Flow,
+  Diffusion đã học) — nhưng khác 3 trường phái đó ở việc không cần biến
+  latent trung gian nào cả: mô hình hoá trực tiếp `p(x)` trên không gian
+  dữ liệu gốc bằng chain rule.
+- Masked convolution dùng lại đúng cơ chế convolution đã học ở
+  [CNN](../../../03-Computer%20Vision/01-Co-ban/01-cnn.mdx) — chỉ thêm
+  một ràng buộc (mask) vào kernel, không cần kỹ thuật tích chập mới.
+- So với [GAN](../03-Generative-Adversarial-Network-Family/01-gan.mdx) (sinh
+  1 pass, không có likelihood) và
+  [VAE](../02-Likelihood-based-Models/02-vae-variational-autoencoder.mdx)
+  (có ELBO, xấp xỉ likelihood), PixelCNN đứng ở cực đối lập: exact
+  likelihood nhưng sinh chậm nhất trong mọi trường phái đã học — đúng
+  kiểu đánh đổi "chất lượng lý thuyết cho tốc độ" đã lặp lại nhiều lần
+  trong module.
+- PixelCNN **không mang tính đối kháng** (không có discriminator, không
+  minimax) — đây là lý do bài này đứng ở sub-module riêng "Autoregressive
+  & Hybrid Models" thay vì "Generative Adversarial Network Family", dù về
+  mặt thời gian nó ra đời xen giữa các bài GAN (2016, giữa cGAN và WGAN).
+  Vị trí đọc (ngay sau Conditional GAN) vẫn giữ nguyên vì đây là bài đệm
+  trực tiếp cho VQ-VAE (bài tiếp theo).
+
+## Nguồn tham khảo
+
+- [arXiv — Pixel Recurrent Neural Networks (van den Oord, Kalchbrenner & Kavukcuoglu, 2016)](https://arxiv.org/abs/1601.06759) — paper gốc PixelRNN/PixelCNN, dùng cho phân rã chain rule `p(x) = ∏ p(x_i | x_<i)`, so sánh PixelRNN (RNN quét pixel) vs PixelCNN (masked convolution), và hạn chế tốc độ sinh tuần tự.
+- [arXiv — Conditional Image Generation with PixelCNN Decoders (van den Oord et al., 2016)](https://arxiv.org/abs/1606.05328) — paper Gated PixelCNN, dùng cho vấn đề blind spot của masked convolution gốc, giải pháp gating 2 luồng ngang/dọc, và cơ chế conditional generation qua vector điều kiện.
+- [Lilian Weng — From Autoencoder to Beta-VAE](https://lilianweng.github.io/posts/2018-08-12-vae/) — dùng cho trực giác so sánh autoregressive model với các trường phái likelihood-based khác (VAE, Flow) trong cùng bức tranh tổng quát.

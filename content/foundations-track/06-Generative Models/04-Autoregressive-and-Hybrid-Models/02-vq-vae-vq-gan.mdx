@@ -2,15 +2,15 @@
 title: VQ-VAE & VQ-GAN — Lượng Tử Hóa Không Gian Latent Cho Sinh Ảnh Chất Lượng Cao
 track: foundations-track
 module: Generative Models
-order: 5
+order: 2
 status: stable
-prerequisites: ["03-vae-variational-autoencoder", "01-gan"]
+prerequisites: ["02-vae-variational-autoencoder", "01-gan", "01-pixelcnn-pixelrnn"]
 summary: VAE (bài trước) thường sinh ảnh mờ vì ELBO + Gaussian prior. VQ-VAE (van den Oord 2017) giải quyết bằng cách lượng tử hoá không gian latent thành discrete codebook — mỗi ảnh là chuỗi index từ codebook. VQ-GAN (Esser 2021) thêm adversarial loss cho ảnh sắc nét hơn. Cả hai là nền tảng cho DALL-E, Stable Diffusion, và nhiều model sinh hiện đại.
-last_touched_by_task: Bài mới (2026-07-08): Phase 3.4 đào sâu Generative Models — VQ-VAE/VQ-GAN, nền tảng cho DALL-E và Stable Diffusion. Nguồn: arxiv VQ-VAE 1711.00937 + arxiv VQ-GAN 2012.09841 + lilianweng.github.io.
-submodule: Overview
+last_touched_by_task: Chuyển từ sub-module "Overview" sang cuối "Generative Adversarial Network Family" (2026-07-11), sau đó tách tiếp sang sub-module riêng "Autoregressive & Hybrid Models" cùng PixelCNN (2026-07-11, review chiều sâu module) — VQ-VAE (phần lớn nội dung bài) không mang tính đối kháng, chỉ VQ-GAN mới thêm adversarial loss; gộp cả bài vào "GAN Family" theo tên thư mục dễ gây hiểu lầm. Sửa toàn bộ link theo vị trí file mới.
+submodule: Autoregressive & Hybrid Models
 ---
 
-Bài [VAE](03-vae-variational-autoencoder.mdx) giới thiệu autoencoder biến
+Bài [VAE](../02-Likelihood-based-Models/02-vae-variational-autoencoder.mdx) giới thiệu autoencoder biến
 phân với latent space liên tục (z ~ N(μ, σ²)). Cách này có hai hạn chế:
 
 1. **Ảnh mờ:** VAE dùng MSE reconstruction loss + Gaussian prior → ảnh
@@ -88,9 +88,13 @@ L = L_recon + ||sg[z_e(x)] - e||² + β · ||z_e(x) - sg[e]||²
 ### Prior học riêng
 
 Sau khi VQ-VAE được train, latent code là discrete index. Prior (phân phối
-của index) được học riêng bằng **autoregressive model** (PixelCNN hoặc
-Transformer) — đây là điểm khác biệt lớn so với VAE thường (prior là
-Gaussian cố định).
+của index) được học riêng bằng một **mô hình autoregressive** — ví dụ
+[PixelCNN](01-pixelcnn-pixelrnn.mdx) (bài trước) hoặc Transformer — đây là
+điểm khác biệt lớn so với VAE thường (prior là Gaussian cố định). Vì
+chuỗi index (ví dụ 32×32 = 1024 giá trị) ngắn hơn nhiều so với ảnh gốc
+(256×256×3 pixel), bài toán autoregressive ở đây khả thi hơn hẳn so với
+áp dụng PixelCNN trực tiếp lên pixel — đúng lý do PixelCNN được chọn làm
+prior thay vì sinh ảnh trực tiếp.
 
 ## VQ-GAN — Thêm Adversarial Loss
 
@@ -118,7 +122,7 @@ phân phối của discrete code hiệu quả hơn. Đây là nền tảng cho D
 
 ### Ứng dụng trong Stable Diffusion
 
-[Latent Diffusion](89-latent-diffusion.mdx) (Stable Diffusion) dùng
+[Latent Diffusion](../06-Diffusion-Models/03-latent-diffusion.mdx) (Stable Diffusion) dùng
 encoder-decoder của VQ-GAN (hoặc KL-regularized autoencoder) để nén ảnh
 vào latent space, rồi chạy diffusion trong latent space đó — không phải
 trong pixel space. VQ-GAN là thành phần quan trọng trong pipeline:
@@ -136,16 +140,24 @@ trong pixel space. VQ-GAN là thành phần quan trọng trong pipeline:
 
 ## Liên hệ lại với các bài trước
 
-- **VAE (bài trước):** VQ-VAE thay continuous latent bằng discrete codebook
+- **[VAE](../02-Likelihood-based-Models/02-vae-variational-autoencoder.mdx):** VQ-VAE thay continuous latent bằng discrete codebook
   — giải quyết vấn đề posterior collapse và blurry images của VAE.
-- **GAN (bài 23):** VQ-GAN thêm discriminator và adversarial loss vào
-  VQ-VAE — kết hợp ưu điểm của cả VAE (cấu trúc latent) và GAN (chất
-  lượng ảnh).
-- **Latent Diffusion / Stable Diffusion (bài 89):** dùng VQ-GAN's encoder-
-  decoder để nén ảnh vào latent space — VQ-GAN là thành phần không thể
-  thiếu trong pipeline.
-- **Conditional GAN (bài 105):** VQ-GAN dùng PatchGAN discriminator giống
-  pix2pix.
+- **[GAN](../03-Generative-Adversarial-Network-Family/01-gan.mdx):** VQ-GAN
+  thêm discriminator và adversarial loss vào VQ-VAE — kết hợp ưu điểm của
+  cả VAE (cấu trúc latent) và GAN (chất lượng ảnh). VQ-GAN là điểm hội tụ
+  của cả 2 trường phái, nhưng VQ-VAE (phần lớn nội dung bài này) tự nó
+  không đối kháng — đây là lý do VQ-VAE/VQ-GAN đứng ở sub-module riêng
+  "Autoregressive & Hybrid Models" thay vì trong "Generative Adversarial
+  Network Family", dù có liên hệ chặt với cả GAN và Autoencoder.
+- **[PixelCNN/PixelRNN](01-pixelcnn-pixelrnn.mdx):** cung cấp cơ chế
+  autoregressive dùng làm prior cho discrete latent code — không có bài
+  này, "prior học riêng" của VQ-VAE chỉ là một cái tên không giải thích
+  được.
+- **[Latent Diffusion / Stable Diffusion](../06-Diffusion-Models/03-latent-diffusion.mdx):**
+  dùng VQ-GAN's encoder-decoder để nén ảnh vào latent space — VQ-GAN là
+  thành phần không thể thiếu trong pipeline.
+- **[Conditional GAN](../03-Generative-Adversarial-Network-Family/04-conditional-gan.mdx):**
+  VQ-GAN dùng PatchGAN discriminator giống pix2pix.
 
 ## Nguồn tham khảo
 

@@ -1,0 +1,53 @@
+---
+quiz_for: 01-pixelcnn-pixelrnn
+---
+
+## Q1
+Điểm khác biệt cốt lõi giữa PixelCNN/PixelRNN và GAN/VAE/Flow-based là gì?
+
+- [ ] PixelCNN dùng CNN, các mô hình khác không dùng
+- [ ] PixelCNN chỉ hoạt động trên ảnh xám, không hoạt động trên ảnh màu
+- [x] PixelCNN sinh ảnh tuần tự, từng pixel một (autoregressive), dựa trên chain rule của xác suất — các mô hình khác sinh toàn bộ ảnh cùng lúc
+- [ ] PixelCNN không cần huấn luyện
+
+> GAN (1 pass qua generator), VAE (1 lần decode), Flow (1 chuỗi biến đổi cố định) đều sinh ảnh hoàn chỉnh cùng lúc. PixelCNN phân rã p(x) = ∏ p(x_i | x_<i) và sinh từng pixel dựa trên các pixel đã sinh trước.
+
+## Q2
+Vì sao PixelCNN nhanh hơn PixelRNN khi huấn luyện, dù cả hai đều autoregressive?
+
+- [ ] PixelCNN dùng ít tham số hơn
+- [ ] PixelCNN không cần tính loss
+- [x] PixelCNN dùng masked convolution — tính song song (parallelize) được trên toàn ảnh lúc huấn luyện (vì biết trước ảnh thật), khác RNN phải xử lý tuần tự từng bước
+- [ ] PixelCNN sinh ảnh nhanh hơn khi inference
+
+> Lúc huấn luyện, cả ảnh thật đã biết trước — CNN với masked convolution tính được mọi vị trí cùng lúc. RNN có trạng thái ẩn phụ thuộc tuần tự vào bước trước, không parallelize được. Lưu ý: cả 2 vẫn sinh ảnh mới (inference) tuần tự như nhau.
+
+## Q3
+Masked convolution trong PixelCNN dùng để giải quyết vấn đề gì?
+
+- [ ] Giảm số tham số của mạng
+- [ ] Tăng receptive field
+- [x] Đảm bảo tính causality — dự đoán pixel x_i chỉ được dùng thông tin từ các pixel đã sinh trước nó (x_1,...,x_i-1), không "nhìn trộm" pixel sinh sau
+- [ ] Giúp mô hình học nhanh hơn bằng cách bỏ qua một số pixel
+
+> Convolution thông thường nhìn được toàn bộ receptive field xung quanh, kể cả pixel "tương lai" theo thứ tự raster — phá vỡ tính autoregressive. Mask che các trọng số kernel ứng với vị trí chưa được sinh để đảm bảo causality.
+
+## Q4
+Sau khi sinh xong, việc lấy mẫu (inference) của PixelCNN có đặc điểm gì khác với lúc huấn luyện?
+
+- [ ] Inference cũng parallelize được như huấn luyện
+- [x] Inference vẫn phải tuần tự — mỗi pixel mới cần convolution chạy lại dựa trên các pixel đã sinh trước, không thể sinh song song
+- [ ] Inference nhanh hơn GAN vì dùng CNN
+- [ ] Inference không cần dùng lại encoder
+
+> Đây là hạn chế cốt lõi của mọi mô hình autoregressive: huấn luyện có thể song song (biết trước toàn bộ ảnh thật), nhưng sinh dữ liệu mới luôn phải tuần tự (chưa biết trước pixel nào, phải sinh xong pixel này mới sinh được pixel tiếp).
+
+## Q5
+Trong VQ-VAE (bài tiếp theo), PixelCNN được dùng để làm gì?
+
+- [ ] Thay thế encoder của VQ-VAE
+- [ ] Thay thế decoder của VQ-VAE
+- [x] Học prior (phân phối) của chuỗi discrete index trong codebook — sau khi ảnh đã được nén thành lưới index ngắn hơn nhiều so với ảnh gốc
+- [ ] Tính reconstruction loss cho VQ-VAE
+
+> VQ-VAE nén ảnh thành lưới discrete index (ví dụ 32×32 = 1024 giá trị, ngắn hơn nhiều so với 256×256×3 pixel gốc). PixelCNN học phân phối của chuỗi index này — bài toán autoregressive khả thi hơn hẳn vì chuỗi ngắn hơn nhiều so với sinh trực tiếp trên pixel.

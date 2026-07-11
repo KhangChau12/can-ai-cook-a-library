@@ -2,12 +2,12 @@
 title: Autoencoder — Mạng nơ-ron tự học nén dữ liệu không cần nhãn
 track: foundations-track
 module: Generative Models
-submodule: Overview
-order: 2
+submodule: Likelihood-based Models
+order: 1
 status: stable
 prerequisites: ["07-k-means-clustering"]
 summary: Kiến trúc encoder-decoder tự học cách nén dữ liệu vào một biểu diễn ẩn (bottleneck) rồi khôi phục lại, huấn luyện chỉ bằng reconstruction loss — không cần nhãn, giống K-means nhưng dùng mạng nơ-ron. Nền tảng trực tiếp cho VAE (bài tiếp theo).
-last_touched_by_task: Chuyển từ module 'Dimensionality Reduction' sang 'Generative Models/Overview' (2026-07-09, tái cấu trúc module theo yêu cầu người vận hành) — Autoencoder là tiền thân tiến hoá trực tiếp của VAE (bài liền sau) nên gộp chung mạch thay vì tách xa; PCA/t-SNE/UMAP (giảm chiều thuần, không sinh dữ liệu) ở lại module Dimensionality Reduction. Nội dung không đổi so với bản cũ, chỉ sửa link tương ứng vị trí mới.
+last_touched_by_task: Tách sub-module "Likelihood-based Models" khỏi "Overview" (2026-07-11, theo yêu cầu người vận hành sau khi review chiều sâu module) — Autoencoder→VAE→Flow-based là một mạch tiến hoá likelihood-based riêng, "Overview" giờ chỉ còn đúng 1 bài mở đầu module. Nội dung không đổi, chỉ đổi submodule/order.
 ---
 
 Bài [K-means Clustering](../../01-Nền tảng Toán & ML cổ điển/07-k-means-clustering.mdx) là ví dụ đầu tiên về
@@ -97,11 +97,12 @@ tế:
   tính (bỏ activation phi tuyến), kết quả học được hội tụ về đúng không
   gian mà PCA tìm ra bằng công thức đóng.
 - Kiến trúc encoder-decoder ở đây là tiền thân trực giác cho nhiều kiến
-  trúc phức tạp hơn: bài tiếp theo trong chính sub-module này (VAE) mở
-  rộng bottleneck từ một điểm cố định thành một phân phối xác suất để có
-  thể sinh dữ liệu mới; GAN (sub-module kế tiếp) cũng dùng một mạng
-  "decoder-như" (gọi là generator) để tạo ra dữ liệu mới từ một vector
-  chiều thấp, chỉ khác cách huấn luyện.
+  trúc phức tạp hơn: bài tiếp theo trong chính sub-module này
+  ([VAE](02-vae-variational-autoencoder.mdx)) mở rộng bottleneck từ một
+  điểm cố định thành một phân phối xác suất để có thể sinh dữ liệu mới;
+  [GAN](../03-Generative-Adversarial-Network-Family/01-gan.mdx) (sub-module
+  kế tiếp) cũng dùng một mạng "decoder-như" (gọi là generator) để tạo ra
+  dữ liệu mới từ một vector chiều thấp, chỉ khác cách huấn luyện.
 - Việc huấn luyện vẫn hoàn toàn dựa trên
   [backpropagation](../../02-Deep Learning Nền tảng/02-backpropagation.mdx)
   và squared error loss đã học từ bài đầu tiên về mạng nơ-ron —

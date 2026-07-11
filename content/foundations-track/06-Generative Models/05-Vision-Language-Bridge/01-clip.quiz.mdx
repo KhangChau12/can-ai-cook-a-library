@@ -1,0 +1,43 @@
+---
+quiz_for: 01-clip
+---
+
+## Q1
+CLIP giải quyết vấn đề gì mà các mô hình phân loại ảnh truyền thống (CNN/ViT huấn luyện trên ImageNet) gặp phải?
+
+- [ ] Tốc độ inference quá chậm
+- [ ] Không xử lý được ảnh độ phân giải cao
+- [x] Bị khoá vào một tập nhãn phân loại cố định, hữu hạn — không tổng quát hoá được tới khái niệm hình ảnh chưa từng có trong tập nhãn huấn luyện
+- [ ] Không dùng được kiến trúc Transformer
+
+> Một mô hình huấn luyện trên 1000 lớp ImageNet không thể phân loại một khái niệm mới mà không thu thập dữ liệu có nhãn và huấn luyện lại. CLIP học từ caption tự nhiên (không nhãn cố định) nên tổng quát hoá tốt hơn.
+
+## Q2
+Trong một batch huấn luyện CLIP gồm N cặp (ảnh, caption), có bao nhiêu cặp được coi là "đúng" (positive)?
+
+- [ ] N² cặp
+- [ ] N² - N cặp
+- [x] N cặp (đường chéo của ma trận N×N — mỗi ảnh chỉ đúng với caption gốc của nó)
+- [ ] 1 cặp duy nhất cho cả batch
+
+> Với N ảnh và N caption, có N×N cặp có thể, nhưng chỉ N cặp trên đường chéo là đúng (ảnh khớp đúng caption gốc). N²-N cặp còn lại là sai — loss kéo gần N cặp đúng, đẩy xa các cặp sai.
+
+## Q3
+Zero-shot classification bằng CLIP hoạt động như thế nào sau khi huấn luyện xong?
+
+- [ ] Cần fine-tune lại Image Encoder trên tập nhãn mới
+- [ ] Cần huấn luyện lại toàn bộ mô hình từ đầu
+- [x] Encode ảnh cần phân loại + encode câu template cho mỗi nhãn ứng viên, rồi so sánh similarity — nhãn có similarity cao nhất là dự đoán, không cần huấn luyện thêm
+- [ ] Chỉ hoạt động với đúng 1000 lớp ImageNet đã huấn luyện
+
+> Không cần bước fine-tune nào: so sánh embedding ảnh với embedding của các câu "a photo of a {nhãn}" cho từng nhãn ứng viên — hoạt động ngay cả với nhãn chưa từng xuất hiện lúc huấn luyện.
+
+## Q4
+Vì sao CLIP là bước bắt buộc trước khi học Latent Diffusion (text-to-image)?
+
+- [ ] CLIP trực tiếp sinh ra ảnh từ text
+- [ ] CLIP thay thế U-Net trong quá trình khử nhiễu
+- [x] CLIP cung cấp không gian embedding chung ảnh-text — text encoder của CLIP biến prompt thành vector điều kiện `c` mà diffusion model dùng để điều kiện hoá quá trình khử nhiễu
+- [ ] CLIP giúp diffusion model sinh ảnh nhanh hơn
+
+> CLIP không sinh ảnh — nó chỉ tạo không gian nơi ảnh và text so sánh được trực tiếp. Latent Diffusion dùng text encoder của CLIP để biến câu prompt thành vector `c`, rồi inject vào U-Net qua cross-attention.

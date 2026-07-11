@@ -1,0 +1,149 @@
+---
+title: GAN Family — Tổng Kết Dòng Tiến Hóa Sinh Đối Kháng
+track: foundations-track
+module: Generative Models
+submodule: Generative Adversarial Network Family
+order: 5
+status: stable
+prerequisites: ["04-conditional-gan"]
+summary: Tổng kết dòng tiến hoá GAN thuần đối kháng từ 2014–2019: timeline, bảng so sánh biến thể, decision tree chọn GAN variant, và các vấn đề mở (FID, mode collapse, training stability). Bổ sung giải thích Progressive GAN và BigGAN — 2 kỹ thuật quan trọng xuất hiện trong dòng thời gian nhưng chưa có bài riêng.
+last_touched_by_task: Sửa (2026-07-11, review chiều sâu module): thu hẹp phạm vi về đúng GAN thuần đối kháng — PixelCNN/PixelRNN và VQ-VAE/VQ-GAN đã tách sang sub-module riêng "Autoregressive & Hybrid Models" (không đối kháng, gộp vào bài tổng kết GAN sẽ tái tạo đúng vấn đề nhầm lẫn vừa sửa). Bỏ PixelCNN/VQ-GAN khỏi timeline/bảng/decision-tree, thêm đoạn dẫn sang sub-module mới ở cuối bài. order đổi từ 7 về 5 (bài cuối GAN Family, kế tục Conditional GAN).
+---
+
+Generative Adversarial Network Family giờ có 5 bài chi tiết — từ GAN gốc
+(Goodfellow 2014) tới StyleGAN2 (2019), toàn bộ đều thuần **đối kháng**
+(có discriminator, huấn luyện theo minimax). Bài này tổng kết toàn bộ dòng
+tiến hoá đó, và giải thích thêm 2 kỹ thuật quan trọng (Progressive GAN,
+BigGAN) xuất hiện trong dòng thời gian nhưng không có bài riêng — vì cả
+hai chỉ cải tiến **quy mô huấn luyện** (độ phân giải, kích thước batch),
+không mang ý tưởng kiến trúc mới đủ khác biệt để tách thành bài riêng
+như DCGAN hay StyleGAN.
+
+Hai kỹ thuật khác cũng ra đời trong cùng giai đoạn — PixelCNN/PixelRNN
+(2016, autoregressive) và VQ-VAE/VQ-GAN (2017/2021, discrete latent) —
+**không** nằm trong bài tổng kết này vì cả hai không mang tính đối kháng;
+xem sub-module riêng [Autoregressive & Hybrid Models](../04-Autoregressive-and-Hybrid-Models/01-pixelcnn-pixelrnn.mdx)
+ngay sau sub-module này.
+
+## Hai kỹ thuật bổ sung: Progressive GAN và BigGAN
+
+**Progressive GAN (Karras và cộng sự, 2017).** Huấn luyện GAN trực tiếp ở
+độ phân giải cao (1024×1024) rất bất ổn định — generator và discriminator
+phải học đồng thời cả cấu trúc tổng thể (bố cục khuôn mặt) và chi tiết vi
+mô (từng sợi tóc) ngay từ đầu. Progressive GAN giải quyết bằng cách
+**tăng dần độ phân giải trong lúc huấn luyện**: bắt đầu ở độ phân giải
+rất thấp (4×4), huấn luyện ổn định xong mới **thêm layer mới** để tăng
+gấp đôi độ phân giải (8×8, rồi 16×16, ...), lặp lại cho tới khi đạt
+1024×1024. Ý tưởng: học cấu trúc thô trước, chi tiết mịn sau — giống cách
+con người vẽ phác thảo trước khi tô chi tiết. Kết quả: sinh ảnh khuôn mặt
+CelebA-HQ ở độ phân giải 1024×1024 với chất lượng chưa từng có, đạt
+Inception Score 8.80 trên CIFAR-10 (kỷ lục tại thời điểm công bố).
+
+**BigGAN (Brock, Donahue & Simonyan, 2018).** Thay vì thay đổi kiến trúc,
+BigGAN chứng minh: chỉ cần **tăng quy mô huấn luyện** (batch size lớn hơn
+nhiều — hàng nghìn ảnh mỗi batch, và nhiều tham số hơn) cũng cải thiện
+đáng kể chất lượng ảnh sinh trên dữ liệu phức tạp (ImageNet, 1000 lớp).
+Đóng góp kỹ thuật cụ thể là **truncation trick**: khi sample vector nhiễu
+`z`, cắt bớt (truncate) phân phối Gaussian ở các giá trị đuôi xa — giảm
+độ đa dạng nhưng tăng độ "an toàn"/sắc nét của ảnh sinh, cho phép người
+dùng tự chọn điểm cân bằng giữa **fidelity** (độ chân thực từng ảnh) và
+**variety** (độ đa dạng giữa các ảnh). Kết quả trên ImageNet 128×128:
+Inception Score 166.5 và FID 7.4 — vượt xa kỷ lục trước đó (IS 52.52,
+FID 18.6).
+
+Cả hai minh chứng một bài học chung: đôi khi cải tiến lớn nhất không nằm
+ở công thức loss hay kiến trúc mới, mà ở **cách huấn luyện** (progressive
+growing) hoặc **quy mô** (BigGAN) — cùng tinh thần với nhiều bước ngoặt
+khác trong deep learning (ví dụ Scaling Laws ở module Large Language
+Models).
+
+## Timeline GAN (2014–2019)
+
+```
+2014 — GAN (Goodfellow): minimax, JS divergence, MLP
+2015 — DCGAN (Radford): convolutional architecture, BatchNorm, LeakyReLU
+2015 — cGAN (Mirza & Osindero): condition y vào G và D
+2016 — pix2pix (Isola): U-Net + PatchGAN, paired image translation
+2017 — WGAN (Arjovsky): Wasserstein distance, gradient clipping
+2017 — CycleGAN (Zhu): cycle-consistency, unpaired translation
+2017 — Progressive GAN (Karras): tăng dần độ phân giải khi huấn luyện
+2018 — BigGAN (Brock): scale lớn (batch size, tham số), truncation trick
+2018 — StyleGAN (Karras): style-based generator, AdaIN
+2019 — StyleGAN2 (Karras): bỏ artifact, path length regularity
+```
+
+Hai mốc autoregressive/hybrid ra đời xen giữa dòng thời gian này — PixelCNN
+(2016) và VQ-VAE/VQ-GAN (2017/2021) — không liệt kê ở đây vì không mang
+tính đối kháng; xem timeline riêng ở bài đầu sub-module
+[Autoregressive & Hybrid Models](../04-Autoregressive-and-Hybrid-Models/01-pixelcnn-pixelrnn.mdx).
+
+## Bảng so sánh các variant
+
+| Variant | Năm | Innovation chính | Loss function | Architecture |
+|---|---|---|---|---|
+| **GAN** | 2014 | Minimax, adversarial training | JS divergence | MLP |
+| **DCGAN** | 2015 | CNN cho GAN | JS divergence | Transposed conv + LeakyReLU |
+| **cGAN** | 2015 | Condition y | conditional JS | G(z,y) + D(x,y) |
+| **pix2pix** | 2017 | Image translation | cGAN + L1 | U-Net + PatchGAN |
+| **WGAN** | 2017 | Ổn định training | Wasserstein | Weight clipping/GP |
+| **CycleGAN** | 2017 | Unpaired translation | cGAN + cycle-consistency | 2G + 2D |
+| **Progressive GAN** | 2017 | Tăng dần độ phân giải | WGAN-GP | Grow layer dần |
+| **BigGAN** | 2018 | Scale lớn + truncation trick | Hinge loss | Self-attention + class embedding |
+| **StyleGAN** | 2019 | Style control | WGAN-GP | Mapping + AdaIN |
+
+## Decision tree
+
+```
+Bạn muốn làm gì?
+│
+├─ Sinh ảnh từ noise, cần đối kháng (GAN)?
+│   ├─ Cần ổn định? → WGAN-GP
+│   ├─ Cần kiểm soát style? → StyleGAN
+│   ├─ Cần độ phân giải rất cao? → Progressive GAN
+│   └─ Cần chất lượng SOTA trên dataset lớn (ImageNet)? → BigGAN
+│
+├─ Sinh ảnh từ label/text (điều kiện)?
+│   └─ cGAN (đơn giản) / BigGAN (quy mô lớn)
+│
+├─ Image-to-image translation?
+│   ├─ Có paired data? → pix2pix
+│   └─ Không có paired data? → CycleGAN
+│
+├─ Cần exact likelihood hoặc nén ảnh thành discrete code (không cần đối kháng)?
+│   └─ Xem sub-module Autoregressive & Hybrid Models (PixelCNN, VQ-GAN)
+│
+└─ Mới bắt đầu học GAN?
+    └─ DCGAN (baseline ổn định nhất)
+```
+
+## Các vấn đề mở
+
+1. **Mode collapse:** GAN vẫn có thể rơi vào mode collapse dù đã có nhiều
+   cải tiến. WGAN giảm nhưng không triệt để.
+2. **FID vs IS:** FID (Fréchet Inception Distance) là metric phổ biến nhất
+   nhưng vẫn chưa hoàn hảo (không đo được diversity thực sự).
+3. **Evaluation khó:** Không có likelihood → khó so sánh khách quan giữa
+   các model đối kháng (khác với PixelCNN — xem sub-module tiếp theo —
+   vốn có exact likelihood đúng vì không đối kháng).
+4. **Stability:** Huấn luyện GAN vẫn là "nghệ thuật" — tuning hyperparameter
+   rất nhạy.
+
+## Liên hệ các bài trong Generative Adversarial Network Family
+
+- [GAN](01-gan.mdx): điểm khởi đầu, minimax, JS divergence
+- [DCGAN](02-dcgan.mdx): CNN cho GAN, ổn định hơn
+- [WGAN & StyleGAN](03-wgan-stylegan.mdx): 2 hướng nâng cấp — Wasserstein vs style control
+- [Conditional GAN](04-conditional-gan.mdx): cGAN, pix2pix, CycleGAN
+
+Dòng tiến hoá không đối kháng nhưng liên quan chặt (autoregressive, discrete
+latent) tiếp tục ở sub-module kế tiếp:
+[PixelCNN & PixelRNN](../04-Autoregressive-and-Hybrid-Models/01-pixelcnn-pixelrnn.mdx)
+→ [VQ-VAE & VQ-GAN](../04-Autoregressive-and-Hybrid-Models/02-vq-vae-vq-gan.mdx)
+(điểm hội tụ trở lại với GAN qua adversarial loss của VQ-GAN).
+
+## Nguồn tham khảo
+
+- [Lilian Weng — From GAN to WGAN](https://lilianweng.github.io/posts/2017-08-20-gan/) — dùng cho tổng quan dòng tiến hoá GAN và bảng so sánh các variant.
+- [arXiv — Progressive Growing of GANs for Improved Quality, Stability, and Variation (Karras et al., 2017)](https://arxiv.org/abs/1710.10196) — paper gốc Progressive GAN, dùng cho vấn đề bất ổn định ở độ phân giải cao, ý tưởng tăng dần layer/độ phân giải, kết quả CelebA-HQ 1024×1024 và Inception Score 8.80 trên CIFAR-10.
+- [arXiv — Large Scale GAN Training for High Fidelity Natural Image Synthesis (Brock, Donahue & Simonyan, 2018)](https://arxiv.org/abs/1809.11096) — paper gốc BigGAN, dùng cho ý tưởng scale batch size/tham số, truncation trick, và kết quả ImageNet 128×128 (IS 166.5, FID 7.4).
+- Các bài GAN, DCGAN, WGAN/StyleGAN, Conditional GAN, PixelCNN/PixelRNN, VQ-VAE/VQ-GAN trong chính sub-module này — dùng cho chi tiết từng variant.

@@ -5,19 +5,20 @@ module: Generative Models
 submodule: Diffusion Models
 order: 1
 status: stable
-prerequisites: ["01-gan", "02-dcgan", "02-vae-variational-autoencoder"]
+prerequisites: ["01-gan", "02-dcgan", "02-vae-variational-autoencoder", "foundations-track/02-unet"]
 summary: GAN/DCGAN huấn luyện đối kháng hai mạng — mạnh nhưng nổi tiếng bất ổn định (huấn luyện có thể dao động, mode collapse — generator chỉ học tạo ra một số ít kiểu dữ liệu thay vì đa dạng như thật). Ho, Jain và Abbeel (2020) giải quyết bằng Diffusion Model: bỏ hẳn cơ chế đối kháng, thay bằng một quy trình cố định 2 chiều — thêm nhiễu dần (forward process, có closed-form `x_t=√ᾱ_t·x_0+√(1-ᾱ_t)·ε`) rồi học cách khử nhiễu dần (reverse process, U-Net dự đoán ε, loss `L_simple=E[‖ε-ε_θ‖²]`) — đạt FID 3.17 trên CIFAR-10, SOTA tại thời điểm công bố, đổi lại sinh dữ liệu chậm hơn nhiều vì cần lặp qua nhiều bước khử nhiễu.
 last_touched_by_task: Cải thiện Task 105 (2026-07-07): Phase 2 Generative — bổ sung 4 khoảng trống kỹ thuật (1) variance schedule linear β 1e-4→0.02, (2) closed-form sampling `x_t=√ᾱ_t·x_0+√(1-ᾱ_t)·ε` (không cần lặp forward), (3) hàm loss `L_simple=E[‖ε-ε_θ‖²]` dạng MSE (bài cũ chỉ nói 'hàm loss rút gọn' bằng lời), (4) kiến trúc U-Net + time embedding + self-attention. Nguồn: WebSearch whitelist (arxiv/lilianweng) xác nhận công thức. Giữ nguyên cấu trúc forward/reverse + động cơ Goodfellow 2014 (đã đúng).
 ---
 
-Bài [GAN](23-gan.mdx) và [DCGAN](46-dcgan.mdx) giải quyết bài toán sinh
+Bài [GAN](../03-Generative-Adversarial-Network-Family/01-gan.mdx) và
+[DCGAN](../03-Generative-Adversarial-Network-Family/02-dcgan.mdx) giải quyết bài toán sinh
 dữ liệu bằng cách huấn luyện đối kháng hai mạng nơ-ron. Cả hai bài đều
 nhắc tới một hạn chế thực tế: GAN nổi tiếng **khó huấn luyện ổn định**.
 Bài này kể cách một hướng tiếp cận hoàn toàn khác — bỏ hẳn cơ chế đối
 kháng — giải quyết đúng vấn đề đó.
 
 Về mặt toán học, Diffusion Models dùng cùng công cụ ELBO (Evidence Lower
-BOund) đã học ở bài [VAE](94-vae-variational-autoencoder.mdx) để suy ra
+BOund) đã học ở bài [VAE](../02-Likelihood-based-Models/02-vae-variational-autoencoder.mdx) để suy ra
 hàm loss `L_simple` — nhưng thay vì tối ưu một biểu diễn latent duy nhất
 như VAE, Diffusion Models tối ưu một chuỗi các bước khử nhiễu.
 
@@ -101,7 +102,7 @@ bài toán regression supervised đơn giản (dự đoán nhiễu), khác hẳn
 đối kháng phức tạp của GAN.
 
 **Kiến trúc reverse process — U-Net.** Mạng `ε_θ` dùng kiến trúc **U-Net**
-(xem [U-Net](40-unet.mdx) module Computer Vision): encoder-decoder đối
+(xem [U-Net](../../03-Computer%20Vision/03-Segmentation/02-unet.mdx) module Computer Vision): encoder-decoder đối
 xứng với skip connection giữ chi tiết spatial từ encoder sang decoder.
 Diffusion thêm 2 thành phần:
 
@@ -150,12 +151,12 @@ trung nhiều vào việc rút ngắn số bước cần thiết mà không mấ
   bằng một quy trình đơn giản hơn, dễ huấn luyện hơn, có thể cho kết quả
   tốt hơn — dù đánh đổi lại tốc độ sinh dữ liệu.
 - Reverse process vẫn là một mạng nơ-ron huấn luyện bằng
-  [backpropagation](09-backpropagation.mdx) như mọi mô hình khác trong
+  [backpropagation](../../02-Deep%20Learning%20Nền%20tảng/02-backpropagation.mdx) như mọi mô hình khác trong
   track — điểm mới chỉ nằm ở cách đặt bài toán (dự đoán nhiễu qua nhiều
   bước thời gian), không phải kỹ thuật tối ưu hoá mới.
 - Forward process thêm nhiễu Gaussian dần dần có cùng tinh thần với ý
   tưởng "khử nhiễu" (denoising) đã nhắc thoáng qua ở ứng dụng của
-  [Autoencoder](../01-Overview/02-autoencoder.mdx) — nhưng Diffusion Model đẩy ý tưởng
+  [Autoencoder](../02-Likelihood-based-Models/01-autoencoder.mdx) — nhưng Diffusion Model đẩy ý tưởng
   đó xa hơn nhiều: không chỉ khử một lượng nhiễu cố định, mà học cả một
   **quy trình nhiều bước** từ nhiễu thuần tuý về dữ liệu thật.
 

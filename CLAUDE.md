@@ -14,17 +14,26 @@
 
 ## 1. STATUS (đọc đầu mỗi task, không ngoại lệ)
 
-- **Version:** v11.1
-- **Phiên gần nhất:** CHUẨN HOÁ TÊN VIẾT TẮT MODULE/SUBMODULE (2026-07-10)
-  — đổi 4 tên viết tắt sang dạng đầy đủ cho nhất quán với các module khác
-  (không viết tắt): module "NLP" → "Natural Language Processing", module
-  "LLM" → "Large Language Models", submodule "RNN Family" →
-  "Recurrent Neural Network Family", submodule "GAN Family" →
-  "Generative Adversarial Network Family". Đổi frontmatter 46 file
-  (36 module + 10 submodule), đổi tên 2 thư mục submodule con, cập nhật
-  `content/modules.json`, sửa link/tham chiếu module trực tiếp trong nội
-  dung .mdx (giữ nguyên chỗ dùng NLP/LLM như thuật ngữ chung ngành).
-- **Tổng số bài hiện có:** 143 (11 exam-track + 132 foundations-track) —
+- **Version:** v13.0
+- **Phiên gần nhất:** SỬA TAXONOMY GAN FAMILY TRONG GENERATIVE MODELS
+  (2026-07-11) — review 2 tầng (cấu trúc + chiều sâu) theo yêu cầu người
+  vận hành phát hiện thư mục "Generative Adversarial Network Family"
+  chứa 2 bài không mang tính đối kháng (PixelCNN/PixelRNN — autoregressive;
+  VQ-VAE/VQ-GAN — phần lớn VAE-lineage), gây hiểu lầm dù nội dung bài tự
+  giải thích rõ. Tách cả 2 sang sub-module mới "Autoregressive & Hybrid
+  Models" (đặt giữa GAN Family và Vision-Language Bridge). GAN Family co
+  lại còn 5 bài thuần đối kháng (GAN→DCGAN→WGAN&StyleGAN→cGAN→Synthesis);
+  Synthesis thu hẹp phạm vi timeline/bảng/decision-tree đúng GAN thuần,
+  thêm đoạn dẫn sang sub-module mới. Module giờ 17 bài, 6 sub-module (cấu
+  trúc bài không đổi, chỉ đổi tổ chức + thêm giải thích taxonomy trong
+  từng bài). Đồng thời sửa: CLAUDE.md mục 4 trước đó lỗi thời so với chính
+  `content/modules.json` (đã đúng từ trước) — bài học: khi tách sub-module
+  luôn kiểm tra modules.json đã đồng bộ chưa, không chỉ tin mục 4; sửa 5
+  link tương đối cũ trỏ Autoencoder ở path đã đổi (GAN/DCGAN/WGAN/DDPM);
+  thêm U-Net vào `prerequisites` của DDPM (dùng in-body nhưng chưa khai
+  báo); cập nhật `_index.mdx` mục lục Generative Models cho khớp 6
+  sub-module.
+- **Tổng số bài hiện có:** 146 (11 exam-track + 135 foundations-track) —
   tổ chức thành **9 module** cho foundations-track:
   ML cổ điển (12 bài, 4 sub-module: Overview 1/Supervised Learning 6/
   Unsupervised Learning 4/Ensemble Methods 1), DL Nền tảng (7, phẳng),
@@ -38,8 +47,12 @@
   Reinforcement Learning (22 bài, 5 sub-module: Overview 2/Value-based 5/
   Policy-based 9 (Policy Gradient, Actor-Critic, TRPO, PPO, A3C, A2C,
   DDPG/TD3, SAC, Synthesis)/Model-based 2/Advanced Topics 4),
-  Generative Models (14 bài, 3 sub-module: Overview 5/Generative
-  Adversarial Network Family 5/Diffusion Models 4),
+  Generative Models (17 bài, 6 sub-module: Overview 1/Likelihood-based
+  Models 3 (Autoencoder→VAE→Flow-based)/Generative Adversarial Network
+  Family 5 (GAN→DCGAN→WGAN&StyleGAN→cGAN→Synthesis, thuần đối kháng)/
+  Autoregressive & Hybrid Models 2 (PixelCNN→VQ-VAE/VQ-GAN, không đối
+  kháng)/Vision-Language Bridge 1 (CLIP)/Diffusion Models 5 (DDPM→DDIM→
+  Latent Diffusion→Score Function&Langevin đệm→Score-based)),
   Audio (13 bài, 5 sub-module: Overview 1/Biểu diễn âm thanh 3 (waveform/
   spectrogram, SSL — Ý tưởng chung, SSL cho Âm thanh)/STT 2/TTS 3/
   Audio-Understanding 4 (Source Separation, Event Detection, Speaker
@@ -180,9 +193,16 @@ mục 4, hoặc đọc trực tiếp `content/modules.json` + thư mục bài):
   Actor-Critic, hợp lưu 2 trường phái) / "Model-based" / "Advanced Topics"
   (Imitation Learning, Exploration, Offline RL, Hierarchical RL — cần nền
   cả 3 trường phái trên, đặt cuối module)
-- **Generative Models**: "Generative Adversarial Network Family" /
-  "Diffusion Models" (2 nhánh song song, khác bản chất: đối kháng vs
-  khuếch tán)
+- **Generative Models**: "Overview" (bản đồ 3 trường phái) /
+  "Likelihood-based Models" (Autoencoder→VAE→Flow, mạch nén→sinh không
+  đối kháng) / "Generative Adversarial Network Family" (GAN→DCGAN→
+  WGAN&StyleGAN→cGAN→Synthesis, thuần đối kháng) / "Autoregressive &
+  Hybrid Models" (PixelCNN→VQ-VAE/VQ-GAN, không đối kháng — VQ-GAN là
+  điểm hội tụ VAE+GAN qua adversarial loss, nhưng tách riêng khỏi GAN
+  Family vì bản chất kiến trúc gốc không đối kháng) / "Vision-Language
+  Bridge" (CLIP, cầu nối bắt buộc trước Diffusion Models có điều kiện
+  text) / "Diffusion Models" (DDPM→DDIM→Latent Diffusion→Score
+  Function&Langevin đệm→Score-based)
 - **Audio**: "Biểu diễn âm thanh" / "Speech-to-Text" / "Text-to-Speech"
 - **Recommendation Systems**: "Overview" (2 trường phái nền tảng, rating
   vs ranking) / "Nền tảng Content-based & CF" (Content-based Filtering,
@@ -506,7 +526,7 @@ bài này bị sửa mà không phải vì nó sai.
 - `"Hướng dẫn dùng nền tảng"` — bài 1-3
 - `"Kỹ thuật thi đấu nâng cao"` — bài 4-11
 
-### foundations-track — 132 bài, 9 module
+### foundations-track — 135 bài, 9 module
 
 1. `"Nền tảng Toán & ML cổ điển"` — 12 bài, 4 sub-module: Overview 1
    (Xác suất & thống kê)/Supervised Learning 6 (Linear/Logistic
@@ -519,9 +539,15 @@ bài này bị sửa mà không phải vì nó sai.
 4. `"Natural Language Processing"` — 17 bài, 5 sub-module: Overview 1/Tokenization 3/Recurrent Neural Network Family 5/Transformer Architecture 5/NLP Task cổ điển 3 (Phân loại văn bản, POS Tagging & NER, Topic Modeling)
 5. `"Large Language Models"` — 19 bài, 7 sub-module: Overview 1/Pretrained Language Models 4 (BERT/RoBERTa/ALBERT/T5)/GPT & Decoder-only 4 (GPT-1/GPT-2/GPT-3, Mixture-of-Experts)/Huấn luyện & Alignment 6 (Pretraining, Scaling Laws, Fine-tuning, RLHF, LoRA, DPO)/Reasoning & Test-time Compute 1/Ứng dụng & Inference-time 2/Evaluation 1
 6. `"Reinforcement Learning"` — 22 bài, 5 sub-module: Overview 2/Value-based 5/Policy-based 9 (Policy Gradient, Actor-Critic, TRPO, PPO, A3C, A2C, DDPG/TD3, SAC, Synthesis)/Model-based 2/Advanced Topics 4
-7. `"Generative Models"` — 14 bài, 3 sub-module: Overview 5 (gồm
-   Autoencoder → VAE → Flow-based → VQ-VAE, mạch tiến hoá "nén → sinh dữ
-   liệu")/Generative Adversarial Network Family 5/Diffusion Models 4
+7. `"Generative Models"` — 17 bài, 6 sub-module: Overview 1 (bản đồ 3
+   trường phái)/Likelihood-based Models 3 (Autoencoder → VAE → Flow-based,
+   mạch tiến hoá "nén → sinh dữ liệu", không đối kháng)/Generative
+   Adversarial Network Family 5 (GAN → DCGAN → WGAN&StyleGAN → cGAN →
+   Synthesis, thuần đối kháng)/Autoregressive & Hybrid Models 2 (PixelCNN
+   đệm → VQ-VAE/VQ-GAN, không đối kháng dù VQ-GAN có adversarial
+   loss)/Vision-Language Bridge 1 (CLIP, cầu nối bắt buộc trước Diffusion
+   Models có điều kiện text)/Diffusion Models 5 (DDPM → DDIM → Latent
+   Diffusion → Score Function & Langevin Dynamics đệm → Score-based)
 8. `"Audio"` — 13 bài, 5 sub-module: Overview 1/Biểu diễn âm thanh 3 (waveform/spectrogram, SSL — Ý tưởng chung, SSL cho Âm thanh)/STT 2/TTS 3/Audio-Understanding 4 (Source Separation, Event Detection, Speaker Recognition, Audio Segmentation)
 9. `"Recommendation Systems"` — 11 bài, 5 sub-module: Overview 1/Nền tảng Content-based & CF 3 (Content-based Filtering, Memory-based CF, Matrix Factorization)/Deep Learning cho RS 3 (NeuMF, DeepFM, AutoRec)/Ranking & Evaluation 2 (metric ranking + cold-start, BPR)/Sequence-aware & Modern Architectures 2 (GRU4Rec/SASRec, Two-Tower)
 

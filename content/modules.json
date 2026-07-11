@@ -64,11 +64,14 @@
       }
     },
     "Generative Models": {
-      "description": "Mô hình sinh dữ liệu hình ảnh: nền tảng representation learning (Autoencoder/VAE) và 2 nhánh song song — sinh đối kháng (GAN family) và khuếch tán (Diffusion Models).",
+      "description": "Mô hình sinh dữ liệu hình ảnh: phân loại 3 trường phái (Overview), nền tảng likelihood-based thuần (Autoencoder→VAE→Flow), dòng tiến hoá sinh đối kháng thuần (GAN Family), các kỹ thuật autoregressive/hybrid liên quan nhưng không đối kháng (PixelCNN, VQ-VAE/VQ-GAN), cầu nối vision-language bắt buộc cho text-to-image (CLIP), và dòng tiến hoá khuếch tán (Diffusion Models).",
       "submodules": {
-        "Generative Adversarial Network Family": "Mô hình sinh đối kháng: GAN gốc (Goodfellow 2014) → DCGAN (convolutional), giải quyết khó định nghĩa loss đo độ chân thực bằng discriminator học được.",
-        "Diffusion Models": "Mô hình sinh khuếch tán: DDPM (forward/reverse process) → DDIM (sample nhanh 10-50×) → classifier-free guidance + Latent Diffusion (Stable Diffusion) biến thành text-to-image thực tế.",
-        "Overview": "Nền tảng chung: phân loại generative models, Autoencoder → VAE (mạch tiến hoá nén dữ liệu → sinh dữ liệu), Flow-based models, VQ-VAE/VQ-GAN."
+        "Overview": "Bài mở đầu module: phân biệt generative vs discriminative, 3 trường phái (likelihood-based, implicit, energy-based), bản đồ toàn bộ 6 sub-module.",
+        "Likelihood-based Models": "Mạch nén dữ liệu → sinh dữ liệu, không dùng đối kháng: Autoencoder (nén, chưa sinh được) → VAE (ELBO, latent liên tục có cấu trúc) → Flow-based Models (NICE→RealNVP→Glow, exact likelihood).",
+        "Generative Adversarial Network Family": "Dòng tiến hoá sinh đối kháng thuần: GAN gốc (Goodfellow 2014) → DCGAN (convolutional) → WGAN/StyleGAN (ổn định + kiểm soát) → Conditional GAN (cGAN/pix2pix/CycleGAN) → tổng kết dòng tiến hoá (kèm Progressive GAN, BigGAN).",
+        "Autoregressive & Hybrid Models": "Hai kỹ thuật ra đời cùng giai đoạn với GAN Family nhưng không mang tính đối kháng: PixelCNN/PixelRNN (autoregressive, đệm cho VQ-VAE) → VQ-VAE/VQ-GAN (discrete latent, điểm hội tụ VAE+GAN qua adversarial loss của VQ-GAN).",
+        "Vision-Language Bridge": "Cầu nối bắt buộc trước Diffusion Models có điều kiện text: CLIP (contrastive pretraining, học chung embedding space ảnh-text).",
+        "Diffusion Models": "Dòng tiến hoá khuếch tán: DDPM (forward/reverse process) → DDIM (sample nhanh 10-50× + classifier-free guidance) → Latent Diffusion (nén latent + CLIP, Stable Diffusion) → Score Function & Langevin Dynamics (đệm toán nền) → Score-based Models (SDE thống nhất DDPM/score matching)."
       }
     },
     "Audio": {

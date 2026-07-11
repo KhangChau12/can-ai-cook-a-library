@@ -1,0 +1,43 @@
+---
+quiz_for: 04-score-function-langevin-dynamics
+---
+
+## Q1
+Score function s(x) = ∇_x log p(x) có ý nghĩa trực giác gì?
+
+- [ ] Xác suất chính xác của điểm x
+- [ ] Khoảng cách từ x tới điểm gần nhất trong dữ liệu huấn luyện
+- [x] Hướng đi (gradient) từ vị trí x tới vùng có xác suất cao hơn trên "bản đồ độ cao" log p(x)
+- [ ] Số chiều của không gian latent
+
+> Score function chỉ ra hướng tăng nhanh nhất của log p(x) tại mỗi điểm — giống một la bàn chỉ về vùng có nhiều dữ liệu thật hơn, không cho biết giá trị xác suất tuyệt đối là bao nhiêu.
+
+## Q2
+Nếu chỉ lặp lại "đi theo score function" (gradient ascent thuần, không có nhiễu), điều gì xảy ra?
+
+- [ ] Quá trình luôn sample đúng và đa dạng từ p(x)
+- [x] Quá trình hội tụ về đúng 1 điểm cố định (local mode gần điểm xuất phát) — không khám phá được các mode khác của p(x)
+- [ ] Quá trình phân kỳ, không hội tụ
+- [ ] Quá trình chạy nhanh hơn nhưng kết quả giống nhau
+
+> Gradient ascent thuần luôn leo lên đỉnh gần nhất và mắc kẹt ở đó. Vì p(x) thường có nhiều mode (nhiều "kiểu" dữ liệu khác nhau), cần cách khác để sample đa dạng từ toàn bộ phân phối.
+
+## Q3
+Langevin dynamics giải quyết vấn đề mắc kẹt ở 1 mode bằng cách nào?
+
+- [ ] Tăng learning rate ε lên rất lớn
+- [ ] Chạy nhiều lần độc lập rồi lấy trung bình
+- [x] Thêm một lượng nhiễu ngẫu nhiên √(2ε)·z_t vào mỗi bước, bên cạnh việc đi theo score function — nhiễu này "xóc" điểm hiện tại ra khỏi việc mắc kẹt quá sớm
+- [ ] Đổi hướng gradient ngẫu nhiên mỗi bước
+
+> Công thức x_{t+1} = x_t + ε·s(x_t) + √(2ε)·z_t kết hợp gradient ascent (đi lên) và nhiễu ngẫu nhiên (khám phá). Nhiễu cho phép quá trình thoát khỏi 1 mode và khám phá các mode khác qua đủ số bước lặp.
+
+## Q4
+Việc DDPM dự đoán nhiễu ε_θ(x_t, t) có liên hệ gì với score function?
+
+- [ ] Không có liên hệ gì — đây là 2 khái niệm hoàn toàn độc lập
+- [x] Dự đoán nhiễu tương đương (qua một phép biến đổi tỉ lệ) với ước lượng score function: ∇_x log p(x_t) ≈ -ε_θ(x_t, t) / σ_t — DDPM luôn "học score function" một cách gián tiếp
+- [ ] DDPM dự đoán score function trực tiếp, không qua nhiễu
+- [ ] Score function chỉ dùng trong NCSN, không liên quan tới DDPM
+
+> Đây là cầu nối quan trọng: hai cách đặt vấn đề nghe khác nhau (dự đoán nhiễu vs ước lượng gradient log-density) thực chất là cùng một phép toán, chỉ khác cách gọi tên — giúp thống nhất DDPM và score-based models dưới cùng một framework.

@@ -5,12 +5,12 @@ module: Generative Models
 submodule: Generative Adversarial Network Family
 order: 1
 status: stable
-prerequisites: ["02-autoencoder"]
+prerequisites: ["01-autoencoder"]
 summary: Goodfellow và cộng sự (2014) giải quyết vấn đề cụ thể của generative model truyền thống (rất khó viết công thức toán học trực tiếp cho 'dữ liệu này chân thực tới đâu') bằng một ý tưởng táo bạo: dùng một mạng nơ-ron khác (discriminator) làm giám khảo học được, thay vì tự định nghĩa hàm loss. Hàm mục tiêu minimax `min_G max_D E[log D(x)]+E[log(1-D(G(z)))]` tự động hoá về Jensen-Shannon Divergence — điểm cân bằng lý tưởng là `p_g=p_data` (JSD=0, D=1/2).
 last_touched_by_task: Cải thiện Task 104 (2026-07-07): Phase 2 Generative bắt đầu — bổ sung công thức minimax đầy đủ `min_G max_D E[log D(x)]+E[log(1-D(G(z)))]` + non-saturating loss thực hành + phần JS divergence (discriminator tối ưu `D*=p_data/(p_data+p_g)`, giá trị `C(G)=-log4+2·JSD`, điểm cân bằng `p_g=p_data`), bài cũ chỉ mô tả minimax bằng lời. Thêm nguồn Lil'Log 'From GAN to WGAN' cho phần JS/KL divergence. Giữ nguyên cấu trúc 2 mạng/2 mục tiêu + động cơ Goodfellow 2014 (đã đúng).
 ---
 
-Bài [Autoencoder](../01-Overview/02-autoencoder.mdx) dùng decoder để khôi phục lại dữ
+Bài [Autoencoder](../02-Likelihood-based-Models/01-autoencoder.mdx) dùng decoder để khôi phục lại dữ
 liệu đã biết (`x` gốc). Nhưng nếu muốn tạo dữ liệu **hoàn toàn mới** (một
 khuôn mặt chưa từng tồn tại nhưng trông như thật), generative model
 truyền thống gặp một vấn đề khó: rất khó viết ra một công thức toán học
@@ -138,7 +138,7 @@ generative model.
 ## Liên hệ lại với các bài trước
 
 - Generator trong GAN đóng vai trò tương tự decoder trong autoencoder
-  (bài [Autoencoder](../01-Overview/02-autoencoder.mdx)) — cả hai đều biến một vector
+  (bài [Autoencoder](../02-Likelihood-based-Models/01-autoencoder.mdx)) — cả hai đều biến một vector
   chiều thấp thành dữ liệu chiều cao. Khác biệt cốt lõi: decoder học cách
   khôi phục lại **đúng** một input cụ thể đã biết (reconstruction loss so
   với `x` gốc); generator học cách tạo ra dữ liệu **mới**, không so khớp

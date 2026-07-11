@@ -2,15 +2,15 @@
 title: VAE (Variational Autoencoder) — Từ Nén Dữ Liệu tới Sinh Dữ Liệu Mới
 track: foundations-track
 module: Generative Models
-order: 3
+order: 2
 status: stable
-prerequisites: ["02-autoencoder"]
+prerequisites: ["01-autoencoder"]
 summary: Bước tiến từ Autoencoder sang generative model: học phân phối xác suất của dữ liệu trong không gian latent thay vì chỉ nén, dùng ELBO và reparameterization trick để huấn luyện — cầu nối giữa Autoencoder và Diffusion Models, so sánh với GAN.
-last_touched_by_task: Cập nhật order (2026-07-09) sau khi Autoencoder chuyển từ module Dimensionality Reduction vào chung sub-module Overview này (đứng ngay trước, order 2) — sửa lại các link nội bộ trỏ đúng file thật thay vì số thứ tự cũ đã lỗi thời (bài 22/89/93/49).
-submodule: Overview
+last_touched_by_task: Tách sub-module "Likelihood-based Models" khỏi "Overview" (2026-07-11, theo yêu cầu người vận hành) — order đổi từ 3 sang 2 vì Autoencoder giờ là order 1 trong sub-module mới. Sửa link nội bộ trỏ đúng vị trí file thật sau khi tách.
+submodule: Likelihood-based Models
 ---
 
-Bài [Autoencoder](02-autoencoder.mdx) đã dạy cách nén dữ liệu vào một không
+Bài [Autoencoder](01-autoencoder.mdx) đã dạy cách nén dữ liệu vào một không
 gian ẩn (latent space) nhỏ hơn rồi khôi phục lại — một công cụ unsupervised
 học mạnh. Nhưng autoencoder có một hạn chế cốt lõi: **không thể sinh dữ liệu
 mới**.
@@ -151,7 +151,7 @@ mờ (vì reconstruction loss phải nhường chỗ cho KL).
 
 ## VAE trong bối cảnh Generative Models
 
-So với các trường phái khác (đã tổng quan ở [Generative Models — Tổng quan và Phân loại](01-generative-models-overview.mdx)):
+So với các trường phái khác (đã tổng quan ở [Generative Models — Tổng quan và Phân loại](../01-Overview/01-generative-models-overview.mdx)):
 
 | Tiêu chí | VAE | GAN | Diffusion |
 |----------|-----|-----|-----------|
@@ -162,7 +162,7 @@ So với các trường phái khác (đã tổng quan ở [Generative Models —
 | Latent space có cấu trúc | Có, nội suy được | Không rõ ràng | Có |
 
 **Điểm đặc biệt của VAE:** nó là cầu nối giữa Autoencoder (bài trước) và
-[Diffusion Models](../03-Diffusion-Models/01-diffusion-models.mdx). Cả VAE và Diffusion đều tối ưu ELBO — nhưng
+[Diffusion Models](../06-Diffusion-Models/01-diffusion-models.mdx). Cả VAE và Diffusion đều tối ưu ELBO — nhưng
 Diffusion làm điều đó qua một chuỗi nhiều bước thay vì một bước duy nhất,
 cho chất lượng cao hơn nhiều. VAE cũng có không gian latent có cấu trúc
 đẹp (cho phép nội suy và điều khiển) — điều mà GAN không có và Diffusion
@@ -174,7 +174,7 @@ cross-entropy) khuyến khích decoder "an toàn": nếu không chắc pixel nà
 Đây là lý do VAE hiếm khi được dùng trực tiếp cho sinh ảnh chất lượng
 cao, nhưng nó vẫn là nền tảng cho nhiều ứng dụng khác (anomaly detection,
 data compression, và đặc biệt là thành phần nén trong
-[Latent Diffusion / Stable Diffusion](../03-Diffusion-Models/03-latent-diffusion.mdx)).
+[Latent Diffusion / Stable Diffusion](../06-Diffusion-Models/03-latent-diffusion.mdx)).
 
 ## Nguồn tham khảo
 

@@ -14,7 +14,7 @@ Bài [Matrix Factorization](../02-Nen-tang-Content-based-va-CF/03-collaborative-
 dự đoán rating bằng cách phân rã ma trận `R` thành tích `P × Q^T`, rồi
 tính rating dự đoán bằng tích vô hướng giữa 2 vector latent factor. Bài
 này giới thiệu một cách tiếp cận khác hẳn cho cùng bài toán: dùng chính
-kiến trúc [Autoencoder](../../06-Generative Models/01-Overview/02-autoencoder.mdx) đã học, nhưng áp dụng theo
+kiến trúc [Autoencoder](../../06-Generative Models/02-Likelihood-based-Models/01-autoencoder.mdx) đã học, nhưng áp dụng theo
 một cách khá bất ngờ.
 
 ## Ý tưởng: mỗi người dùng (hoặc item) là một vector cần tái tạo
@@ -89,7 +89,7 @@ lớp ẩn), không cần thiết kế thêm gì phức tạp hơn ngoài kỹ t
   không học từ khoảng trống" đã gặp ở chính công thức huấn luyện Matrix
   Factorization (bài 43) — chỉ tối thiểu hoá sai số trên các ô **đã
   biết**, không phải toàn bộ ma trận.
-- Đây là ví dụ thứ hai trong track (sau [PCA và Autoencoder](../../06-Generative Models/01-Overview/02-autoencoder.mdx))
+- Đây là ví dụ thứ hai trong track (sau [PCA và Autoencoder](../../06-Generative Models/02-Likelihood-based-Models/01-autoencoder.mdx))
   cho thấy Autoencoder có thể thay thế một phương pháp giảm chiều/phân rã
   tuyến tính cổ điển — Matrix Factorization (tuyến tính, nghiệm gần đóng)
   → AutoRec (phi tuyến, học qua gradient descent) đi đúng con đường tương

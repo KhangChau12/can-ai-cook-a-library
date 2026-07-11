@@ -1,0 +1,53 @@
+---
+quiz_for: 02-vae-variational-autoencoder
+---
+
+## Q1
+Vì sao Autoencoder thường không sinh được dữ liệu mới có nghĩa, dù đã có latent space?
+
+- [ ] Vì Autoencoder không dùng backpropagation
+- [ ] Vì latent space của Autoencoder quá nhiều chiều
+- [x] Vì latent space của Autoencoder có cấu trúc lộn xộn — các điểm ảnh thật nằm rải rác, chọn 1 điểm ngẫu nhiên (không qua encoder) thường rơi vào "lỗ hổng" mà decoder chưa từng thấy, cho ra nhiễu vô nghĩa
+- [ ] Vì Autoencoder chỉ hoạt động với ảnh xám
+
+> Autoencoder chỉ học ánh xạ chính xác cho các điểm latent tương ứng với ảnh thật đã thấy lúc huấn luyện — không đảm bảo vùng xung quanh cũng có nghĩa.
+
+## Q2
+VAE thay đổi gì ở encoder so với Autoencoder thường để giải quyết vấn đề "lỗ hổng" trong latent space?
+
+- [ ] VAE bỏ hẳn encoder, chỉ dùng decoder
+- [x] VAE cho encoder trả ra tham số của một phân phối Gaussian (μ, log σ²) thay vì một vector cố định — buộc mỗi input tương ứng với một vùng latent (có độ bất định), không phải 1 điểm duy nhất
+- [ ] VAE dùng CNN thay cho MLP trong encoder
+- [ ] VAE huấn luyện encoder và decoder riêng biệt, không đồng thời
+
+> Autoencoder: z = f(x), một điểm xác định. VAE: (μ, log σ²) = f(x), rồi lấy mẫu z ~ N(μ, σ²I). Sự bất định này buộc các vùng latent chồng lấn lên nhau, tạo không gian liên tục.
+
+## Q3
+Reparameterization trick (z = μ + σ⊙ε) giải quyết vấn đề gì?
+
+- [ ] Giảm số tham số cần huấn luyện
+- [ ] Tăng tốc độ inference
+- [x] Cho phép gradient chảy qua bước lấy mẫu ngẫu nhiên — vì z = μ + σ⊙ε có thể đạo hàm theo μ, σ (còn lấy mẫu trực tiếp z ~ N(μ,σ²) thì không backpropagate được)
+- [ ] Giúp decoder tái tạo ảnh sắc nét hơn
+
+> Lấy mẫu z ~ N(μ, σ²I) trực tiếp là một phép toán ngẫu nhiên, không đạo hàm được. Tách ngẫu nhiên ra thành ε (input phụ, không học) giúp μ và σ (output của encoder, có thể học) vẫn nhận được gradient bình thường.
+
+## Q4
+Trong hàm loss ELBO của VAE, thành phần KL divergence đóng vai trò gì?
+
+- [ ] Đo mức độ decoder tái tạo đúng ảnh gốc
+- [x] Regularizer kéo mọi phân phối q(z|x) về gần prior N(0,I), buộc chúng chồng lấn lên nhau thay vì tách rời — tạo ra latent space liên tục
+- [ ] Tính tốc độ huấn luyện của mô hình
+- [ ] Đo độ tương phản của ảnh sinh ra
+
+> ELBO gồm 2 phần: reconstruction loss (khớp ảnh gốc) và KL divergence (kéo q(z|x) về gần Gaussian chuẩn). Sự căng thẳng giữa 2 mục tiêu này tạo ra latent space vừa có cấu trúc vừa giữ đủ thông tin.
+
+## Q5
+Vì sao VAE thường sinh ảnh bị mờ, và điều này khác gì với hạn chế của GAN?
+
+- [ ] VAE mờ vì dùng ít tham số hơn GAN; GAN không có hạn chế nào
+- [x] VAE mờ vì MSE/cross-entropy loss khuyến khích decoder "an toàn" (tô màu trung bình khi không chắc); GAN thì sắc nét nhưng dễ mode collapse (thiếu đa dạng) — 2 hạn chế khác bản chất, không phải cùng 1 vấn đề
+- [ ] Cả VAE và GAN đều mờ vì lý do giống nhau
+- [ ] VAE mờ vì latent space quá nhỏ
+
+> VAE: hạn chế về độ sắc nét (reconstruction loss "né an toàn"). GAN: hạn chế về độ bao phủ (mode collapse). Đây là 2 trade-off độc lập, không phải cùng nguyên nhân — nên kết hợp cả 2 (VQ-GAN) giải quyết được cả hai.

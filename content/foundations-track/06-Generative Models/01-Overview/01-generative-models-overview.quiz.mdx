@@ -1,0 +1,43 @@
+---
+quiz_for: 01-generative-models-overview
+---
+
+## Q1
+Điểm khác biệt căn bản giữa discriminative model và generative model là gì?
+
+- [ ] Discriminative model dùng mạng nơ-ron, generative model không dùng
+- [ ] Generative model chỉ hoạt động với ảnh, discriminative model hoạt động với mọi loại dữ liệu
+- [x] Discriminative model học p(y|x) — phân biệt giữa các lớp; generative model học p(x) — hiểu phân phối của chính dữ liệu, có thể tạo ra dữ liệu mới
+- [ ] Generative model luôn cho kết quả chính xác hơn discriminative model
+
+> Một mô hình discriminative (như logistic regression, CNN classification) chỉ vẽ ranh giới quyết định giữa các lớp. Một mô hình generative hiểu "dữ liệu trông như thế nào" nên có thể sinh ra mẫu mới chưa từng tồn tại.
+
+## Q2
+Vì sao bài toán sinh dữ liệu (generative) khó hơn phân loại (discriminative) rất nhiều?
+
+- [ ] Vì generative model luôn cần nhiều tham số hơn
+- [x] Vì dữ liệu cực kỳ đa chiều (phần lớn không gian là "nhiễu" vô nghĩa), phân phối đa mode (nhiều output hợp lệ cho 1 input), và không có "ground truth" cụ thể để so sánh trực tiếp
+- [ ] Vì generative model không dùng được backpropagation
+- [ ] Vì generative model chỉ hoạt động trên dữ liệu có nhãn
+
+> 3 khó khăn cốt lõi: (1) không gian dữ liệu cực lớn nhưng chỉ 1 phần nhỏ có nghĩa, (2) nhiều output hợp lệ cho cùng 1 điều kiện (cần bao phủ đa dạng), (3) không có "đáp án đúng" cụ thể để tính loss trực tiếp như supervised learning.
+
+## Q3
+Ba trường phái generative model chính khác nhau ở điểm nào?
+
+- [ ] Khác nhau ở loại dữ liệu đầu vào (ảnh, text, audio)
+- [x] Khác nhau ở cách định nghĩa hàm mục tiêu: likelihood-based (tối đa hoá p(x)), implicit (chỉ cần sinh được, không tính xác suất), energy-based (định nghĩa năng lượng thay vì xác suất)
+- [ ] Khác nhau ở framework code sử dụng (PyTorch vs TensorFlow)
+- [ ] Khác nhau ở việc có dùng GPU hay không
+
+> Likelihood-based (VAE, Flow, Diffusion) tối ưu trực tiếp hoặc gián tiếp p(x). Implicit (GAN) chỉ cần generator sinh ra dữ liệu giống thật, không định nghĩa p(x) rõ ràng. Energy-based gán năng lượng thấp cho mẫu thật, cao cho mẫu giả.
+
+## Q4
+Theo bảng trade-off trong bài, vì sao GAN thống trị sinh ảnh giai đoạn 2014-2020 nhưng Diffusion dần thay thế từ 2021?
+
+- [ ] Vì GAN không dùng được nữa do lỗi kỹ thuật
+- [x] Vì Diffusion vượt trội về chất lượng ảnh và độ bao phủ mode (không bị mode collapse như GAN), dù phải đánh đổi tốc độ sinh chậm hơn nhiều
+- [ ] Vì Diffusion không cần huấn luyện
+- [ ] Vì GAN chỉ hoạt động trên ảnh đen trắng
+
+> Không có generative model "tốt nhất tuyệt đối" — mỗi trường phái đánh đổi giữa chất lượng, độ bao phủ, và tốc độ sinh. GAN nhanh nhưng dễ mode collapse; Diffusion chậm hơn nhiều (10-1000 bước) nhưng chất lượng và độ bao phủ tốt hơn.

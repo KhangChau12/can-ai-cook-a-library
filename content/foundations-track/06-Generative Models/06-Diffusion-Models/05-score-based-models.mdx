@@ -3,14 +3,14 @@ title: Score-based Models — Sinh Dữ Liệu Bằng Gradient Của Log-Probabi
 track: foundations-track
 module: Generative Models
 submodule: Diffusion Models
-order: 4
+order: 5
 status: stable
-prerequisites: ["01-diffusion-models"]
-summary: DDPM (bài 49) có discrete timesteps và forward process Gaussian. Score-based Models (Song & Ermon 2019) tiếp cận từ góc nhìn khác: học score function (gradient của log probability) và dùng Langevin dynamics để sample. Song et al. 2020 thống nhất DDPM và score matching vào một framework duy nhất — continuous-time SDE — cho phép ODE sampling (nhanh hơn) và exact likelihood.
-last_touched_by_task: Bài mới (2026-07-08): Phase 3.2 đào sâu Generative Models — Score-based/SDE Models, cầu nối toán học giữa DDPM và score matching. Nguồn: arxiv NCSN 1907.05600 + arxiv Score SDE 2011.13456 + lilianweng.github.io.
+prerequisites: ["04-score-function-langevin-dynamics"]
+summary: DDPM có discrete timesteps và forward process Gaussian. Score-based Models (Song & Ermon 2019) tiếp cận từ góc nhìn khác: học score function (gradient của log probability) và dùng Langevin dynamics để sample — 2 khái niệm đã dựng trực giác ở bài đệm trước. Song et al. 2020 thống nhất DDPM và score matching vào một framework duy nhất — continuous-time SDE — cho phép ODE sampling (nhanh hơn) và exact likelihood.
+last_touched_by_task: Sửa (2026-07-11, review chiều sâu module): order đổi từ 4 sang 5 sau khi chèn bài đệm "Score Function & Langevin Dynamics" (order 4) — bài này đòi hỏi SDE/score matching/Langevin dynamics mà track chưa từng dạy, nay có bài đệm dẫn trước. Bỏ phần định nghĩa lại score function/Langevin dynamics đã trùng với bài đệm, thêm câu dẫn nhập ngắn cho Wiener process/Brownian motion trước khi vào công thức SDE (khái niệm này bài đệm không dạy, chỉ dừng ở discrete-time Langevin).
 ---
 
-Bài [DDPM](49-diffusion-models.mdx) trình bày diffusion models như một quá
+Bài [DDPM](01-diffusion-models.mdx) trình bày diffusion models như một quá
 trình 2 chiều rời rạc: forward thêm nhiễu qua T bước, reverse học khử nhiễu.
 Kiến trúc này hoạt động tốt nhưng có hai hạn chế về mặt lý thuyết:
 
@@ -21,7 +21,11 @@ Song & Ermon (2019, Stanford) và Song et al. (2020, Stanford/Google/OpenAI)
 giải quyết bằng cách nhìn diffusion từ góc nhìn **score-based** — học
 gradient của log-probability thay vì dự đoán nhiễu — và thống nhất mọi
 phương pháp sinh (DDPM, score matching, flow) vào một framework duy nhất:
-**Stochastic Differential Equation (SDE)**.
+**Stochastic Differential Equation (SDE)**. Bài
+[Score Function & Langevin Dynamics](04-score-function-langevin-dynamics.mdx)
+(bài trước) đã dựng trực giác cho 2 viên gạch nền — score function và
+Langevin dynamics rời rạc — bài này dùng trực tiếp cả hai, không định
+nghĩa lại.
 
 ## Tại sao cần góc nhìn score-based?
 
@@ -35,34 +39,16 @@ của dữ liệu — gradient của log-probability density:
 ```
 
 Nghĩa là: mạng ε_θ không chỉ "dự đoán nhiễu" — nó đang học hướng (gradient)
-để đi từ vùng ít xác suất lên vùng nhiều xác suất. Góc nhìn này mở ra khả
-năng tổng quát hoá: không chỉ Gaussian, không chỉ discrete steps.
+để đi từ vùng ít xác suất lên vùng nhiều xác suất, đúng như score function
+đã học ở bài trước. Góc nhìn này mở ra khả năng tổng quát hoá: không chỉ
+Gaussian, không chỉ discrete steps.
 
 ## NCSN — Score Matching + Langevin Dynamics
 
 NCSN (Song & Ermon 2019) — Noise Conditional Score Network — là score-based
-model đầu tiên hoạt động thành công với ảnh.
-
-### Score function
-
-Score function của một phân phối p(x) là gradient của log-density:
-
-```
-s(x) = ∇_x log p(x)
-```
-
-Score function chỉ cho biết "hướng đi để tăng xác suất" tại mỗi điểm x.
-Nếu biết score function ở mọi điểm, ta có thể sample từ p(x) bằng
-**Langevin dynamics**:
-
-```
-x_{t+1} = x_t + ε · s(x_t) + √(2ε) · z_t
-```
-
-Trong đó z_t ~ N(0, I) là nhiễu ngẫu nhiên. Công thức này kết hợp:
-- **Gradient ascent** theo score function: x_t + ε·s(x_t) — đi lên vùng
-  xác suất cao hơn
-- **Nhiễu:** √(2ε)·z_t — tránh rơi vào local mode
+model đầu tiên hoạt động thành công với ảnh, dùng trực tiếp công thức
+Langevin dynamics `x_{t+1} = x_t + ε·s(x_t) + √(2ε)·z_t` đã học ở bài
+trước, với `s(x)` được một mạng nơ-ron học thay vì biết trước.
 
 ### Vấn đề: manifold hypothesis
 
@@ -114,16 +100,31 @@ quá trình là một **SDE liên tục**.
 
 ### Forward SDE
 
-Dữ liệu bị phá huỷ dần bởi nhiễu, được mô tả bởi một SDE:
+**Từ bước rời rạc sang liên tục.** Langevin dynamics ở bài trước lặp
+`x_{t+1} = x_t + ε·s(x_t) + √(2ε)·z_t` qua các bước **rời rạc** (mỗi
+bước một khoảng thời gian `ε` cố định). Nếu để `ε → 0` (số bước tiến tới
+vô hạn, mỗi bước vô cùng nhỏ), chuỗi các bước rời rạc đó trở thành một
+quá trình **liên tục theo thời gian** — đây chính là ý tưởng của
+**Stochastic Differential Equation (SDE)**: viết phương trình mô tả
+"tốc độ thay đổi tức thời" của `x` theo thời gian, thay vì từng bước
+nhảy rời rạc. Phần nhiễu ngẫu nhiên `z_t` ở mỗi bước rời rạc, khi lấy
+giới hạn liên tục, trở thành **Wiener process** (còn gọi là **Brownian
+motion** — mô hình toán học cho chuyển động ngẫu nhiên liên tục, ví dụ
+cổ điển là hạt phấn hoa bị va đập ngẫu nhiên bởi phân tử nước, ký hiệu
+`dw` hoặc `dw̄`) — chỉ cần hiểu nó là "phiên bản liên tục" của việc cộng
+`z_t ~ N(0,I)` mỗi bước, không cần đi sâu vào định nghĩa toán học chặt.
+
+Với trực giác đó, dữ liệu bị phá huỷ dần bởi nhiễu được mô tả bởi một SDE:
 
 ```
 dx = f(x, t) dt + g(t) dw
 ```
 
 Trong đó:
-- f(x, t) — drift coefficient (xu hướng trung tâm)
-- g(t) — diffusion coefficient (cường độ nhiễu)
-- dw — Wiener process (Brownian motion)
+- f(x, t) — drift coefficient (xu hướng trung tâm, tương tự phần
+  "-½β(t)x" đã gặp ở forward process DDPM — kéo `x` về gần 0 dần)
+- g(t) — diffusion coefficient (cường độ nhiễu, tương tự `β_t` của DDPM)
+- dw — Wiener process (Brownian motion), phiên bản liên tục của `z_t`
 
 ### Reverse SDE
 
@@ -175,14 +176,22 @@ ODE này:
 
 ## Liên hệ lại với các bài trước
 
-- **DDPM (bài 49):** được thống nhất là VP-SDE trong framework SDE. Công
-  thức loss L_simple = E[||ε - ε_θ||²] tương đương với score matching.
-- **DDIM (bài 70):** DDIM là trường hợp đặc biệt của probability flow ODE
-  (η=0 → ODE, tất định). DDIM sinh nhanh bằng cách giải ODE với ít bước.
-- **Flow-based Models (bài 103):** probability flow ODE kết nối diffusion
-  với normalizing flows — cho phép tính exact likelihood qua ODE.
-- **VAE (bài 94):** SDE framework cũng có thể xem như một hierarchical VAE
-  với infinite latent variables.
+- **[Score Function & Langevin Dynamics](04-score-function-langevin-dynamics.mdx)
+  (bài trước):** toàn bộ bài này chỉ mở rộng 2 khái niệm đã dựng ở đó
+  (score function, Langevin dynamics rời rạc) sang một khung liên tục
+  (SDE) — không có khái niệm mới nào khác ngoài Wiener process.
+- **[DDPM](01-diffusion-models.mdx):** được thống nhất là VP-SDE trong
+  framework SDE. Công thức loss L_simple = E[||ε - ε_θ||²] tương đương
+  với score matching.
+- **[DDIM](02-ddim.mdx):** DDIM là trường hợp đặc biệt của probability
+  flow ODE (η=0 → ODE, tất định). DDIM sinh nhanh bằng cách giải ODE với
+  ít bước.
+- **[Flow-based Models](../02-Likelihood-based-Models/03-flow-based-models.mdx):**
+  probability flow ODE kết nối diffusion với normalizing flows — cho phép
+  tính exact likelihood qua ODE.
+- **[VAE](../02-Likelihood-based-Models/02-vae-variational-autoencoder.mdx):**
+  SDE framework cũng có thể xem như một hierarchical VAE với infinite
+  latent variables.
 
 ## Nguồn tham khảo
 

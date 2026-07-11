@@ -30,8 +30,8 @@ function isCurrent(l: Lesson) {
       <a
         href={`${base}${lesson.id}/`}
         data-lesson-nav={lesson.id}
-        class={`flex items-center gap-2 rounded-md px-2.5 py-1.5 text-[13px] transition ${
-          isCurrent(lesson) ? 'bg-primary-blue/10 font-semibold text-text-primary' : 'text-text-tertiary hover:bg-bg-elevated hover:text-text-secondary'
+        class={`flex items-center gap-2 rounded-md border-l-2 px-2.5 py-1.5 text-[13px] transition ${
+          isCurrent(lesson) ? 'border-accent-cyan-bright bg-primary-blue/10 font-semibold text-text-primary' : 'border-transparent text-text-tertiary hover:bg-bg-elevated hover:text-text-secondary'
         }`}
       >
         <span data-nav-dot={lesson.id} class="h-1.5 w-1.5 shrink-0 rounded-full border border-border-subtle"></span>
@@ -46,8 +46,8 @@ function isCurrent(l: Lesson) {
           <a
             href={`${base}${lesson.id}/`}
             data-lesson-nav={lesson.id}
-            class={`flex items-center gap-2 rounded-md px-2.5 py-1.5 text-[13px] transition ${
-              isCurrent(lesson) ? 'bg-primary-blue/10 font-semibold text-text-primary' : 'text-text-tertiary hover:bg-bg-elevated hover:text-text-secondary'
+            class={`flex items-center gap-2 rounded-md border-l-2 px-2.5 py-1.5 text-[13px] transition ${
+              isCurrent(lesson) ? 'border-accent-cyan-bright bg-primary-blue/10 font-semibold text-text-primary' : 'border-transparent text-text-tertiary hover:bg-bg-elevated hover:text-text-secondary'
             }`}
           >
             <span data-nav-dot={lesson.id} class="h-1.5 w-1.5 shrink-0 rounded-full border border-border-subtle"></span>

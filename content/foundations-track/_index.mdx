@@ -193,25 +193,37 @@ module là 1 thư mục, bài đánh số local trong module/submodule.
 ### Overview
 
 1. [Generative Models — Tổng quan và Phân loại](06-Generative Models/01-Overview/01-generative-models-overview.mdx)
-2. [Autoencoder — Mạng nơ-ron tự học nén dữ liệu không cần nhãn](06-Generative Models/01-Overview/02-autoencoder.mdx)
-3. [VAE (Variational Autoencoder) — Từ Nén Dữ Liệu tới Sinh Dữ Liệu Mới](06-Generative Models/01-Overview/03-vae-variational-autoencoder.mdx)
-4. [Flow-based Models — Biến Đổi Phân Phối Bằng Dòng Chảy Khả Nghịch](06-Generative Models/01-Overview/04-flow-based-models.mdx)
-5. [VQ-VAE & VQ-GAN — Lượng Tử Hóa Không Gian Latent Cho Sinh Ảnh Chất Lượng Cao](06-Generative Models/01-Overview/05-vq-vae-vq-gan.mdx)
+
+### Likelihood-based Models
+
+1. [Autoencoder — Mạng nơ-ron tự học nén dữ liệu không cần nhãn](06-Generative Models/02-Likelihood-based-Models/01-autoencoder.mdx)
+2. [VAE (Variational Autoencoder) — Từ Nén Dữ Liệu tới Sinh Dữ Liệu Mới](06-Generative Models/02-Likelihood-based-Models/02-vae-variational-autoencoder.mdx)
+3. [Flow-based Models — Biến Đổi Phân Phối Bằng Dòng Chảy Khả Nghịch](06-Generative Models/02-Likelihood-based-Models/03-flow-based-models.mdx)
 
 ### Generative Adversarial Network Family
 
-1. [GAN — Hai mạng nơ-ron thi đấu để tạo dữ liệu giả chân thực](06-Generative Models/02-Generative-Adversarial-Network-Family/01-gan.mdx)
-2. [DCGAN — Kiến trúc Convolutional Ổn định hoá Huấn luyện GAN](06-Generative Models/02-Generative-Adversarial-Network-Family/02-dcgan.mdx)
-3. [WGAN & StyleGAN — Hai Hướng Nâng cấp GAN: Ổn định hoá và Kiểm soát](06-Generative Models/02-Generative-Adversarial-Network-Family/03-wgan-stylegan.mdx)
-4. [Conditional GAN — Sinh Ảnh Có Điều Kiện Từ Nhãn, Ảnh Khác, Và Miền](06-Generative Models/02-Generative-Adversarial-Network-Family/04-conditional-gan.mdx)
-5. [GAN Family — Tổng Kết Dòng Tiến Hóa Từ GAN Gốc Đến StyleGAN](06-Generative Models/02-Generative-Adversarial-Network-Family/05-gan-family-synthesis.mdx)
+1. [GAN — Hai mạng nơ-ron thi đấu để tạo dữ liệu giả chân thực](06-Generative Models/03-Generative-Adversarial-Network-Family/01-gan.mdx)
+2. [DCGAN — Kiến trúc Convolutional Ổn định hoá Huấn luyện GAN](06-Generative Models/03-Generative-Adversarial-Network-Family/02-dcgan.mdx)
+3. [WGAN & StyleGAN — Hai Hướng Nâng cấp GAN: Ổn định hoá và Kiểm soát](06-Generative Models/03-Generative-Adversarial-Network-Family/03-wgan-stylegan.mdx)
+4. [Conditional GAN — Sinh Ảnh Có Điều Kiện Từ Nhãn, Ảnh Khác, Và Miền](06-Generative Models/03-Generative-Adversarial-Network-Family/04-conditional-gan.mdx)
+5. [GAN Family — Tổng Kết Dòng Tiến Hóa Sinh Đối Kháng](06-Generative Models/03-Generative-Adversarial-Network-Family/05-gan-family-synthesis.mdx)
+
+### Autoregressive & Hybrid Models
+
+1. [PixelCNN & PixelRNN — Sinh Ảnh Bằng Cách Dự Đoán Từng Pixel Tuần Tự](06-Generative Models/04-Autoregressive-and-Hybrid-Models/01-pixelcnn-pixelrnn.mdx)
+2. [VQ-VAE & VQ-GAN — Lượng Tử Hóa Không Gian Latent Cho Sinh Ảnh Chất Lượng Cao](06-Generative Models/04-Autoregressive-and-Hybrid-Models/02-vq-vae-vq-gan.mdx)
+
+### Vision-Language Bridge
+
+1. [CLIP — Học Chung Không Gian Embedding Cho Ảnh Và Văn Bản](06-Generative Models/05-Vision-Language-Bridge/01-clip.mdx)
 
 ### Diffusion Models
 
-1. [Diffusion Models — Sinh Dữ liệu Bằng Cách Học Khử nhiễu Dần](06-Generative Models/03-Diffusion-Models/01-diffusion-models.mdx)
-2. [DDIM — Sinh Nhanh Hơn 10-50 Lần Bằng Quá trình Non-Markovian Tất định](06-Generative Models/03-Diffusion-Models/02-ddim.mdx)
-3. [Latent Diffusion (Stable Diffusion) — Khử nhiễu Trong Không gian Latent](06-Generative Models/03-Diffusion-Models/03-latent-diffusion.mdx)
-4. [Score-based Models — Sinh Dữ Liệu Bằng Gradient Của Log-Probability](06-Generative Models/03-Diffusion-Models/04-score-based-models.mdx)
+1. [Diffusion Models — Sinh Dữ liệu Bằng Cách Học Khử nhiễu Dần](06-Generative Models/06-Diffusion-Models/01-diffusion-models.mdx)
+2. [DDIM — Sinh Nhanh Hơn 10-50 Lần Bằng Quá trình Non-Markovian Tất định](06-Generative Models/06-Diffusion-Models/02-ddim.mdx)
+3. [Latent Diffusion (Stable Diffusion) — Khử nhiễu Trong Không gian Latent](06-Generative Models/06-Diffusion-Models/03-latent-diffusion.mdx)
+4. [Score Function & Langevin Dynamics — Sinh Dữ Liệu Bằng Cách "Leo Dốc Có Nhiễu"](06-Generative Models/06-Diffusion-Models/04-score-function-langevin-dynamics.mdx)
+5. [Score-based Models — Sinh Dữ Liệu Bằng Gradient Của Log-Probability](06-Generative Models/06-Diffusion-Models/05-score-based-models.mdx)
 
 ## Module 7 — Audio
 

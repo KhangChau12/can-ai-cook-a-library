@@ -1,0 +1,126 @@
+---
+title: Score Function & Langevin Dynamics — Sinh Dữ Liệu Bằng Cách "Leo Dốc Có Nhiễu"
+track: foundations-track
+module: Generative Models
+submodule: Diffusion Models
+order: 4
+status: stable
+prerequisites: ["03-latent-diffusion"]
+summary: DDPM/DDIM học dự đoán nhiễu qua các bước rời rạc cố định (T bước). Trước khi học Score-based Models (bài tiếp theo) — vốn đòi hỏi nhìn diffusion qua lăng kính liên tục (SDE) — bài này dựng trực giác tối thiểu cho 2 khái niệm nền: score function (gradient của log-probability, "la bàn" chỉ hướng về vùng xác suất cao) và Langevin dynamics (thuật toán sample bằng cách lặp "đi theo la bàn + thêm nhiễu ngẫu nhiên"). Không cần stochastic calculus đầy đủ — chỉ cần hiểu đúng 2 công thức này trước khi ghép chúng vào một quy trình liên tục (SDE).
+last_touched_by_task: Bài đệm mới (2026-07-11) — lấp khoảng trống prerequisite nặng nhất phát hiện khi review chiều sâu module Generative Models. Bài Score-based Models nhắc SDE/score matching/Langevin dynamics như khái niệm đã biết, nhưng track chưa từng dạy stochastic calculus ở đâu (kể cả bài xác suất-thống kê nền tảng chỉ tới discrete probability + MLE). Bài này KHÔNG dạy đầy đủ SDE theory — chỉ dựng đủ trực giác (score function, Langevin dynamics) để bài Score-based Models không còn là bước nhảy đột ngột. Nguồn: arxiv NCSN 1907.05600 + Lilian Weng diffusion models blog (phần Langevin dynamics).
+---
+
+Bài [Latent Diffusion](03-latent-diffusion.mdx) hoàn thiện dòng DDPM →
+DDIM → text-to-image — tất cả đều coi diffusion là một quy trình **rời
+rạc**: `T` bước cố định, mỗi bước có công thức riêng. Bài tiếp theo
+(Score-based Models) nhìn lại toàn bộ ý tưởng đó từ một góc **liên tục**
+hơn — và để hiểu được góc nhìn đó, cần 2 khái niệm nền chưa xuất hiện ở
+đâu trong track: **score function** và **Langevin dynamics**. Bài đệm
+này chỉ dựng đủ trực giác cho 2 khái niệm đó — không đi sâu vào
+stochastic calculus đầy đủ (nằm ngoài phạm vi track).
+
+## Score function: "la bàn" chỉ hướng về vùng xác suất cao
+
+Với một phân phối xác suất `p(x)` bất kỳ, **score function** được định
+nghĩa là gradient của log-probability theo `x`:
+
+```
+s(x) = ∇_x log p(x)
+```
+
+**Đọc công thức này như thế nào?** `log p(x)` là một "bản đồ độ cao" —
+càng cao (giá trị lớn) ở những vùng `x` có xác suất lớn (dữ liệu thật hay
+xuất hiện ở đó), càng thấp ở vùng xác suất nhỏ (nhiễu, dữ liệu vô nghĩa).
+Gradient `∇_x log p(x)` tại một điểm `x` chính là **hướng đi lên dốc nhất**
+trên bản đồ độ cao đó — nói cách khác, score function tại mỗi điểm chỉ ra
+"nếu bạn đang đứng ở đây, đi theo hướng này sẽ nhanh nhất tới vùng có
+nhiều dữ liệu thật hơn".
+
+**Vì sao đây là một "la bàn" hữu ích?** Nếu ta có được `s(x)` ở **mọi**
+điểm `x` trong không gian dữ liệu (không cần biết `p(x)` cụ thể là bao
+nhiêu, chỉ cần biết hướng đi), ta có một cách sinh dữ liệu mới: bắt đầu
+từ một điểm bất kỳ (kể cả nhiễu ngẫu nhiên), rồi liên tục "đi theo la
+bàn" — mỗi bước dịch chuyển một chút theo hướng `s(x)` — cuối cùng sẽ trôi
+dạt tới vùng có xác suất cao, tức là vùng chứa dữ liệu giống thật.
+
+## Vấn đề: chỉ đi theo gradient thì bị "kẹt" ở một điểm
+
+Nếu chỉ lặp lại "đi theo hướng `s(x)`" (giống gradient ascent thông
+thường đã quen từ tối ưu hoá), quá trình sẽ hội tụ về đúng **một điểm duy
+nhất** — đỉnh cao nhất gần vị trí xuất phát (local mode của `p(x)`). Điều
+này sai với mục tiêu: ta muốn **sample** từ toàn bộ phân phối `p(x)` (đa
+dạng, nhiều mode khác nhau — nhiều "kiểu" dữ liệu thật khác nhau), không
+phải luôn tìm về đúng 1 điểm cố định.
+
+## Giải pháp: Langevin dynamics — leo dốc nhưng có thêm nhiễu
+
+**Langevin dynamics** (tên bắt nguồn từ vật lý thống kê — mô tả chuyển
+động của một hạt vừa chịu lực kéo vừa bị va đập nhiệt ngẫu nhiên) giải
+quyết đúng vấn đề trên bằng một sửa đổi đơn giản: **thêm một lượng nhiễu
+ngẫu nhiên nhỏ vào mỗi bước di chuyển**, bên cạnh việc đi theo score
+function:
+
+```
+x_{t+1} = x_t + ε · s(x_t) + √(2ε) · z_t,      z_t ~ N(0, I)
+```
+
+Hai thành phần cộng lại mỗi bước:
+
+- **`ε · s(x_t)`** — phần "đi theo la bàn": dịch chuyển một bước nhỏ
+  (kích thước `ε`) theo hướng score function, tức hướng về vùng xác suất
+  cao hơn.
+- **`√(2ε) · z_t`** — phần **nhiễu ngẫu nhiên**: một bước dịch chuyển ngẫu
+  nhiên, độc lập với hướng score function.
+
+**Vì sao thêm nhiễu lại quan trọng, không phải chỉ làm chậm quá trình?**
+Nếu không có nhiễu, quá trình chắc chắn hội tụ về đúng 1 điểm (local
+mode) và mắc kẹt vĩnh viễn ở đó — dù `p(x)` có nhiều mode khác cũng không
+bao giờ tới được. Nhiễu ngẫu nhiên liên tục "xóc" điểm hiện tại ra khỏi
+việc mắc kẹt quá sớm, cho phép quá trình khám phá nhiều mode khác nhau
+qua đủ số bước lặp — về lâu dài, phân phối của điểm `x_t` sẽ hội tụ đúng
+về `p(x)` gốc (kết quả lý thuyết trong vật lý thống kê, không chứng minh
+lại ở đây), chứ không dừng lại ở một mode duy nhất.
+
+**Liên hệ trực tiếp:** đây chính xác là công thức mà bài tiếp theo dùng
+để "sample" từ mô hình đã học — mạng nơ-ron học cách ước lượng `s(x)`
+(gọi là **score matching**, huấn luyện một mạng `s_θ(x) ≈ ∇_x log p(x)`),
+rồi dùng Langevin dynamics để sinh dữ liệu mới từ score đã học đó.
+
+## Vì sao góc nhìn này "thống nhất" được với DDPM
+
+DDPM (đã học) huấn luyện mạng dự đoán nhiễu `ε_θ(x_t, t)` ở mỗi bước rời
+rạc `t`. Về mặt toán học, dự đoán nhiễu này **tương đương** với ước lượng
+score function tại bước đó (`∇_x log p(x_t) ≈ -ε_θ(x_t, t) / σ_t` — một
+phép biến đổi tỉ lệ đơn giản, không phải hai đại lượng độc lập). Nói cách
+khác: DDPM vẫn luôn "học score function" một cách gián tiếp — chỉ là qua
+cái tên "dự đoán nhiễu" chứ không gọi thẳng ra. Bài Score-based Models sẽ
+khai thác đúng sự tương đương này để nhìn DDPM, NCSN (score matching +
+Langevin dynamics rời rạc theo nhiều mức nhiễu), và một phiên bản **liên
+tục hoá** của cả hai (thay chuỗi `T` bước bằng một phương trình vi phân
+ngẫu nhiên — SDE) như 3 cách diễn đạt khác nhau của **cùng một ý tưởng
+cốt lõi**: học hướng đi về vùng xác suất cao, rồi sample bằng cách đi
+theo hướng đó có kèm nhiễu.
+
+## Liên hệ lại với các bài trước
+
+- Score function là một khái niệm xác suất tổng quát — không phải kỹ
+  thuật riêng của diffusion. Nó dùng lại đúng định nghĩa gradient và
+  log-probability đã học ở bài
+  [Xác suất & Thống kê cơ bản](../../../01-Nền%20tảng%20Toán%20&%20ML%20cổ%20điển/01-Overview/01-xac-suat-thong-ke-co-ban.mdx)
+  (maximum likelihood estimation cũng tối ưu hoá `log p(x)`, chỉ khác là
+  tối ưu theo tham số `θ` thay vì theo `x`).
+- Việc DDPM dự đoán nhiễu **tương đương** ước lượng score function là một
+  ví dụ khác của mẫu hình đã lặp lại nhiều lần trong track: hai cách đặt
+  vấn đề nghe khác nhau (dự đoán nhiễu vs ước lượng gradient log-density)
+  có thể chỉ là **cùng một phép toán, viết dưới 2 tên khác nhau** — tương
+  tự cách VQ-GAN's discriminator loss và GAN's minimax cùng một họ hàm
+  mục tiêu.
+- Bài này **không** thay thế nhu cầu học SDE đầy đủ (giải tích stochastic
+  không thuộc phạm vi track) — nó chỉ đảm bảo người đọc hiểu đúng 2 viên
+  gạch nền (score function, Langevin dynamics) trước khi bài tiếp theo
+  ghép chúng vào một khung liên tục.
+
+## Nguồn tham khảo
+
+- [arXiv — Generative Modeling by Estimating Gradients of the Data Distribution (Song & Ermon, 2019)](https://arxiv.org/abs/1907.05600) — paper NCSN, dùng cho định nghĩa score function, cơ chế Langevin dynamics dùng score đã học để sample, và vai trò nhiễu ngẫu nhiên trong việc tránh mắc kẹt ở 1 mode.
+- [Lilian Weng — What are Diffusion Models?](https://lilianweng.github.io/posts/2021-07-11-diffusion-models/) — dùng cho công thức Langevin dynamics cụ thể và so sánh với stochastic gradient descent (nhiễu Gaussian tiêm vào update giúp tránh collapse vào local minima).

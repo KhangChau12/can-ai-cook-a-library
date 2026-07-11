@@ -1,0 +1,43 @@
+---
+quiz_for: 05-gan-family-synthesis
+---
+
+## Q1
+Progressive GAN giải quyết vấn đề bất ổn định khi huấn luyện GAN ở độ phân giải cao bằng cách nào?
+
+- [ ] Dùng Wasserstein distance thay JS divergence
+- [ ] Thêm discriminator thứ hai
+- [x] Bắt đầu huấn luyện ở độ phân giải rất thấp (4×4), rồi thêm layer mới để tăng dần độ phân giải sau khi đã ổn định ở độ phân giải trước
+- [ ] Giảm batch size xuống rất nhỏ
+
+> Học cấu trúc thô (bố cục tổng thể) trước, chi tiết mịn (texture) sau — tránh việc phải học đồng thời cả 2 mức độ ngay từ đầu ở độ phân giải cao, vốn rất bất ổn định.
+
+## Q2
+Truncation trick của BigGAN dùng để làm gì?
+
+- [ ] Giảm thời gian huấn luyện
+- [ ] Giảm số tham số của generator
+- [x] Cắt bớt phân phối Gaussian của vector nhiễu z ở các giá trị đuôi xa — cho phép đánh đổi giữa fidelity (độ chân thực) và variety (độ đa dạng) khi sample
+- [ ] Tăng batch size lên vô hạn
+
+> Cắt truncation mạnh → ảnh sắc nét/an toàn hơn nhưng ít đa dạng. Không cắt → đa dạng hơn nhưng có thể kém chân thực. Người dùng tự chọn điểm cân bằng phù hợp.
+
+## Q3
+Theo bài Synthesis, vì sao PixelCNN và VQ-VAE/VQ-GAN KHÔNG xuất hiện trong timeline/bảng so sánh của bài này dù ra đời cùng giai đoạn 2016–2021?
+
+- [ ] Vì hai kỹ thuật đó chưa có bài viết nào trong track
+- [x] Vì cả hai không mang tính đối kháng (không huấn luyện theo minimax generator/discriminator) — bài Synthesis chỉ tổng kết đúng dòng tiến hoá thuần GAN, PixelCNN/VQ-VAE được tổng kết riêng ở sub-module Autoregressive & Hybrid Models
+- [ ] Vì PixelCNN và VQ-VAE ra đời trước GAN gốc (2014)
+- [ ] Vì hai kỹ thuật đó không dùng được cho ảnh
+
+> GAN, DCGAN, WGAN, StyleGAN, Progressive GAN, BigGAN đều có discriminator và huấn luyện đối kháng. PixelCNN (autoregressive) và phần lớn VQ-VAE (VAE-lineage) thì không — gộp chung sẽ làm sai tên "GAN Family". VQ-GAN vẫn có liên hệ với GAN (thêm discriminator) nhưng được xếp cùng VQ-VAE ở sub-module riêng vì bản chất kiến trúc gốc là VAE lượng tử hoá.
+
+## Q4
+Điểm chung giữa Progressive GAN và BigGAN mà bài Synthesis nhấn mạnh là gì?
+
+- [ ] Cả hai đều thay JS divergence bằng Wasserstein distance
+- [ ] Cả hai đều loại bỏ hoàn toàn discriminator
+- [x] Cả hai không đưa ra ý tưởng kiến trúc/loss mới, mà cải tiến chủ yếu ở cách huấn luyện (tăng dần độ phân giải) hoặc quy mô huấn luyện (batch size, tham số lớn hơn)
+- [ ] Cả hai chỉ hoạt động trên dữ liệu văn bản
+
+> Progressive GAN thay đổi lịch trình huấn luyện (grow layer dần), BigGAN thay đổi quy mô (batch size, tham số) — khác với DCGAN/WGAN/StyleGAN vốn mỗi bài đều mang một ý tưởng kiến trúc/loss mới thật sự.

@@ -1,0 +1,135 @@
+---
+title: CLIP — Học Chung Không Gian Embedding Cho Ảnh Và Văn Bản
+track: foundations-track
+module: Generative Models
+submodule: Vision-Language Bridge
+order: 1
+status: stable
+prerequisites: ["foundations-track/07-vision-transformer", "04-conditional-gan"]
+summary: Mọi mô hình sinh ảnh đã học (GAN, VAE, Diffusion) chỉ biết "ảnh trông giống thật không" — không mô hình nào hiểu được ngôn ngữ tự nhiên để nhận lệnh "sinh ảnh con mèo màu cam". CLIP (Radford 2021, OpenAI) giải quyết bằng contrastive pretraining: học đồng thời một image encoder và một text encoder sao cho ảnh và caption đúng cặp có embedding gần nhau, cặp sai xa nhau — tạo ra không gian embedding chung ảnh-text dùng được cho zero-shot classification và, quan trọng nhất cho module này, làm "la bàn" điều kiện hoá text cho Diffusion Models (bài tiếp theo).
+last_touched_by_task: Bài đệm mới (2026-07-11) — lấp khoảng trống prerequisite phát hiện khi review chiều sâu module Generative Models. Bài Latent Diffusion dùng CLIP như khái niệm đã biết ("model encode text thành vector ngữ nghĩa, học đối ngẫu text-image") nhưng track chưa từng dạy contrastive vision-language pretraining ở đâu — tạo sub-module riêng "Vision-Language Bridge" vì CLIP không thuộc gọn về CV thuần (kiến trúc) hay LLM thuần (text) mà là cầu nối 2 modality dùng riêng cho mục đích sinh ảnh có điều kiện trong module này. Nguồn: arxiv CLIP 2103.00020 + lilianweng.github.io contrastive representation learning.
+---
+
+Ba trường phái sinh ảnh đã học trong module này — GAN, VAE, Diffusion —
+đều có một điểm chung: chúng chỉ biết đánh giá "ảnh này trông giống dữ
+liệu thật không", hoàn toàn không hiểu ngôn ngữ tự nhiên. Muốn ra lệnh
+"sinh ảnh một con mèo màu cam đang ngồi trên ghế", cần một cách để mô
+hình **hiểu câu lệnh đó nghĩa là gì trong không gian ảnh** — đây là vấn
+đề mà **CLIP** (Contrastive Language-Image Pre-training, Radford và cộng
+sự, OpenAI 2021) giải quyết, và là bước bắt buộc trước khi học
+[Latent Diffusion](../06-Diffusion-Models/03-latent-diffusion.mdx) (text-to-image thực tế).
+
+## Vấn đề: vision model truyền thống bị khoá vào một tập nhãn cố định
+
+Mọi mô hình phân loại ảnh đã học trong module Computer Vision (CNN, ViT,
+Swin Transformer) đều huấn luyện trên một **tập nhãn cố định, hữu hạn**
+(ví dụ 1000 lớp của ImageNet). Một mô hình như vậy không thể phân loại
+một khái niệm chưa từng thấy trong tập nhãn huấn luyện — muốn thêm lớp
+mới, phải thu thập dữ liệu có nhãn và huấn luyện lại. Cách tiếp cận này
+không tổng quát hoá được tới thế giới mở, nơi số lượng khái niệm hình ảnh
+là vô hạn và không thể liệt kê hết bằng nhãn rời rạc.
+
+## Giải pháp: contrastive pretraining trên 400 triệu cặp ảnh-text từ web
+
+CLIP đi theo hướng khác hẳn: thay vì học từ ảnh có **nhãn phân loại**,
+học từ ảnh có **caption tự nhiên** — dữ liệu vốn có sẵn khắp nơi trên
+Internet (ảnh + đoạn text mô tả đi kèm) mà không cần gán nhãn thủ công.
+Radford và cộng sự thu thập **400 triệu cặp (ảnh, text)** từ web để
+huấn luyện.
+
+### Kiến trúc: hai encoder học chung một không gian
+
+CLIP gồm hai mạng riêng biệt, huấn luyện đồng thời:
+
+```
+Ảnh    → [Image Encoder]  → embedding ảnh   (vector v_image, d chiều)
+Text   → [Text Encoder]   → embedding text  (vector v_text,  d chiều)
+```
+
+- **Image Encoder:** một CNN (ResNet) hoặc
+  [Vision Transformer](../../03-Computer%20Vision/01-Co-ban/07-vision-transformer.mdx)
+  (đã học ở module Computer Vision) — biến ảnh thành 1 vector.
+- **Text Encoder:** một
+  [Transformer](../../04-NLP/03-Transformer-Architecture/02-transformer.mdx)
+  (đã học ở module Natural Language Processing) — biến câu caption thành
+  1 vector cùng số chiều `d` với embedding ảnh.
+
+Điểm mấu chốt: cả hai encoder được huấn luyện để đưa embedding của **cùng
+một khái niệm** (một ảnh mèo và câu "a photo of a cat") tới **gần nhau**
+trong không gian `d` chiều đó — dù xuất phát từ hai modality hoàn toàn
+khác nhau (pixel vs token văn bản).
+
+### Contrastive loss: đối chiếu đúng cặp trong một batch
+
+Cách huấn luyện cụ thể — lấy một batch gồm `N` cặp (ảnh, caption) thật từ
+dữ liệu web. Với `N` ảnh và `N` caption trong batch, tính toàn bộ `N × N`
+cặp embedding có thể (mỗi ảnh đối chiếu với mọi caption trong batch, kể cả
+caption không thuộc về nó):
+
+- **N cặp đúng** (đường chéo của ma trận `N × N`): ảnh và đúng caption của
+  nó — muốn similarity **cao**.
+- **N² - N cặp sai** (ngoài đường chéo): ảnh ghép với caption của ảnh khác
+  trong batch — muốn similarity **thấp**.
+
+Hàm loss (dạng **InfoNCE**, một biến thể cross-entropy cho bài toán phân
+biệt "đâu là cặp đúng giữa nhiều lựa chọn sai") ép mô hình tối đa hoá
+similarity cho các cặp đúng trong khi tối thiểu hoá similarity cho mọi
+cặp sai còn lại trong batch — về bản chất là bài toán **classification
+nhị phân lặp lại N lần**: với mỗi ảnh, "đoán đúng caption nào trong N
+caption của batch là của nó", dùng cùng
+[cross-entropy loss](../../../01-Nền%20tảng%20Toán%20&%20ML%20cổ%20điển/02-Supervised-Learning/02-logistic-regression.mdx)
+đã quen thuộc từ Logistic Regression.
+
+## Kết quả: zero-shot classification không cần huấn luyện lại
+
+Sau khi huấn luyện xong, CLIP có một khả năng đặc biệt — **zero-shot
+classification**: phân loại ảnh vào bất kỳ tập nhãn nào, kể cả nhãn chưa
+từng xuất hiện lúc huấn luyện, không cần một bước fine-tune nào:
+
+1. Với mỗi nhãn ứng viên (ví dụ "chó", "mèo", "chim"), tạo một câu
+   template ("a photo of a {nhãn}") rồi encode qua Text Encoder.
+2. Encode ảnh cần phân loại qua Image Encoder.
+3. So sánh embedding ảnh với embedding của từng câu nhãn — nhãn có
+   similarity cao nhất là dự đoán.
+
+Radford và cộng sự công bố: CLIP zero-shot đạt độ chính xác **tương đương
+ResNet-50 huấn luyện có giám sát đầy đủ trên ImageNet** — mà không hề
+nhìn thấy một tấm ảnh nào trong 1.28 triệu ảnh huấn luyện gốc của
+ImageNet. Đây là minh chứng mạnh cho sức mạnh tổng quát hoá của việc học
+từ ngôn ngữ tự nhiên thay vì nhãn rời rạc.
+
+## Vì sao bài này là cầu nối bắt buộc trước Diffusion Models có điều kiện
+
+CLIP tự nó không sinh ảnh — nó chỉ tạo ra **không gian embedding chung**
+nơi ảnh và text có thể so sánh trực tiếp. Nhưng chính không gian đó là
+điều [Latent Diffusion](../06-Diffusion-Models/03-latent-diffusion.mdx)
+(Stable Diffusion) cần để biến một câu prompt thành vector điều kiện `c`
+đưa vào quá trình khử nhiễu — không có bước "hiểu text" này, diffusion
+model chỉ sinh được ảnh vô điều kiện (ngẫu nhiên), không thể nhận lệnh
+bằng ngôn ngữ tự nhiên.
+
+## Liên hệ lại với các bài trước
+
+- Image Encoder của CLIP tái sử dụng trực tiếp kiến trúc
+  [Vision Transformer](../../03-Computer%20Vision/01-Co-ban/07-vision-transformer.mdx)
+  hoặc CNN đã học ở module Computer Vision — CLIP không phát minh kiến
+  trúc vision mới, chỉ thay đổi **cách huấn luyện** (contrastive với text,
+  thay vì classification với nhãn cố định).
+- Text Encoder tái sử dụng kiến trúc
+  [Transformer](../../04-NLP/03-Transformer-Architecture/02-transformer.mdx)
+  đã học ở module Natural Language Processing.
+- Contrastive loss của CLIP cùng tinh thần đối kháng "kéo gần cặp đúng,
+  đẩy xa cặp sai" như minimax của [GAN](../03-Generative-Adversarial-Network-Family/01-gan.mdx)
+  đẩy xa phân phối giả khỏi phân phối thật — nhưng CLIP không có 2 mạng
+  thi đấu nhau, chỉ có 1 hàm loss chung tối ưu đồng thời cho cả 2 encoder.
+- CLIP là ví dụ về **self-supervised learning** ở quy mô lớn: không cần
+  nhãn phân loại thủ công, chỉ cần dữ liệu (ảnh, text) có sẵn tự nhiên
+  trên Internet — cùng tinh thần "học không cần nhãn tốn công" đã gặp ở
+  [Autoencoder](../02-Likelihood-based-Models/01-autoencoder.mdx), nhưng
+  quy mô dữ liệu (400 triệu cặp) và mục tiêu (liên kết 2 modality) khác
+  hẳn.
+
+## Nguồn tham khảo
+
+- [arXiv — Learning Transferable Visual Models From Natural Language Supervision (Radford et al., 2021)](https://arxiv.org/abs/2103.00020) — paper gốc CLIP, dùng cho vấn đề vision model bị khoá vào tập nhãn cố định, kiến trúc 2 encoder học chung embedding space, dữ liệu 400 triệu cặp ảnh-text, cơ chế zero-shot classification qua template câu, và kết quả cụ thể (CLIP zero-shot khớp độ chính xác ResNet-50 có giám sát trên ImageNet).
+- [Lilian Weng — Contrastive Representation Learning (2021)](https://lilianweng.github.io/posts/2021-05-31-contrastive/) — dùng cho giải thích trực giác contrastive loss/InfoNCE: mục tiêu kéo gần cặp dương/đẩy xa cặp âm trong không gian embedding, và cách mở rộng từ 1 cặp âm sang nhiều cặp âm trong 1 batch (cơ chế CLIP dùng).

@@ -55,7 +55,7 @@ const base = import.meta.env.BASE_URL;
   </nav>
 
   <header class="mb-8 border-b border-border-default pb-7">
-    <h1 class="text-[28px] font-extrabold leading-tight tracking-tight text-text-primary sm:text-[32px]">
+    <h1 class="font-display text-[26px] leading-tight tracking-tight text-text-primary sm:text-[30px]">
       {lesson.data.title}
     </h1>
     {lesson.data.summary && (
@@ -66,7 +66,7 @@ const base = import.meta.env.BASE_URL;
   {quiz && quiz.data.questions.length > 0 ? (
     <div id="tab-panels">
       <div class="mb-7 inline-flex gap-1 rounded-xl border border-border-default bg-bg-inset p-1">
-        <button type="button" data-tab-btn="content" class="rounded-lg bg-primary-blue px-4 py-2 text-[13px] font-bold text-white transition" data-active="true">
+        <button type="button" data-tab-btn="content" class="rounded-lg bg-[linear-gradient(135deg,#2563EB_0%,#06B6D4_100%)] px-4 py-2 text-[13px] font-bold text-white transition" data-active="true">
           Nội dung bài
         </button>
         <button type="button" data-tab-btn="quiz" class="rounded-lg px-4 py-2 text-[13px] font-bold text-text-tertiary transition hover:text-text-secondary">
@@ -75,7 +75,7 @@ const base = import.meta.env.BASE_URL;
       </div>
 
       <div data-tab-panel="content">
-        <article class="prose prose-invert max-w-none prose-headings:font-bold prose-headings:tracking-tight prose-a:text-accent-cyan-bright prose-code:text-[#7dd3fc] prose-pre:bg-bg-inset prose-pre:border prose-pre:border-border-default" set:html={lesson.data.html} />
+        <article class="prose max-w-none prose-headings:font-bold prose-headings:tracking-tight prose-pre:bg-bg-inset prose-pre:border prose-pre:border-border-default" set:html={lesson.data.html} />
       </div>
       <div data-tab-panel="quiz" class="hidden">
         <QuizIsland client:visible lessonId={lesson.id} questions={quiz.data.questions} />
@@ -109,7 +109,7 @@ const base = import.meta.env.BASE_URL;
       buttons.forEach((b) => {
         const active = b === btn;
         b.dataset.active = String(active);
-        b.classList.toggle('bg-primary-blue', active);
+        b.classList.toggle('bg-[linear-gradient(135deg,#2563EB_0%,#06B6D4_100%)]', active);
         b.classList.toggle('text-white', active);
         b.classList.toggle('text-text-tertiary', !active);
       });
