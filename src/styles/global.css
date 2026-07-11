@@ -107,3 +107,19 @@ body {
 .prose :not(pre) > code::after {
   content: '';
 }
+
+.prose table {
+  display: block;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.prose pre {
+  overflow-x: auto;
+}
+
+@media (max-width: 640px) {
+  .prose {
+    font-size: 0.975rem;
+  }
+}
