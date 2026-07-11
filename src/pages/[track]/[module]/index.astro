@@ -94,9 +94,9 @@ const levelClasses: Record<string, string> = {
       const id = el.dataset.lessonCheck!;
       const state = getProgress(id);
       if (state === 'quiz_done') {
-        el.classList.add('bg-success', 'border-success');
+        el.classList.add('border-transparent', 'bg-success', 'text-white');
       } else if (state === 'viewed') {
-        el.classList.add('bg-accent-blue', 'border-accent-blue');
+        el.classList.add('border-transparent', 'bg-accent-blue', 'text-white');
       }
     });
 

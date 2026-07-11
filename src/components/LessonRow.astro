@@ -16,13 +16,12 @@ const isDraftish = lesson.data.status && lesson.data.status !== 'stable';
   data-lesson-row={lesson.id}
   class="group flex items-start gap-4 rounded-lg px-3 py-3.5 transition hover:bg-bg-surface"
 >
-  <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-border-subtle font-mono text-[11px] font-bold text-text-tertiary transition group-hover:border-transparent group-hover:bg-[linear-gradient(135deg,#2563EB_0%,#06B6D4_100%)] group-hover:text-white">
-    {index + 1}
-  </span>
   <span
     data-lesson-check={lesson.id}
-    class="mt-2 h-2.5 w-2.5 shrink-0 rounded-full border border-border-subtle"
-  ></span>
+    class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-border-subtle font-mono text-[11px] font-bold text-text-tertiary"
+  >
+    {index + 1}
+  </span>
   <span class="min-w-0 flex-1">
     <span class="flex items-start justify-between gap-3">
       <span class="truncate text-[14.5px] font-semibold leading-snug text-text-primary">{lesson.data.title}</span>

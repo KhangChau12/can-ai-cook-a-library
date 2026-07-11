@@ -20,7 +20,9 @@ const { title, description = 'Thư viện bài học AI/ML — The Noders' } = A
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
     <title>{title} — Can AI Cook a Library?</title>
-    <link rel="icon" href={`${import.meta.env.BASE_URL}favicon.svg`} />
+    <link rel="icon" href={`${import.meta.env.BASE_URL}favicon.ico`} sizes="any" />
+    <link rel="icon" type="image/png" href={`${import.meta.env.BASE_URL}favicon-32.png`} sizes="32x32" />
+    <link rel="apple-touch-icon" href={`${import.meta.env.BASE_URL}apple-touch-icon.png`} />
   </head>
   <body class="min-h-screen bg-bg-primary font-sans text-text-secondary antialiased" data-pagefind-body>
     <slot />
