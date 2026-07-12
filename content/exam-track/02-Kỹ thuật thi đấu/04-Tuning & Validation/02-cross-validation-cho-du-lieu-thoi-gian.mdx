@@ -1,8 +1,9 @@
 ---
 title: Cross-Validation cho Dữ liệu Có Tính Thời gian — Walk-Forward Validation
 track: exam-track
-module: Kỹ thuật thi đấu nâng cao
-order: 10
+module: Kỹ thuật thi đấu
+submodule: Tuning & Validation
+order: 2
 status: stable
 summary: Bài Baseline đã dạy dùng k-fold cross-validation làm chuẩn so sánh — nhưng k-fold thông thường (chia ngẫu nhiên) phá vỡ cấu trúc thời gian nếu dữ liệu competition có tính chất chuỗi thời gian (dự đoán doanh số, giá cổ phiếu, lưu lượng...). Walk-forward validation giải quyết bằng cách luôn train trên QUÁ KHỨ, test trên TƯƠNG LAI — đúng với cách model sẽ thực sự được dùng.
 last_touched_by_task: Viết mới 2026-07-06: lấp khoảng trống — bài 1 đã dạy data leakage (train-test contamination, target leakage) nhưng chưa nhắc temporal leakage riêng cho dữ liệu có tính thời gian. Nguồn: machinelearningmastery.com/5-ways-to-use-cross-validation-to-improve-time-series-models (walk-forward, expanding vs sliding window) + machinelearningmastery.com/data-leakage-machine-learning (đã dùng ở bài 1, xác nhận có nhắc temporal leakage cụ thể).

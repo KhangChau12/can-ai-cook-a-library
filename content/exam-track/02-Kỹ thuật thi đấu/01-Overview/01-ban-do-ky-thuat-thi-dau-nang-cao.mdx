@@ -1,0 +1,81 @@
+---
+title: "Bản đồ Kỹ thuật Thi đấu Nâng cao — Chọn đúng công cụ cho đúng tình huống"
+track: exam-track
+module: "Kỹ thuật thi đấu"
+submodule: "Overview"
+order: 1
+status: stable
+summary: "Tổng quan 3 nhóm kỹ thuật thi đấu nâng cao (Model & Kiến trúc, Dữ liệu & Feature, Tuning & Validation) và cách chọn đúng nhóm theo tình huống thi đấu cụ thể — dữ liệu ít, leaderboard đứng yên, hay sắp hết thời gian."
+last_touched_by_task: "Viết mới 2026-07-12 khi tách module 'Kỹ thuật thi đấu nâng cao' thành 3 submodule theo yêu cầu người vận hành — bài mở đầu giúp người đọc định vị 11 bài trong module theo bản đồ chức năng, không chỉ theo thứ tự file."
+---
+
+Ba bài đầu track (module "Hướng dẫn dùng nền tảng") đã đủ để bạn nộp một
+bài dự thi hoàn chỉnh: đọc leaderboard, chạy đúng quy trình, có một
+baseline chạy được. Nhưng baseline chỉ là điểm khởi đầu — khoảng cách từ
+baseline tới top leaderboard gần như luôn được lấp đầy bằng một tập hợp
+kỹ thuật cụ thể, không phải một model "thần kỳ" nào duy nhất. Module này
+tổng hợp 11 kỹ thuật đó, chia thành 3 nhóm theo **loại vấn đề chúng giải
+quyết** — không phải độ khó hay thứ tự phát minh.
+
+## Ba nhóm kỹ thuật
+
+**1. Model & Kiến trúc** — nhóm này trả lời câu hỏi "dùng model nào, và
+dùng nó thế nào cho hiệu quả nhất": tận dụng model đã học sẵn (transfer
+learning, checkpoint), chỉnh sửa kiến trúc cho khớp bài toán, và kết hợp
+nhiều model lại (model ensembling, seed ensembling) để giảm sai số. Đây
+là nhóm nên học trước, vì phần lớn kỹ thuật ở 2 nhóm sau đều giả định bạn
+đã có ít nhất một model chạy được để áp dụng lên.
+
+**2. Dữ liệu & Feature** — nhóm này trả lời câu hỏi "dữ liệu mình có đã
+đủ tốt chưa, và có thể khai thác thêm từ đâu": nhân bản dữ liệu ảnh có
+chủ đích (data augmentation), xử lý dữ liệu mất cân bằng, feature
+engineering riêng cho dữ liệu bảng (tabular), và tận dụng chính tập test
+chưa có nhãn (pseudo-labeling). Model tốt đến đâu cũng bị giới hạn bởi
+chất lượng dữ liệu đưa vào — nhóm này thường mang lại cải thiện điểm số
+lớn hơn kỳ vọng so với công sức bỏ ra, đặc biệt khi dataset competition
+nhỏ.
+
+**3. Tuning & Validation** — nhóm này trả lời câu hỏi "làm sao biết một
+thay đổi thực sự tốt hơn, chứ không phải may mắn": tìm cấu hình
+hyperparameter tốt một cách có hệ thống, và đánh giá đúng cách khi dữ
+liệu có tính thời gian (walk-forward validation). Đây là nhóm "phanh và
+la bàn" — không trực tiếp tăng điểm số như 2 nhóm trên, nhưng đảm bảo
+mọi cải thiện từ 2 nhóm kia là **thật**, không phải overfit lên
+validation set hay public leaderboard.
+
+## Chọn nhóm nào theo tình huống thi đấu
+
+- **Dataset nhỏ, dễ overfit** → bắt đầu từ nhóm Model & Kiến trúc (transfer
+  learning thay vì train from scratch) rồi sang nhóm Dữ liệu & Feature
+  (augmentation, xử lý mất cân bằng nếu có).
+- **Đã có baseline chạy ổn, điểm số chững lại không lên thêm** → nhóm Model
+  & Kiến trúc phần ensembling (kết hợp nhiều model/seed) thường là bước
+  tiếp theo hiệu quả nhất, chi phí thấp so với thiết kế lại kiến trúc.
+- **Dữ liệu dạng bảng (tabular), nhiều cột category** → ưu tiên nhóm Dữ
+  liệu & Feature, đặc biệt kỹ thuật riêng cho tabular (target encoding,
+  feature interaction) — thường tác động lớn hơn đổi model cho dạng dữ
+  liệu này.
+- **Nghi ngờ điểm public leaderboard không phản ánh đúng thực lực** (điểm
+  cao bất thường hoặc dao động mạnh giữa các lần nộp) → dừng lại, quay về
+  nhóm Tuning & Validation để kiểm tra lại cách chia validation set trước
+  khi thử thêm kỹ thuật mới — thêm kỹ thuật lên một validation set sai chỉ
+  khiến bạn tự đánh lừa chính mình.
+- **Dữ liệu có tính thời gian** (dự đoán theo ngày/tháng, log sự kiện theo
+  trình tự) → bắt buộc đọc walk-forward validation (nhóm Tuning &
+  Validation) trước khi áp dụng bất kỳ kỹ thuật nào ở 2 nhóm còn lại — một
+  cải thiện đo bằng k-fold ngẫu nhiên trên dữ liệu thời gian có thể hoàn
+  toàn ảo do leakage.
+- **Sắp hết thời gian/lượt nộp, cần "ăn điểm miễn phí" nhanh** → seed
+  ensembling và test-time augmentation (nhắc trong bài Data Augmentation)
+  là hai kỹ thuật rẻ nhất, không cần thiết kế lại gì, chỉ cần thêm thời
+  gian tính toán.
+
+## Thứ tự đọc khuyến nghị
+
+Ba nhóm được sắp theo đúng thứ tự nên học: **Model & Kiến trúc** trước
+(vì các nhóm sau giả định đã có model), **Dữ liệu & Feature** tiếp theo
+(mở rộng và làm sạch nguyên liệu đầu vào cho model đó), rồi
+**Tuning & Validation** khép lại (đảm bảo mọi cải thiện đo được ở 2 nhóm
+trước là thật). Bạn không bắt buộc đọc tuần tự — nếu tình huống thi đấu
+cụ thể chỉ cần một nhóm, dùng phần "Chọn nhóm nào" ở trên để nhảy thẳng
+vào đúng chỗ.

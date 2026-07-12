@@ -1,0 +1,56 @@
+---
+quiz_for: 01-ban-do-ky-thuat-thi-dau-nang-cao
+---
+
+## Q1
+Ba nhóm kỹ thuật trong module này được chia theo tiêu chí nào?
+
+- [ ] Theo độ khó tăng dần, nhóm sau luôn khó hơn nhóm trước
+- [ ] Theo thứ tự phát minh trong lịch sử machine learning
+- [x] Theo loại vấn đề mà nhóm kỹ thuật đó giải quyết (chọn/kết hợp model, chuẩn bị dữ liệu, hay đánh giá đúng cách)
+- [ ] Theo mức độ phổ biến trên các cuộc thi Kaggle
+
+> Ba nhóm — Model & Kiến trúc, Dữ liệu & Feature, Tuning & Validation —
+> được chia theo bản chất vấn đề chúng giải quyết, không phải độ khó hay
+> lịch sử. Một bài nền tảng và một bài nâng cao trong cùng một vấn đề vẫn
+> thuộc chung một nhóm.
+
+## Q2
+Vì sao module này khuyến nghị đọc nhóm "Model & Kiến trúc" trước nhóm "Dữ liệu & Feature"?
+
+- [ ] Vì nhóm Model & Kiến trúc có ít bài hơn nên đọc nhanh hơn
+- [x] Vì phần lớn kỹ thuật ở nhóm Dữ liệu & Feature giả định người đọc đã có sẵn một model chạy được để áp dụng lên
+- [ ] Vì nhóm Dữ liệu & Feature chỉ dành cho dữ liệu tabular, ít phổ biến hơn
+- [ ] Không có lý do cụ thể, thứ tự này chỉ mang tính quy ước
+
+> Các kỹ thuật như augmentation, xử lý mất cân bằng, hay pseudo-labeling
+> đều thao tác trên dữ liệu đưa vào một model — cần hiểu trước bạn đang
+> dùng model gì (transfer learning, ensembling...) thì mới áp dụng đúng
+> ngữ cảnh.
+
+## Q3
+Bạn đang thi đấu với dữ liệu doanh số bán hàng theo từng ngày (time series), điểm cross-validation rất cao nhưng leaderboard thật lại thấp bất thường. Nhóm kỹ thuật nào nên được kiểm tra đầu tiên?
+
+- [ ] Model & Kiến trúc — thử ensemble thêm nhiều model
+- [ ] Dữ liệu & Feature — thử pseudo-labeling để tận dụng tập test
+- [x] Tuning & Validation — kiểm tra lại cách chia validation set có đúng walk-forward hay không
+- [ ] Không nhóm nào liên quan, đây là vấn đề của hạ tầng nộp bài
+
+> Chênh lệch lớn giữa cross-validation và leaderboard thật trên dữ liệu
+> thời gian là dấu hiệu kinh điển của temporal leakage — k-fold ngẫu
+> nhiên "nhìn thấy tương lai" khi validate. Cần walk-forward validation
+> (nhóm Tuning & Validation) trước khi tin vào bất kỳ cải thiện nào đo
+> được.
+
+## Q4
+Nhóm "Tuning & Validation" khác 2 nhóm còn lại ở điểm nào?
+
+- [ ] Đây là nhóm duy nhất áp dụng được cho dữ liệu ảnh
+- [ ] Đây là nhóm dễ nhất, nên học đầu tiên
+- [x] Nhóm này không trực tiếp tăng điểm số, mà đảm bảo các cải thiện từ 2 nhóm kia là thật chứ không phải overfit hay may mắn
+- [ ] Đây là nhóm duy nhất bắt buộc phải học trước khi nộp bài lần đầu
+
+> Tuning & Validation đóng vai trò "phanh và la bàn" — kiểm chứng đúng
+> cách để những gì đo được từ Model & Kiến trúc / Dữ liệu & Feature phản
+> ánh đúng thực lực, không phải ảo giác từ leakage hay overfit lên public
+> leaderboard.

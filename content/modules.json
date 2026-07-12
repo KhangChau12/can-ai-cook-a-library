@@ -4,9 +4,14 @@
       "description": "Làm quen với hệ thống: quy trình nộp bài, đọc hiểu metric và thiết lập baseline chuẩn.",
       "submodules": {}
     },
-    "Kỹ thuật thi đấu nâng cao": {
+    "Kỹ thuật thi đấu": {
       "description": "Tối ưu hóa điểm số với transfer learning, tinh chỉnh siêu tham số, ensemble và xử lý dữ liệu dạng bảng.",
-      "submodules": {}
+      "submodules": {
+        "Overview": "Bản đồ 3 nhóm kỹ thuật và cách chọn đúng nhóm theo tình huống thi đấu cụ thể.",
+        "Model & Kiến trúc": "Chọn model nào, tận dụng model đã học sẵn (transfer learning, checkpoint), chỉnh kiến trúc, và kết hợp nhiều model (ensembling, seed ensembling).",
+        "Dữ liệu & Feature": "Chuẩn bị và mở rộng dữ liệu đầu vào: augmentation, xử lý mất cân bằng, feature engineering cho tabular, pseudo-labeling.",
+        "Tuning & Validation": "Tìm cấu hình tốt có hệ thống và đánh giá đúng cách để cải thiện đo được là thật, không phải overfit hay leakage."
+      }
     }
   },
   "foundations-track": {

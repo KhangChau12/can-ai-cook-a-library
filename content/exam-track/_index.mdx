@@ -5,11 +5,9 @@ summary: "Bí kíp thực chiến chinh phục các cuộc thi AI/ML: từ quy t
 ---
 
 Mục lục dự kiến (agent cập nhật khi thêm/sửa/sắp xếp lại bài — đây là danh
-sách sống, không phải cam kết cố định). Track chia đúng 2 module theo mục
-đích, tách rõ ràng trong viewer (2026-07-05):
-
-Cấu trúc thư mục (tái cấu trúc 2026-07-08): mỗi module là 1 thư mục riêng, file
-đánh số local trong module.
+sách sống, không phải cam kết cố định). Track chia 2 module theo mục đích;
+module 2 tách tiếp thành 4 sub-module theo loại vấn đề kỹ thuật giải quyết
+(2026-07-12).
 
 ## Module 1 — Hướng dẫn dùng nền tảng
 
@@ -21,50 +19,42 @@ nộp hợp lệ.
 2. [Quy trình thi đấu: Từ Dữ liệu thô tới Submission hợp lệ](01-Hướng dẫn dùng nền tảng/02-quy-trinh-thi-dau-tu-du-lieu-den-nop-bai.mdx) — `stable`
 3. [Baseline, Nâng cấp Mô hình & Chiến lược Nộp bài](01-Hướng dẫn dùng nền tảng/03-baseline-nang-cap-mo-hinh-va-chien-luoc-nop-bai.mdx) — `stable`
 
-## Module 2 — Kỹ thuật thi đấu nâng cao
+## Module 2 — Kỹ thuật thi đấu
 
-Trick và kỹ thuật thi đấu thật, áp dụng sau khi đã nắm module 1: tận dụng
-model pretrained, quản lý checkpoint, tuỳ chỉnh kiến trúc, xử lý dữ liệu
-mất cân bằng, tìm hyperparameter có hệ thống, kết hợp nhiều model (bao gồm
-seed ensembling), kỹ thuật riêng cho dữ liệu dạng bảng/ảnh/time-series, và
-pseudo-labeling.
+Trick và kỹ thuật thi đấu thật, áp dụng sau khi đã nắm module 1. Chia 4
+sub-module theo loại vấn đề giải quyết — xem bài Overview để chọn đúng
+nhóm theo tình huống thi đấu cụ thể.
 
-1. [Transfer Learning & Fine-tuning — Tận dụng Model đã học sẵn](02-Kỹ thuật thi đấu nâng cao/01-transfer-learning-va-fine-tuning.mdx) — `stable`
-2. [Checkpoint — Lưu, Load & Dùng lại Trạng thái Model](02-Kỹ thuật thi đấu nâng cao/02-load-va-dung-pretrained-checkpoint.mdx) — `stable`
-3. [Tuỳ chỉnh Kiến trúc — Thêm/Bớt/Thay Layer trên Model Pretrained](02-Kỹ thuật thi đấu nâng cao/03-thay-doi-kien-truc-them-bot-layer.mdx) — `stable`
-4. [Xử lý Dữ liệu Mất cân bằng — Class Weighting, Oversampling & SMOTE](02-Kỹ thuật thi đấu nâng cao/04-xu-ly-du-lieu-mat-can-bang.mdx) — `stable`
-5. [Hyperparameter Tuning — Tìm cấu hình tốt nhất một cách có hệ thống](02-Kỹ thuật thi đấu nâng cao/05-hyperparameter-tuning.mdx) — `stable`
-6. [Model Ensembling — Kết hợp nhiều Model để tăng điểm số](02-Kỹ thuật thi đấu nâng cao/06-model-ensembling.mdx) — `stable`
-7. [Seed Ensembling — Kết hợp nhiều lần Train của Cùng một Model](02-Kỹ thuật thi đấu nâng cao/07-seed-ensembling.mdx) — `stable`
-8. [Kỹ thuật riêng cho Dữ liệu Tabular — Target Encoding & Feature Interaction](02-Kỹ thuật thi đấu nâng cao/08-ky-thuat-rieng-cho-tabular.mdx) — `stable`
-9. [Data Augmentation — Nhân bản Dữ liệu Ảnh Có Chủ đích Để Giảm Overfitting](02-Kỹ thuật thi đấu nâng cao/09-data-augmentation.mdx) — `stable`
-10. [Cross-Validation cho Dữ liệu Có Tính Thời gian — Walk-Forward Validation](02-Kỹ thuật thi đấu nâng cao/10-cross-validation-cho-du-lieu-thoi-gian.mdx) — `stable`
-11. [Pseudo-labeling — Tận dụng Dữ liệu Test Chưa có Nhãn](02-Kỹ thuật thi đấu nâng cao/11-pseudo-labeling.mdx) — `stable`
+### Overview
+
+1. [Bản đồ Kỹ thuật Thi đấu Nâng cao — Chọn đúng công cụ cho đúng tình huống](02-Kỹ thuật thi đấu/01-Overview/01-ban-do-ky-thuat-thi-dau-nang-cao.mdx) — `stable`
+
+### Model & Kiến trúc
+
+Chọn model nào, dùng nó thế nào, và kết hợp nhiều model lại.
+
+1. [Transfer Learning & Fine-tuning — Tận dụng Model đã học sẵn](02-Kỹ thuật thi đấu/02-Model & Kiến trúc/01-transfer-learning-va-fine-tuning.mdx) — `stable`
+2. [Checkpoint — Lưu, Load & Dùng lại Trạng thái Model](02-Kỹ thuật thi đấu/02-Model & Kiến trúc/02-load-va-dung-pretrained-checkpoint.mdx) — `stable`
+3. [Tuỳ chỉnh Kiến trúc — Thêm/Bớt/Thay Layer trên Model Pretrained](02-Kỹ thuật thi đấu/02-Model & Kiến trúc/03-thay-doi-kien-truc-them-bot-layer.mdx) — `stable`
+4. [Model Ensembling — Kết hợp nhiều Model để tăng điểm số](02-Kỹ thuật thi đấu/02-Model & Kiến trúc/04-model-ensembling.mdx) — `stable`
+5. [Seed Ensembling — Kết hợp nhiều lần Train của Cùng một Model](02-Kỹ thuật thi đấu/02-Model & Kiến trúc/05-seed-ensembling.mdx) — `stable`
+
+### Dữ liệu & Feature
+
+Chuẩn bị và mở rộng dữ liệu đầu vào cho model.
+
+1. [Data Augmentation — Nhân bản Dữ liệu Ảnh Có Chủ đích Để Giảm Overfitting](02-Kỹ thuật thi đấu/03-Dữ liệu & Feature/01-data-augmentation.mdx) — `stable`
+2. [Xử lý Dữ liệu Mất cân bằng — Class Weighting, Oversampling & SMOTE](02-Kỹ thuật thi đấu/03-Dữ liệu & Feature/02-xu-ly-du-lieu-mat-can-bang.mdx) — `stable`
+3. [Kỹ thuật riêng cho Dữ liệu Tabular — Target Encoding & Feature Interaction](02-Kỹ thuật thi đấu/03-Dữ liệu & Feature/03-ky-thuat-rieng-cho-tabular.mdx) — `stable`
+4. [Pseudo-labeling — Tận dụng Dữ liệu Test Chưa có Nhãn](02-Kỹ thuật thi đấu/03-Dữ liệu & Feature/04-pseudo-labeling.mdx) — `stable`
+
+### Tuning & Validation
+
+Đảm bảo cải thiện đo được là thật, không phải overfit hay leakage.
+
+1. [Hyperparameter Tuning — Tìm cấu hình tốt nhất một cách có hệ thống](02-Kỹ thuật thi đấu/04-Tuning & Validation/01-hyperparameter-tuning.mdx) — `stable`
+2. [Cross-Validation cho Dữ liệu Có Tính Thời gian — Walk-Forward Validation](02-Kỹ thuật thi đấu/04-Tuning & Validation/02-cross-validation-cho-du-lieu-thoi-gian.mdx) — `stable`
 
 ---
 
-**Ghi chú tái cấu trúc (2026-07-05):** track này được tái cấu trúc lớn
-theo yêu cầu người vận hành — 11 bài cũ (thiên về "hướng dẫn quy trình
-dùng platform") được gộp/rút gọn còn 3 bài (module 1), giữ vai trò nền
-tảng bắt buộc. Từ bài 4 trở đi (module 2) là nội dung hoàn toàn mới, đúng
-phạm vi ban đầu của exam-track: dạy trick/kỹ thuật thi đấu thật.
-
-**Ghi chú tách module (2026-07-05):** 2 nhóm này đã tồn tại ngầm trong
-`_index.mdx` từ đợt tái cấu trúc trước ("Nhóm nền tảng" / "Nhóm kỹ thuật
-nâng cao") nhưng chưa phải structured data — nay chính thức hoá thành
-field `module` trong frontmatter mỗi bài, hiển thị thành 2 nhóm rõ ràng
-trong sidebar viewer, khớp đúng ý định gốc "section 1: hướng dẫn dùng web
-đơn giản, section 2: technique thi đấu" của người vận hành.
-
 Xem quy tắc nội dung Sườn A ở `../../CLAUDE.md` mục 2.1 trước khi thêm bài.
-
-**Cột mốc (2026-07-06):** toàn bộ 9 bài exam-track đã rà lại dưới góc
-nhìn triết lý mới — **9/9 đạt `status: stable`**. Không bài nào cần viết
-lại nội dung: cả 9 bài đều đã đạt chuẩn "thực chiến, gọn, bám platform
-thật" (mục 2.1 sườn A) từ đợt tái cấu trúc lớn 2026-07-05, không "vỏ
-rỗng". Kết hợp với foundations-track (42/42 stable, sau khi hoàn thiện
-module Computer Vision với bài 42 Mask R-CNN), **toàn bộ 51 bài giáo
-trình đã đạt 100% `stable`** — hoàn tất trọn vẹn đợt "đổi triết lý nội
-dung" bắt đầu từ phiên 2026-07-06. Đợt rà soát bổ sung (Task 30-32,
-9 mẫu trải đều cả 2 track) xác nhận chất lượng thực chất, không chỉ
-`status` trên giấy tờ.

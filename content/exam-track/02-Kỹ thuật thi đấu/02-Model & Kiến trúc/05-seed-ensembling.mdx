@@ -1,14 +1,15 @@
 ---
 title: Seed Ensembling — Kết hợp nhiều lần Train của Cùng một Model
 track: exam-track
-module: Kỹ thuật thi đấu nâng cao
-order: 7
+module: Kỹ thuật thi đấu
+submodule: Model & Kiến trúc
+order: 5
 status: stable
 summary: Một biến thể rẻ nhất của ensembling — train cùng một kiến trúc nhiều lần với random seed khác nhau rồi lấy trung bình dự đoán — giảm phương sai (variance) do quá trình train ngẫu nhiên gây ra, khác hẳn bagging/stacking vốn cần thay đổi dữ liệu hoặc kiến trúc.
 last_touched_by_task: Viết mới 2026-07-12 theo yêu cầu người vận hành sau đợt review 2 tầng module — lấp khoảng trống "ensembling nói chung đã có (bài 06) nhưng chưa tách riêng biến thể seed ensembling cụ thể, rẻ và phổ biến nhất khi thi đấu". Nguồn: machinelearningmastery.com/ensemble-methods-for-deep-learning-neural-networks (cơ chế train nhiều lần với random init khác nhau, lý do giảm variance, số lượng model khuyến nghị 3-10, phân biệt với bagging).
 ---
 
-Bài [Model Ensembling](06-model-ensembling.mdx) đã dạy ba kỹ thuật kết hợp
+Bài [Model Ensembling](04-model-ensembling.mdx) đã dạy ba kỹ thuật kết hợp
 nhiều model: voting/averaging, stacking, blending — và nhấn mạnh điều kiện
 quan trọng để ensembling có giá trị: **các model cần đủ khác nhau**. Bài
 này đào sâu vào cách tạo ra sự khác biệt đó **rẻ nhất có thể**: không đổi
@@ -98,8 +99,8 @@ tăng tuyến tính.
   tabular** — đổi `random_state` của XGBoost/LightGBM/CatBoost giữa các lần
   train, chi phí train một lần thường thấp hơn nhiều so với deep learning
   nên dễ chạy đủ 5-10 seed trong thời gian ngắn.
-- **Kết hợp tự nhiên với các checkpoint đã lưu từ quá trình tuning** (bài
-  [Hyperparameter Tuning](05-hyperparameter-tuning.mdx)) — nếu trong lúc
+- **Kết hợp tự nhiên với các checkpoint đã lưu từ quá trình tuning
+  hyperparameter** (nhóm Tuning & Validation sẽ đi sâu hơn) — nếu trong lúc
   tìm hyperparameter tốt nhất đã train nhiều model với cấu hình gần tương
   đương, các checkpoint "gần tối ưu" đó cũng là nguyên liệu hợp lệ cho seed
   ensembling, không cần train thêm từ đầu.

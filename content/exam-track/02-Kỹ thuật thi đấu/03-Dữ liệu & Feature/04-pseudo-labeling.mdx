@@ -1,10 +1,11 @@
 ---
 title: Pseudo-labeling — Tận dụng Dữ liệu Test Chưa có Nhãn
 track: exam-track
-module: Kỹ thuật thi đấu nâng cao
-order: 11
+module: Kỹ thuật thi đấu
+submodule: Dữ liệu & Feature
+order: 4
 status: stable
-summary: Kỹ thuật cuối cùng của track — dùng model đã train để tự gán nhãn cho dữ liệu test tin cậy cao, rồi đưa ngược vào tập train để học thêm. Tận dụng được lượng dữ liệu test lớn mà competition luôn cung cấp sẵn, nhưng đi kèm rủi ro confirmation bias nếu làm sai cách.
+summary: Kỹ thuật khép lại nhóm Dữ liệu & Feature — dùng model đã train để tự gán nhãn cho dữ liệu test tin cậy cao, rồi đưa ngược vào tập train để học thêm. Tận dụng được lượng dữ liệu test lớn mà competition luôn cung cấp sẵn, nhưng đi kèm rủi ro confirmation bias nếu làm sai cách.
 last_touched_by_task: Viết mới 2026-07-12 theo yêu cầu người vận hành sau đợt review 2 tầng module — lấp khoảng trống đã ghi nhận từ trước (xem lịch sử ở bài Data Augmentation, từng thử viết pseudo-labeling nhưng thiếu nguồn whitelist chất lượng). Nguồn: machinelearningmastery.com/semi-supervised-learning-with-label-propagation (định nghĩa pseudo-labeling/self-training, quy trình 6 bước, rủi ro confirmation bias) + machinelearningmastery.com/data-leakage-machine-learning (đã dùng ở bài 1, đối chiếu nguyên tắc leakage khi đưa test vào train).
 ---
 
@@ -101,7 +102,7 @@ nhãn thật ẩn của test. Đây là kỹ thuật hợp lệ, không phải m
   đủ lớn, lợi ích thu được từ pseudo-labeling thường không tương xứng với
   rủi ro và chi phí tính toán thêm (train lại nhiều vòng).
 - Có thể kết hợp với ensembling (bài
-  [Model Ensembling](06-model-ensembling.mdx)): dùng dự đoán trung bình của
+  [Model Ensembling](04-model-ensembling.mdx)): dùng dự đoán trung bình của
   cả ensemble (thay vì một model đơn lẻ) để tạo pseudo-label, thường đáng
   tin hơn dự đoán của một model riêng lẻ vì đã giảm bớt phương sai.
 - Luôn kiểm chứng bằng validation set tách riêng, không dùng chính điểm
@@ -109,10 +110,12 @@ nhãn thật ẩn của test. Đây là kỹ thuật hợp lệ, không phải m
   vào validation set tự tách hơn bất kỳ tín hiệu nào có thể tự đánh lừa
   chính mình.
 
-Đây là bài cuối cùng của track — kết hợp cùng các kỹ thuật đã học (transfer
-learning, tuning, ensembling, xử lý mất cân bằng, xử lý tabular/ảnh/time
-series), bạn đã có đủ bộ công cụ thực chiến bao quát phần lớn tình huống
-gặp phải khi thi đấu trên The Noders Platform.
+Đây là bài khép lại nhóm kỹ thuật dữ liệu & feature — kết hợp cùng các kỹ
+thuật đã học (augmentation, xử lý mất cân bằng, xử lý tabular), bạn đã có
+đủ bộ công cụ thực chiến bao quát phần lớn tình huống chuẩn bị/mở rộng dữ
+liệu khi thi đấu. Nhóm cuối cùng của track — [Hyperparameter
+Tuning](01-hyperparameter-tuning.mdx) — quay lại vấn đề đã gác lại từ đầu:
+tìm cấu hình tốt nhất và đánh giá đúng cách trước khi nộp bài cuối cùng.
 
 ## Nguồn tham khảo
 

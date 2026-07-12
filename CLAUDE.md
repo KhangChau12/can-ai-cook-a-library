@@ -14,18 +14,17 @@
 
 ## 1. STATUS (đọc đầu mỗi task, không ngoại lệ)
 
-- **Version:** v14.1
-- **Phiên gần nhất:** POLISH PASS module Computer Vision (2026-07-12) —
-  đọc lại toàn mạch 19 bài (Overview/Classification/Detection/Segmentation)
-  theo `auto-tools/POLISHPASS.md`. Cả 19 bài đã đạt chuẩn "bài dạy tốt"
-  từ một lượt review chiều sâu trước đó, không cần sửa văn phong/nội dung
-  thêm. Phát hiện phụ khi đọc: nhiều link nội bộ dạng `(NN-slug.mdx)` trỏ
-  sai thư mục (bare-slug không khớp file thật khi link trỏ sang sub-module
-  hoặc module khác — ví dụ AlexNet trỏ `02-backpropagation.mdx` cùng thư
-  mục thay vì đúng đường dẫn sang module DL Nền tảng) — sửa toàn bộ ~20
-  link gãy theo mục 1.2 điểm 5 (lỗi thật, sửa ngay khi phát hiện), đã xác
-  minh lại toàn bộ resolve đúng.
-- **Tổng số bài hiện có:** 151 (14 exam-track + 137 foundations-track) —
+- **Version:** v14.3
+- **Phiên gần nhất:** Tách module "Kỹ thuật thi đấu" (exam-track, đổi tên
+  từ "Kỹ thuật thi đấu nâng cao", đổi tier từ `advanced` xuống
+  `intermediate`) thành 4 sub-module theo yêu cầu người vận hành
+  (2026-07-12): Overview (bài mới, bản đồ chọn kỹ thuật theo tình huống
+  thi đấu) / Model & Kiến trúc (5 bài) / Dữ liệu & Feature (4 bài, đổi
+  thứ tự nội bộ để hết ref ngược) / Tuning & Validation (2 bài). Di
+  chuyển file + cập nhật toàn bộ frontmatter, link nội bộ, câu chuyển
+  tiếp giữa các bài cho khớp thứ tự mới, `_index.mdx`, `modules.json`,
+  `src/lib/content.ts` (MODULE_LEVELS/MODULE_ICONS key).
+- **Tổng số bài hiện có:** 152 (15 exam-track + 137 foundations-track) —
   tổ chức thành **9 module** cho foundations-track:
   ML cổ điển (12 bài, 4 sub-module: Overview 1/Supervised Learning 6/
   Unsupervised Learning 4/Ensemble Methods 1), DL Nền tảng (7, phẳng),
@@ -245,12 +244,11 @@ chủ đề; chỉ tạo module mới nếu bài đó mở ra một nhánh chủ
 khác (xem mục 2.1).
 
 `submodule` là field **tuỳ chọn** (từ 2026-07-06) — chỉ áp dụng cho các
-module đã tách nhánh con theo mục 2.1 (hiện tại: `"Computer Vision"` với
-4 sub-module `"Overview"` / `"Classification"` / `"Detection"` /
-`"Segmentation"`). Khi bài có
-`submodule`, viewer group theo `module` → `submodule` → bài (3 cấp thay
-vì 2). Không thêm `submodule` cho module chưa được quyết định tách nhánh
-ở mục 2.1 — tự ý thêm sẽ tạo nhóm mồ côi không nhất quán trong viewer.
+module đã tách nhánh con theo mục 2.1 (danh sách đầy đủ + mô tả từng
+sub-module: mục 4 hoặc `content/modules.json`). Khi bài có `submodule`,
+viewer group theo `module` → `submodule` → bài (3 cấp thay vì 2). Không
+thêm `submodule` cho module chưa được quyết định tách nhánh ở mục 2.1 —
+tự ý thêm sẽ tạo nhóm mồ côi không nhất quán trong viewer.
 
 - `status: draft` — mới tạo, chưa tự-review lại lần nào.
 - `status: needs-review` — agent tự thấy còn thiếu sót nhưng không tự sửa
@@ -457,14 +455,15 @@ bài này bị sửa mà không phải vì nó sai.
 > **cập nhật cả CLAUDE.md và `content/modules.json`** khi cấu trúc giáo
 > trình thay đổi (thêm/xoá bài, tách sub-module, đổi module).
 
-### exam-track — 14 bài, 2 module
+### exam-track — 15 bài, 2 module
 
-- `"Hướng dẫn dùng nền tảng"` — bài 1-3
-- `"Kỹ thuật thi đấu nâng cao"` — bài 1-11 (local order trong module):
-  Transfer Learning/Checkpoint/Tuỳ chỉnh kiến trúc/Xử lý dữ liệu mất cân
-  bằng/Hyperparameter Tuning/Model Ensembling/Seed Ensembling/Tabular
-  (Target Encoding & Feature Interaction)/Data Augmentation/Walk-Forward
-  CV/Pseudo-labeling
+- `"Hướng dẫn dùng nền tảng"` — 3 bài, phẳng
+- `"Kỹ thuật thi đấu"` — 12 bài, 4 sub-module: Overview 1 (bản đồ
+  chọn kỹ thuật theo tình huống)/Model & Kiến trúc 5 (Transfer Learning→
+  Checkpoint→Tuỳ chỉnh kiến trúc→Model Ensembling→Seed Ensembling)/
+  Dữ liệu & Feature 4 (Data Augmentation→Xử lý mất cân bằng→Tabular
+  (Target Encoding & Feature Interaction)→Pseudo-labeling)/
+  Tuning & Validation 2 (Hyperparameter Tuning→Walk-Forward CV)
 
 ### foundations-track — 137 bài, 9 module
 

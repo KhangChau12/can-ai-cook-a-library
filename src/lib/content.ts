@@ -36,7 +36,7 @@ export const LEVEL_LABELS: Record<ModuleLevel, string> = {
 // 2026-07-10 — update by hand if module.json's module set changes shape.
 const MODULE_LEVELS: Record<string, ModuleLevel> = {
   'Hướng dẫn dùng nền tảng': 'foundation',
-  'Kỹ thuật thi đấu nâng cao': 'advanced',
+  'Kỹ thuật thi đấu': 'intermediate',
   'Nền tảng Toán & ML cổ điển': 'foundation',
   'Deep Learning Nền tảng': 'foundation',
   'Computer Vision': 'intermediate',
@@ -57,7 +57,7 @@ export function moduleLevel(moduleName: string): ModuleLevel {
 // by topic association, no other significance.
 const MODULE_ICONS: Record<string, string> = {
   'Hướng dẫn dùng nền tảng': 'compass',
-  'Kỹ thuật thi đấu nâng cao': 'trophy',
+  'Kỹ thuật thi đấu': 'trophy',
   'Nền tảng Toán & ML cổ điển': 'sigma',
   'Deep Learning Nền tảng': 'brain-circuit',
   'Computer Vision': 'eye',
