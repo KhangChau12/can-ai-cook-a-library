@@ -1,34 +1,30 @@
 # AI Learn Content — Registry & Design Rules
 
 > Nguồn sự thật duy nhất cho: giáo trình hiện tại, quy chuẩn viết, trạng thái
-> từng bài, và các quyết định thiết kế đã chốt. `AUTOPILOT.md` là vòng lặp vận
-> hành — nó đọc file này mỗi task, không lặp lại nội dung ở đây.
+> từng bài, và các quyết định thiết kế đã chốt. Thư mục `auto-tools/` chứa
+> các vòng lặp vận hành đọc file này mỗi task, không lặp lại nội dung ở đây:
+> `auto-tools/AUTOPILOT.md` (mở rộng giáo trình — viết bài mới, lấp khoảng
+> trống, sửa `needs-review`) và `auto-tools/POLISHPASS.md` (trau chuốt văn
+> phong/độ sâu toàn mạch 1 module theo yêu cầu, gọi thủ công kèm tên module).
 >
-> File này KHÔNG được git track (thư mục `autopilot-learn/` nằm trong
-> `.gitignore` ở root). Đây là không gian làm việc nội bộ của agent, không
-> phải nội dung sẽ publish thẳng lên web. Thành viên CLB đọc bài ở đây để lấy
-> cảm hứng và tự viết lại bài chính thức cho `/learn` trên web — agent không
-> cần tối ưu cho "publish-ready", chỉ cần tối ưu cho "dễ đọc, đúng, hữu ích".
+> File này KHÔNG được git track cho thư mục chính ở ngoài (thư mục `autopilot-learn/` nằm trong
+> `.gitignore` ở root). Đây là không gian làm việc nội bộ của agent, những nội dung này sẽ được deploy như 1 sản phẩm phụ sang web https://khangchau12.github.io/can-ai-cook-a-library/
 
 ---
 
 ## 1. STATUS (đọc đầu mỗi task, không ngoại lệ)
 
-- **Version:** v13.4
-- **Phiên gần nhất:** LẤP KHOẢNG TRỐNG CHIỀU SÂU MODULE COMPUTER VISION
-  (2026-07-12) — review 2 tầng (cấu trúc + chiều sâu) toàn bộ 17 bài CV
-  theo yêu cầu người vận hành, phát hiện 3 bài (ViT/Swin/SegFormer) phụ
-  thuộc self-attention/Transformer nhưng track chưa dạy trước đó (CV =
-  module 3, NLP = module 4), và module CV thiếu sub-module Overview mà
-  mọi module có submodule khác đều có. Thêm sub-module Overview mới (1
-  bài, renumber sub-module cũ "Cơ bản" thành "Classification" — khớp tên
-  bài toán, đồng bộ pattern đặt tên với Detection/Segmentation — và đổi
-  số thư mục thành 02/03/04) + bài đệm "Self-attention cho ảnh" (order 7,
-  trước ViT) trong sub-module Classification. Đồng thời: thêm định nghĩa
-  mAP vào bài Object Detection, dọn số "bài N" track-wide cũ còn sót ở
-  6 file, thêm trade-off còn thiếu ở ResNet/EfficientNet/DeepLab. Cập
-  nhật mọi link nội bộ (bare-slug lẫn full relative path) trỏ tới các
-  file/thư mục đã đổi số/tên trên toàn bộ 2 track.
+- **Version:** v14.1
+- **Phiên gần nhất:** POLISH PASS module Computer Vision (2026-07-12) —
+  đọc lại toàn mạch 19 bài (Overview/Classification/Detection/Segmentation)
+  theo `auto-tools/POLISHPASS.md`. Cả 19 bài đã đạt chuẩn "bài dạy tốt"
+  từ một lượt review chiều sâu trước đó, không cần sửa văn phong/nội dung
+  thêm. Phát hiện phụ khi đọc: nhiều link nội bộ dạng `(NN-slug.mdx)` trỏ
+  sai thư mục (bare-slug không khớp file thật khi link trỏ sang sub-module
+  hoặc module khác — ví dụ AlexNet trỏ `02-backpropagation.mdx` cùng thư
+  mục thay vì đúng đường dẫn sang module DL Nền tảng) — sửa toàn bộ ~20
+  link gãy theo mục 1.2 điểm 5 (lỗi thật, sửa ngay khi phát hiện), đã xác
+  minh lại toàn bộ resolve đúng.
 - **Tổng số bài hiện có:** 151 (14 exam-track + 137 foundations-track) —
   tổ chức thành **9 module** cho foundations-track:
   ML cổ điển (12 bài, 4 sub-module: Overview 1/Supervised Learning 6/
@@ -72,9 +68,6 @@
 > dòng đó (không giữ lại để "ghi công"). Khi thêm việc mới, viết tối đa
 > 1-2 dòng.
 
-1. Chế độ vận hành: KHÔNG hỏi lại người vận hành giữa chừng — tự quyết
-   định trong phạm vi AUTOPILOT.md, chỉ dừng đúng 2 điều kiện ở mục "Khi
-   nào dừng" của file đó.
 2. Đào sâu 3 module RL/Generative Models/Audio — Phase 1 (coherence fixes)
    đã xong. Phase 2-4: viết bài mới bắt đầu từ order 97 (Imitation Learning),
    mỗi bài kèm quiz. Xem plan file `C:\Users\Admin\.claude\plans\iridescent-forging-wombat.md`.
@@ -86,25 +79,16 @@
 3. Khi viết bài mới nhưng nguồn không đủ chất lượng: ưu tiên kiểm tra
    xem có bài cũ đang thiếu đúng nguồn academic gốc đó không, cải thiện
    bài đó thay vì ép viết bài mới yếu.
-4. Quy tắc bắt buộc khi sửa mục 1 "Phiên gần nhất": `old_string` PHẢI
-   khớp và thay thế TOÀN BỘ entry cũ, không chỉ prepend.
 4b. 2 bài mới trong Computer Vision (Overview, Self-attention cho ảnh)
    chưa có quiz đi kèm — làm khi tới lượt batch quiz theo mục 2.6.
-5. Link nội bộ dạng `(NN-slug.mdx)` được `src/lib/renderMarkdown.ts` resolve
-   bằng bare-slug (bỏ số thứ tự đầu) qua map toàn track, không quan tâm số
-   hiển thị trong link có đúng số thật của file đích hay không — về mặt kỹ
-   thuật link vẫn trỏ đúng miễn bare-slug khớp. Dù vậy, số đã được quét
-   đồng bộ khớp file thật trên toàn bộ 2 track (2026-07-12) để source dễ
-   đọc — khi đổi tên/số file, cập nhật luôn mọi link trỏ tới bare-slug cũ
-   của file đó trong cùng task (không để số lệch tái tích luỹ). Nếu bare-
-   slug trong link không khớp bất kỳ file thật nào (không phải chỉ khác
-   số, mà khác hẳn tên — ví dụ do đổi tên file lúc viết lại bài), đó là
-   lỗi thật cần sửa ngay khi phát hiện.
+5. Khi đổi tên/số file `.mdx`, cập nhật luôn mọi link nội bộ `(NN-slug.mdx)`
+   trỏ tới bare-slug cũ của file đó trong cùng task (không để số lệch tái
+   tích luỹ). Bare-slug không khớp bất kỳ file thật nào (khác hẳn tên, không
+   chỉ khác số) là lỗi thật cần sửa ngay khi phát hiện.
 
 ### 1.3 Human Pin (người ngoài có thể ghi task ưu tiên vào đây, agent luôn ưu tiên đọc dòng này trước khi tự chọn task)
 
-- _(trống — yêu cầu tái cấu trúc exam-track đã hoàn thành, xem "Phiên gần
-  nhất" ở mục 1)_
+- _(trống)_
 - _(trống)_
 - _(trống)_
 
@@ -166,53 +150,9 @@ trúc/công thức cuối cùng. Cụ thể:
 
 **Sub-module hiện có** (field `submodule`, xem mục 2.3) — dùng khi 1
 module có ≥2 nhánh/giai đoạn/trường phái đủ khác biệt về bản chất, không
-có ngưỡng số bài tối thiểu cứng. Danh sách hiện tại (chi tiết bài nào ở
-mục 4, hoặc đọc trực tiếp `content/modules.json` + thư mục bài):
-- **Computer Vision**: "Overview" (lịch sử CV trước deep learning, bản đồ
-  3 bài toán con, điều hướng nhánh Transformer-based) / "Classification"
-  (dòng tiến hoá backbone CNN→...→EfficientNet, rồi bài đệm self-attention
-  →ViT→Swin) / "Detection" / "Segmentation"
-- **Natural Language Processing**: "Overview" / "Tokenization" (tiền xử lý
-  text→token→vector) / "Recurrent Neural Network Family" (kiến trúc hồi
-  quy) / "Transformer Architecture" (kiến trúc dựa attention) / "NLP Task
-  cổ điển" (áp dụng kiến trúc đã học để giải bài toán cụ thể: phân loại
-  văn bản, POS/NER, topic modeling) — 5 sub-module theo đúng thứ tự
-  pipeline, dừng ở "áp dụng kiến trúc cho bài toán NLP cụ thể", chưa chạm
-  khái niệm pretrain quy mô lớn.
-- **Large Language Models**: "Overview" / "Pretrained Language Models"
-  (BERT/RoBERTa/ALBERT/T5, encoder-only) / "GPT & Decoder-only" (GPT-1/2/3
-  dòng tiến hoá + Mixture-of-Experts) / "Huấn luyện & Alignment"
-  (Pretraining, Scaling Laws, Fine-tuning, RLHF/LoRA/DPO) / "Reasoning &
-  Test-time Compute" (trục cải thiện khác Scaling Laws) / "Ứng dụng &
-  Inference-time" (Prompting/RAG/Agent) / "Evaluation" (benchmark, data
-  contamination, LLM-as-judge) — 7 sub-module; ranh giới bản chất với
-  module Natural Language Processing: kiến trúc chuỗi nói chung (module
-  đó) vs triết lý pretrain 1 mô hình khổng lồ dùng chung mọi bài toán
-  (module này)
-- **Reinforcement Learning**: "Overview" (Framework, MDP — nền tảng chung
-  đọc trước mọi nhánh) / "Value-based" / "Policy-based" (gồm cả
-  Actor-Critic, hợp lưu 2 trường phái) / "Model-based" / "Advanced Topics"
-  (Imitation Learning, Exploration, Offline RL, Hierarchical RL — cần nền
-  cả 3 trường phái trên, đặt cuối module)
-- **Generative Models**: "Overview" (bản đồ 3 trường phái) /
-  "Likelihood-based Models" (Autoencoder→VAE→Flow, mạch nén→sinh không
-  đối kháng) / "Generative Adversarial Network Family" (GAN→DCGAN→
-  WGAN&StyleGAN→cGAN→Synthesis, thuần đối kháng) / "Autoregressive &
-  Hybrid Models" (PixelCNN→VQ-VAE/VQ-GAN, không đối kháng — VQ-GAN là
-  điểm hội tụ VAE+GAN qua adversarial loss, nhưng tách riêng khỏi GAN
-  Family vì bản chất kiến trúc gốc không đối kháng) / "Vision-Language
-  Bridge" (CLIP, cầu nối bắt buộc trước Diffusion Models có điều kiện
-  text) / "Diffusion Models" (DDPM→DDIM→Latent Diffusion→Score
-  Function&Langevin đệm→Score-based)
-- **Audio**: "Biểu diễn âm thanh" / "Speech-to-Text" / "Text-to-Speech"
-- **Recommendation Systems**: "Overview" (2 trường phái nền tảng, rating
-  vs ranking) / "Nền tảng Content-based & CF" (Content-based Filtering,
-  Memory-based CF, Matrix Factorization) / "Deep Learning cho RS" (NeuMF,
-  DeepFM, AutoRec) / "Ranking & Evaluation" (metric đo ranking + cold-start,
-  BPR) / "Sequence-aware & Modern Architectures" (GRU4Rec/SASRec,
-  Two-Tower — kết nối RNN/Transformer/vector search đã học ở module
-  Natural Language Processing)
-- Module còn lại chưa tách (ML cổ điển) — xem mục 1.2 để tiếp tục đánh giá.
+có ngưỡng số bài tối thiểu cứng. Danh sách + mô tả chi tiết từng sub-module
+của mỗi module: đọc mục 4 (bảng tóm tắt) hoặc `content/modules.json`
+(nguồn đầy đủ nhất, dùng trực tiếp bởi code site) — không lặp lại ở đây.
 
 Khi cân nhắc tách sub-module hoặc tạo module mới: nếu 1 mảng con đã có
 module tương ứng ở nơi khác trong track, trả về module đó thay vì tạo
@@ -553,9 +493,9 @@ bài này bị sửa mà không phải vì nó sai.
 8. `"Audio"` — 13 bài, 5 sub-module: Overview 1/Biểu diễn âm thanh 3 (waveform/spectrogram, SSL — Ý tưởng chung, SSL cho Âm thanh)/STT 2/TTS 3/Audio-Understanding 4 (Source Separation, Event Detection, Speaker Recognition, Audio Segmentation)
 9. `"Recommendation Systems"` — 11 bài, 5 sub-module: Overview 1/Nền tảng Content-based & CF 3 (Content-based Filtering, Memory-based CF, Matrix Factorization)/Deep Learning cho RS 3 (NeuMF, DeepFM, AutoRec)/Ranking & Evaluation 2 (metric ranking + cold-start, BPR)/Sequence-aware & Modern Architectures 2 (GRU4Rec/SASRec, Two-Tower)
 
-**Trạng thái review:** 0 bài `needs-review` trên cả 2 track — toàn bộ đã
-đạt `stable`. Lý do cụ thể "vì sao mỗi bài đạt stable" nằm trong
-`last_touched_by_task` của chính file `.mdx` đó.
+Trạng thái review (số bài `needs-review`): xem mục 1 STATUS. Lý do cụ thể
+"vì sao mỗi bài đạt stable" nằm trong `last_touched_by_task` của chính
+file `.mdx` đó.
 
 ---
 

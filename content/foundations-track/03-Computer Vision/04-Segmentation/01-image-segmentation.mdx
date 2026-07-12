@@ -9,7 +9,7 @@ summary: Semantic vs instance segmentation, và dòng tiến hoá kiến trúc c
 last_touched_by_task: Viết lại theo triết lý nội dung mới (2026-07-06): bài cũ chỉ dừng ở phân loại khái niệm (semantic vs instance segmentation), hoàn toàn không có kiến trúc/lịch sử cụ thể — 'vỏ rỗng' đúng nghĩa phê bình ở CLAUDE.md mục 1. Thêm dòng tiến hoá FCN (Long et al. 2015) → U-Net (Ronneberger et al. 2015): vấn đề cụ thể mỗi bước giải quyết, không chỉ nêu tên kiến trúc. Gắn submodule 'Segmentation' — bài mở đầu sub-module. 2 nguồn: D2L.ai (FCN chapter, kiến trúc cụ thể: 1x1 conv + transposed convolution) và arxiv (paper gốc U-Net, đúng yêu cầu whitelist mở rộng 2026-07-06 cho bài dòng tiến hoá).
 ---
 
-Bài [Object Detection](01-object-detection.mdx) định vị vật thể bằng
+Bài [Object Detection](../03-Detection/01-object-detection.mdx) định vị vật thể bằng
 **bounding box** — một khung chữ nhật thô, luôn bao gồm cả một phần nền
 không thuộc vật thể thật (ví dụ khung bao quanh một con mèo cong người
 vẫn là hình chữ nhật, dù con mèo không lấp đầy toàn bộ khung đó).
@@ -34,7 +34,7 @@ không phân biệt đây là "mèo thứ nhất" hay "mèo thứ hai".
 
 Semantic segmentation nghe có vẻ chỉ là "classification áp dụng cho từng
 pixel" — nhưng một CNN classification thông thường (bài
-[CNN](01-cnn.mdx)) không thể dùng thẳng cho bài
+[CNN](../02-Co-ban/01-cnn.mdx)) không thể dùng thẳng cho bài
 toán này. Vấn đề cụ thể: kiến trúc CNN classification (như LeNet/AlexNet)
 kết thúc bằng các lớp **fully-connected**, vốn "làm phẳng" toàn bộ đặc
 trưng không gian thành một vector cố định để đưa ra **một** nhãn lớp duy
@@ -122,22 +122,22 @@ quy mô nhỏ hơn nhiều so với các bộ dữ liệu classification thông 
 ## Liên hệ lại với các bài trước
 
 - Cả ba tác vụ (classification, detection, segmentation) đều dùng
-  [CNN](01-cnn.mdx) làm nền tảng trích xuất đặc
+  [CNN](../02-Co-ban/01-cnn.mdx) làm nền tảng trích xuất đặc
   trưng — điểm khác biệt nằm ở **cấu trúc đầu ra** và cách chuẩn bị nhãn
   huấn luyện, không phải một kiến trúc xử lý ảnh hoàn toàn khác.
 - Semantic segmentation về bản chất là classification áp dụng **tại từng
   pixel** thay vì cho cả ảnh — mỗi pixel được phân loại độc lập vào một
   trong các lớp đã định nghĩa, dùng lại đúng nguyên lý cross-entropy loss
-  đã học ở [Logistic Regression](02-logistic-regression.mdx)/Softmax, chỉ
+  đã học ở [Logistic Regression](../../01-Nền%20tảng%20Toán%20&%20ML%20cổ%20điển/02-Supervised-Learning/02-logistic-regression.mdx)/Softmax, chỉ
   áp dụng lặp lại ở quy mô hàng nghìn/triệu pixel thay vì 1 lần cho cả
   ảnh.
 - Instance segmentation kết hợp cả hai hướng đã học: định vị/đếm vật thể
-  (tinh thần [Object Detection](01-object-detection.mdx)) và phân loại
+  (tinh thần [Object Detection](../03-Detection/01-object-detection.mdx)) và phân loại
   chi tiết mức pixel (tinh thần semantic segmentation) — một minh hoạ cho
   việc các bài toán CV phức tạp hơn thường là sự kết hợp của các bài toán
   đơn giản hơn đã học, không phải khái niệm hoàn toàn mới từ đầu.
 - Dòng tiến hoá FCN → U-Net lặp lại đúng mẫu hình đã gặp ở
-  [AlexNet](02-alexnet.mdx) và [Object Detection](01-object-detection.mdx):
+  [AlexNet](../02-Co-ban/02-alexnet.mdx) và [Object Detection](../03-Detection/01-object-detection.mdx):
   mỗi kiến trúc mới nhắm chính xác vào một hạn chế cụ thể của kiến trúc
   ngay trước nó (fully-connected phá vỡ tương ứng không gian → transposed
   convolution của FCN khôi phục nó → dữ liệu khan hiếm khiến FCN thuần

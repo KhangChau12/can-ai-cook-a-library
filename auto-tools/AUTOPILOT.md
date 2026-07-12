@@ -1,19 +1,12 @@
 # AUTOPILOT MODE — AI Learn Content Workshop
 
 Chế độ tự động dài hạn, không có người giám sát trực tiếp. Không dừng lại để
-hỏi, trừ các điều kiện ở mục "Khi nào dừng". Gặp điều mơ hồ: tự quyết định,
-tiếp tục.
-
-Điều này áp dụng cho **mọi loại quyết định trong phạm vi workshop này**,
-không chỉ nội dung từng bài — kể cả khi phát hiện lỗi cấu trúc giáo trình
-(order sai thứ tự logic, cần đổi tên/số nhiều file cùng lúc), khi cần
-refactor lại content đã có, hay khi cần chọn giữa nhiều
-cách sửa hợp lý. Không hỏi "bạn muốn sửa thế nào" cho những việc này — tự
-đánh giá phương án hợp lý nhất (thường là phương án khớp đúng nhất với mục
-tiêu "giáo trình đọc liền mạch, đúng thứ tự logic" ở mục 2.1/2.3 CLAUDE.md),
-thực hiện, rồi tiếp tục vòng lặp. Chỉ dừng lại hỏi khi rơi đúng vào một
-trong các điều kiện ở mục "Khi nào dừng" bên dưới — không có ngoại lệ nào
-khác, kể cả khi thay đổi ảnh hưởng nhiều file hoặc trông "quan trọng".
+hỏi — kể cả cho quyết định cấu trúc (order sai, cần đổi tên/số nhiều file,
+refactor content, chọn giữa nhiều cách sửa hợp lý), không chỉ nội dung
+từng bài. Gặp điều mơ hồ: tự đánh giá phương án khớp nhất với mục tiêu
+"giáo trình đọc liền mạch, đúng thứ tự logic" (CLAUDE.md mục 2.1/2.3), thực
+hiện, tiếp tục vòng lặp. Chỉ dừng đúng điều kiện ở mục "Khi nào dừng" bên
+dưới — không ngoại lệ, kể cả khi thay đổi ảnh hưởng nhiều file.
 
 **Ghi lý do quyết định — đúng chỗ, đúng độ dài:** lý do chi tiết (vì sao
 chọn phương án này, task nào, nguồn nào) ghi vào `last_touched_by_task`
@@ -29,13 +22,19 @@ submodule (ví dụ Computer Vision "Classification", Sequence Model "RNN Family
 số hoặc xếp bài lệch mức độ. Nếu cần thêm bài mới vào giữa các bài đã có,
 phải tính toán lại số thứ tự cho toàn bộ submodule đó — không để bị lệch.
 
-`CLAUDE.md` (cùng thư mục) chứa quy tắc thiết kế, quy chuẩn viết, giới hạn
-nội dung, và bảng tóm tắt giáo trình — không lặp lại ở đây. File này chỉ
-là vòng lặp vận hành. Chi tiết một bài cụ thể (nguồn, lý do viết) đọc
-trực tiếp từ `summary`/`last_touched_by_task`/`## Nguồn tham khảo` trong
-chính file `.mdx` đó — không có tầng tóm tắt trung gian nào khác.
-CLAUDE.md và nội dung thực tế trong `content/` mâu thuẫn nhau mà không rõ
-cái nào đúng → dừng (xem mục "Khi nào dừng").
+`../CLAUDE.md` (thư mục cha) chứa quy tắc thiết kế, quy chuẩn viết, giới
+hạn nội dung, và bảng tóm tắt giáo trình — không lặp lại ở đây. File này
+chỉ là vòng lặp vận hành cho việc **mở rộng giáo trình** (viết bài mới,
+lấp khoảng trống, sửa bài `needs-review`). Chi tiết một bài cụ thể (nguồn,
+lý do viết) đọc trực tiếp từ `summary`/`last_touched_by_task`/
+`## Nguồn tham khảo` trong chính file `.mdx` đó — không có tầng tóm tắt
+trung gian nào khác. CLAUDE.md và nội dung thực tế trong `content/` mâu
+thuẫn nhau mà không rõ cái nào đúng → dừng (xem mục "Khi nào dừng").
+
+**Không phải chế độ này nếu người vận hành yêu cầu "polish" / "trau
+chuốt lại" một module cụ thể** — đó là `POLISHPASS.md` (cùng thư mục
+`auto-tools/`), một vòng lặp khác tập trung vào văn phong/độ sâu của bài
+đã có, không mở rộng giáo trình.
 
 Đọc mục 1 (STATUS) của CLAUDE.md trước mỗi task, không ngoại lệ. Mục 2-7
 đọc theo nhu cầu task đang làm.
@@ -130,8 +129,10 @@ gặp điều kiện dừng thật sự.
   trong task đó.
 - Không bịa tính năng/metric platform không có — đối chiếu
   `src/lib/constants.ts` và phần "Scoring Metrics" / "Competition Phase
-  Logic" trong CLAUDE.md của repo chính (`../CLAUDE.md`) khi viết nội dung
-  exam-track liên quan trực tiếp đến cách platform vận hành.
+  Logic" trong CLAUDE.md của repo chính (`../../CLAUDE.md`, tức
+  `The Noders Competition Platform/CLAUDE.md` — khác với
+  `../CLAUDE.md` là registry riêng của `autopilot-learn/`) khi viết nội
+  dung exam-track liên quan trực tiếp đến cách platform vận hành.
 - Không sửa bất kỳ file nào ngoài `autopilot-learn/` — vòng lặp này không
   được đụng vào code của web app thật (`src/`, `supabase/`, v.v.). Nếu một
   task có vẻ cần sửa code ngoài thư mục này để "hoàn thành đúng", đó là dấu

@@ -4,14 +4,14 @@ const base = import.meta.env.BASE_URL;
 ---
 
 <header class="sticky top-0 z-30 border-b border-border-default/60 bg-bg-primary/70 shadow-sm backdrop-blur-xl">
-  <div class="mx-auto flex max-w-6xl items-center gap-4 px-5 py-3">
-    <a href={base} class="flex items-center gap-2.5">
+  <div class="mx-auto flex w-full max-w-screen-2xl items-center gap-4 px-4 py-3 sm:px-8 lg:px-12">
+    <a href={base} class="flex min-w-0 items-center gap-2.5">
       <img src={`${base}logo.png`} alt="" width="32" height="32" class="h-8 w-8 shrink-0" />
-      <span class="font-display text-xl tracking-tight text-text-primary sm:text-2xl">
+      <span class="truncate font-display text-base tracking-tight text-text-primary sm:text-xl lg:text-2xl">
         Can AI Cook a Library?
       </span>
     </a>
-    <div class="ml-auto flex items-center gap-2">
+    <div class="ml-auto flex shrink-0 items-center gap-2">
       <button
         id="theme-toggle"
         type="button"
@@ -24,7 +24,7 @@ const base = import.meta.env.BASE_URL;
       <button
         id="search-trigger"
         type="button"
-        class="flex items-center gap-2 rounded-lg border border-border-default bg-bg-inset px-3 py-1.5 text-xs text-text-disabled transition hover:border-border-subtle hover:text-text-tertiary"
+        class="flex items-center gap-2 rounded-lg border border-border-default bg-bg-inset px-2.5 py-1.5 text-xs text-text-disabled transition hover:border-border-subtle hover:text-text-tertiary sm:px-3"
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <span class="hidden md:inline">Tìm bài viết…</span>

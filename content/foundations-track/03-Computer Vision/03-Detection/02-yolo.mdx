@@ -78,7 +78,7 @@ thường ưu tiên one-stage.
 
 ## Liên hệ lại với các bài trước
 
-- YOLO vẫn dùng CNN (bài [CNN](01-cnn.mdx)) làm
+- YOLO vẫn dùng CNN (bài [CNN](../02-Co-ban/01-cnn.mdx)) làm
   phần trích xuất đặc trưng nền tảng — điểm khác biệt với R-CNN family
   không nằm ở cách trích xuất đặc trưng, mà ở cách **tổ chức lại toàn bộ
   bài toán** thành một phép hồi quy duy nhất thay vì pipeline nhiều
@@ -88,7 +88,7 @@ thường ưu tiên one-stage.
   R-CNN → Faster R-CNN tối ưu dần selective search) mà là "đặt lại toàn
   bộ câu hỏi" — giống cách Transformer (15) đặt câu hỏi "có cần RNN
   không?" thay vì tiếp tục tối ưu RNN/LSTM.
-- Vẫn huấn luyện bằng [backpropagation](02-backpropagation.mdx) như mọi
+- Vẫn huấn luyện bằng [backpropagation](../../02-Deep%20Learning%20Nền%20tảng/02-backpropagation.mdx) như mọi
   mạng nơ-ron khác — YOLO chỉ thay đổi cách công thức hoá đầu ra và hàm
   loss (dự đoán trực tiếp toạ độ + lớp trong một lần), không thay đổi cơ
   chế tối ưu hoá.

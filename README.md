@@ -2,7 +2,7 @@
 
 **📖 Xem trực tiếp: https://khangchau12.github.io/can-ai-cook-a-library/**
 
-Một thư viện bài học AI/ML (92 bài, 392 câu quiz, song ngữ Việt) được
+Một thư viện bài học AI/ML (151 bài, 629 câu quiz, song ngữ Việt) được
 **viết gần như hoàn toàn bởi Claude Code chạy tự động (autopilot) — không
 có người ngồi review từng bài trước khi publish**. Đây là một thử nghiệm:
 để một agent tự chọn chủ đề, tự tra cứu nguồn học thuật (arxiv, D2L.ai,
@@ -78,7 +78,10 @@ autopilot-learn/
 ├── .github/workflows/pages.yml  # Build (Astro + Pagefind) và deploy lên GitHub Pages mỗi push
 ├── CLAUDE.md          # Nguồn sự thật: quy chuẩn viết, trạng thái, mọi
 │                       # quyết định thiết kế đã chốt, bảng tóm tắt giáo trình
-├── AUTOPILOT.md        # Vòng lặp vận hành cho agent (đọc CLAUDE.md mỗi task)
+├── auto-tools/
+│   ├── AUTOPILOT.md    # Vòng lặp mở rộng giáo trình (đọc CLAUDE.md mỗi task)
+│   └── POLISHPASS.md   # Vòng lặp trau chuốt văn phong/độ sâu 1 module,
+│                        # gọi thủ công kèm tên module cần polish
 ├── content/
 │   ├── modules.json           # Mô tả ngắn module/sub-module (dùng bởi src/lib/content.ts)
 │   ├── exam-track/            # Bài .mdx + quiz .mdx — bổ trợ thi đấu
@@ -158,26 +161,39 @@ thư mục này.
    - Mục 6 — bắt buộc cập nhật lại mục 1 cuối mỗi task, để phiên sau (hoặc
      chính agent trong vòng lặp tiếp theo) luôn có bức tranh đúng.
 
-2. **`AUTOPILOT.md`** là kịch bản vòng lặp: chọn task → đọc bối cảnh → viết/
-   sửa → tự kiểm tra → cập nhật `CLAUDE.md` → quay lại từ đầu. Đây là file
-   được nạp làm system prompt cho phiên autopilot, tách riêng khỏi
-   `CLAUDE.md` để nội dung "luật chơi" và "vòng lặp vận hành" không lẫn
-   vào nhau.
+2. **`auto-tools/AUTOPILOT.md`** là kịch bản vòng lặp mở rộng giáo trình:
+   chọn task → đọc bối cảnh → viết/sửa → tự kiểm tra → cập nhật
+   `CLAUDE.md` → quay lại từ đầu. Đây là file được nạp làm system prompt
+   cho phiên autopilot, tách riêng khỏi `CLAUDE.md` để nội dung "luật
+   chơi" và "vòng lặp vận hành" không lẫn vào nhau.
+
+   **`auto-tools/POLISHPASS.md`** là một vòng lặp khác, gọi thủ công: đọc
+   lại toàn bộ bài trong 1 module theo đúng mạch học và sửa văn phong/độ
+   sâu cho đúng giọng giáo trình dạy học — không viết bài mới, không mở
+   rộng giáo trình. Ra đời vì autopilot mở rộng nhanh dễ để lại những bài
+   đọc giống "báo cáo quyết định biên tập" hơn là bài dạy (đặc biệt các
+   bài Overview đầu module) — polish pass là bước dọn lại theo lô, chọn
+   đúng 1 module mỗi lần.
 
 3. **Cách tôi khởi động một phiên autopilot:**
    - Mở Claude Code trong thư mục `autopilot-learn/` (hoặc trỏ nó đọc
-     `AUTOPILOT.md` làm điểm bắt đầu).
+     `auto-tools/AUTOPILOT.md` làm điểm bắt đầu).
    - Agent KHÔNG tự chạy watcher nền nữa (quyết định 2026-07-06) — tôi tự
      chạy `node viewer/build-data.js` thủ công khi muốn xem viewer cập
      nhật mới nhất.
-   - Ra lệnh kiểu: *"Đọc AUTOPILOT.md và bắt đầu vòng lặp"* — agent sẽ tự
-     chạy liên tục, mỗi task tự chọn việc theo mục 3 của `CLAUDE.md`, viết
-     xong tự cập nhật registry, rồi lặp lại mà không cần tôi can thiệp.
+   - Ra lệnh kiểu: *"Đọc auto-tools/AUTOPILOT.md và bắt đầu vòng lặp"* —
+     agent sẽ tự chạy liên tục, mỗi task tự chọn việc theo mục 3 của
+     `CLAUDE.md`, viết xong tự cập nhật registry, rồi lặp lại mà không cần
+     tôi can thiệp.
    - Muốn ưu tiên 1 việc cụ thể ngoài thứ tự tự động → ghi thẳng vào mục 1.3
      ("Human Pin") của `CLAUDE.md`, agent sẽ đọc và ưu tiên tuyệt đối dòng
      đó ở task kế tiếp.
+   - Muốn trau chuốt lại 1 module đã có thay vì mở rộng thêm → ra lệnh
+     kiểu *"Đọc auto-tools/POLISHPASS.md, polish module Computer Vision"*
+     — agent chỉ sửa văn phong/độ sâu của bài đã có trong module đó, không
+     viết bài mới, không đụng module khác.
 
-4. **Giới hạn cứng agent luôn tuân theo** (xem đầy đủ ở `AUTOPILOT.md`):
+4. **Giới hạn cứng agent luôn tuân theo** (xem đầy đủ ở `auto-tools/AUTOPILOT.md`):
    không sửa code ngoài `autopilot-learn/`, không bịa số liệu thực nghiệm,
    không tự mở rộng whitelist nguồn, không tạo bài trùng chủ đề, không giữ
    nhiều version của cùng 1 bài (sửa là ghi đè trực tiếp).

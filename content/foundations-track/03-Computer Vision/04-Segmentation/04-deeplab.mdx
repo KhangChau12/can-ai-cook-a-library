@@ -86,7 +86,7 @@ for Semantic Image Segmentation") giải quyết bằng cách kết hợp thêm 
 U-Net — để tinh chỉnh lại ranh giới vật thể dựa trên thông tin chi tiết
 từ các lớp nông hơn trong mạng, tương tự vai trò skip connection ở U-Net.
 Ngoài ra, DeepLabv3+ còn dùng **depthwise separable convolution** (đã
-học ở bài [MobileNet](05-mobilenet.mdx)) cho cả module ASPP và decoder,
+học ở bài [MobileNet](../02-Co-ban/05-mobilenet.mdx)) cho cả module ASPP và decoder,
 cùng backbone Xception, giúp mạng vừa nhanh hơn vừa mạnh hơn.
 
 Về bản chất, DeepLabv3+ chính là sự **hợp nhất** hai triết lý thiết kế
@@ -112,13 +112,13 @@ từng cần dùng thêm để làm mượt ranh giới).
   DeepLabv3+ thực chất **kết hợp cả hai** ý tưởng (ASPP cho ngữ cảnh đa
   tỷ lệ, decoder kiểu U-Net cho ranh giới sắc nét).
 - Depthwise separable convolution dùng trong DeepLabv3+ là kỹ thuật đã
-  học nguyên vẹn ở bài [MobileNet](05-mobilenet.mdx) — một minh chứng
+  học nguyên vẹn ở bài [MobileNet](../02-Co-ban/05-mobilenet.mdx) — một minh chứng
   khác cho thấy kỹ thuật tối ưu hiệu quả tính toán có thể tái sử dụng
   xuyên suốt nhiều bài toán CV khác nhau (classification, segmentation),
   không chỉ riêng bài toán ban đầu nó được đề xuất cho.
 - Atrous convolution vẫn là một phép convolution thông thường về bản
-  chất toán học — vẫn học được qua [backpropagation](02-backpropagation.mdx)
-  như mọi lớp convolution khác đã học ở bài [CNN](01-cnn.mdx),
+  chất toán học — vẫn học được qua [backpropagation](../../02-Deep%20Learning%20Nền%20tảng/02-backpropagation.mdx)
+  như mọi lớp convolution khác đã học ở bài [CNN](../02-Co-ban/01-cnn.mdx),
   chỉ khác ở cách bố trí trọng số trong kernel (có khoảng trống).
 
 ## Nguồn tham khảo

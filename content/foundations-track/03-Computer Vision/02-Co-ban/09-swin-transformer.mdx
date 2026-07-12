@@ -29,10 +29,10 @@ Transformer kém phù hợp với ảnh độ phân giải cao hơn".
 Vấn đề thứ hai: ViT chỉ sinh ra biểu diễn ở **một tỷ lệ không gian duy
 nhất** (kích thước patch cố định xuyên suốt mạng) — phù hợp cho
 classification (chỉ cần 1 nhãn cho cả ảnh), nhưng **không phù hợp** cho
-các tác vụ như object detection (bài [Object Detection](01-object-detection.mdx))
-hay segmentation (bài [Image Segmentation](01-image-segmentation.mdx)),
+các tác vụ như object detection (bài [Object Detection](../03-Detection/01-object-detection.mdx))
+hay segmentation (bài [Image Segmentation](../04-Segmentation/01-image-segmentation.mdx)),
 vốn cần đặc trưng ở **nhiều tỷ lệ khác nhau** (đã học rõ ở bài
-[SSD](03-ssd.mdx) — vật thể kích thước khác nhau cần bản đồ đặc trưng ở
+[SSD](../03-Detection/03-ssd.mdx) — vật thể kích thước khác nhau cần bản đồ đặc trưng ở
 độ phân giải khác nhau).
 
 ## Giải pháp: shifted window attention + cấu trúc phân cấp
@@ -97,7 +97,7 @@ các tác vụ CV, không chỉ riêng classification.
   trước" đã lặp lại xuyên suốt track (giống ResNet giải quyết degradation
   của VGG, hay Fast R-CNN giải quyết tính toán lặp lại của R-CNN).
 - Cấu trúc phân cấp sinh đặc trưng đa tỷ lệ của Swin về tinh thần tương
-  tự cách [SSD](03-ssd.mdx) dùng nhiều bản đồ đặc trưng ở nhiều độ phân
+  tự cách [SSD](../03-Detection/03-ssd.mdx) dùng nhiều bản đồ đặc trưng ở nhiều độ phân
   giải — chỉ khác công cụ (self-attention theo cửa sổ thay vì convolution
   xếp chồng).
 - Vì Swin cho ra đặc trưng đa tỷ lệ giống CNN, nó có thể **thay thế trực

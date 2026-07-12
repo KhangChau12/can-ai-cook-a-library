@@ -49,7 +49,7 @@ với 2 lớp tích chập của LeNet-5, và số tham số lớn hơn nhiều 
 **ReLU thay vì sigmoid.** LeNet dùng hàm kích hoạt sigmoid — nhưng
 sigmoid có đạo hàm rất nhỏ ở hai đầu (bão hoà), khiến gradient "biến mất"
 dần khi lan truyền qua nhiều lớp (vấn đề vanishing gradient, xem lại
-[Backpropagation](02-backpropagation.mdx)). Với một mạng sâu gấp nhiều
+[Backpropagation](../../02-Deep%20Learning%20Nền%20tảng/02-backpropagation.mdx)). Với một mạng sâu gấp nhiều
 lần LeNet, sigmoid sẽ khiến việc huấn luyện gần như không hội tụ được.
 AlexNet dùng **ReLU** (`f(x) = max(0, x)`) — đạo hàm bằng 1 với mọi input
 dương, không bị bão hoà ở nhánh dương, giúp gradient lan truyền ổn định
@@ -57,7 +57,7 @@ hơn qua nhiều lớp và huấn luyện nhanh hơn đáng kể so với sigmoi
 
 **Dropout chống overfitting.** Mạng sâu hơn đồng nghĩa số tham số tăng
 mạnh — nguy cơ overfitting cao hơn nhiều so với LeNet (xem
-[Regularization](03-regularization.mdx)). AlexNet là một trong những kiến
+[Regularization](../../02-Deep%20Learning%20Nền%20tảng/03-regularization.mdx)). AlexNet là một trong những kiến
 trúc CNN quy mô lớn đầu tiên áp dụng **dropout** ở các lớp fully-connected
 để kiểm soát overfitting, cùng với việc mở rộng dữ liệu train bằng các
 phép biến đổi ảnh đơn giản (data augmentation).
@@ -84,13 +84,13 @@ kiến trúc lại giải quyết một hạn chế cụ thể của kiến trú
 ## Liên hệ lại với các bài trước
 
 - AlexNet không đổi cơ chế huấn luyện — vẫn
-  [backpropagation](02-backpropagation.mdx) và gradient descent như mọi
+  [backpropagation](../../02-Deep%20Learning%20Nền%20tảng/02-backpropagation.mdx) và gradient descent như mọi
   mạng nơ-ron khác. Thay đổi nằm ở kiến trúc (sâu hơn), hàm kích hoạt
   (ReLU), và kỹ thuật chống overfitting (dropout) — ba mảnh ghép cụ thể
   đã học riêng ở các bài trước, nay kết hợp lại để giải quyết một bài
   toán quy mô lớn hơn hẳn.
 - Đây là minh hoạ cụ thể cho nguyên tắc đã nói ở bài
-  [Regularization](03-regularization.mdx): mạng càng nhiều tham số càng
+  [Regularization](../../02-Deep%20Learning%20Nền%20tảng/03-regularization.mdx): mạng càng nhiều tham số càng
   cần kỹ thuật kiểm soát overfitting rõ ràng — AlexNet không thể đạt kết
   quả đó nếu bỏ qua dropout.
 
