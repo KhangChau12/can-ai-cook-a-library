@@ -5,22 +5,21 @@ module: Generative Models
 submodule: Generative Adversarial Network Family
 order: 2
 status: stable
-prerequisites: ["01-gan", "01-cnn"]
 summary: GAN gốc dùng MLP cho cả generator và discriminator — hoạt động kém với ảnh vì MLP không khai thác được cấu trúc không gian. Radford, Metz và Chintala (2015) giải quyết bằng DCGAN: thay MLP bằng kiến trúc convolutional (transposed convolution cho generator, convolution thường cho discriminator) kèm các quy tắc thiết kế cụ thể (batch normalization, LeakyReLU) giúp huấn luyện ổn định hơn hẳn, đồng thời chứng minh generator/discriminator học được biểu diễn phân cấp hữu ích cho các tác vụ khác.
 last_touched_by_task: Bài mới (2026-07-06), bài thứ 2 module Generative Models — module mỏng nhất track (trước đó chỉ 1 bài, GAN) sau đợt tái cấu trúc hệ thống module theo yêu cầu người vận hành. Nguồn: D2L.ai (chapter_generative-adversarial-networks/dcgan.html, xác nhận qua WebFetch chi tiết kiến trúc generator/discriminator, batch normalization, LeakyReLU, thay đổi hyperparameter Adam) + arxiv 1511.06434 (paper gốc Radford, Metz, Chintala 2015, xác nhận qua WebFetch abstract: vấn đề khoảng cách giữa CNN supervised và unsupervised, đóng góp architectural guidelines, kết quả biểu diễn phân cấp học được).
 ---
 
-Bài [GAN](23-gan.mdx) giới thiệu ý tưởng cốt lõi: hai mạng nơ-ron thi đấu
+Bài [GAN](01-gan.mdx) giới thiệu ý tưởng cốt lõi: hai mạng nơ-ron thi đấu
 với nhau, một sinh dữ liệu giả, một phân biệt thật/giả. Nhưng bài đó
 không nói rõ **kiến trúc cụ thể** của hai mạng này — trên thực tế, GAN
 gốc (Goodfellow et al., 2014) dùng **MLP** (mạng nơ-ron nhiều lớp thông
-thường, đã học ở bài [Perceptron](08-perceptron-va-mang-no-ron.mdx)) cho
+thường, đã học ở bài [Perceptron](01-perceptron-va-mang-no-ron.mdx)) cho
 cả generator và discriminator. Bài này kể cách một kiến trúc cụ thể hơn
 giải quyết đúng hạn chế đó cho bài toán sinh ảnh.
 
 ## Vấn đề: MLP không khai thác được cấu trúc không gian của ảnh
 
-Bài [CNN](11-convolutional-neural-network.mdx) đã giải thích rõ vì sao
+Bài [CNN](01-cnn.mdx) đã giải thích rõ vì sao
 MLP hoạt động kém với ảnh: nó không khai thác được tính **cục bộ** và
 **bất biến vị trí** của dữ liệu ảnh — mỗi pixel được coi như một feature
 độc lập, không có khái niệm "các pixel lân cận thường liên quan tới
@@ -107,18 +106,18 @@ tương tự những gì CNN học được qua huấn luyện supervised.
 ## Liên hệ lại với các bài trước
 
 - DCGAN không thay đổi nguyên lý đối kháng generator/discriminator đã
-  học ở bài [GAN](23-gan.mdx) — nó chỉ thay **kiến trúc cụ thể** của cả
+  học ở bài [GAN](01-gan.mdx) — nó chỉ thay **kiến trúc cụ thể** của cả
   hai mạng, đúng mẫu hình đã lặp lại nhiều lần trong track: giữ nguyên ý
   tưởng cốt lõi, thay công cụ biểu diễn để giải quyết hạn chế về kiến
   trúc (tương tự cách NeuMF thay tích vô hướng tuyến tính của Matrix
   Factorization bằng MLP, hay Autoencoder tổng quát hoá PCA bằng mạng
   nơ-ron phi tuyến).
 - Việc dùng convolution/transposed convolution dựa trực tiếp trên
-  nguyên lý đã học ở bài [CNN](11-convolutional-neural-network.mdx) —
+  nguyên lý đã học ở bài [CNN](01-cnn.mdx) —
   DCGAN là ví dụ rõ ràng cho thấy kiến trúc CNN không chỉ dùng được cho
   classification mà còn cho các tác vụ sinh dữ liệu.
 - LeakyReLU là một biến thể của ReLU đã học ở bài
-  [Perceptron & Mạng nơ-ron](08-perceptron-va-mang-no-ron.mdx) — cùng
+  [Perceptron & Mạng nơ-ron](01-perceptron-va-mang-no-ron.mdx) — cùng
   mục tiêu (giữ gradient chảy qua tốt hơn) nhưng giải quyết một vấn đề cụ
   thể hơn (dying ReLU) chưa được nhắc tới ở bài đó.
 

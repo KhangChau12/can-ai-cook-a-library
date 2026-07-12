@@ -5,12 +5,11 @@ module: Computer Vision
 submodule: Cơ bản
 order: 6
 status: stable
-prerequisites: ["05-mobilenet"]
 summary: MobileNet giải quyết bài toán hiệu quả cho thiết bị hạn chế, nhưng cách tăng quy mô một mô hình (sâu hơn, rộng hơn, hay ảnh phân giải cao hơn) trước EfficientNet vẫn thiếu hệ thống — mỗi hướng thường được thử riêng lẻ, không cân bằng. Tan và Le (2019) giải quyết bằng compound scaling: một hệ số hợp chất duy nhất mở rộng đồng đều cả 3 chiều. EfficientNet-B7 đạt 84.3% top-1 ImageNet, nhỏ hơn 8.4 lần và nhanh hơn 6.1 lần so với ConvNet tốt nhất trước đó.
 last_touched_by_task: Bài mới (2026-07-06) hoàn thiện dòng tiến hoá sub-module CV 'Cơ bản' đã hoạch định từ đầu (LeNet→AlexNet→VGG→ResNet→MobileNet→EfficientNet). Nguồn: arxiv (paper gốc Tan & Le 2019, ICML, xác nhận qua WebFetch trực tiếp abstract: vấn đề scale thiếu hệ thống, compound scaling, số liệu EfficientNet-B7 cụ thể). Không bịa chi tiết công thức compound scaling cụ thể (hệ số alpha/beta/gamma) vì chỉ đọc được abstract, không đọc được PDF đầy đủ — chỉ mô tả khái niệm 'hệ số hợp chất duy nhất' đã xác nhận.
 ---
 
-Bài [MobileNet](38-mobilenet.mdx) giải quyết bài toán hiệu quả tính
+Bài [MobileNet](05-mobilenet.mdx) giải quyết bài toán hiệu quả tính
 toán cho thiết bị hạn chế tài nguyên bằng depthwise separable convolution.
 Nhưng MobileNet chỉ là một kiến trúc cụ thể ở một quy mô cụ thể — câu
 hỏi tiếp theo là: khi cần một mô hình **lớn hơn** (để đạt độ chính xác
@@ -68,8 +67,8 @@ hơn đáng kể so với các kiến trúc trước.
 ## Liên hệ lại với các bài trước
 
 - EfficientNet không thay đổi nguyên lý convolution đã học ở bài
-  [CNN](11-convolutional-neural-network.mdx), và cũng không thay đổi kỹ
-  thuật depthwise separable convolution của [MobileNet](38-mobilenet.mdx)
+  [CNN](01-cnn.mdx), và cũng không thay đổi kỹ
+  thuật depthwise separable convolution của [MobileNet](05-mobilenet.mdx)
   — nó bổ sung một **phương pháp có hệ thống** để quyết định quy mô tổng
   thể của mạng (bao nhiêu lớp, bao nhiêu kênh, ảnh đầu vào lớn cỡ nào),
   giải quyết đúng khoảng trống mà các kiến trúc trước để lại: thiếu
@@ -81,7 +80,7 @@ hơn đáng kể so với các kiến trúc trước.
   MobileNet (38, hiệu quả tính toán bằng depthwise separable convolution)
   → EfficientNet (41, mở rộng quy mô có hệ thống bằng compound scaling)
   — mỗi bước giải quyết đúng một hạn chế cụ thể của bước ngay trước nó.
-- Vẫn huấn luyện bằng [backpropagation](09-backpropagation.mdx) như mọi
+- Vẫn huấn luyện bằng [backpropagation](02-backpropagation.mdx) như mọi
   kiến trúc CNN khác — compound scaling chỉ là một phương pháp xác định
   **kiến trúc** (số lớp, số kênh, độ phân giải input) trước khi huấn
   luyện, không thay đổi cơ chế tối ưu hoá tham số.

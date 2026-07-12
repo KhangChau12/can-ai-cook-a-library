@@ -5,7 +5,6 @@ module: Recommendation Systems
 submodule: Ranking & Evaluation
 order: 1
 status: stable
-prerequisites: ["01-recommendation-systems-overview", "03-collaborative-filtering-matrix-factorization"]
 summary: "Rating prediction dùng RMSE/MAE để đánh giá — nhưng ranking (mục tiêu thực sự của phần lớn hệ thống gợi ý) cần một họ metric khác: Precision@K, Recall@K, NDCG đo chất lượng của TOÀN BỘ danh sách top-K, không chỉ một cặp dự đoán-thực tế. Bài này cũng giới thiệu cold-start — vấn đề kinh điển khi user/item hoàn toàn mới, không có lịch sử tương tác để bất kỳ kỹ thuật collaborative filtering nào khai thác."
 last_touched_by_task: "Bài mới (2026-07-10), bài đầu sub-module Ranking & Evaluation — lấp lỗ hổng: bài BPR cũ nói 'tối ưu đúng tiêu chí ranking' nhưng module chưa từng định nghĩa cách ĐO ranking, và cold-start được nhắc nhiều lần rải rác (Content-based, Overview) nhưng chưa có bài giải thích đầy đủ. Nguồn: D2L.ai recsys-intro.html (xác nhận qua WebFetch: định nghĩa cold-start recommendation) + machinelearningmastery.com/practical-guide-building-recommender-systems (xác nhận qua WebFetch: liệt kê các metric chuẩn cho recommender systems — precision, recall, NDCG, MAP — và định nghĩa Precision@K/Recall@K/NDCG@K)."
 ---

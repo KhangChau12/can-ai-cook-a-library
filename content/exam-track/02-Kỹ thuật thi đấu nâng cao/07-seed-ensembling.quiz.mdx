@@ -1,0 +1,43 @@
+---
+quiz_for: 07-seed-ensembling
+---
+
+## Q1
+Seed ensembling khác bagging chủ yếu ở điểm nào?
+
+- [ ] Seed ensembling dùng nhiều kiến trúc khác nhau, bagging chỉ dùng một kiến trúc
+- [x] Seed ensembling giữ nguyên dữ liệu train cho mọi lần train, chỉ đổi random seed; bagging đổi dữ liệu train (lấy mẫu có hoàn lại) giữa các lần
+- [ ] Seed ensembling chỉ áp dụng được cho gradient boosting, bagging chỉ áp dụng cho mạng nơ-ron
+- [ ] Seed ensembling không cần lưu checkpoint, bagging bắt buộc phải lưu checkpoint
+
+> Cả hai đều train nhiều model rồi kết hợp, nhưng nguồn tạo ra sự khác biệt giữa các model khác nhau: bagging thay đổi tập dữ liệu mỗi model nhìn thấy (qua lấy mẫu có hoàn lại), trong khi seed ensembling giữ nguyên dữ liệu và kiến trúc, chỉ đổi random seed của quá trình train.
+
+## Q2
+Vì sao train cùng một kiến trúc, cùng dữ liệu, với hai random seed khác nhau lại cho ra hai model có dự đoán khác nhau?
+
+- [ ] Vì mỗi seed sẽ tự động dùng một tập validation khác nhau
+- [x] Vì khởi tạo trọng số ngẫu nhiên và thứ tự dữ liệu khác nhau khiến quá trình train hội tụ về các điểm khác nhau trong không gian tham số
+- [ ] Vì random seed thay đổi luôn cả kiến trúc model
+- [ ] Vì random seed quyết định trực tiếp scoring metric nào được dùng
+
+> Quá trình train có nhiều yếu tố ngẫu nhiên (khởi tạo trọng số, shuffle dữ liệu, dropout...). Seed khác nhau khiến quá trình tối ưu hoá đi theo đường khác nhau và hội tụ về các điểm (local minima) khác nhau trong không gian tham số, dù kiến trúc và dữ liệu giống hệt.
+
+## Q3
+Theo nguyên tắc thực dụng đã học, số lượng seed hợp lý để thử trong seed ensembling thường là bao nhiêu?
+
+- [ ] 1-2, vì train thêm không mang lại lợi ích gì
+- [x] 3, 5, hoặc 10 — vượt quá ngưỡng này thường cho lợi ích giảm dần trong khi chi phí vẫn tăng tuyến tính
+- [ ] Luôn cần ít nhất 50 để đảm bảo thống kê đáng tin cậy
+- [ ] Không có giới hạn, càng nhiều seed càng tốt tuyệt đối
+
+> Chi phí tính toán tăng tuyến tính theo số lần train, nhưng cải thiện điểm số có xu hướng bão hoà sau một số lượng model nhất định — 3, 5, hoặc 10 là mức phổ biến cân bằng giữa chi phí và lợi ích, không có công thức "càng nhiều càng tốt" tuyệt đối.
+
+## Q4
+Bạn có ngân sách thời gian hạn chế ở cuối competition, đã thử xong transfer learning, tuning, và feature engineering nhưng chưa hết thời gian. Hành động nào sau đây tận dụng seed ensembling đúng cách nhất?
+
+- [ ] Thiết kế một kiến trúc mạng nơ-ron hoàn toàn mới rồi train một seed duy nhất
+- [x] Train lại đúng cấu hình tốt nhất đã tìm được nhiều lần với các seed khác nhau, rồi trung bình dự đoán của các lần train đó
+- [ ] Dùng seed ensembling để thay thế hoàn toàn bước cross-validation khi so sánh các cải tiến
+- [ ] Chỉ cần đổi seed của việc chia train/validation, không cần train lại model
+
+> Đây đúng là tình huống lý tưởng cho seed ensembling: không cần ý tưởng mới, chỉ cần thời gian tính toán để train lại cấu hình đã tối ưu với các seed khác nhau rồi kết hợp — tận dụng đúng "phần dư" ngẫu nhiên của quá trình train làm nguồn đa dạng hoá model.

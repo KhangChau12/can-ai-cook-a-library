@@ -122,7 +122,6 @@ const lessons = defineCollection({
     submodule: z.string().optional(),
     order: z.coerce.number().optional(),
     status: z.enum(['draft', 'needs-review', 'stable']).optional(),
-    prerequisites: z.array(z.string()).default([]),
     summary: z.string().optional(),
     last_touched_by_task: z.string().optional(),
     html: z.string().optional(),

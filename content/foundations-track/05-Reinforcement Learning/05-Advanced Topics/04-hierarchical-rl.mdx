@@ -4,7 +4,6 @@ track: foundations-track
 module: Reinforcement Learning
 order: 4
 status: stable
-prerequisites: ["02-actor-critic"]
 summary: RL cơ bản học policy ở mức action (từng bước). Trong môi trường phức tạp (robotics, game chiến thuật), cần lập kế hoạch ở nhiều mức trừu tượng — 'đi tới cửa' rồi 'mở cửa', thay vì 1000 bước action lẻ tẻ. Hierarchical RL giải quyết sparse reward và temporal abstraction qua Options Framework, FeUdal Networks và HIRO.
 last_touched_by_task: Tái cấu trúc (2026-07-10) — chuyển từ submodule Overview (nhồi nhét, sai bản chất) sang submodule mới Advanced Topics, đặt sau Model-based vì cần actor-critic làm nền, không phải kiến thức nền tảng chung. Nội dung không đổi. Nguồn: arxiv FeUdal 1703.01161 + arxiv HIRO 1805.08296 + lilianweng.github.io.
 submodule: Advanced Topics
@@ -30,7 +29,7 @@ cấp thấp thực thi từng bước cụ thể.
 ## Options Framework — Nền tảng lý thuyết
 
 Options Framework (Sutton, Precup & Singh 1999) là nền tảng toán học cho
-HRL, mở rộng [MDP](17-markov-decision-process.mdx) với **temporally
+HRL, mở rộng [MDP](02-markov-decision-process.mdx) với **temporally
 extended actions** — action kéo dài nhiều bước.
 
 ### Định nghĩa option
@@ -166,7 +165,7 @@ tính loss cho Worker.
 
 ## Liên hệ lại với các bài trước
 
-- **[MDP](17-markov-decision-process.mdx):** Options framework mở rộng
+- **[MDP](02-markov-decision-process.mdx):** Options framework mở rộng
   MDP với temporally extended actions — một trong những mở rộng quan
   trọng nhất của MDP.
 - **[Actor-Critic](02-actor-critic.mdx):** FeUdal Manager dùng policy

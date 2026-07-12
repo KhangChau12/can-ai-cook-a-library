@@ -5,7 +5,6 @@ module: Generative Models
 submodule: Diffusion Models
 order: 1
 status: stable
-prerequisites: ["01-gan", "02-dcgan", "02-vae-variational-autoencoder", "foundations-track/02-unet"]
 summary: GAN/DCGAN huấn luyện đối kháng hai mạng — mạnh nhưng nổi tiếng bất ổn định (huấn luyện có thể dao động, mode collapse — generator chỉ học tạo ra một số ít kiểu dữ liệu thay vì đa dạng như thật). Ho, Jain và Abbeel (2020) giải quyết bằng Diffusion Model: bỏ hẳn cơ chế đối kháng, thay bằng một quy trình cố định 2 chiều — thêm nhiễu dần (forward process, có closed-form `x_t=√ᾱ_t·x_0+√(1-ᾱ_t)·ε`) rồi học cách khử nhiễu dần (reverse process, U-Net dự đoán ε, loss `L_simple=E[‖ε-ε_θ‖²]`) — đạt FID 3.17 trên CIFAR-10, SOTA tại thời điểm công bố, đổi lại sinh dữ liệu chậm hơn nhiều vì cần lặp qua nhiều bước khử nhiễu.
 last_touched_by_task: Cải thiện Task 105 (2026-07-07): Phase 2 Generative — bổ sung 4 khoảng trống kỹ thuật (1) variance schedule linear β 1e-4→0.02, (2) closed-form sampling `x_t=√ᾱ_t·x_0+√(1-ᾱ_t)·ε` (không cần lặp forward), (3) hàm loss `L_simple=E[‖ε-ε_θ‖²]` dạng MSE (bài cũ chỉ nói 'hàm loss rút gọn' bằng lời), (4) kiến trúc U-Net + time embedding + self-attention. Nguồn: WebSearch whitelist (arxiv/lilianweng) xác nhận công thức. Giữ nguyên cấu trúc forward/reverse + động cơ Goodfellow 2014 (đã đúng).
 ---

@@ -5,7 +5,6 @@ module: Generative Models
 submodule: Generative Adversarial Network Family
 order: 1
 status: stable
-prerequisites: ["01-autoencoder"]
 summary: Goodfellow và cộng sự (2014) giải quyết vấn đề cụ thể của generative model truyền thống (rất khó viết công thức toán học trực tiếp cho 'dữ liệu này chân thực tới đâu') bằng một ý tưởng táo bạo: dùng một mạng nơ-ron khác (discriminator) làm giám khảo học được, thay vì tự định nghĩa hàm loss. Hàm mục tiêu minimax `min_G max_D E[log D(x)]+E[log(1-D(G(z)))]` tự động hoá về Jensen-Shannon Divergence — điểm cân bằng lý tưởng là `p_g=p_data` (JSD=0, D=1/2).
 last_touched_by_task: Cải thiện Task 104 (2026-07-07): Phase 2 Generative bắt đầu — bổ sung công thức minimax đầy đủ `min_G max_D E[log D(x)]+E[log(1-D(G(z)))]` + non-saturating loss thực hành + phần JS divergence (discriminator tối ưu `D*=p_data/(p_data+p_g)`, giá trị `C(G)=-log4+2·JSD`, điểm cân bằng `p_g=p_data`), bài cũ chỉ mô tả minimax bằng lời. Thêm nguồn Lil'Log 'From GAN to WGAN' cho phần JS/KL divergence. Giữ nguyên cấu trúc 2 mạng/2 mục tiêu + động cơ Goodfellow 2014 (đã đúng).
 ---
@@ -48,7 +47,7 @@ Hai mạng được huấn luyện xen kẽ:
 
 1. **Cập nhật Discriminator:** cho D xem cả dữ liệu thật (nhãn "thật") và
    dữ liệu do G tạo ra (nhãn "giả"), huấn luyện D bằng cross-entropy loss
-   (đã quen thuộc từ bài [Logistic Regression](03-logistic-regression.mdx))
+   (đã quen thuộc từ bài [Logistic Regression](02-logistic-regression.mdx))
    để phân loại tốt hơn.
 2. **Cập nhật Generator:** cho G tạo dữ liệu mới, đưa qua D, rồi cập nhật
    tham số của G theo hướng làm D **dễ bị đánh lừa hơn** (D phân loại nhầm
@@ -146,9 +145,9 @@ generative model.
   liệu thật, theo đánh giá của discriminator.
 - Discriminator về bản chất là một bài toán **classification nhị phân**
   (thật/giả) — dùng lại chính xác kiến trúc và cross-entropy loss đã học
-  từ bài [Logistic Regression](03-logistic-regression.mdx).
+  từ bài [Logistic Regression](02-logistic-regression.mdx).
 - Cả hai mạng vẫn huấn luyện bằng
-  [backpropagation](09-backpropagation.mdx) và gradient descent như mọi
+  [backpropagation](02-backpropagation.mdx) và gradient descent như mọi
   mạng nơ-ron khác trong giáo trình — điểm mới của GAN nằm ở **cách đặt
   ra hai mục tiêu đối kháng nhau**, không phải ở kỹ thuật tối ưu hoá.
 

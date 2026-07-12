@@ -5,7 +5,6 @@ module: Large Language Models
 submodule: GPT & Decoder-only
 order: 1
 status: stable
-prerequisites: ["01-llm-overview", "01-bert"]
 summary: Trước GPT, ELMo đạt hiệu quả nhưng cần kiến trúc riêng cho từng tác vụ downstream. Radford và cộng sự (2018, OpenAI) giải quyết bằng GPT: dùng decoder Transformer với causal mask, pretrain qua next-token prediction trên corpus không nhãn, rồi fine-tune GẦN NHƯ TOÀN BỘ tham số cho từng tác vụ cụ thể — chỉ cần thêm một lớp output tuyến tính, không cần thiết kế kiến trúc riêng cho mỗi loại bài toán. Đạt cải thiện SOTA trên 9/12 tác vụ NLP benchmark.
 last_touched_by_task: Bài mới (2026-07-10), mở sub-module "GPT & Decoder-only" — bài đầu tiên trong dòng tiến hoá GPT-1 → GPT-2 → GPT-3, đối trọng trực tiếp với sub-module "Pretrained Language Models" (BERT-họ, encoder-only) học ngay trước. Nguồn: d2l.ai (xác nhận qua WebFetch chapter BERT: kiến trúc GPT dùng decoder Transformer trái-phải, quy trình 2 giai đoạn pretraining+fine-tuning fine-tune TOÀN BỘ tham số khác ELMo đóng băng, tính chất task-agnostic chỉ cần thêm lớp output tuyến tính, kết quả cụ thể cải thiện SOTA 9/12 tác vụ) + machinelearningmastery.com (xác nhận qua WebSearch: định nghĩa decoder-only là kiến trúc tập trung dự đoán token tiếp theo, đối chiếu với encoder-only/encoder-decoder). Paper gốc GPT-1 (Radford et al. 2018, "Improving Language Understanding by Generative Pre-Training") không có bản arxiv, chỉ công bố qua OpenAI — trích dẫn qua d2l.ai (đã xác nhận đọc trực tiếp nội dung liên quan) thay vì trích thẳng nguồn OpenAI (ngoài whitelist).
 ---

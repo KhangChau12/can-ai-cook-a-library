@@ -5,7 +5,6 @@ module: Large Language Models
 submodule: Huấn luyện & Alignment
 order: 1
 status: stable
-prerequisites: ["03-gpt3"]
 summary: Bài này đào sâu cơ chế huấn luyện đã dùng ở GPT-1/2/3 (sub-module trước): self-supervised learning (tự tạo nhãn từ chính dữ liệu) và next-token prediction — mục tiêu huấn luyện autoregressive dùng kiến trúc Transformer decoder đã học, cách một mô hình học được biểu diễn ngôn ngữ từ lượng văn bản khổng lồ mà không cần con người gán nhãn thủ công.
 last_touched_by_task: Tách module NLP/LLM (2026-07-10): module giờ có sub-module "GPT & Decoder-only" (GPT-1/2/3, Mixture-of-Experts) đứng TRƯỚC sub-module này — sửa đoạn mở đầu để đào sâu đúng cơ chế next-token prediction/self-supervised learning mà các bài GPT vừa dùng, thay vì giới thiệu decoder-only từ số 0 (đã học ở GPT-1). Đổi prerequisite từ Transformer sang GPT-3 (bài liền trước trong sub-module mới).
 ---
@@ -52,7 +51,7 @@ từng vị trí trong văn bản — không cần bất kỳ nhãn nào ngoài 
 đó.
 
 Hàm loss dùng lại chính xác **cross-entropy loss** đã học ở bài
-[Logistic Regression](03-logistic-regression.mdx)/[Softmax](03-logistic-regression.mdx):
+[Logistic Regression](02-logistic-regression.mdx)/[Softmax](02-logistic-regression.mdx):
 tại mỗi vị trí, mô hình đưa ra một phân phối xác suất trên toàn bộ từ vựng
 (có thể hàng chục nghìn token khả dĩ), và loss đo mức độ "tự tin đúng" vào
 token thật sự xuất hiện tiếp theo.
@@ -93,16 +92,16 @@ là công việc của bước tiếp theo trong series: **fine-tuning**.
   bài GPT tập trung vào kiến trúc và kết quả từng model, bài này tập
   trung vào lý do self-supervised pretraining hiệu quả ở quy mô lớn.
 - Next-token prediction dùng lại chính xác **cross-entropy loss** và
-  **softmax** đã học ở bài [Logistic Regression](03-logistic-regression.mdx)
+  **softmax** đã học ở bài [Logistic Regression](02-logistic-regression.mdx)
   — chỉ khác là dự đoán trên hàng chục nghìn lớp (từ vựng) thay vì 2 lớp,
   và lặp lại việc dự đoán này ở mọi vị trí trong chuỗi.
-- Việc huấn luyện vẫn là [backpropagation](09-backpropagation.mdx) và
+- Việc huấn luyện vẫn là [backpropagation](02-backpropagation.mdx) và
   gradient descent — không có kỹ thuật tối ưu hoá mới, chỉ có mục tiêu
   (dự đoán token tiếp theo) và cách tạo dữ liệu train (self-supervised,
   không cần nhãn con người) là mới.
 - Self-supervised learning ở đây là một cách nhìn khác về ranh giới
   supervised/unsupervised đã phân biệt từ bài
-  [K-means Clustering](07-k-means-clustering.mdx): về mặt kỹ thuật huấn
+  [K-means Clustering](01-k-means-clustering.mdx): về mặt kỹ thuật huấn
   luyện vẫn có "nhãn" (token tiếp theo), nhưng nhãn đó được tạo tự động từ
   chính dữ liệu, không cần con người gán — một dạng lai giữa 2 thế giới.
 

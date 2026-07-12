@@ -5,7 +5,6 @@ module: Natural Language Processing
 submodule: NLP Task cổ điển
 order: 2
 status: stable
-prerequisites: ["04-bidirectional-rnn", "01-phan-loai-van-ban"]
 summary: Phân loại văn bản gán MỘT nhãn cho CẢ câu; POS tagging và NER (Named Entity Recognition) là bài toán khác hẳn — sequence labeling, gán MỘT nhãn cho MỖI token, và nhãn của token này phụ thuộc vào nhãn token lân cận (không thể quyết định độc lập). Cách tiếp cận cổ điển dùng Conditional Random Field (CRF) mô hình hoá trực tiếp sự phụ thuộc đó bằng thống kê. Lample và cộng sự (2016) kết hợp Bidirectional LSTM (học biểu diễn ngữ cảnh) với CRF (ràng buộc nhãn hợp lệ) thành BiLSTM-CRF, đạt SOTA 4 ngôn ngữ mà không cần feature thủ công/gazetteer.
 last_touched_by_task: Bài mới (2026-07-10), sub-module "NLP Task cổ điển" — bài thứ 2, giới thiệu sequence labeling như một dạng bài toán NLP khác hẳn phân loại văn bản (bài trước). Nguồn: arxiv 1603.01360 (paper gốc Lample, Ballesteros, Subramanian, Kawakami, Dyer 2016, "Neural Architectures for Named Entity Recognition", xác nhận qua WebFetch abstract: vấn đề cụ thể NER truyền thống phụ thuộc feature thủ công/domain knowledge, kiến trúc BiLSTM-CRF kết hợp character-level + word embedding không cần feature thủ công, kết quả SOTA 4 ngôn ngữ không cần gazetteer) + machinelearningmastery.com (xác nhận qua WebFetch: ví dụ minh hoạ cụ thể NER, lịch sử 3 giai đoạn rule-based → HMM/CRF → deep learning, 3 thách thức sequence labeling, BIO/IOB tagging scheme).
 ---

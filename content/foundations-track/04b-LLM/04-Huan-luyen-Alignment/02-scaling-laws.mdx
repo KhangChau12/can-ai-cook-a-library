@@ -5,12 +5,11 @@ module: Large Language Models
 submodule: Huấn luyện & Alignment
 order: 2
 status: stable
-prerequisites: ["01-pretraining-llm"]
 summary: Kaplan và cộng sự (2020) chỉ ra loss tuân theo power-law với 3 yếu tố: số tham số, lượng dữ liệu, và compute — kết luận ban đầu: huấn luyện mô hình rất lớn trên dữ liệu vừa phải rồi dừng sớm. Hoffmann và cộng sự (2022, Chinchilla) điều chỉnh lại: kích thước mô hình và lượng dữ liệu cần tăng theo tỷ lệ NGANG NHAU — Chinchilla 70B (4 lần dữ liệu Gopher, cùng compute) vượt trội Gopher 280B/GPT-3 175B, cho thấy phần lớn LLM lớn thời điểm đó bị huấn luyện chưa tới.
 last_touched_by_task: Viết lại theo triết lý nội dung mới (2026-07-06): thêm tên tác giả/năm/tên paper cụ thể (Kaplan et al., 2020, 'Scaling Laws for Neural Language Models') và cấu trúc quan hệ cụ thể (power-law, không phải chỉ 'không tuyến tính' chung chung), cùng kết luận cụ thể về sample efficiency và early stopping — xác nhận qua WebFetch trực tiếp abstract arxiv 2001.08361. Cập nhật (2026-07-06, Task 86): thử lại tìm nguồn Chinchilla (trước đó đánh dấu 'chưa xác nhận qua nguồn whitelist đọc được') — lần này xác nhận thành công qua WebFetch trực tiếp arxiv 2203.15556 (Hoffmann et al. 2022, DeepMind), thêm đoạn 'Chinchilla điều chỉnh lại Kaplan' với số liệu cụ thể (70B params/4x data Gopher, MMLU 67.5%/+7pp).
 ---
 
-Bài [Pretraining](24-pretraining-llm.mdx) giải thích **cách** LLM học (next-
+Bài [Pretraining](01-pretraining-llm.mdx) giải thích **cách** LLM học (next-
 token prediction trên corpus khổng lồ). Câu hỏi tự nhiên tiếp theo: quy mô
 — số tham số của mô hình, lượng dữ liệu huấn luyện, lượng compute bỏ ra —
 ảnh hưởng thế nào tới kết quả cuối cùng? **Scaling laws** (quy luật mở
@@ -120,7 +119,7 @@ một đảm bảo tuyệt đối cho từng trường hợp cụ thể.
   dữ liệu và compute hơn để tận dụng đúng sức chứa đó mà không rơi vào
   underfitting (huấn luyện chưa đủ).
 - Loss được đo ở đây chính là cross-entropy loss của next-token
-  prediction đã học ở bài [Pretraining](24-pretraining-llm.mdx) — scaling
+  prediction đã học ở bài [Pretraining](01-pretraining-llm.mdx) — scaling
   laws không giới thiệu hàm loss mới, chỉ mô tả cách loss đó biến thiên
   theo quy mô.
 

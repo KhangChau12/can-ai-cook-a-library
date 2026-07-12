@@ -5,7 +5,6 @@ module: Reinforcement Learning
 submodule: Policy-based
 order: 3
 status: stable
-prerequisites: ["01-policy-gradient", "02-actor-critic"]
 summary: Policy gradient chuẩn cập nhật tham số theo learning rate cố định — nhưng không có cách tự nhiên để biết bước cập nhật "bao nhiêu là quá lớn". Một bước quá lớn có thể phá hỏng policy không thể phục hồi, vì các bước sau lại dùng chính policy đã hỏng để thu thập dữ liệu. Schulman và cộng sự (2015) đề xuất TRPO: ràng buộc trực tiếp khoảng cách (KL divergence) giữa policy mới và cũ thay vì learning rate, đảm bảo monotonic improvement — nhưng cái giá là một pipeline tối ưu hoá phức tạp (Fisher information, conjugate gradient, backtracking line search).
 last_touched_by_task: Tách từ file cũ "07-trpo-a2c.mdx" (2026-07-10) — theo phản hồi người vận hành, bài gộp cũ đặt TRPO SAU PPO khiến PPO phải tự giải thích TRPO ở mức nông rồi bài này giảng lại sâu hơn, gây trùng lặp. Tách TRPO thành bài riêng đặt TRƯỚC PPO (đúng thứ tự thời gian 2015→2017 và đúng mạch tư duy: học đủ TRPO trước, PPO chỉ cần nói "đơn giản hoá nó"). Nội dung kỹ thuật giữ nguyên từ bài gộp cũ. Nguồn: arxiv 1502.05477 (Schulman et al. 2015).
 ---

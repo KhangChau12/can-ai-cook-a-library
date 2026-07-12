@@ -1,5 +1,7 @@
 ---
 import type { ModuleGroup, Lesson, Track } from '../lib/content';
+import { getQuizFor } from '../lib/content';
+import type { LockInfo } from '../lib/lockClient';
 
 interface Props {
   track: Track;
@@ -13,6 +15,17 @@ const base = import.meta.env.BASE_URL;
 function isCurrent(l: Lesson) {
   return l.id === currentLessonId;
 }
+
+const lockInfo: LockInfo = await Promise.all(
+  group.submodules.map((sub) =>
+    Promise.all(
+      sub.lessons.map(async (lesson) => ({
+        id: lesson.id,
+        hasQuiz: !!(await getQuizFor(lesson))?.data.questions.length,
+      })),
+    ),
+  ),
+);
 ---
 
 <nav class="flex h-full flex-col overflow-y-auto p-4" aria-label="Danh sách bài trong module">
@@ -39,8 +52,8 @@ function isCurrent(l: Lesson) {
       </a>
     ))}
 
-    {group.submodules.map((sub) => (
-      <div class="mt-3">
+    {group.submodules.map((sub, subIndex) => (
+      <div class="mt-3 transition-opacity" data-submodule-section={subIndex}>
         <div class="px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-text-disabled">{sub.name}</div>
         {sub.lessons.map((lesson) => (
           <a
@@ -59,12 +72,24 @@ function isCurrent(l: Lesson) {
   </div>
 </nav>
 
+<script define:vars={{ lockInfo }}>
+  window.__sidebarLockInfo = lockInfo;
+</script>
 <script>
   import { getProgress } from '../lib/progress';
+  import { applySubmoduleLocks } from '../lib/lockClient';
+
   document.querySelectorAll<HTMLElement>('[data-nav-dot]').forEach((el) => {
     const id = el.dataset.navDot!;
     const state = getProgress(id);
-    if (state === 'quiz_done') el.classList.add('bg-success', 'border-success');
+    if (state === 'quiz_done' || state === 'completed') el.classList.add('bg-success', 'border-success');
     else if (state === 'viewed') el.classList.add('bg-accent-blue', 'border-accent-blue');
   });
+
+  const lockInfo = (window as any).__sidebarLockInfo as { id: string; hasQuiz: boolean }[][];
+  if (lockInfo) {
+    document.querySelectorAll<HTMLElement>('nav[aria-label="Danh sách bài trong module"]').forEach((nav) => {
+      applySubmoduleLocks(nav, lockInfo);
+    });
+  }
 </script>

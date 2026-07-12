@@ -5,7 +5,6 @@ module: Recommendation Systems
 submodule: Deep Learning cho RS
 order: 3
 status: stable
-prerequisites: ["03-collaborative-filtering-matrix-factorization"]
 summary: Matrix Factorization phân rã ma trận rating thành 2 ma trận latent factor, dự đoán bằng tích vô hướng. Sedhain và cộng sự (2015) đề xuất một cách nhìn khác hoàn toàn: coi mỗi cột (hoặc hàng) của ma trận rating là một VECTOR ĐẦU VÀO cho một Autoencoder — huấn luyện mạng tái tạo lại đúng vector đó, với một kỹ thuật riêng để chỉ tính loss trên các rating THẬT SỰ đã quan sát, bỏ qua toàn bộ ô trống.
 last_touched_by_task: Tái cấu trúc (2026-07-10) — chuyển vào submodule "Deep Learning cho RS" (order 5→3, xếp cuối cùng nhánh mở rộng kiến trúc từ Matrix Factorization sau NeuMF/DeepFM), sửa prerequisite trỏ đúng slug Matrix Factorization sau khi module tách submodule. Nguồn: D2L.ai chapter_recommender-systems/autorec.html (xác nhận qua WebFetch: kiến trúc U/I-AutoRec, công thức encoder-decoder, kỹ thuật gradient masking cho missing ratings, kết quả RMSE 0.900 MovieLens 100K vượt Matrix Factorization). Paper gốc (Sedhain, Menon, Sanner, Xie 2015, WWW conference) không có bản arxiv — dùng 1 nguồn D2L.ai đủ chi tiết công thức/kết quả, theo đúng tiền lệ SVM/t-SNE khi paper gốc chỉ có ở venue ngoài whitelist.
 ---

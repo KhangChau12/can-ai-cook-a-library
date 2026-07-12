@@ -6,8 +6,8 @@ tiếp tục.
 
 Điều này áp dụng cho **mọi loại quyết định trong phạm vi workshop này**,
 không chỉ nội dung từng bài — kể cả khi phát hiện lỗi cấu trúc giáo trình
-(order sai thứ tự logic, prerequisites trỏ sai, cần đổi tên/số nhiều file
-cùng lúc), khi cần refactor lại content đã có, hay khi cần chọn giữa nhiều
+(order sai thứ tự logic, cần đổi tên/số nhiều file cùng lúc), khi cần
+refactor lại content đã có, hay khi cần chọn giữa nhiều
 cách sửa hợp lý. Không hỏi "bạn muốn sửa thế nào" cho những việc này — tự
 đánh giá phương án hợp lý nhất (thường là phương án khớp đúng nhất với mục
 tiêu "giáo trình đọc liền mạch, đúng thứ tự logic" ở mục 2.1/2.3 CLAUDE.md),
@@ -63,8 +63,9 @@ quan vào 1 task).
 ### Bước 2 — Trước khi viết
 
 - Đọc `_index.mdx` của track liên quan để biết bối cảnh giáo trình hiện tại.
-- Nếu bài mới có `prerequisites` — đọc lướt qua các bài đó để không lặp lại
-  hoặc mâu thuẫn khái niệm đã giải thích.
+- Nếu viết bài mới trong 1 module/submodule đã có bài — đọc lướt các bài
+  `order` trước đó trong cùng module/submodule để không lặp lại hoặc mâu
+  thuẫn khái niệm đã giải thích.
 - Nếu đang sửa bài cũ — đọc toàn bộ bài đó trước, không sửa mù dựa trên tên
   file.
 - Nếu task liên quan đến scoring metric / quy trình platform (exam-track) —
@@ -84,9 +85,9 @@ liệt kê bài mới đúng vị trí `order`.
 
 **Cải thiện bài cũ:** sửa trực tiếp, không tạo bản sao/version mới (mục 5).
 Nếu sửa làm thay đổi khái niệm cốt lõi của bài (không chỉ văn phong), cân
-nhắc bài nào khác có `prerequisites` trỏ tới bài này có bị ảnh hưởng không —
-nếu có, đánh dấu `status: needs-review` cho bài phụ thuộc đó luôn trong cùng
-task.
+nhắc các bài `order` sau trong cùng module/submodule (những bài giả định
+người đọc đã hiểu khái niệm này) có bị ảnh hưởng không — nếu có, đánh dấu
+`status: needs-review` cho bài phụ thuộc đó luôn trong cùng task.
 
 **Tái cấu trúc giáo trình** (đổi thứ tự, tách/gộp bài, đổi track): cập nhật
 toàn bộ `order` bị ảnh hưởng + cả 2 `_index.mdx` liên quan trong cùng task,

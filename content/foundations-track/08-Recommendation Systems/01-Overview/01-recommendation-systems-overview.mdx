@@ -5,12 +5,11 @@ module: Recommendation Systems
 submodule: Overview
 order: 1
 status: stable
-prerequisites: ["05-k-nearest-neighbors", "07-k-means-clustering"]
 summary: "Bài mở đầu module Recommendation Systems: vấn đề quá tải thông tin mà hệ thống gợi ý giải quyết, hai trường phái nền tảng (Content-based vs Collaborative Filtering), phân biệt explicit/implicit feedback, và các dạng bài toán khác nhau (rating prediction, ranking, CTR prediction) — bản đồ để đọc đúng thứ tự 5 sub-module tiếp theo."
 last_touched_by_task: "Bài mới (2026-07-10), viết theo yêu cầu tái cấu trúc module Recommendation Systems — module trước đó nhảy thẳng vào Collaborative Filtering mà không giới thiệu bức tranh lớn, khiến câu mở đầu bài CF cũ ('không cần hiểu nội dung item') vô nghĩa vì chưa ai biết có trường phái content-based để so sánh. Nguồn: D2L.ai chapter_recommender-systems/recsys-intro.html (xác nhận qua WebFetch: taxonomy 4 loại bài toán — rating prediction/ranking/CTR/sequence-aware, định nghĩa cold-start, và câu xác nhận CF gồm memory-based + model-based, content-based là hướng bổ trợ)."
 ---
 
-Từ bài [k-NN](05-k-nearest-neighbors.mdx) và [K-means](07-k-means-clustering.mdx),
+Từ bài [k-NN](04-k-nearest-neighbors.mdx) và [K-means](01-k-means-clustering.mdx),
 track đã học cách đo **độ tương đồng** giữa các điểm dữ liệu. **Recommendation
 systems** (hệ thống gợi ý) là một trong những ứng dụng thực tế lớn nhất của
 chính ý tưởng "tìm những gì giống nhau" đó — nhưng áp dụng cho một bài toán

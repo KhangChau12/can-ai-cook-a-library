@@ -5,12 +5,11 @@ module: Large Language Models
 submodule: Ứng dụng & Inference-time
 order: 2
 status: stable
-prerequisites: ["01-prompting-in-context-learning"]
 summary: Lewis và cộng sự (2020, NeurIPS) đề xuất RAG để giải quyết vấn đề cụ thể: LLM lưu kiến thức trong tham số nhưng khó truy cập/thao tác chính xác kiến thức đó cho tác vụ đòi hỏi kiến thức sâu — kết hợp bộ nhớ tham số hoá (LLM) với bộ nhớ phi tham số hoá (chỉ mục vector), đạt SOTA trên các tác vụ hỏi-đáp miền mở. Yao và cộng sự (2022) giải quyết giới hạn còn lại bằng ReAct: chain-of-thought thuần dễ hallucination, hành động thuần thiếu khả năng lập kế hoạch — xen kẽ suy luận và hành động giải quyết cả hai, đạt +34 điểm phần trăm trên ALFWorld.
 last_touched_by_task: Cải thiện thực chất (2026-07-06, task 44, đào sâu sub-module 'Ứng dụng & Inference-time'): tìm và xác nhận được paper gốc ReAct (Yao et al. 2022, arxiv 2210.03629) qua WebFetch abstract — trước đó phần Agent chỉ mô tả cơ chế ReAct chung chung (từ MachineLearningMastery) không có tên tác giả/vấn đề cụ thể mỗi cách tiếp cận đơn lẻ gặp phải. Bổ sung: vấn đề cụ thể (chain-of-thought thuần bị hallucination/lỗi lan truyền; hành động thuần thiếu khả năng lập kế hoạch), và kết quả thực nghiệm cụ thể (ALFWorld +34 điểm phần trăm, WebShop +10%, HotpotQA khắc phục hallucination qua truy vấn Wikipedia). Đã cân nhắc viết bài Multi-agent riêng nhưng nguồn hời hợt (MachineLearningMastery/AutoGen paper không đủ sâu theo chuẩn dòng tiến hoá) — chọn cải thiện bài đã có thay vì viết bài mới yếu. Giữ nguyên nội dung RAG/embedding cũ (đã đúng, có nguồn Lewis et al. từ trước).
 ---
 
-Bài [Prompting & In-context Learning](28-prompting-in-context-learning.mdx)
+Bài [Prompting & In-context Learning](01-prompting-in-context-learning.mdx)
 cho thấy cách khai thác LLM tốt hơn chỉ bằng cách viết prompt khéo léo.
 Nhưng có hai giới hạn mà riêng prompting không giải quyết được: (1) LLM chỉ
 "biết" những gì có trong dữ liệu pretraining — không biết thông tin riêng
@@ -22,10 +21,10 @@ từng giới hạn này.
 ## Vấn đề đầu tiên: LLM không biết thông tin riêng/mới
 
 Kiến thức của một LLM bị "đóng băng" ở thời điểm pretraining (bài
-[Pretraining](24-pretraining-llm.mdx)) — nó không biết tài liệu nội bộ
+[Pretraining](01-pretraining-llm.mdx)) — nó không biết tài liệu nội bộ
 công ty bạn, không biết sự kiện xảy ra sau khi huấn luyện, và fine-tune
 lại toàn bộ mô hình mỗi khi có thông tin mới là quá tốn kém (bài
-[Fine-tuning](26-fine-tuning-instruction-tuning.mdx) đã nói fine-tuning
+[Fine-tuning](03-fine-tuning-instruction-tuning.mdx) đã nói fine-tuning
 không phải lựa chọn đầu tiên nên thử).
 
 ## RAG: cho LLM "tra cứu" trước khi trả lời
@@ -68,7 +67,7 @@ Bước quan trọng nhất là "tìm đoạn văn bản liên quan nhất" — 
 **Embedding** là một vector số thực biểu diễn **ý nghĩa ngữ nghĩa** của
 một đoạn văn bản — hai đoạn văn bản có ý nghĩa gần nhau sẽ có embedding
 **gần nhau** trong không gian vector (đo bằng khoảng cách, giống hệt
-khái niệm khoảng cách đã học ở bài [k-NN](05-k-nearest-neighbors.mdx)).
+khái niệm khoảng cách đã học ở bài [k-NN](04-k-nearest-neighbors.mdx)).
 Quy trình cụ thể cho RAG:
 
 - Toàn bộ kho dữ liệu riêng được cắt thành các đoạn nhỏ (chunk), mỗi đoạn
@@ -101,7 +100,7 @@ Một LLM agent dùng chính LLM làm **bộ máy suy luận trung tâm** để 
 trả về từ công cụ đó. **Yao và cộng sự (2022)**, trong bài báo "ReAct:
 Synergizing Reasoning and Acting in Language Models", chỉ ra vấn đề cụ
 thể mà từng cách tiếp cận đơn lẻ trước đó gặp phải: **chain-of-thought
-thuần** (chỉ suy luận, không hành động — bài [28](28-prompting-in-context-learning.mdx))
+thuần** (chỉ suy luận, không hành động — bài [28](01-prompting-in-context-learning.mdx))
 dễ bị **hallucination** (bịa thông tin) và lỗi lan truyền qua các bước
 suy luận, vì mọi thứ chỉ dựa vào kiến thức nội tại của mô hình, không có
 cách xác minh với thế giới thực; ngược lại, **hành động thuần** (chỉ gọi
@@ -142,16 +141,16 @@ lại ngữ cảnh và kết quả các bước trước để dùng cho quyết
 
 - RAG và Agent đều là cách **mở rộng khả năng** của một LLM đã huấn luyện
   sẵn mà **không cần huấn luyện lại** — cùng tinh thần với
-  [Prompting](28-prompting-in-context-learning.mdx) (khai thác mô hình có
+  [Prompting](01-prompting-in-context-learning.mdx) (khai thác mô hình có
   sẵn hiệu quả hơn), nhưng đi xa hơn: kết nối mô hình với dữ liệu và hành
   động bên ngoài, không chỉ thay đổi cách hỏi.
 - Cơ chế tìm kiếm trong vector database dùng lại chính xác bài toán
   "tìm điểm gần nhất theo khoảng cách" đã học ở bài
-  [k-NN](05-k-nearest-neighbors.mdx) — chỉ khác không gian feature là
+  [k-NN](04-k-nearest-neighbors.mdx) — chỉ khác không gian feature là
   không gian ngữ nghĩa (embedding) thay vì feature số trực tiếp.
 - Vòng lặp reasoning-acting-observing của agent có cấu trúc tương tự
   (dù khác bản chất) vòng lặp agent-environment đã học ở
-  [RL Framework](16-reinforcement-learning-framework.mdx): quan sát trạng
+  [RL Framework](01-reinforcement-learning-framework.mdx): quan sát trạng
   thái hiện tại, quyết định hành động, nhận phản hồi, lặp lại — chỉ khác
   "quyết định" ở đây do chính LLM suy luận bằng ngôn ngữ tự nhiên, không
   phải một policy được huấn luyện bằng RL.

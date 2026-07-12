@@ -5,7 +5,6 @@ module: Natural Language Processing
 submodule: Recurrent Neural Network Family
 order: 2
 status: stable
-prerequisites: ["01-rnn"]
 summary: Hochreiter phát hiện vấn đề vanishing gradient từ 1991, rồi cùng Schmidhuber đề xuất LSTM (1997) giải quyết bằng cơ chế gating; gần 2 thập kỷ sau, Cho et al. (2014) đơn giản hoá thành GRU — dòng tiến hoá cụ thể từ vấn đề tới giải pháp tới bản rút gọn.
 last_touched_by_task: Viết lại theo triết lý nội dung mới (2026-07-06): thêm dòng lịch sử ý tưởng cụ thể (Hochreiter luận văn thạc sĩ 1991 nhận diện vấn đề, Hochreiter & Schmidhuber 1997 đề xuất LSTM, Cho et al. 2014 đề xuất GRU vì lý do tốc độ tính toán) — trước đó bài chỉ có cơ chế kỹ thuật, không có tên người/năm/động cơ cụ thể. Thêm nguồn thứ 2 (cs231n) với chi tiết mới: LSTM không đảm bảo loại bỏ hoàn toàn vanishing gradient, chỉ giúp dễ học phụ thuộc xa hơn. Cập nhật thêm (2026-07-06, Task 70): đóng khoảng trống 'peephole connections' đã ghi ở _index.mdx bằng 1 đoạn ngắn (không đủ chất liệu cho bài riêng, xác nhận qua WebSearch) — Gers & Schmidhuber 2000 đề xuất peephole, nhưng Greff et al. 2015 'LSTM: A Search Space Odyssey' (5400 lượt thực nghiệm) kết luận không biến thể nào kể cả peephole cải thiện đáng kể so với LSTM chuẩn — bài học về kiểm chứng thực nghiệm thay vì tin trực giác thiết kế. Nguồn thứ 3: arxiv 1503.04069. Cập nhật (2026-07-10, tách module NLP/LLM): sửa 2 link [RNN] trỏ nhầm slug "recurrent-neural-network" (không tồn tại) thành đúng "01-rnn.mdx".
 ---
@@ -134,7 +133,7 @@ D2L.ai) không còn nhấn mạnh peephole như một cải tiến bắt buộc.
 
 - Vấn đề vanishing gradient ở đây là một biến thể theo **thời gian** của
   vấn đề đã gặp khi bàn về activation function ở bài
-  [Perceptron & MLP](08-perceptron-va-mang-no-ron.mdx) (sigmoid có đạo hàm
+  [Perceptron & MLP](01-perceptron-va-mang-no-ron.mdx) (sigmoid có đạo hàm
   rất nhỏ ở hai đầu, làm chậm quá trình học) — cùng bản chất "nhân liên
   tiếp nhiều số nhỏ khiến gradient teo lại", chỉ khác chiều nhân là qua
   nhiều **lớp** hay qua nhiều **bước thời gian**.

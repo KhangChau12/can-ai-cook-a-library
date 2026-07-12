@@ -2,9 +2,8 @@
 title: Kỹ thuật riêng cho Dữ liệu Tabular — Target Encoding & Feature Interaction
 track: exam-track
 module: Kỹ thuật thi đấu nâng cao
-order: 6
+order: 8
 status: stable
-prerequisites: ["03-baseline-nang-cap-mo-hinh-va-chien-luoc-nop-bai", "04-hyperparameter-tuning"]
 summary: Hai kỹ thuật feature engineering nâng cao riêng cho dữ liệu dạng bảng: target encoding cho category có nhiều giá trị (high cardinality) và cách tránh leakage khi dùng nó, cùng feature interaction — tạo feature mới từ tổ hợp nhiều cột thay vì chỉ xử lý từng cột riêng lẻ.
 last_touched_by_task: Rà lại dưới góc nhìn triết lý mới (2026-07-06): đọc kỹ, xác nhận bài đã đạt chuẩn đúng tiêu chí exam-track (mục 2.1 sườn A) — ví dụ số cụ thể (Hà Nội 0.10/Đà Nẵng 0.02), rủi ro leakage giải thích rõ + 2 cách khắc phục cụ thể (k-fold encoding, smoothing), feature interaction có ví dụ đa dạng. Không 'vỏ rỗng', không cần viết lại. Giữ nguyên nội dung, chỉ nâng status. Cập nhật (2026-07-06, cùng task viết bài 10 Data Augmentation): sửa câu kết luận vì không còn là bài cuối module 2.
 ---
@@ -109,7 +108,7 @@ loại bỏ những feature chỉ làm phức tạp thêm mô hình mà không c
 Kết hợp với transfer learning/ensembling (cho dữ liệu ảnh/văn bản) và
 target encoding/feature interaction (cho dữ liệu bảng), bạn đã có đủ bộ
 công cụ thực chiến để tối ưu điểm số vượt xa mức baseline ban đầu. Bài
-tiếp theo ([Data Augmentation](10-data-augmentation.mdx)) quay lại đào
+tiếp theo ([Data Augmentation](09-data-augmentation.mdx)) quay lại đào
 sâu thêm một kỹ thuật riêng cho dữ liệu ảnh.
 
 ## Nguồn tham khảo

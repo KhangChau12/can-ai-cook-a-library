@@ -5,7 +5,6 @@ module: Reinforcement Learning
 submodule: Policy-based
 order: 6
 status: stable
-prerequisites: ["05-a3c"]
 summary: A3C dùng nhiều worker cập nhật bất đồng bộ vào tham số chung — tận dụng CPU đa nhân, nhưng gây race condition gradient và không tận dụng được GPU (không gộp được batch lớn). A2C (Mnih et al. 2016, cùng paper A3C) đơn giản hoá: một coordinator đợi tất cả worker xong, gộp thành 1 batch lớn, cập nhật đồng bộ 1 lần — không còn race condition, tận dụng GPU tốt hơn, và trong hạ tầng hiện đại (GPU phổ biến) thường ngang hoặc tốt hơn A3C.
 last_touched_by_task: Tách từ file cũ "07-trpo-a2c.mdx" (2026-07-10) — theo phản hồi người vận hành, bài gộp cũ đặt A2C SAU A3C khá xa (2 bài DDPG/TD3, SAC chen giữa dòng tiến hoá on-policy), khiến A2C bị tách rời khỏi ngữ cảnh A3C vừa học. Tách A2C thành bài riêng đặt NGAY SAU A3C (đúng mạch: học xong vấn đề + giải pháp bất đồng bộ của A3C, lập tức thấy biến thể đồng bộ). Nội dung kỹ thuật giữ nguyên từ bài gộp cũ. Nguồn: arxiv 1602.01783 (Mnih et al. 2016, cùng paper đề xuất cả A3C và A2C).
 ---

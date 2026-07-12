@@ -4,7 +4,6 @@ track: foundations-track
 module: Generative Models
 order: 3
 status: stable
-prerequisites: ["02-vae-variational-autoencoder"]
 summary: VAE có ELBO (xấp xỉ likelihood), GAN không có likelihood, Diffusion chậm (nhiều bước). Flow-based models (normalizing flows) có exact likelihood inference và sinh nhanh 1 pass, nhưng đánh đổi bằng kiến trúc phức tạp (cần bijector khả nghịch với Jacobian tính được). Bài này kể dòng tiến hoá NICE → RealNVP → Glow, hoàn thiện 3 trường phái likelihood-based.
 last_touched_by_task: Tách sub-module "Likelihood-based Models" khỏi "Overview" (2026-07-11) — order đổi từ 4 sang 3, sửa link nội bộ trỏ đúng vị trí file thật sau khi tách (VAE giờ là order 2 cùng thư mục).
 submodule: Likelihood-based Models

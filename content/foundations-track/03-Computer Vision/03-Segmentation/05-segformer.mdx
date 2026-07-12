@@ -5,13 +5,12 @@ module: Computer Vision
 submodule: Segmentation
 order: 5
 status: stable
-prerequisites: ["08-swin-transformer", "04-deeplab"]
 summary: Áp dụng thẳng ViT cho segmentation gặp vấn đề cụ thể: positional encoding cố định gây giảm hiệu năng khi độ phân giải test khác lúc train, và các decoder phức tạp (như DeepLab/U-Net) làm chậm mô hình. Xie và cộng sự (2021) giải quyết bằng SegFormer: một encoder Transformer phân cấp (không cần positional encoding) sinh đặc trưng đa tỷ lệ, kết hợp với một decoder MLP cực nhẹ (chỉ vài lớp fully-connected) tổng hợp thông tin từ mọi tầng — đạt 50.3% mIoU trên ADE20K với model nhỏ hơn 5 lần và chính xác hơn 2.2% so với phương pháp tốt nhất trước đó.
 last_touched_by_task: Bài mới (2026-07-06), theo yêu cầu người vận hành đào sâu Detection/Segmentation không dừng lại chờ phản hồi. SegFormer là bước hoàn thiện nhánh Transformer-cho-segmentation, nối tiếp trực tiếp Swin Transformer (58, vừa viết) và đối chiếu với DeepLab (57, đã viết) — 2 triết lý khác nhau cho cùng bài toán segmentation nâng cao. Nguồn: arxiv 2105.15203 (paper gốc Xie et al. 2021, NeurIPS, xác nhận qua WebFetch abstract: vấn đề positional encoding + decoder phức tạp, giải pháp hierarchical Transformer encoder + MLP decoder nhẹ, kết quả mIoU cụ thể trên ADE20K/Cityscapes) + D2L.ai (vision-transformer.html, dùng lại làm nguồn phụ xác nhận vấn đề chung của positional encoding/độ phức tạp Transformer cho ảnh, đã dùng ở bài 55/58).
 ---
 
-Bài [DeepLab](57-deeplab.mdx) giải quyết segmentation bằng atrous
-convolution trên nền CNN. Bài [Swin Transformer](58-swin-transformer.mdx)
+Bài [DeepLab](04-deeplab.mdx) giải quyết segmentation bằng atrous
+convolution trên nền CNN. Bài [Swin Transformer](08-swin-transformer.mdx)
 chứng minh kiến trúc Transformer phân cấp có thể làm backbone tổng quát
 cho cả detection lẫn segmentation. Bài này kể cách một kiến trúc thiết
 kế **riêng cho segmentation** dựa trên Transformer giải quyết những vấn
@@ -24,7 +23,7 @@ Hai vấn đề cụ thể khi áp dụng kiến trúc Transformer (kiểu ViT) 
 toán segmentation:
 
 1. **Positional encoding cố định gây lỗi khi đổi độ phân giải.** ViT gốc
-   (bài [55](55-vision-transformer.mdx)) dùng positional embedding học
+   (bài [55](07-vision-transformer.mdx)) dùng positional embedding học
    sẵn theo đúng số lượng patch cố định lúc huấn luyện. Nếu ảnh test có
    độ phân giải khác lúc train (số patch khác), cần **nội suy** lại
    positional embedding — và việc nội suy này gây **giảm hiệu năng** rõ
@@ -72,7 +71,7 @@ tốt nhất trước đó tại thời điểm công bố. Phiên bản lớn h
 **ổn định tốt** (robustness) trước nhiễu và biến dạng dữ liệu đầu vào.
 
 Đây là một kết quả đáng chú ý theo cùng tinh thần đã gặp ở
-[EfficientNet](41-efficientnet.mdx): không phải lúc nào "chính xác hơn"
+[EfficientNet](06-efficientnet.mdx): không phải lúc nào "chính xác hơn"
 cũng đồng nghĩa với "nặng hơn" — thiết kế đúng cách (ở đây là loại bỏ
 những thành phần không cần thiết như positional encoding và decoder phức
 tạp) có thể đạt được cả độ chính xác cao hơn lẫn kích thước nhỏ hơn cùng
@@ -80,20 +79,20 @@ lúc.
 
 ## Liên hệ lại với các bài trước
 
-- SegFormer và [DeepLab](57-deeplab.mdx) là hai câu trả lời khác hẳn
+- SegFormer và [DeepLab](04-deeplab.mdx) là hai câu trả lời khác hẳn
   nhau cho cùng bài toán segmentation nâng cao: DeepLab dựa trên CNN +
   atrous convolution + ASPP (nhiều nhánh dilation rate song song);
   SegFormer dựa trên Transformer phân cấp + decoder MLP tối giản — hai
   công cụ hoàn toàn khác nhau, cùng đạt kết quả SOTA cho segmentation.
 - SegFormer dùng cấu trúc phân cấp sinh đặc trưng đa tỷ lệ tương tự
-  [Swin Transformer](58-swin-transformer.mdx) — cả hai đều giải quyết
+  [Swin Transformer](08-swin-transformer.mdx) — cả hai đều giải quyết
   vấn đề "Transformer cần đặc trưng đa tỷ lệ cho các tác vụ dense
   prediction", dù SegFormer không nhất thiết dùng đúng cơ chế shifted
   window của Swin.
 - Việc loại bỏ positional encoding phức tạp để đơn giản hoá và tăng khả
   năng tổng quát hoá là một minh hoạ khác cho nguyên tắc đã lặp lại
   trong track: đôi khi bớt đi một thành phần (thay vì thêm vào) mới là
-  cách cải tiến đúng — tương tự cách [DPO](27-rlhf-alignment.mdx) đơn
+  cách cải tiến đúng — tương tự cách [DPO](04-rlhf-alignment.mdx) đơn
   giản hoá RLHF bằng cách bỏ hẳn bước RL.
 
 ## Nguồn tham khảo

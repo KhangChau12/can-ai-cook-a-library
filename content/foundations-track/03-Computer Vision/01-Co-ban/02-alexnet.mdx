@@ -5,12 +5,11 @@ module: Computer Vision
 submodule: Cơ bản
 order: 2
 status: stable
-prerequisites: ["01-cnn", "03-regularization"]
 summary: Vì sao AlexNet (2012) không phát minh convolution mới nhưng lại tạo ra cú sốc lớn nhất lịch sử computer vision: giải quyết đúng 2 giới hạn khiến LeNet 'ngủ đông' 14 năm (dữ liệu quy mô lớn, phần cứng) bằng ImageNet + GPU + ReLU + dropout.
 last_touched_by_task: Bài mới đầu tiên (2026-07-06) lấp khoảng trống sub-module CV 'Cơ bản', nối tiếp trực tiếp phần lịch sử LeNet→AlexNet đã thêm vào bài 11 (CNN) trong task trước — tách AlexNet thành bài riêng thay vì gộp chung vì đủ nội dung kỹ thuật cụ thể (kiến trúc, ReLU, dropout, GPU) để đứng độc lập, tránh bài 11 quá dài lan man 2 chủ đề (nguyên lý convolution tổng quát vs chi tiết kỹ thuật huấn luyện một mô hình cụ thể).
 ---
 
-Bài [CNN](11-convolutional-neural-network.mdx) đã kể câu chuyện: LeCun
+Bài [CNN](01-cnn.mdx) đã kể câu chuyện: LeCun
 xây dựng LeNet từ 1989-1998, chứng minh convolution hoạt động tốt cho bài
 toán hẹp (nhận diện chữ số viết tay), rồi CNN gần như "biến mất" khỏi
 computer vision trong hơn một thập kỷ vì thiếu dữ liệu quy mô lớn và
@@ -50,7 +49,7 @@ với 2 lớp tích chập của LeNet-5, và số tham số lớn hơn nhiều 
 **ReLU thay vì sigmoid.** LeNet dùng hàm kích hoạt sigmoid — nhưng
 sigmoid có đạo hàm rất nhỏ ở hai đầu (bão hoà), khiến gradient "biến mất"
 dần khi lan truyền qua nhiều lớp (vấn đề vanishing gradient, xem lại
-[Backpropagation](09-backpropagation.mdx)). Với một mạng sâu gấp nhiều
+[Backpropagation](02-backpropagation.mdx)). Với một mạng sâu gấp nhiều
 lần LeNet, sigmoid sẽ khiến việc huấn luyện gần như không hội tụ được.
 AlexNet dùng **ReLU** (`f(x) = max(0, x)`) — đạo hàm bằng 1 với mọi input
 dương, không bị bão hoà ở nhánh dương, giúp gradient lan truyền ổn định
@@ -58,7 +57,7 @@ hơn qua nhiều lớp và huấn luyện nhanh hơn đáng kể so với sigmoi
 
 **Dropout chống overfitting.** Mạng sâu hơn đồng nghĩa số tham số tăng
 mạnh — nguy cơ overfitting cao hơn nhiều so với LeNet (xem
-[Regularization](10-regularization.mdx)). AlexNet là một trong những kiến
+[Regularization](03-regularization.mdx)). AlexNet là một trong những kiến
 trúc CNN quy mô lớn đầu tiên áp dụng **dropout** ở các lớp fully-connected
 để kiểm soát overfitting, cùng với việc mở rộng dữ liệu train bằng các
 phép biến đổi ảnh đơn giản (data augmentation).
@@ -85,13 +84,13 @@ kiến trúc lại giải quyết một hạn chế cụ thể của kiến trú
 ## Liên hệ lại với các bài trước
 
 - AlexNet không đổi cơ chế huấn luyện — vẫn
-  [backpropagation](09-backpropagation.mdx) và gradient descent như mọi
+  [backpropagation](02-backpropagation.mdx) và gradient descent như mọi
   mạng nơ-ron khác. Thay đổi nằm ở kiến trúc (sâu hơn), hàm kích hoạt
   (ReLU), và kỹ thuật chống overfitting (dropout) — ba mảnh ghép cụ thể
   đã học riêng ở các bài trước, nay kết hợp lại để giải quyết một bài
   toán quy mô lớn hơn hẳn.
 - Đây là minh hoạ cụ thể cho nguyên tắc đã nói ở bài
-  [Regularization](10-regularization.mdx): mạng càng nhiều tham số càng
+  [Regularization](03-regularization.mdx): mạng càng nhiều tham số càng
   cần kỹ thuật kiểm soát overfitting rõ ràng — AlexNet không thể đạt kết
   quả đó nếu bỏ qua dropout.
 

@@ -5,12 +5,11 @@ module: Computer Vision
 submodule: Cơ bản
 order: 1
 status: stable
-prerequisites: ["02-backpropagation"]
 summary: Vì sao dùng thẳng MLP cho ảnh không thực tế, hai nguyên lý translation invariance + locality dẫn tới phép tích chập, và cách LeNet (LeCun, 1989-1998) rồi AlexNet (2012) biến ý tưởng đó thành hệ thống thực dùng được — bài mở đầu sub-module CV Cơ bản.
 last_touched_by_task: Viết lại theo triết lý nội dung mới (2026-07-06): thêm dòng lịch sử ý tưởng LeNet (LeCun, vấn đề nhận diện chữ số viết tay ATT Bell Labs) và AlexNet (2012, ImageNet, vì sao 1998-2012 CNN 'ngủ đông') — trước đó bài chỉ có nguyên lý convolution, không kể được ai giải quyết vấn đề gì. Thêm nguồn thứ 2 (cs231n) theo yêu cầu tối thiểu 2 nguồn cho bài dòng tiến hoá. Bài này giờ là bài mở đầu chính thức của sub-module 'Cơ bản' trong module Computer Vision, dẫn tới LeNet/AlexNet/VGG/ResNet/MobileNet/EfficientNet (chưa viết, xem CLAUDE.md mục 4).
 ---
 
-Bài [Perceptron & MLP](08-perceptron-va-mang-no-ron.mdx) giới thiệu mạng
+Bài [Perceptron & MLP](01-perceptron-va-mang-no-ron.mdx) giới thiệu mạng
 nơ-ron nhiều lớp tổng quát — về lý thuyết, một MLP đủ lớn có thể xấp xỉ
 mọi hàm số, kể cả nhận diện ảnh. Nhưng thử áp dụng thẳng MLP cho ảnh sẽ
 lộ ra hai vấn đề nghiêm trọng, và cách giải quyết hai vấn đề đó dẫn tới
@@ -126,9 +125,9 @@ deep learning) — một bước nhảy hiếm khi thấy trong một năm. Về
 AlexNet vẫn là chính nguyên lý convolution của LeNet, chỉ sâu hơn (5 lớp
 tích chập + 3 lớp fully-connected) và thêm 2 ý tưởng kỹ thuật mới để huấn
 luyện mạng sâu hơn khả thi: dùng **ReLU** thay sigmoid (giảm vấn đề
-vanishing gradient khi mạng sâu hơn — xem lại [Backpropagation](09-backpropagation.mdx)),
+vanishing gradient khi mạng sâu hơn — xem lại [Backpropagation](02-backpropagation.mdx)),
 và **dropout** để chống overfitting khi số tham số tăng mạnh (xem
-[Regularization](10-regularization.mdx)). Điểm mấu chốt: AlexNet không
+[Regularization](03-regularization.mdx)). Điểm mấu chốt: AlexNet không
 phát minh lại convolution — nó chứng minh nguyên lý LeNet đã đúng vẫn mở
 rộng được lên quy mô lớn, một khi dữ liệu và phần cứng bắt kịp ý tưởng.
 Đây là khởi đầu của làn sóng CNN hiện đại (VGG, ResNet, và các kiến trúc
@@ -137,7 +136,7 @@ tiếp theo trong sub-module này).
 ## Liên hệ lại với các bài trước
 
 - CNN không phải một cơ chế học hoàn toàn khác — nó vẫn dùng
-  [backpropagation](09-backpropagation.mdx) để tính gradient và cập nhật
+  [backpropagation](02-backpropagation.mdx) để tính gradient và cập nhật
   tham số (kernel) qua gradient descent, giống hệt MLP thông thường. Điểm
   khác biệt duy nhất là **cấu trúc kết nối**: kết nối cục bộ + chia sẻ
   trọng số qua toàn ảnh, thay vì kết nối đầy đủ giữa mọi input và mọi đơn

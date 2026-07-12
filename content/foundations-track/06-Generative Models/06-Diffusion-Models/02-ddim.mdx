@@ -5,12 +5,11 @@ module: Generative Models
 submodule: Diffusion Models
 order: 2
 status: stable
-prerequisites: ["01-diffusion-models"]
 summary: Diffusion Models/DDPM (bài 49) sinh ảnh chất lượng cao nhưng phải mô phỏng một chuỗi Markov qua HÀNG NGÀN bước khử nhiễu tuần tự — cực kỳ chậm so với GAN (chỉ cần 1 lần forward). Song, Meng và Ermon (2020, Stanford) giải quyết bằng DDIM (Denoising Diffusion Implicit Models): quá trình reverse KHÔNG-Markov (non-Markovian) chia sẻ cùng mục tiêu huấn luyện với DDPM nhưng cho phép BỎ QUA bước (update rule dự đoán x_0 rồi nhảy), sinh nhanh 10-50×. Tham số η=0 cho quá trình TẤT ĐỊNH (nội suy ngữ nghĩa). Bổ sung classifier-free guidance (Ho & Salimans 2022, `ε̂=(1+w)·ε(x_t,c)−w·ε(x_t,∅)`) — kỹ thuật biến diffusion thành text-to-image thực tế.
 last_touched_by_task: Cải thiện Task 106 (2026-07-07): Phase 2 Generative — bổ sung (1) update rule cụ thể (dự đoán x_0 từ x_t+ε_θ, rồi tính x_{t-1} với 3 phần hướng x_0/hướng ε/nhiễu), (2) section mới 'classifier-free guidance' (Ho & Salimans 2022, công thức `(1+w)·ε(x_t,c)−w·ε(x_t,∅)`, guidance scale 7.5, kỹ thuật biến diffusion thành text-to-image thực tế). Nguồn: WebSearch whitelist (arxiv/lilianweng) xác nhận công thức. Giữ nguyên cấu trúc non-Markovian + η + kết quả 10-50× (đã đúng).
 ---
 
-Bài [Diffusion Models/DDPM](49-diffusion-models.mdx) học cách sinh ảnh
+Bài [Diffusion Models/DDPM](01-diffusion-models.mdx) học cách sinh ảnh
 chất lượng cao bằng cách khử nhiễu dần qua một chuỗi bước cố định. Nhưng
 chính cơ chế đó — một chuỗi Markov nhiều bước — tạo ra một vấn đề thực tế
 nghiêm trọng mà bài này giải quyết.
@@ -25,7 +24,7 @@ bước này — không thể bỏ qua bước nào, vì mỗi bước được 
 khử đúng một lượng nhiễu nhỏ tương ứng với đúng vị trí của nó trong chuỗi.
 
 Kết quả: DDPM sinh ảnh **rất chậm** so với các phương pháp sinh ảnh khác
-như [GAN](23-gan.mdx) (chỉ cần đúng **một** lần forward qua generator để
+như [GAN](01-gan.mdx) (chỉ cần đúng **một** lần forward qua generator để
 sinh một ảnh) — một đánh đổi tốc độ nghiêm trọng đổi lấy chất lượng và độ
 ổn định huấn luyện mà Diffusion Models mang lại.
 
@@ -59,7 +58,7 @@ DDPM ban đầu.
 
 **Update rule cụ thể.** Mấu chốt của DDIM là **dự đoán `x_0`** từ ảnh
 nhiễu `x_t` và nhiễu dự đoán `ε_θ` — đảo ngược closed-form forward (bài
-[49](49-diffusion-models.mdx)):
+[49](01-diffusion-models.mdx)):
 
 ```
 x_0 dự đoán = ( x_t - sqrt(1 - ᾱ_t) · ε_θ(x_t, t) ) / sqrt(ᾱ_t)
@@ -128,20 +127,20 @@ khả thi về mặt thời gian.
 
 ## Liên hệ lại với các bài trước
 
-- Đối chiếu trực tiếp với [Diffusion Models/DDPM](49-diffusion-models.mdx):
+- Đối chiếu trực tiếp với [Diffusion Models/DDPM](01-diffusion-models.mdx):
   DDIM không thay đổi cách **huấn luyện** mô hình (vẫn học đúng mục tiêu
   DDPM), chỉ thay đổi cách **sample/sinh ảnh** sau khi đã huấn luyện xong
   — một minh chứng cho thấy huấn luyện và suy luận (inference) có thể
   được tối ưu **độc lập** với nhau.
-- Đánh đổi tốc độ >< chất lượng của DDPM (so với [GAN](23-gan.mdx)) từng
+- Đánh đổi tốc độ >< chất lượng của DDPM (so với [GAN](01-gan.mdx)) từng
   được nêu ở bài 49 — DDIM chính là câu trả lời trực tiếp cho đánh đổi
   đó, thu hẹp đáng kể khoảng cách tốc độ giữa Diffusion Models và GAN mà
   không quay lại cơ chế đối kháng (adversarial) vốn khó huấn luyện ổn
   định.
 - Tham số `η` kiểm soát đánh đổi tốc độ/chất lượng có cùng tinh thần với
   các siêu tham số đánh đổi khác đã gặp trong track (ví dụ số chiều
-  latent `k` ở [Matrix Factorization](43-collaborative-filtering-matrix-factorization.mdx),
-  kích thước từ vựng ở [BPE](64-tokenization-word-to-subword.mdx)) —
+  latent `k` ở [Matrix Factorization](03-collaborative-filtering-matrix-factorization.mdx),
+  kích thước từ vựng ở [BPE](01-tokenization-word-to-subword.mdx)) —
   một mẫu hình lặp lại: gần như mọi cải tiến hiệu quả đều đi kèm một
   tham số cho phép người dùng tự chọn điểm cân bằng phù hợp với bài toán
   cụ thể.

@@ -5,7 +5,6 @@ module: Large Language Models
 submodule: GPT & Decoder-only
 order: 3
 status: stable
-prerequisites: ["02-gpt2"]
 summary: GPT-2 chứng minh zero-shot task transfer khả thi nhưng vẫn còn khoảng cách với fine-tuning truyền thống trên nhiều tác vụ. Brown và cộng sự (2020, OpenAI) đẩy quy mô lên 175 tỷ tham số (gấp 10 lần bất kỳ mô hình non-sparse nào trước đó) và phát hiện: khi đủ lớn, mô hình có thể học từ VÀI VÍ DỤ đặt ngay trong prompt (few-shot) — không cập nhật gradient nào — đạt hiệu năng cạnh tranh được với fine-tuning truyền thống trên nhiều tác vụ NLP (dịch, hỏi-đáp, điền từ khuyết). Đây là bằng chứng thực nghiệm mạnh nhất cho in-context learning.
 last_touched_by_task: Bài mới (2026-07-10), sub-module "GPT & Decoder-only" — bài thứ 3, hoàn thiện dòng tiến hoá GPT-1 (task-agnostic, cần fine-tune) → GPT-2 (zero-shot, không cần fine-tune nhưng chưa cạnh tranh được fine-tuning) → GPT-3 (few-shot, cạnh tranh được fine-tuning). Nội dung Brown et al. 2020 trước đây nằm rải rác trong bài Prompting & In-context Learning (module LLM cũ) — nay tách thành bài riêng, bài Prompting rút gọn lại chỉ còn tóm tắt + link sang đây. Nguồn: arxiv 2005.14165 (paper gốc Brown et al. 2020, xác nhận qua WebFetch abstract: số liệu 175 tỷ tham số = 10x mô hình non-sparse lớn nhất trước đó, cơ chế in-context learning không cập nhật gradient/fine-tune, kết quả mạnh trên dịch máy/hỏi-đáp/cloze task, hạn chế tự thừa nhận: vẫn có dataset few-shot GPT-3 gặp khó khăn + vấn đề phương pháp luận khi huấn luyện trên corpus web lớn).
 ---

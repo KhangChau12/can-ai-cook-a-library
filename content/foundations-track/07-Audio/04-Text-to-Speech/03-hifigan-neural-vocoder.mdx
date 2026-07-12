@@ -5,7 +5,6 @@ module: Audio
 submodule: Text-to-Speech
 order: 3
 status: stable
-prerequisites: ["01-text-to-speech", "01-gan"]
 summary: Bài Text-to-Speech giới thiệu HiFi-GAN ở mức tổng quan (nhanh hơn WaveNet hàng nghìn lần). Bài này đào sâu kiến trúc cụ thể: generator dùng transposed convolution + multi-receptive field fusion (nhiều nhánh kernel/dilation song song, bắt đặc trưng đa độ phân giải thời gian), 2 discriminator chuyên biệt (multi-period bắt tính tuần hoàn của giọng nói, multi-scale bắt cấu trúc nhiều độ phân giải), huấn luyện bằng 3 loss kết hợp (adversarial + mel-spectrogram loss + feature matching loss) — không chỉ GAN loss thuần như DCGAN.
 last_touched_by_task: "Sửa (2026-07-10): dọn các tham chiếu 'bài NN' bằng số thứ tự cũ (plain text và link hiển thị số ảo) sang link markdown theo tên bài, khớp chuẩn hiện tại. Nội dung kỹ thuật không đổi."
 ---
@@ -14,11 +13,11 @@ Bài [Text-to-Speech](01-text-to-speech.mdx) giới thiệu HiFi-GAN ở mức
 tổng quan: vocoder dựa trên GAN, nhanh hơn WaveNet hàng nghìn lần. Bài
 này đào sâu kiến trúc cụ thể — vì sao HiFi-GAN cần **2 discriminator
 chuyên biệt** và **3 loss function** kết hợp, khác hẳn GAN thuần đã học
-ở bài [GAN](23-gan.mdx).
+ở bài [GAN](01-gan.mdx).
 
 ## Vấn đề: waveform audio có cấu trúc khác ảnh
 
-GAN cho ảnh (DCGAN, bài [DCGAN](46-dcgan.mdx)) dùng 1 discriminator CNN
+GAN cho ảnh (DCGAN, bài [DCGAN](02-dcgan.mdx)) dùng 1 discriminator CNN
 đánh giá "ảnh này thật hay giả". Nhưng waveform audio có đặc điểm mà
 discriminator CNN thuần không bắt tốt: **tính tuần hoàn** (giọng nói có
 cao độ — pitch — lặp lại theo chu kỳ) và **cấu trúc đa độ phân giải thời
@@ -35,7 +34,7 @@ theo hop_length ở bài
 ngược lại):
 
 - **Transposed convolution** (tích chập chuyển vị — đã gặp ở
-  [DCGAN](46-dcgan.mdx) cho ảnh): tăng dần độ phân giải thời gian qua
+  [DCGAN](02-dcgan.mdx) cho ảnh): tăng dần độ phân giải thời gian qua
   nhiều lớp.
 - **Multi-Receptive Field Fusion (MRF)**: sau mỗi lần upsample, thay vì
   1 khối tích chập đơn, dùng **nhiều nhánh residual block song song**,
@@ -69,16 +68,16 @@ downsample).
 2 discriminator bổ sung nhau: MPD bắt tính tuần hoàn (đặc thù giọng
 nói), MSD bắt cấu trúc đa tỷ lệ (tổng quát cho mọi tín hiệu). Cùng dùng
 kiến trúc "nhiều discriminator con chuyên biệt" — mẫu hình tương tự
-multi-head trong attention (bài [Attention](14-attention.mdx)), mỗi "đầu" nhìn
+multi-head trong attention (bài [Attention](01-attention.mdx)), mỗi "đầu" nhìn
 một khía cạnh khác nhau.
 
 ## Ba loss kết hợp — không chỉ minimax thuần
 
-GAN gốc (bài [GAN](23-gan.mdx)) chỉ có 1 minimax loss. HiFi-GAN kết hợp **3 loss**:
+GAN gốc (bài [GAN](01-gan.mdx)) chỉ có 1 minimax loss. HiFi-GAN kết hợp **3 loss**:
 
 1. **Adversarial loss** (dạng least-squares GAN — biến thể ổn định hơn
    minimax gốc, tránh vấn đề gradient bão hoà đã nhắc ở
-   [WGAN](88-wgan-stylegan.mdx) theo cách khác): generator/discriminator
+   [WGAN](03-wgan-stylegan.mdx) theo cách khác): generator/discriminator
    thi đấu chuẩn.
 2. **Mel-spectrogram loss**: tính lại mel-spectrogram từ waveform
    generator vừa sinh, so sánh **trực tiếp** (L1 loss) với mel-spectrogram
@@ -97,7 +96,7 @@ hiệu **có nhãn đúng trực tiếp** (không phải học qua đối kháng
 
 ## Liên hệ lại với các bài trước
 
-- HiFi-GAN là ví dụ áp dụng GAN (bài [23](23-gan.mdx)) cho 1 modality
+- HiFi-GAN là ví dụ áp dụng GAN (bài [23](01-gan.mdx)) cho 1 modality
   mới (audio waveform) — kiến trúc discriminator phải **thiết kế lại**
   theo đặc điểm dữ liệu (tính tuần hoàn), không sao chép nguyên xi từ
   DCGAN (ảnh) — nguyên lý chung: kiến trúc phải khớp cấu trúc dữ liệu.

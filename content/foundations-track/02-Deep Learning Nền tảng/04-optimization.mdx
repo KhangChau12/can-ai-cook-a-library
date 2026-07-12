@@ -4,7 +4,6 @@ track: foundations-track
 module: "Deep Learning Nền tảng"
 order: 4
 status: stable
-prerequisites: ["02-backpropagation"]
 summary: "Backpropagation cho gradient, nhưng gradient descent thuần chạy chậm và dễ dao động trên loss landscape hình 'thung lũng'. Dòng tiến hoá 4 bước: Momentum (Polyak, 1964) dùng đà quán tính để vượt dao động, AdaGrad/RMSProp (Hinton, 2012) tự điều chỉnh learning rate theo từng tham số, và Adam (Kingma & Ba, 2015) kết hợp cả hai ý tưởng thành optimizer mặc định phổ biến nhất hiện nay."
 last_touched_by_task: "Viết mới — lấp khoảng trống module Deep Learning Nền tảng (chỉ có Perceptron/Backprop/Regularization, dừng ở gradient descent thuần). Bài dòng tiến hoá SGD→Momentum→AdaGrad→RMSProp→Adam, dùng 3 nguồn: d2l.ai (công thức + bối cảnh AdaGrad/RMSProp), distill.pub (trực giác momentum + condition number), arxiv.org 1412.6980 (paper gốc Adam, đối chiếu epsilon=1e-8 khác d2l.ai nêu 1e-6)."
 ---
@@ -200,7 +199,7 @@ hoặc Momentum đơn thuần.
   nhật tham số.
 - Cả 4 optimizer trong dòng tiến hoá này đều là phần mở rộng trực tiếp của
   công thức `tham_so := tham_so - learning_rate * gradient` đã học từ bài
-  [Linear Regression](02-linear-regression.mdx) — không thay khung sườn
+  [Linear Regression](01-linear-regression.mdx) — không thay khung sườn
   "đi ngược chiều gradient", chỉ thay cách tính "bước đi" mỗi lần.
 - Việc chọn optimizer là một quyết định độc lập với các kỹ thuật chống
   overfitting đã học ở bài [Regularization](03-regularization.mdx) (weight

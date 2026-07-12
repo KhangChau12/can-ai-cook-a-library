@@ -5,7 +5,6 @@ module: Reinforcement Learning
 submodule: Policy-based
 order: 5
 status: stable
-prerequisites: ["01-policy-gradient", "02-actor-critic"]
 summary: Actor-Critic chuẩn chỉ chạy trên MỘT môi trường, nên các mẫu dữ liệu liên tiếp bị tương quan cao (trajectory này nối tiếp trajectory kia) — gây bất ổn khi huấn luyện. Mnih và cộng sự (2016) giải quyết bằng A3C: chạy NHIỀU actor-learner độc lập song song trên nhiều bản sao môi trường, mỗi luồng tự thu thập kinh nghiệm và cập nhật bất đồng bộ vào một bộ tham số chung — tự nhiên phá tương quan giữa các mẫu mà không cần replay buffer.
 last_touched_by_task: Tái cấu trúc (2026-07-10) — đổi order 4→5 (TRPO chen vào order 3 trước PPO). Cắt phần "A2C: biến thể đồng bộ" ở cuối bài — giờ có bài A2C riêng (06-a2c.mdx) ngay sau, tránh trùng lặp với bài đó. Nội dung A3C (song song hoá, advantage) không đổi.
 ---
@@ -91,11 +90,11 @@ biến thể đồng bộ đơn giản hoá thêm một bước.
   thuật toán vì đây là thành phần cốt lõi thứ hai (sau song song hoá).
 - Ý tưởng "chạy song song nhiều bản sao môi trường để phá tương quan mẫu"
   là một giải pháp khác hẳn hướng "lưu trữ và lấy mẫu lại" (replay buffer)
-  đã gặp ở [Q-learning/DQN](18-q-learning.mdx) — cùng mục
+  đã gặp ở [Q-learning/DQN](01-q-learning.mdx) — cùng mục
   tiêu (phá tương quan mẫu huấn luyện) nhưng bằng cơ chế hoàn toàn khác.
 - Thú vị: khái niệm "advantage" cũng xuất hiện độc lập ở nhánh Value-based
   cùng giai đoạn (2015-2016) —
-  [Dueling DQN](71-double-dueling-dqn.mdx) tách kiến
+  [Dueling DQN](02-double-dueling-dqn.mdx) tách kiến
   trúc mạng Q-value thành nhánh Value `V(s)` + nhánh Advantage `A(s,a)`,
   dùng đúng công thức tương tự nhưng cho một mục đích khác: không phải để
   giảm phương sai gradient của policy (như A3C), mà để kiến trúc mạng

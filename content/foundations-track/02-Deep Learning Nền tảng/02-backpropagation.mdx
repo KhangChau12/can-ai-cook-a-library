@@ -4,14 +4,13 @@ track: foundations-track
 module: Deep Learning Nền tảng
 order: 2
 status: stable
-prerequisites: ["01-perceptron-va-mang-no-ron"]
 summary: Thuật toán tính gradient hiệu quả cho mạng nhiều lớp: forward pass tính output, backward pass lan truyền gradient ngược từ output về input bằng chain rule, tái sử dụng kết quả trung gian thay vì tính lại từ đầu.
 last_touched_by_task: Rà lại theo triết lý nội dung mới (2026-07-06): đọc kỹ, xác nhận bài đã đạt chuẩn (ví dụ số cụ thể cho chain rule, không 'vỏ rỗng') — backpropagation là 1 thuật toán/kỹ thuật đơn, không thuộc dạng 'dòng tiến hoá nhiều model' nên không bắt buộc thêm lịch sử theo mục 2.1. Đã thử tra D2L.ai tìm lịch sử (Rumelhart/Hinton/Williams) — xác nhận không có, giữ nguyên nội dung, chỉ nâng status.
 ---
 
-Bài [Perceptron & Mạng nơ-ron nhiều lớp](08-perceptron-va-mang-no-ron.mdx)
+Bài [Perceptron & Mạng nơ-ron nhiều lớp](01-perceptron-va-mang-no-ron.mdx)
 để lại một câu hỏi bỏ ngỏ: có công thức nghiệm đóng như
-[Linear Regression](02-linear-regression.mdx), cũng không thể chỉ đơn giản
+[Linear Regression](01-linear-regression.mdx), cũng không thể chỉ đơn giản
 tính gradient trực tiếp như trước — mạng nhiều lớp có hàng nghìn, hàng
 triệu tham số xếp lồng nhau. **Backpropagation** (lan truyền ngược) là
 thuật toán giải quyết đúng bài toán này: tính gradient của loss theo mọi
@@ -111,7 +110,7 @@ chỉ chạy dự đoán bằng mạng đã huấn luyện xong.
   cách **tính gradient hiệu quả** cho một mạng nhiều lớp. Bước cập nhật
   tham số sau đó vẫn là gradient descent, giống hệt bài Linear Regression,
   chỉ áp dụng cho nhiều tham số xếp lồng nhau hơn.
-- Đây là lý do bài [Perceptron & MLP](08-perceptron-va-mang-no-ron.mdx) nói
+- Đây là lý do bài [Perceptron & MLP](01-perceptron-va-mang-no-ron.mdx) nói
   "thách thức thực tế nằm ở việc tìm ra đúng bộ trọng số" — backpropagation
   chính là câu trả lời cho thách thức đó: một cách hệ thống để tính được
   gradient cần thiết, dù mạng có bao nhiêu lớp đi nữa.

@@ -42,7 +42,7 @@ export default function QuizIsland({ lessonId, questions }: Props) {
       <div className="mb-5 flex items-center gap-3">
         <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-bg-inset">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-accent-blue to-accent-cyan-bright transition-all duration-300"
+            className="h-full rounded-full bg-primary-blue transition-all duration-300"
             style={{ width: `${(answeredCount / questions.length) * 100}%` }}
           />
         </div>

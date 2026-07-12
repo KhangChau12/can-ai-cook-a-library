@@ -5,27 +5,26 @@ module: Reinforcement Learning
 submodule: Value-based
 order: 4
 status: stable
-prerequisites: ["03-prioritized-experience-replay"]
 summary: Giữa 2013-2017, cộng đồng RL đề xuất ít nhất 6 cải tiến độc lập cho DQN (Double, Dueling, PER, multi-step, distributional/C51, Noisy Nets) — mỗi cải tiến giải một vấn đề riêng. Hessel và cộng sự (2017, DeepMind) trong bài 'Rainbow' kết hợp cả 6 thành một agent duy nhất, đạt SOTA Atari 57 game. Bài này kể 3 thành phần chưa học (multi-step n-step return, C51 phân phối return, Noisy Nets khám phá qua nhiễu tham số) và kết quả ablation: bỏ PER gây giảm nhiều nhất.
 last_touched_by_task: Bài mới (Task 99, 2026-07-07) — Phase 1 RL, hoàn thiện dòng tiến hoá Value-based: DQN (18) → Double/Dueling (71) → PER (82) → Rainbow (83). Bài tổng hợp 6 thành phần, 3 đã có bài riêng (71, 82), 3 thành phần mới (multi-step/C51/Noisy Nets) giải thích súc tích. Dạng 'tổng hợp dòng tiến hoá' nhưng 3 thành phần mới mỗi cái là 1 khái niệm đơn lẻ, arxiv 1710.02298 cung cấp đủ 6 thành phần + kết quả ablation cụ thể — 1 nguồn theo ngoại lệ mục 2.1 giống tiền lệ PER.
 ---
 
 Trong 4 năm sau khi DQN gốc ra đời (Mnih et al. 2013, bài
-[18](18-q-learning.mdx)), cộng đồng deep RL đề xuất ít nhất **6 cải tiến
+[18](01-q-learning.mdx)), cộng đồng deep RL đề xuất ít nhất **6 cải tiến
 độc lập**, mỗi cải tiến nhắm vào một vấn đề riêng của DQN:
 
 1. **Double DQN** (Van Hasselt 2015) — sửa overestimation bias.
 2. **Dueling DQN** (Wang 2015) — tách V/A trong kiến trúc.
 3. **Prioritized Experience Replay** (Schaul 2015, bài
-   [82](82-prioritized-experience-replay.mdx)) — ưu tiên transition theo
+   [82](03-prioritized-experience-replay.mdx)) — ưu tiên transition theo
    TD error.
 4. **Multi-step learning** — dùng n-step return thay 1-step.
 5. **Distributional RL (C51)** — mô hình hoá phân phối return thay vì
    chỉ kỳ vọng.
 6. **Noisy Networks** — khám phá qua nhiễu tham số thay ε-greedy.
 
-3 cải tiến đầu đã được học riêng ở bài [71](71-double-dueling-dqn.mdx) và
-[82](82-prioritized-experience-replay.mdx). Bài này kể 3 thành phần còn
+3 cải tiến đầu đã được học riêng ở bài [71](02-double-dueling-dqn.mdx) và
+[82](03-prioritized-experience-replay.mdx). Bài này kể 3 thành phần còn
 lại, rồi tổng hợp toàn bộ.
 
 ## Multi-step learning: lan truyền reward nhanh hơn
@@ -74,7 +73,7 @@ cải thiện đáng kể trên Atari. Bài [Distributional RL](05-distributiona
 
 ## Noisy Networks: khám phá qua nhiễu tham số
 
-DQN gốc khám phá (exploration) bằng ε-greedy ([Q-learning](18-q-learning.mdx)) — với xác suất ε,
+DQN gốc khám phá (exploration) bằng ε-greedy ([Q-learning](01-q-learning.mdx)) — với xác suất ε,
 chọn action ngẫu nhiên. Hạn chế: ε-greedy "mù" — chọn ngẫu nhiên không
 phụ thuộc trạng thái, nên ở những trạng thái đã rõ ràng an toàn/không
 cần khám phá, agent vẫn đôi khi chọn action ngẫu nhiên vô nghĩa.

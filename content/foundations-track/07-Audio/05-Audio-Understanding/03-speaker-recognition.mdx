@@ -5,7 +5,6 @@ module: Audio
 submodule: Audio-Understanding
 order: 3
 status: stable
-prerequisites: ["01-bieu-dien-am-thanh", "02-audio-event-detection"]
 summary: Xác định ai đang nói từ giọng nói — verification (1:1, "có đúng là người X không?") và identification (1:N, "là ai trong N người?"). Cả hai quy về cùng một kỹ thuật nền tảng — d-vector/x-vector embedding + cosine similarity — thay vì huấn luyện riêng một bộ phân loại cho từng người, vì danh sách người cần nhận diện luôn thay đổi.
 last_touched_by_task: "Bài mới (2026-07-10): lấp khoảng trống Overview đã hứa nhưng module chưa có bài — Speaker Recognition là 1 trong 6 bài toán chính được liệt kê ở Overview. Nguồn: arxiv x-vector 1810.04960 + arxiv d-vector/GE2E 1710.10467."
 ---

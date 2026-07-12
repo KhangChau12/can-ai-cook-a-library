@@ -41,7 +41,7 @@ const MODULE_LEVELS: Record<string, ModuleLevel> = {
   'Deep Learning Nền tảng': 'foundation',
   'Computer Vision': 'intermediate',
   NLP: 'intermediate',
-  'Generative Models': 'intermediate',
+  'Generative Models': 'advanced',
   'Recommendation Systems': 'intermediate',
   LLM: 'advanced',
   'Reinforcement Learning': 'advanced',
@@ -238,13 +238,27 @@ export async function getPrevNext(track: Track, lessonId: string): Promise<{ pre
   return { prev: ordered[idx - 1], next: ordered[idx + 1] };
 }
 
+// getCollection('quizzes') re-reads the whole collection on every call; with
+// gating now calling getQuizFor per-lesson (module list, sidebar x2, lesson
+// page), that added up to hundreds of redundant collection loads per build.
+// Cache once per build and index by quiz_for for O(1) lookup instead.
+let quizByLessonSlug: Map<string, Quiz> | undefined;
+
+async function getQuizIndex(): Promise<Map<string, Quiz>> {
+  if (!quizByLessonSlug) {
+    const quizzes = await getCollection('quizzes');
+    quizByLessonSlug = new Map(quizzes.map((q) => [q.data.quiz_for, q]));
+  }
+  return quizByLessonSlug;
+}
+
 export async function getQuizFor(lesson: Lesson): Promise<Quiz | undefined> {
-  const quizzes = await getCollection('quizzes');
   const lessonFileSlug = lesson.data.sourcePath
     .split('/')
     .pop()!
     .replace(/\.mdx$/, '');
-  return quizzes.find((q) => q.data.quiz_for === lessonFileSlug);
+  const index = await getQuizIndex();
+  return index.get(lessonFileSlug);
 }
 
 export function lessonUrl(lesson: Lesson): string {

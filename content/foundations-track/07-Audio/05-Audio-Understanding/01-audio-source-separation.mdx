@@ -5,7 +5,6 @@ module: Audio
 submodule: Audio-Understanding
 order: 1
 status: stable
-prerequisites: ["01-bieu-dien-am-thanh"]
 summary: Tách một bản ghi âm hỗn hợp (nhiều người nói cùng lúc, nhạc + giọng hát) thành các track riêng. Bài này kể hai nhánh: speech separation (Conv-TasNet, time-domain mask, tránh vấn đề mất pha của spectrogram-masking cũ) và music separation (Spleeter thuần spectrogram, Demucs hybrid kết hợp cả 2 domain).
 last_touched_by_task: "Sửa (2026-07-10): thêm đoạn mở đầu nối mạch (module chuyển từ nghe-hiểu/nói sang phân tích audio nói chung), giải thích rõ tại sao Conv-TasNet time-domain tốt hơn time-frequency masking cũ (vấn đề mất pha), tại sao Demucs hybrid tốt hơn Spleeter thuần spectrogram, thêm mục Liên hệ lại với các bài trước. Nguồn cũ (Conv-TasNet, Demucs) giữ nguyên, không đổi."
 ---

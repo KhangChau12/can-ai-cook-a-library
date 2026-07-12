@@ -5,7 +5,6 @@ module: Recommendation Systems
 submodule: Nền tảng Content-based & CF
 order: 3
 status: stable
-prerequisites: ["05-k-nearest-neighbors", "07-k-means-clustering", "02-memory-based-collaborative-filtering"]
 summary: Memory-based CF so trực tiếp hàng/cột ma trận rating để tìm người dùng/item giống nhau — nhưng ma trận rating thực tế cực kỳ thưa, khiến so sánh trực tiếp hoạt động kém. Simon Funk (2006, Netflix Prize) phổ biến Matrix Factorization — phân rã ma trận rating thành các latent factor chiều thấp — giải quyết đúng vấn đề đó, trở thành kỹ thuật nền tảng thắng giải Netflix Prize.
 last_touched_by_task: Tái cấu trúc (2026-07-10): chuyển vào submodule "Nền tảng Content-based & CF" (order 1→3), đổi mở bài để nối tiếp Memory-based CF thay vì mở màn module (module giờ có bài Overview + Content-based + Memory-based CF đứng trước) — theo yêu cầu người vận hành rà lại mạch tư duy module Recommendation Systems, phát hiện module thiếu Overview/Content-based làm nền và không có submodule dù đã đủ sâu để tách.
 ---
@@ -52,9 +51,9 @@ khiến tích vô hướng giữa chúng lớn (dự đoán rating cao).
 
 Vì phần lớn ma trận `R` là ô trống, huấn luyện `P` và `Q` chỉ dựa trên
 những ô **đã có rating thật** — tối thiểu hoá sai số bình phương (giống
-squared error đã quen thuộc từ [Linear Regression](02-linear-regression.mdx))
+squared error đã quen thuộc từ [Linear Regression](01-linear-regression.mdx))
 giữa rating thật và rating dự đoán, cộng thêm một số hạng **regularization**
-(đã học ở bài [Regularization](10-regularization.mdx)) để tránh overfitting
+(đã học ở bài [Regularization](03-regularization.mdx)) để tránh overfitting
 khi `k` đủ lớn:
 
 ```
@@ -86,7 +85,7 @@ nhất trong lịch sử recommendation systems hiện đại.
   trước): thay vì so trực tiếp trên ma trận thưa khổng lồ (không scale,
   không đủ dữ liệu chung để so sánh), nó nén ma trận thành các latent
   factor chiều thấp trước, giải quyết cả vấn đề quy mô lẫn vấn đề thưa.
-- Matrix Factorization cùng tinh thần với [PCA](21-pca.mdx): cả hai đều
+- Matrix Factorization cùng tinh thần với [PCA](02-pca.mdx): cả hai đều
   nén một ma trận dữ liệu lớn thành các thành phần chiều thấp hơn nhiều —
   khác biệt là PCA nén **một** ma trận dữ liệu đầy đủ để tìm hướng phương
   sai lớn nhất, còn Matrix Factorization phân rã **một** ma trận **thưa**
@@ -97,7 +96,7 @@ nhất trong lịch sử recommendation systems hiện đại.
   để hiểu cụ thể cách dùng chính kiến trúc autoencoder để giải bài toán dự
   đoán rating, thay vì phân rã ma trận tường minh.
 - Bài toán "tìm người dùng/item gần nhau trong không gian latent factor"
-  về bản chất là bài toán tìm hàng xóm gần nhất đã học ở [k-NN](05-k-nearest-neighbors.mdx)
+  về bản chất là bài toán tìm hàng xóm gần nhất đã học ở [k-NN](04-k-nearest-neighbors.mdx)
   — chỉ khác không gian feature là không gian latent tự học được, không phải
   feature số cho sẵn. Đây cũng chính xác là kỹ thuật **vector search** đã
   học ở bài [RAG, Embedding & Agent](../../04-NLP-LLM/06-Ung-dung-Inference-time/02-rag-embedding-agent.mdx):

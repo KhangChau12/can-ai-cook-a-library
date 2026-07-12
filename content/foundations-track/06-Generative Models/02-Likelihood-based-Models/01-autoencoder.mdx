@@ -5,7 +5,6 @@ module: Generative Models
 submodule: Likelihood-based Models
 order: 1
 status: stable
-prerequisites: ["07-k-means-clustering"]
 summary: Kiến trúc encoder-decoder tự học cách nén dữ liệu vào một biểu diễn ẩn (bottleneck) rồi khôi phục lại, huấn luyện chỉ bằng reconstruction loss — không cần nhãn, giống K-means nhưng dùng mạng nơ-ron. Nền tảng trực tiếp cho VAE (bài tiếp theo).
 last_touched_by_task: Tách sub-module "Likelihood-based Models" khỏi "Overview" (2026-07-11, theo yêu cầu người vận hành sau khi review chiều sâu module) — Autoencoder→VAE→Flow-based là một mạch tiến hoá likelihood-based riêng, "Overview" giờ chỉ còn đúng 1 bài mở đầu module. Nội dung không đổi, chỉ đổi submodule/order.
 ---

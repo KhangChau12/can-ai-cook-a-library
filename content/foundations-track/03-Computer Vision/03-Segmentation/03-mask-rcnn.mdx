@@ -5,15 +5,14 @@ module: Computer Vision
 submodule: Segmentation
 order: 3
 status: stable
-prerequisites: ["01-object-detection", "02-unet"]
 summary: U-Net giải quyết semantic segmentation nhưng không phân biệt được từng cá thể riêng lẻ cùng lớp (instance segmentation). He và cộng sự (2017) giải quyết bằng cách mở rộng trực tiếp Faster R-CNN: thêm một nhánh dự đoán mask chạy song song với nhánh bounding box đã có — đạt kết quả hàng đầu cả 3 hạng mục COCO 2016 (instance segmentation, detection, keypoint) với overhead nhỏ, chạy 5 FPS.
 last_touched_by_task: Bài mới (2026-07-06) — bài đầu tiên kết nối trực tiếp 2 sub-module Detection và Segmentation, đặt tại Segmentation theo đúng ghi chú CLAUDE.md mục 4 (bản chất bài toán là segmentation dù dựa trên kiến trúc detection). Nguồn: arxiv (paper gốc He et al. 2017, xác nhận qua WebFetch trực tiếp abstract: vấn đề instance segmentation, giải pháp thêm nhánh mask, kết quả COCO 2016 cụ thể).
 ---
 
-Bài [Object Detection](33-object-detection.mdx) đã nhắc tới **instance
+Bài [Object Detection](01-object-detection.mdx) đã nhắc tới **instance
 segmentation** như bài toán khó nhất trong 4 tác vụ computer vision cơ
 bản — kết hợp cả định vị/đếm vật thể (tinh thần detection) và phân loại
-chi tiết mức pixel (tinh thần semantic segmentation). Bài [U-Net](40-unet.mdx)
+chi tiết mức pixel (tinh thần semantic segmentation). Bài [U-Net](02-unet.mdx)
 giải quyết tốt semantic segmentation nhưng **không phân biệt được** hai
 cá thể riêng lẻ cùng lớp (ví dụ 2 con mèo trong cùng ảnh vẫn chỉ được
 gán chung nhãn "mèo", không biết đâu là "mèo thứ nhất" hay "mèo thứ
@@ -24,7 +23,7 @@ toán khó nhất đó.
 
 **He và cộng sự (2017)**, trong bài báo "Mask R-CNN", không xây dựng
 một kiến trúc hoàn toàn mới cho instance segmentation — thay vào đó, họ
-nhận ra Faster R-CNN (đã kể ở bài [Object Detection](33-object-detection.mdx))
+nhận ra Faster R-CNN (đã kể ở bài [Object Detection](01-object-detection.mdx))
 đã giải quyết đúng phần khó của bài toán: tìm và phân loại từng vật thể
 riêng lẻ trong ảnh (chính là "instance" mà instance segmentation cần).
 Cái còn thiếu chỉ là: với mỗi vật thể đã tìm được, cần thêm một bước dự
@@ -72,10 +71,10 @@ detection và segmentation trong đúng một kiến trúc duy nhất.
   giữa các "sub-module" (Detection, Segmentation) không hoàn toàn tách
   biệt trong thực tế — cùng một kiến trúc có thể giải quyết cả hai bài
   toán cùng lúc, vì instance segmentation vốn dĩ là sự kết hợp của cả
-  hai (đã nói ở bài [Object Detection](33-object-detection.mdx)).
-- Vẫn dùng CNN (bài [CNN](11-convolutional-neural-network.mdx)) làm
+  hai (đã nói ở bài [Object Detection](01-object-detection.mdx)).
+- Vẫn dùng CNN (bài [CNN](01-cnn.mdx)) làm
   nền tảng trích xuất đặc trưng chung cho cả 3 nhánh dự đoán, và vẫn
-  huấn luyện bằng [backpropagation](09-backpropagation.mdx) — điểm mới
+  huấn luyện bằng [backpropagation](02-backpropagation.mdx) — điểm mới
   chỉ nằm ở việc thêm một đầu ra (nhánh mask) và hàm loss tương ứng cho
   nhánh đó, không thay đổi cơ chế tối ưu hoá nền tảng.
 - Đây cũng là một ví dụ khác cho mẫu hình "mở rộng đúng chỗ" đã gặp ở

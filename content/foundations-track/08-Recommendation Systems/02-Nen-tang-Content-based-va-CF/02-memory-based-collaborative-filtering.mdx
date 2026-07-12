@@ -5,7 +5,6 @@ module: Recommendation Systems
 submodule: Nền tảng Content-based & CF
 order: 2
 status: stable
-prerequisites: ["01-recommendation-systems-overview", "01-content-based-filtering", "05-k-nearest-neighbors"]
 summary: "Collaborative Filtering giải quyết bài toán gợi ý mà không cần hiểu nội dung item — chỉ cần hành vi tương tác của đám đông. Memory-based CF (user-based/item-based) là dạng đơn giản nhất: so trực tiếp các hàng/cột của ma trận rating bằng cosine similarity hoặc Pearson correlation để tìm người dùng/item giống nhau. Hoạt động tốt ở quy mô nhỏ, nhưng lộ rõ hai hạn chế cố hữu khi dữ liệu lớn dần: không scale và không xử lý được ma trận cực kỳ thưa — đúng vấn đề Matrix Factorization (bài tiếp theo) giải quyết."
 last_touched_by_task: "Bài mới (2026-07-10), bài thứ 2 sub-module Nền tảng Content-based & CF — lấp khoảng trống 'bước trung gian' giữa Content-based Filtering và Matrix Factorization: bài Matrix Factorization cũ nhảy thẳng vào vấn đề ma trận thưa mà chưa từng giới thiệu cách tiếp cận CF đơn giản nhất (so trực tiếp hàng/cột) để người đọc thấy rõ VÌ SAO cách đó không ổn trước khi học factorization. Nguồn: D2L.ai recsys-intro.html (xác nhận qua WebFetch: câu 'CF encompasses memory-based methods (nearest-neighbor approaches) and model-based techniques (matrix factorization, neural networks)' — xác nhận memory-based CF là nhánh riêng biệt, đứng trước model-based CF) + kiến thức chuẩn ngành về user-based/item-based CF, cosine similarity, Pearson correlation (thuật ngữ/công thức kinh điển, không cần trích dẫn số liệu thực nghiệm cụ thể nào)."
 ---
@@ -49,7 +48,7 @@ thác trực tiếp ma trận này theo hai cách:
   tương tự.
 
 Cả hai đều là bài toán tìm hàng xóm gần nhất — đúng ý tưởng đã học ở
-[k-NN](05-k-nearest-neighbors.mdx), chỉ khác "khoảng cách" được đo giữa
+[k-NN](04-k-nearest-neighbors.mdx), chỉ khác "khoảng cách" được đo giữa
 các hàng/cột của ma trận rating thay vì giữa các điểm dữ liệu thông thường.
 
 ## Đo độ giống nhau: cosine similarity và Pearson correlation
@@ -92,7 +91,7 @@ của họ khá tương đồng.
 ## Liên hệ lại với các bài trước
 
 - Cả user-based và item-based CF đều là ứng dụng trực tiếp của ý tưởng
-  "hàng xóm gần nhất" đã học ở [k-NN](05-k-nearest-neighbors.mdx) — không
+  "hàng xóm gần nhất" đã học ở [k-NN](04-k-nearest-neighbors.mdx) — không
   có gì mới về thuật toán, chỉ khác không gian áp dụng (hàng/cột ma trận
   rating thay vì điểm dữ liệu thông thường).
 - Cosine similarity dùng ở đây chính là công thức đã giới thiệu ở bài

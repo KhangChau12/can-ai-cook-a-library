@@ -5,7 +5,6 @@ module: Nền tảng Toán & ML cổ điển
 submodule: Unsupervised Learning
 order: 4
 status: stable
-prerequisites: ["03-tsne"]
 summary: t-SNE giữ cấu trúc lân cận cục bộ rất tốt nhưng có 3 hạn chế cụ thể: tốn compute, không giữ cấu trúc toàn cục đáng tin cậy, giới hạn số chiều nhúng (Barnes-Hut chỉ 2-3 chiều). McInnes, Healy và Melville (2018) giải quyết bằng UMAP: xây dựng trên nền tảng lý thuyết Riemannian geometry và algebraic topology, đạt chất lượng trực quan hoá cạnh tranh với t-SNE nhưng nhanh hơn, giữ cấu trúc toàn cục tốt hơn, và không giới hạn số chiều nhúng.
 last_touched_by_task: Bài mới (2026-07-06), bài thứ 4 module Dimensionality Reduction — nối tiếp trực tiếp bài 48 (t-SNE), giải quyết đúng 3 hạn chế cụ thể mà bài t-SNE đã nêu rõ (tốn compute, mất cấu trúc toàn cục, giới hạn Barnes-Hut 2-3 chiều). Nguồn: arxiv 1802.03426 (paper gốc McInnes/Healy/Melville 2018, xác nhận qua WebFetch abstract: 3 ưu điểm cụ thể so với t-SNE, nền tảng lý thuyết Riemannian geometry/algebraic topology). Đã thử tìm nguồn thứ 2 (scikit-learn manifold.html xác nhận KHÔNG có UMAP vì là thư viện ngoài sklearn core; Lil'Log word embedding không đề cập; cs231n chỉ nhắc t-SNE không nhắc UMAP) không thành công — chấp nhận 1 nguồn theo đúng tiền lệ đã áp dụng cho t-SNE (bài 48), vì đây được coi là kỹ thuật thay thế cho mục đích trực quan hoá, không bắt buộc 2 nguồn máy móc theo mục 2.5.
 ---

@@ -5,19 +5,18 @@ module: Natural Language Processing
 submodule: Transformer Architecture
 order: 4
 status: stable
-prerequisites: ["02-transformer", "03-transformer-xl", "08-swin-transformer"]
 summary: Transformer-XL mở rộng ngữ cảnh hiệu quả bằng cách tái sử dụng hidden state qua các segment, nhưng không giải quyết trực tiếp gốc rễ vấn đề: self-attention vẫn tính toán theo BÌNH PHƯƠNG độ dài chuỗi bên trong mỗi segment. Beltagy và cộng sự (2020) tấn công thẳng vào gốc rễ đó với Longformer: kết hợp local windowed attention (mỗi token chỉ chú ý tới các token lân cận trong 1 cửa sổ cố định — độ phức tạp tuyến tính) với global attention có chọn lọc (một số ít token đặc biệt được chú ý bởi toàn bộ chuỗi) — cùng tinh thần với shifted window attention đã học ở Swin Transformer, nhưng áp dụng cho văn bản thay vì ảnh.
 last_touched_by_task: Bài mới (2026-07-06), tiếp tục đào sâu Sequence Model theo chỉ đạo người vận hành. Bài này bổ sung góc độ khác cho vấn đề 'văn bản dài' đã học ở bài 61 (Transformer-XL) — Transformer-XL giải quyết bằng segment recurrence (mở rộng ngữ cảnh hiệu quả), Longformer giải quyết trực tiếp độ phức tạp bậc hai của attention (giảm chi phí tính toán gốc). Kết nối liên module quan trọng: dùng lại đúng ý tưởng 'cửa sổ cục bộ + trao đổi toàn cục' đã học ở Swin Transformer (bài 58, module Computer Vision) áp dụng cho văn bản. Nguồn: arxiv 2004.05150 (paper gốc Beltagy et al. 2020, xác nhận qua WebFetch abstract: vấn đề độ phức tạp bậc hai, giải pháp local windowed + global attention, kết quả SOTA text8/enwik8, vượt trội RoBERTa) + lilianweng.github.io/posts/2020-04-07-the-transformer-family (Lil'Log, xác nhận qua WebFetch: mô tả các hướng tiếp cận khác cùng mục tiêu — Sparse Transformer dùng factorized self-attention, Reformer dùng locality-sensitive hashing đạt O(L log L) — dùng làm ngữ cảnh đối chiếu, không phải nguồn chính cho riêng Longformer).
 ---
 
-Bài [Transformer-XL](61-transformer-xl.mdx) giải quyết vấn đề văn bản
+Bài [Transformer-XL](03-transformer-xl.mdx) giải quyết vấn đề văn bản
 dài bằng cách **tái sử dụng** hidden state qua các segment — mở rộng
 phạm vi ngữ cảnh hiệu quả mà không cần tính toán lại từ đầu. Nhưng cách
 đó không giải quyết trực tiếp **gốc rễ** vấn đề: bên trong mỗi segment,
-self-attention (đã học ở bài [Transformer](15-transformer.mdx)) vẫn tính
+self-attention (đã học ở bài [Transformer](02-transformer.mdx)) vẫn tính
 toán theo cách mọi token chú ý tới mọi token khác — độ phức tạp tăng
 theo **bình phương** độ dài chuỗi, giống hệt vấn đề đã gặp ở
-[Vision Transformer](55-vision-transformer.mdx) khi áp dụng cho ảnh độ
+[Vision Transformer](07-vision-transformer.mdx) khi áp dụng cho ảnh độ
 phân giải cao.
 
 ## Vấn đề: self-attention toàn cục không mở rộng được cho văn bản rất dài
@@ -54,7 +53,7 @@ chọn lọc.
 
 Đáng chú ý: cơ chế "giới hạn attention trong cửa sổ cục bộ, rồi bổ sung
 cách trao đổi thông tin ở phạm vi rộng hơn" chính là **cùng một ý tưởng**
-đã học ở bài [Swin Transformer](58-swin-transformer.mdx) (module Computer
+đã học ở bài [Swin Transformer](08-swin-transformer.mdx) (module Computer
 Vision) — nơi self-attention bị giới hạn trong các cửa sổ ảnh cục bộ,
 rồi giải quyết vấn đề trao đổi thông tin liên cửa sổ bằng cách **dịch
 chuyển** (shift) ranh giới cửa sổ ở lớp kế tiếp. Longformer áp dụng đúng
@@ -77,7 +76,7 @@ khác đáng chú ý:
   một "bucket" trước khi tính attention) để đạt độ phức tạp `O(L log L)`
   thay vì `O(L²)`, kèm thêm **reversible residual layers** giải quyết
   luôn cả vấn đề bộ nhớ khi huấn luyện — xem chi tiết đầy đủ ở bài
-  [Reformer](74-reformer.mdx).
+  [Reformer](05-reformer.mdx).
 
 Cả ba hướng (Longformer, Sparse Transformer, Reformer) đều nhắm chung
 một mục tiêu — giảm độ phức tạp tính toán của self-attention từ bậc hai

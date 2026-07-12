@@ -4,7 +4,6 @@ track: foundations-track
 module: Generative Models
 order: 2
 status: stable
-prerequisites: ["02-vae-variational-autoencoder", "01-gan", "01-pixelcnn-pixelrnn"]
 summary: VAE (bài trước) thường sinh ảnh mờ vì ELBO + Gaussian prior. VQ-VAE (van den Oord 2017) giải quyết bằng cách lượng tử hoá không gian latent thành discrete codebook — mỗi ảnh là chuỗi index từ codebook. VQ-GAN (Esser 2021) thêm adversarial loss cho ảnh sắc nét hơn. Cả hai là nền tảng cho DALL-E, Stable Diffusion, và nhiều model sinh hiện đại.
 last_touched_by_task: Chuyển từ sub-module "Overview" sang cuối "Generative Adversarial Network Family" (2026-07-11), sau đó tách tiếp sang sub-module riêng "Autoregressive & Hybrid Models" cùng PixelCNN (2026-07-11, review chiều sâu module) — VQ-VAE (phần lớn nội dung bài) không mang tính đối kháng, chỉ VQ-GAN mới thêm adversarial loss; gộp cả bài vào "GAN Family" theo tên thư mục dễ gây hiểu lầm. Sửa toàn bộ link theo vị trí file mới.
 submodule: Autoregressive & Hybrid Models

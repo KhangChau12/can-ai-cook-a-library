@@ -5,12 +5,11 @@ module: Large Language Models
 submodule: Huấn luyện & Alignment
 order: 3
 status: stable
-prerequisites: ["01-pretraining-llm"]
 summary: Base model sau pretraining chỉ biết 'hoàn thành văn bản', không hiểu ý định của một câu lệnh/câu hỏi. Instruction tuning — supervised fine-tuning trên các cặp (hướng dẫn, câu trả lời mong muốn) — biến base model thành một trợ lý biết làm theo hướng dẫn.
 last_touched_by_task: Rà lại theo triết lý nội dung mới (2026-07-06): đọc kỹ, xác nhận bài đã đạt chuẩn (ví dụ base vs instruct cụ thể, catastrophic forgetting giải thích rõ, không 'vỏ rỗng') — instruction tuning là 1 kỹ thuật đơn, không thuộc dạng 'dòng tiến hoá nhiều model'. Cập nhật (2026-07-06, Task 85): thêm liên kết sang bài 80 (LoRA) mới viết — trả lời cụ thể câu hỏi 'làm sao fine-tune hiệu quả tham số' mà bài này chỉ nói chung chung.
 ---
 
-Bài [Pretraining](24-pretraining-llm.mdx) kết thúc bằng một vấn đề bỏ ngỏ:
+Bài [Pretraining](01-pretraining-llm.mdx) kết thúc bằng một vấn đề bỏ ngỏ:
 sau pretraining, mô hình chỉ biết **hoàn thành văn bản** hợp lý dựa trên
 ngữ cảnh — gọi là **base model**. Nếu đưa cho base model một câu hỏi trực
 tiếp (ví dụ "Thủ đô của Việt Nam là gì?"), nó có thể tiếp tục viết thêm
@@ -60,7 +59,7 @@ nền, khả năng suy luận cơ bản), instruction tuning không cần dạy 
 khuôn mẫu "làm theo hướng dẫn". Vì vậy, bước này cần lượng dữ liệu **nhỏ
 hơn rất nhiều** so với pretraining (có thể chỉ cần một tập dữ liệu chất
 lượng cao, được chọn lọc kỹ, thay vì hàng tỷ token thô), và tốn ít compute
-hơn nhiều — xem bài [LoRA](80-lora.mdx) để hiểu cụ thể một kỹ thuật giảm
+hơn nhiều — xem bài [LoRA](05-lora.mdx) để hiểu cụ thể một kỹ thuật giảm
 chi phí fine-tune hơn nữa bằng cách chỉ học một lượng tham số rất nhỏ.
 
 ## Rủi ro: catastrophic forgetting
@@ -89,7 +88,7 @@ mà không tốn chi phí và rủi ro catastrophic forgetting của việc fine
 ## Liên hệ lại với các bài trước
 
 - Instruction tuning dùng lại nguyên vẹn kiến trúc Transformer decoder và
-  cross-entropy loss đã học ở bài [Pretraining](24-pretraining-llm.mdx) —
+  cross-entropy loss đã học ở bài [Pretraining](01-pretraining-llm.mdx) —
   không có gì mới về mặt toán học, chỉ khác cấu trúc dữ liệu huấn luyện.
 - Đây là một ví dụ cụ thể của **transfer learning** theo tinh thần đã gặp
   ở Ensemble Methods và Autoencoder: dùng lại kiến thức đã học từ một bước

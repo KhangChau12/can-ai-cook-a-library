@@ -105,7 +105,7 @@ autopilot-learn/
 thuần (frontmatter YAML-ish + markdown), không có JSX/component nào bên
 trong, để có thể tái sử dụng nguyên vẹn cho `/learn` thật trên web chính
 sau này. Frontmatter: `title`, `track`, `module`, `submodule` (tuỳ chọn),
-`order`, `status`, `prerequisites`, `summary`... Một số bài có file
+`order`, `status`, `summary`... Một số bài có file
 `.quiz.mdx` đi kèm (cùng tên, hậu tố `.quiz`) chứa 3-5 câu trắc nghiệm.
 
 Chi tiết đầy đủ về quy chuẩn viết, whitelist nguồn tham khảo, cách chia

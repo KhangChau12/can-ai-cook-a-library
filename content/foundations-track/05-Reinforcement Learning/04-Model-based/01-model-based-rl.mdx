@@ -5,14 +5,13 @@ module: Reinforcement Learning
 submodule: Model-based
 order: 1
 status: stable
-prerequisites: ["01-q-learning"]
 summary: Value-based (DQN) và Policy-based (PPO) đều model-free — chỉ học từ reward, không cần hiểu môi trường. Model-based RL học thêm một 'mô hình môi trường' (transition + reward) để mô phỏng/suy nghĩ trước khi hành động. Dòng tiến hoá: Dyna-Q (Sutton 1990, dùng model sinh experience giả) → AlphaZero (2017, model = luật game đã biết + MCTS) → MuZero (Schrittwieser 2019, học cả dynamics trong latent space, không cần biết luật). Lợi ích: sample efficiency cao hơn model-free rất nhiều.
 last_touched_by_task: Bài mới (Task 102, 2026-07-07) — Phase 1 RL, mở submodule thứ 3 'Model-based' (trường phái RL thứ 3 còn thiếu hoàn toàn, song song Value-based/Policy-based). Bài dòng tiến hoá 3 model (Dyna-Q→AlphaZero→MuZero), mỗi cái giải hạn chế cái trước. 2 nguồn: arxiv MuZero (Schrittwieser 2019) + lilianweng.github.io (RL overview có phần model-based). Bài 87 tiếp theo sẽ đào sâu AlphaGo/AlphaZero riêng (MCTS + self-play). Tách submodule 'Model-based' cập nhật modules.json cùng task.
 ---
 
 Cho tới nay toàn bộ RL đã học đều là **model-free** — DQN (bài
-[18](18-q-learning.mdx)), PPO (bài [47](47-ppo.mdx)), SAC (bài
-[78](78-sac.mdx))... agent chỉ học từ reward quan sát được qua tương tác
+[18](01-q-learning.mdx)), PPO (bài [47](04-ppo.mdx)), SAC (bài
+[78](08-sac.mdx))... agent chỉ học từ reward quan sát được qua tương tác
 thực, **không cần hiểu** cơ chế nội tại của environment. Cách này đơn giản
 nhưng lãng phí: mỗi trải nghiệm thực "đắt" (phải chạy environment thật),
 agent không suy nghĩ được "nếu mình làm X thì chuyện gì xảy ra".

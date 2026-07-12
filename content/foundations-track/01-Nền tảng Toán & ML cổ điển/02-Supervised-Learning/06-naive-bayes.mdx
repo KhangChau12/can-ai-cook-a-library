@@ -5,7 +5,6 @@ module: Nền tảng Toán & ML cổ điển
 submodule: Supervised Learning
 order: 6
 status: stable
-prerequisites: ["01-xac-suat-thong-ke-co-ban", "02-logistic-regression"]
 summary: Áp dụng định lý Bayes (đã học ở bài 1) trực tiếp cho bài toán classification gặp một vấn đề tính toán: ước lượng xác suất đồng thời của mọi feature theo từng lớp đòi hỏi số tham số tăng theo cấp số nhân, dễ rơi vào curse of dimensionality. Naive Bayes giải quyết bằng một giả định đơn giản hoá táo bạo — coi mọi feature độc lập với nhau khi đã biết lớp — đổi lấy tốc độ cực nhanh và hoạt động tốt ngay cả với dữ liệu huấn luyện nhỏ, dù giả định đó hiếm khi đúng hoàn toàn trong thực tế.
 last_touched_by_task: Bài mới (2026-07-06), lấp khoảng trống trong module 'Nền tảng Toán & ML cổ điển' — track đã dạy định lý Bayes ở bài 01 (ví dụ xét nghiệm y tế) nhưng chưa có thuật toán classification áp dụng trực tiếp nguyên lý đó. Nguồn: scikit-learn (modules/naive_bayes.html, xác nhận qua WebFetch rất chi tiết: công thức Bayes theorem đầy đủ, giả định conditional independence, MAP estimation, vấn đề curse of dimensionality nếu không có giả định, các biến thể Gaussian/Multinomial/Bernoulli, và lưu ý predict_proba không đáng tin cậy dù classification vẫn tốt). Không thuộc dạng bài 'dòng tiến hoá nhiều model' (1 thuật toán đơn, không tiền thân cạnh tranh trực tiếp) nên 1 nguồn là đủ theo mục 2.5.
 ---

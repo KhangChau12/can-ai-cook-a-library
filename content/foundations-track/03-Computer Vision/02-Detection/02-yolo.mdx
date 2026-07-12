@@ -5,12 +5,11 @@ module: Computer Vision
 submodule: Detection
 order: 2
 status: stable
-prerequisites: ["01-object-detection"]
 summary: R-CNN family (Girshick 2014 → Faster R-CNN) giải quyết object detection bằng kiến trúc two-stage ngày càng nhanh hơn nhưng vẫn giữ 2 bước tách biệt. Redmon và cộng sự (2015) đặt câu hỏi triệt để hơn: có cần tách 2 bước không? YOLO (You Only Look Once) biến toàn bộ bài toán thành một phép hồi quy duy nhất qua một mạng nơ-ron, đạt 45 FPS (155 FPS bản Fast) — mở ra họ kiến trúc one-stage cho ứng dụng thời gian thực.
 last_touched_by_task: Bài mới (2026-07-06) mở rộng sub-module 'Detection' (đã có bài mở đầu 33-Object Detection với dòng R-CNN family) — bài này kể tiếp nhánh one-stage song song, đối chiếu trực tiếp two-stage vs one-stage. Nguồn: arxiv (paper gốc Redmon et al. 2015, xác nhận qua WebFetch trực tiếp abstract: vấn đề two-stage, giải pháp hồi quy 1 bước, kết quả FPS cụ thể).
 ---
 
-Bài [Object Detection](33-object-detection.mdx) đã kể dòng tiến hoá
+Bài [Object Detection](01-object-detection.mdx) đã kể dòng tiến hoá
 R-CNN → Fast R-CNN → Faster R-CNN — mỗi bước giải quyết đúng một
 bottleneck tốc độ của bước trước, nhưng cả ba vẫn giữ nguyên cấu trúc
 **two-stage**: một bước đề xuất vùng (region proposal), rồi một bước
@@ -78,7 +77,7 @@ thường ưu tiên one-stage.
 
 ## Liên hệ lại với các bài trước
 
-- YOLO vẫn dùng CNN (bài [CNN](11-convolutional-neural-network.mdx)) làm
+- YOLO vẫn dùng CNN (bài [CNN](01-cnn.mdx)) làm
   phần trích xuất đặc trưng nền tảng — điểm khác biệt với R-CNN family
   không nằm ở cách trích xuất đặc trưng, mà ở cách **tổ chức lại toàn bộ
   bài toán** thành một phép hồi quy duy nhất thay vì pipeline nhiều
@@ -88,7 +87,7 @@ thường ưu tiên one-stage.
   R-CNN → Faster R-CNN tối ưu dần selective search) mà là "đặt lại toàn
   bộ câu hỏi" — giống cách Transformer (15) đặt câu hỏi "có cần RNN
   không?" thay vì tiếp tục tối ưu RNN/LSTM.
-- Vẫn huấn luyện bằng [backpropagation](09-backpropagation.mdx) như mọi
+- Vẫn huấn luyện bằng [backpropagation](02-backpropagation.mdx) như mọi
   mạng nơ-ron khác — YOLO chỉ thay đổi cách công thức hoá đầu ra và hàm
   loss (dự đoán trực tiếp toạ độ + lớp trong một lần), không thay đổi cơ
   chế tối ưu hoá.

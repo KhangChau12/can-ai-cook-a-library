@@ -4,7 +4,6 @@ track: foundations-track
 module: "Deep Learning Nền tảng"
 order: 5
 status: stable
-prerequisites: ["02-backpropagation"]
 summary: "Khởi tạo trọng số sai làm mạng nơ-ron không học được ngay từ bước đầu tiên: khởi tạo về 0 gây vấn đề đối xứng, khởi tạo ngẫu nhiên thô gây vanishing/exploding gradient. Xavier/Glorot (2010) giữ phương sai activation ổn định qua các lớp cho mạng tuyến tính/tanh, He (2015) sửa lại hệ số cho ReLU — vì ReLU triệt tiêu một nửa tín hiệu, phá vỡ đúng giả định của Xavier."
 last_touched_by_task: "Viết mới — tiếp nối bài Optimizer, lấp khoảng trống 'vì sao cần chọn điểm khởi đầu đúng trước khi tối ưu hoá'. Nguồn: d2l.ai (symmetry problem, vanishing/exploding gradient demo, công thức Xavier đầy đủ), cs231n.github.io (công thức He, liên kết trực tiếp paper He et al.), arxiv.org 1502.01852 (paper gốc He, đúng đoạn suy ra hệ số 2 từ việc ReLU triệt tiêu nửa tín hiệu). Xác nhận: paper Glorot & Bengio 2010 không nằm trên arxiv.org (ở proceedings.mlr.press, ngoài whitelist) — trích qua d2l.ai/cs231n theo đúng mô tả nội dung, không tự bịa công thức."
 ---
@@ -132,7 +131,7 @@ kiểm tra.
   [Regularization](03-regularization.mdx) và [Optimizer](04-optimization.mdx)
   cần tồn tại: mạng nơ-ron nhiều tham số xếp lồng nhau tạo ra những hiệu
   ứng khuếch đại/suy giảm theo cấp số nhân mà mô hình tuyến tính đơn giản
-  (bài [Linear Regression](02-linear-regression.mdx)) không gặp phải.
+  (bài [Linear Regression](01-linear-regression.mdx)) không gặp phải.
 - Khác với [Optimizer](04-optimization.mdx) (cải thiện **cách cập nhật**
   trọng số qua nhiều bước), weight initialization chỉ tác động **đúng một
   lần** — tại bước đầu tiên trước khi train bắt đầu. Nhưng chọn sai điểm

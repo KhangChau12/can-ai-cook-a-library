@@ -5,12 +5,11 @@ module: Natural Language Processing
 submodule: Recurrent Neural Network Family
 order: 4
 status: stable
-prerequisites: ["02-lstm-gru"]
 summary: RNN/LSTM/GRU (đã học) chỉ xử lý chuỗi theo một chiều — mỗi bước chỉ 'biết' những gì đã xảy ra TRƯỚC nó, không biết gì về những gì sẽ tới SAU. Với nhiều tác vụ (gán nhãn từ loại, điền từ khuyết trong câu), ngữ cảnh phía sau cũng quan trọng không kém ngữ cảnh phía trước. 'Bidirectional' không phải một kiến trúc cell mới mà là một CÁCH BỌC tổng quát áp dụng được cho cả ba (Bidirectional RNN, Bidirectional LSTM, Bidirectional GRU đều tồn tại) — chạy hai mạng độc lập theo hai chiều ngược nhau trên cùng một chuỗi, rồi ghép (concatenate) hidden state của cả hai lại. Đổi lại: không dùng được cho các tác vụ cần dự đoán ngay lập tức (real-time) hay sinh văn bản tuần tự, vì cần biết trước toàn bộ chuỗi trước khi xử lý.
 last_touched_by_task: Bài mới (2026-07-06), theo yêu cầu người vận hành đào sâu thêm sub-module 'RNN Family' (nhận xét: RNN/LSTM/GRU 'vẫn còn nhiều điều để nói, về bidirection, các cải tiến và nhiều thứ khác') — đây là bài đầu tiên đào sâu theo hướng đó. Người vận hành xác nhận thêm ngay sau khi bài được viết: 'bi là 1 ý tưởng có thể dùng chung cho gru, lstm, rnn hết' — đã sửa lại toàn bộ bài để nhấn mạnh đây là kỹ thuật WRAPPER tổng quát cho mọi loại cell hồi quy (không riêng RNN), thay vì đóng khung hẹp chỉ nói về RNN như bản nháp đầu. Nguồn: D2L.ai (chapter_recurrent-modern/bi-rnn.html, xác nhận qua WebFetch: vấn đề cụ thể ngữ cảnh tương lai qua ví dụ điền từ khuyết 'I am ___', kiến trúc 2 mạng độc lập chạy ngược chiều rồi ghép hidden state, và lưu ý quan trọng về chi phí huấn luyện + KHÔNG dùng được cho autoregressive language modeling). Không thuộc dạng 'dòng tiến hoá nhiều model' (là 1 kỹ thuật mở rộng kiến trúc áp dụng chung, không phải model kế nhiệm giải quyết hạn chế lịch sử của model trước) nên 1 nguồn là đủ theo mục 2.5. Đã thử tìm nguồn thứ 2 (cs231n) — xác nhận KHÔNG có nội dung bidirectional RNN. Cập nhật (2026-07-09, tái cấu trúc module): đổi order từ 3 lên 4 — Seq2seq (order 3) chuyển lên trước để làm rõ động lực ứng dụng trước khi học biến thể kỹ thuật này. Cập nhật (2026-07-10, tách module NLP/LLM): sửa link [RNN] trỏ nhầm slug "recurrent-neural-network" (không tồn tại) thành đúng "01-rnn.mdx".
 ---
 
-Bài [RNN](01-rnn.mdx) và [LSTM/GRU](13-lstm-gru.mdx)
+Bài [RNN](01-rnn.mdx) và [LSTM/GRU](02-lstm-gru.mdx)
 xử lý chuỗi theo đúng một chiều — từ đầu tới cuối. Bài này kể cách một
 kỹ thuật đơn giản mở rộng cả ba kiến trúc đó để tận dụng thêm một nguồn
 thông tin mà cách xử lý một chiều bỏ lỡ hoàn toàn.
@@ -78,7 +77,7 @@ Bidirectional RNN có hai giới hạn cụ thể quan trọng cần lưu ý:
    biết **toàn bộ** phần chuỗi phía sau bước đó — điều này hoàn toàn
    **không khả thi** với các tác vụ như dự đoán thời gian thực (chưa có
    dữ liệu tương lai để xử lý) hay next-token prediction kiểu GPT (đã học
-   ở bài [Pretraining](24-pretraining-llm.mdx) — về bản chất, việc dự
+   ở bài [Pretraining](01-pretraining-llm.mdx) — về bản chất, việc dự
    đoán token tiếp theo đòi hỏi mô hình **không được phép** nhìn thấy
    phần chuỗi phía sau, ngược hẳn với mục đích của bidirectional RNN).
 
@@ -90,16 +89,16 @@ tự** nơi tương lai chưa tồn tại tại thời điểm dự đoán.
 ## Liên hệ lại với các bài trước
 
 - Đây chính là bản tiền thân đơn giản hơn nhiều cho ý tưởng "ngữ cảnh hai
-  chiều" mà [BERT](45-bert.mdx) sau này áp dụng ở quy mô lớn hơn nhiều —
+  chiều" mà [BERT](01-bert.mdx) sau này áp dụng ở quy mô lớn hơn nhiều —
   chỉ khác công cụ: bidirectional RNN dùng hai RNN chạy ngược chiều nhau,
   còn BERT dùng self-attention của Transformer encoder (không có causal
   mask) để đạt ngữ cảnh hai chiều mà không cần hai mạng riêng biệt.
 - Giới hạn "không dùng được cho sinh tuần tự" của bidirectional RNN chính
-  là lý do sâu xa khiến [GPT](24-pretraining-llm.mdx) phải dùng **causal
+  là lý do sâu xa khiến [GPT](01-pretraining-llm.mdx) phải dùng **causal
   mask** (chỉ nhìn về quá khứ) thay vì attention hai chiều đầy đủ — cùng
   một đánh đổi cơ bản (ngữ cảnh hai chiều >< khả năng sinh tuần tự) xuất
   hiện lặp lại ở cả hai công cụ khác nhau (RNN và Transformer).
-- Vẫn huấn luyện bằng [backpropagation](09-backpropagation.mdx) (cụ thể
+- Vẫn huấn luyện bằng [backpropagation](02-backpropagation.mdx) (cụ thể
   là BPTT đã học ở bài RNN) — bidirectional chỉ thay đổi **kiến trúc**
   (chạy 2 mạng thay vì 1), không thay đổi cơ chế tối ưu hoá nền tảng.
 

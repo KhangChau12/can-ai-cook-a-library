@@ -5,7 +5,6 @@ module: Natural Language Processing
 submodule: Transformer Architecture
 order: 5
 status: stable
-prerequisites: ["02-transformer", "04-longformer"]
 summary: Longformer giảm độ phức tạp attention bằng cách giới hạn PHẠM VI attention (cửa sổ cục bộ + global chọn lọc). Kitaev, Kaiser, Levskaya (2020) tấn công vấn đề bằng hai kỹ thuật khác hẳn: Locality-Sensitive Hashing (LSH) attention nhóm các query/key tương tự vào cùng bucket để chỉ tính attention trong bucket đó (O(L log L) thay vì O(L^2)), và reversible residual layers giải quyết luôn cả bài toán BỘ NHỚ khi huấn luyện (không cần lưu activation mọi lớp).
 last_touched_by_task: Viết mới 2026-07-06: đào sâu nhánh Reformer đã nhắc sơ qua ở bài 62 (Longformer) thành 1 bài riêng — đủ chất liệu kỹ thuật cụ thể (LSH attention + reversible layers là 2 cơ chế độc lập, không trùng Longformer). Nguồn: arxiv 2001.04451 (Kitaev, Kaiser, Levskaya 2020) + lilianweng.github.io/posts/2020-04-07-the-transformer-family (đã dùng làm nguồn phụ ở bài 62, giờ đào sâu đúng phần Reformer). Cập nhật (2026-07-10, tách module NLP/LLM): sửa 2 link [Longformer] trỏ nhầm slug "longformer-efficient-attention" (không tồn tại, file thật là 04-longformer.mdx) thành đúng slug thật.
 ---
@@ -119,7 +118,7 @@ dụng cùng lúc mà không xung đột.
   nhóm động** qua hashing — không cần biết trước token nào quan trọng.
 - Reversible residual layers là đóng góp **độc lập** với vấn đề attention
   — giải quyết bài toán bộ nhớ của kiến trúc sâu nói chung, một góc độ
-  hiệu quả hoá mà cả [Transformer-XL](61-transformer-xl.mdx) lẫn
+  hiệu quả hoá mà cả [Transformer-XL](03-transformer-xl.mdx) lẫn
   Longformer đều không nhắm tới trực tiếp.
 - Cùng với Sparse Transformer (đã nhắc ở bài 62), Reformer là minh chứng
   thứ hai cho thấy "giảm chi phí self-attention" là một hướng nghiên cứu

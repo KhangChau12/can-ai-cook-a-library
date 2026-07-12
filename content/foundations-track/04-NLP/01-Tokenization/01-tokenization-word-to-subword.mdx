@@ -5,7 +5,6 @@ module: Natural Language Processing
 submodule: Tokenization
 order: 1
 status: stable
-prerequisites: ["01-nlp-llm-overview"]
 summary: Trước khi bất kỳ mô hình chuỗi nào (RNN, Transformer) xử lý được văn bản, văn bản phải được cắt thành các đơn vị rời rạc (token) trước — bước này gọi là tokenization. Tokenize theo TỪ (word-level) gặp 2 vấn đề nghiêm trọng: từ vựng khổng lồ (hàng trăm triệu tổ hợp n-gram có thể có trong tiếng Anh) và hoàn toàn bất lực trước từ chưa từng gặp (out-of-vocabulary). Sennrich và cộng sự (2015) giải quyết bằng cách mượn thuật toán nén Byte Pair Encoding (BPE): thay vì token là cả một từ, token là các SUBWORD (mảnh từ) học được bằng cách ghép dần các cặp ký tự xuất hiện thường xuyên nhất — cho phép biểu diễn cả những từ chưa từng thấy bằng tổ hợp subword đã học, với từ vựng cố định nhỏ hơn nhiều.
 last_touched_by_task: Tái cấu trúc module (2026-07-09): module đổi tên 'Sequence Model' → 'NLP & LLM' sau khi gộp với module LLM cũ; Tokenization chuyển từ submodule thứ 2 lên thứ 1 (trước RNN Family) vì mọi mô hình chuỗi sau đó đều giả định input đã là token/embedding — sửa đoạn mở đầu, prerequisites và mục 'Liên hệ' cho khớp thứ tự mới, nội dung kỹ thuật không đổi.
 ---

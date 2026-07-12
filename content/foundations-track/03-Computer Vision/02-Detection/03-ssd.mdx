@@ -5,12 +5,11 @@ module: Computer Vision
 submodule: Detection
 order: 3
 status: stable
-prerequisites: ["02-yolo"]
 summary: YOLO biến object detection thành hồi quy 1 bước, nhanh nhưng chỉ dự đoán trên một bản đồ đặc trưng duy nhất — kém hiệu quả khi vật thể trong ảnh có kích thước rất khác nhau (một bản đồ đặc trưng ở một độ phân giải cố định khó vừa nắm bắt vật thể nhỏ vừa nắm bắt vật thể lớn). Liu và cộng sự (2016) giải quyết bằng SSD: kết hợp dự đoán từ NHIỀU bản đồ đặc trưng ở nhiều độ phân giải khác nhau trong cùng một mạng — bản đồ nông/lớn cho vật thể nhỏ, bản đồ sâu/nhỏ cho vật thể lớn — đạt độ chính xác vượt trội YOLO trong khi vẫn giữ tốc độ one-stage.
 last_touched_by_task: Bài mới (2026-07-06), theo yêu cầu người vận hành 'hoàn thiện sub-module CV sâu hơn' — mở rộng sub-module Detection (trước đó chỉ 2 bài: Object Detection tóm tắt R-CNN family, và YOLO). SSD là nhánh one-stage song song với YOLO, giải quyết đúng hạn chế cụ thể (single-scale feature map) mà bài YOLO đã ngầm nhắc tới (nhiều lỗi định vị). Nguồn: arxiv 1512.02325 (paper gốc Liu et al. 2016, xác nhận qua WebFetch abstract: vấn đề so với YOLO/two-stage, ý tưởng multi-scale + default box, kết quả mAP/FPS cụ thể) + D2L.ai (chapter_computer-vision/ssd.html, xác nhận qua WebFetch: kiến trúc chi tiết multi-scale feature map blocks, cơ chế bản đồ nông cho vật thể nhỏ/bản đồ sâu cho vật thể lớn). Đã thử tìm nguồn cho FCOS (anchor-free detection) trước đó nhưng không tìm được nguồn thứ 2 phù hợp (D2L.ai không đề cập, Lil'Log/paperswithcode không truy cập được) — chuyển sang SSD vì tìm đủ 2 nguồn.
 ---
 
-Bài [YOLO](39-yolo.mdx) biến object detection thành một phép hồi quy
+Bài [YOLO](02-yolo.mdx) biến object detection thành một phép hồi quy
 duy nhất, đạt tốc độ vượt trội so với họ R-CNN two-stage — nhưng đánh
 đổi lại là nhiều lỗi định vị hơn. Bài này kể cách một kiến trúc one-stage
 khác, ra đời gần như cùng thời điểm, giải quyết đúng một phần nguyên nhân
@@ -44,7 +43,7 @@ dần khi đi sâu vào mạng:
 
 Tại **mỗi** bản đồ đặc trưng ở mọi độ phân giải, SSD đặt các **default
 box** (tương đương khái niệm anchor box đã học ở bài
-[Object Detection](33-object-detection.mdx) — các khung tham chiếu có
+[Object Detection](01-object-detection.mdx) — các khung tham chiếu có
 sẵn với nhiều tỷ lệ khung hình khác nhau), rồi dự đoán đồng thời lớp và
 độ lệch tọa độ cho từng default box đó — **tất cả các độ phân giải chạy
 song song trong cùng một lần forward pass duy nhất**, giữ nguyên tinh
@@ -74,16 +73,16 @@ khoảng cách độ chính xác với two-stage mà không phải hy sinh tốc
 ## Liên hệ lại với các bài trước
 
 - SSD là ví dụ tiếp theo trong dòng tiến hoá one-stage, song song với
-  [YOLO](39-yolo.mdx) — cả hai đều theo đúng nguyên lý one-stage (dự
+  [YOLO](02-yolo.mdx) — cả hai đều theo đúng nguyên lý one-stage (dự
   đoán trực tiếp, không có bước đề xuất vùng riêng), nhưng SSD giải
   quyết cụ thể hạn chế "chỉ dùng một bản đồ đặc trưng" của YOLO gốc.
 - Default box của SSD dùng lại đúng khái niệm anchor box đã học ở bài
-  [Object Detection](33-object-detection.mdx) — điểm mới không nằm ở
+  [Object Detection](01-object-detection.mdx) — điểm mới không nằm ở
   khái niệm anchor, mà ở việc đặt anchor tại **nhiều tầng đặc trưng**
   thay vì chỉ một tầng.
 - Ý tưởng "kết hợp thông tin từ nhiều độ phân giải khác nhau trong cùng
   một mạng" cũng xuất hiện dưới một hình thức khác ở
-  [U-Net](40-unet.mdx) (skip connection giữa encoder và decoder ở nhiều
+  [U-Net](02-unet.mdx) (skip connection giữa encoder và decoder ở nhiều
   độ phân giải) — cùng nguyên lý chung: thông tin ở các độ phân giải
   khác nhau mang giá trị bổ sung cho nhau, không nên chỉ dùng một tầng
   duy nhất.

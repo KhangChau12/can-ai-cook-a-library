@@ -5,15 +5,14 @@ module: Audio
 submodule: Biểu diễn âm thanh
 order: 1
 status: stable
-prerequisites: ["01-cnn"]
 summary: Bài đầu tiên series Audio: âm thanh là tín hiệu liên tục theo thời gian, khác hẳn cấu trúc lưới 2D của ảnh hay chuỗi rời rạc của văn bản. Waveform (tín hiệu số theo thời gian) và spectrogram/mel-spectrogram (biểu diễn theo tần số) là hai cách chính. STFT (cửa sổ trượt win_length/hop_length + FFT) tính spectrogram, tradeoff time-frequency. MFCC (DCT trên mel-spectrogram) nén cho ASR truyền thống. Ví dụ: 16kHz mono 1 giây → 16.000 mẫu waveform → 80×32 mel-spectrogram.
 last_touched_by_task: Cải thiện Task 110 (2026-07-07): Phase 3 Audio bắt đầu — bổ sung (1) section STFT chi tiết [cửa sổ trượt win_length/hop_length, FFT n_fft, overlap 50-75%, nguyên lý bất định Gabor tradeoff time-frequency, tham số chuẩn n_fft=2048/hop=512], (2) section MFCC [DCT nén cho ASR truyền thống], (3) ví dụ số cụ thể [16kHz 1s → 16.000 mẫu → 80×32 mel-spectrogram]. Bài cũ chỉ nói 'biến đổi Fourier' chung chung, không có STFT/MFCC/ví dụ số. Nguồn: WebSearch whitelist (d2l.ai/librosa docs). Giữ nguyên cấu trúc waveform/spectrogram/mel (đã đúng).
 ---
 
 Toàn bộ giáo trình từ đầu tới giờ xử lý hai loại dữ liệu: ảnh (lưới 2D
-pixel, học ở [CNN](11-convolutional-neural-network.mdx)) và văn bản
-(chuỗi token rời rạc, học ở [RNN](12-recurrent-neural-network.mdx)/
-[Transformer](15-transformer.mdx)). **Âm thanh** là một modality hoàn
+pixel, học ở [CNN](01-cnn.mdx)) và văn bản
+(chuỗi token rời rạc, học ở [RNN](01-rnn.mdx)/
+[Transformer](02-transformer.mdx)). **Âm thanh** là một modality hoàn
 toàn khác: một **tín hiệu liên tục theo thời gian** — trước khi đưa được
 vào bất kỳ mô hình ML nào, cần quyết định cách **biểu diễn** tín hiệu đó
 dưới dạng số.
@@ -80,7 +79,7 @@ biểu diễn — sai tham số có thể mất thông tin quan trọng.
 
 Điểm quan trọng: khi âm thanh đã được biểu diễn dưới dạng ảnh 2D như vậy,
 nó có thể được xử lý bằng chính những kiến trúc đã học cho ảnh — đặc biệt
-là [CNN](11-convolutional-neural-network.mdx), vì spectrogram có cấu trúc
+là [CNN](01-cnn.mdx), vì spectrogram có cấu trúc
 không gian cục bộ tương tự ảnh thật (các tần số/thời điểm gần nhau
 thường liên quan tới nhau, giống các pixel gần nhau trong ảnh).
 
@@ -139,11 +138,11 @@ học hiệu quả.
 
 - Spectrogram/mel-spectrogram biến bài toán xử lý âm thanh thành bài toán
   xử lý **ảnh 2D** — cho phép tái sử dụng trực tiếp kiến trúc
-  [CNN](11-convolutional-neural-network.mdx) đã học, đúng nguyên lý đưa
+  [CNN](01-cnn.mdx) đã học, đúng nguyên lý đưa
   kiến thức về cấu trúc dữ liệu vào thiết kế biểu diễn thay vì để mô hình
   tự học từ dữ liệu thô hoàn toàn.
 - Waveform (chuỗi số theo thời gian) có cấu trúc tuần tự tương tự dữ liệu
-  đã học ở [RNN](12-recurrent-neural-network.mdx) — một số mô hình xử lý
+  đã học ở [RNN](01-rnn.mdx) — một số mô hình xử lý
   âm thanh hiện đại làm việc trực tiếp trên waveform bằng kiến trúc dạng
   chuỗi thay vì chuyển qua spectrogram trước.
 - Việc chọn biểu diễn đầu vào phù hợp (waveform vs spectrogram vs

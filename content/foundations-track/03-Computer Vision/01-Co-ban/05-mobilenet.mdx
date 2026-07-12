@@ -5,12 +5,11 @@ module: Computer Vision
 submodule: Cơ bản
 order: 5
 status: stable
-prerequisites: ["04-resnet"]
 summary: ResNet/VGG đạt độ chính xác cao nhưng quá nặng để chạy trên điện thoại/thiết bị nhúng. Howard và cộng sự (2017) giải quyết bằng depthwise separable convolution — tách phép tích chập chuẩn thành 2 bước riêng biệt (lọc không gian + trộn kênh), cùng 2 siêu tham số cho phép đánh đổi có kiểm soát giữa độ trễ và độ chính xác.
 last_touched_by_task: Bài mới (2026-07-06) tiếp nối ResNet (37) trong sub-module CV 'Cơ bản', chuyển hướng mục tiêu từ 'độ chính xác tối đa' (LeNet→AlexNet→VGG→ResNet) sang 'hiệu quả tính toán' — nhánh mới trong cùng dòng tiến hoá. Nguồn: arxiv (paper gốc Howard et al. 2017, xác nhận qua WebFetch trực tiếp abstract). Lưu ý quan trọng: đã thử tìm chi tiết công thức toán học cụ thể (tỷ lệ giảm computation) qua D2L.ai (không có chương MobileNet riêng, xác nhận qua WebFetch) và qua PDF paper gốc (không đọc được, trả về binary stream như nhiều PDF khác trong phiên) — chỉ giữ mô tả khái niệm (2 bước depthwise + pointwise) đã xác nhận qua abstract, KHÔNG đưa công thức/số liệu giảm computation cụ thể vì chưa xác nhận được qua nguồn đọc được trực tiếp, đúng kỷ luật không suy diễn/bịa đã áp dụng nhất quán toàn phiên. Cập nhật (2026-07-06, Task 87): thử lại tìm số liệu cụ thể qua WebSearch (khác WebFetch PDF đã thất bại trước đó) — xác nhận được con số 8-9 lần ít tính toán hơn cho kernel 3×3, thêm vào bài.
 ---
 
-Bài [ResNet](37-resnet.mdx) giải quyết vấn đề degradation, cho phép
+Bài [ResNet](04-resnet.mdx) giải quyết vấn đề degradation, cho phép
 huấn luyện mạng sâu chưa từng có tiền lệ — nhưng đổi lại, các mạng như
 ResNet-152 hay VGG-19 có số lượng tham số và chi phí tính toán rất lớn.
 Điều đó ổn khi chạy trên máy chủ có GPU mạnh, nhưng đặt ra một câu hỏi
@@ -72,7 +71,7 @@ chi tiết (fine-grained classification), nhận diện khuôn mặt, và địn
 ## Liên hệ lại với các bài trước
 
 - MobileNet không thay đổi nguyên lý convolution cốt lõi đã học ở bài
-  [CNN](11-convolutional-neural-network.mdx) (translation invariance,
+  [CNN](01-cnn.mdx) (translation invariance,
   locality) — nó tổ chức lại **cách tính** phép tích chập để hiệu quả
   hơn, không thay đổi nguyên lý nền tảng.
 - Đây là một điểm rẽ nhánh thú vị trong dòng tiến hoá: nếu AlexNet→VGG→
@@ -81,7 +80,7 @@ chi tiết (fine-grained classification), nhận diện khuôn mặt, và địn
   hoặc gần cùng độ chính xác" — cùng một họ bài toán (classification
   ảnh) nhưng mục tiêu tối ưu hoá khác hẳn, tuỳ vào ràng buộc triển khai
   thực tế.
-- Vẫn huấn luyện bằng [backpropagation](09-backpropagation.mdx) như mọi
+- Vẫn huấn luyện bằng [backpropagation](02-backpropagation.mdx) như mọi
   kiến trúc CNN khác — depthwise separable convolution chỉ thay đổi
   cách tổ chức phép tính trong mỗi lớp, không thay đổi cơ chế tính
   gradient hay cập nhật tham số.

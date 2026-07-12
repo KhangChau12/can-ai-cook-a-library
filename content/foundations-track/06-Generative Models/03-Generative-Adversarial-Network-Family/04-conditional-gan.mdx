@@ -5,12 +5,11 @@ module: Generative Models
 submodule: Generative Adversarial Network Family
 order: 4
 status: stable
-prerequisites: ["02-dcgan", "03-wgan-stylegan"]
 summary: GAN gốc sinh ảnh từ noise ngẫu nhiên — không kiểm soát được nội dung. Conditional GAN cho phép sinh ảnh có điều kiện: sinh ảnh mèo từ label 'mèo' (cGAN), chuyển ảnh đen trắng sang màu (pix2pix), chuyển ảnh ngựa sang ngựa vằn (CycleGAN). Bài này kể dòng tiến hoá từ cGAN đơn giản tới pix2pix (có cặp) và CycleGAN (không cặp).
 last_touched_by_task: Bài mới (2026-07-08): Phase 3.3 đào sâu Generative Models — Conditional GAN, lấp khoảng trống ứng dụng GAN. Nguồn: arxiv cGAN 1411.1784 + arxiv pix2pix 1611.07004 + arxiv CycleGAN 1703.10593.
 ---
 
-Bài [GAN](23-gan.mdx) và [DCGAN](46-dcgan.mdx) sinh ảnh từ noise ngẫu
+Bài [GAN](01-gan.mdx) và [DCGAN](02-dcgan.mdx) sinh ảnh từ noise ngẫu
 nhiên z ~ N(0, I). Agent hoàn toàn không kiểm soát được nội dung — không
 thể bảo "sinh ảnh con mèo" hay "biến ảnh này thành ảnh kia". Đây là điểm
 yếu lớn nhất của GAN gốc.

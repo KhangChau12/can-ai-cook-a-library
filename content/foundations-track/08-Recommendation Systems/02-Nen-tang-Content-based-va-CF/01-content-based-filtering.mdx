@@ -5,7 +5,6 @@ module: Recommendation Systems
 submodule: Nền tảng Content-based & CF
 order: 1
 status: stable
-prerequisites: ["01-recommendation-systems-overview", "02-word2vec"]
 summary: "Content-based Filtering là trường phái gợi ý nền tảng thứ nhất: xây hồ sơ sở thích người dùng và biểu diễn item bằng chính đặc điểm/nội dung của nó (thể loại, mô tả, thuộc tính), rồi gợi ý item có đặc điểm gần với hồ sơ đó nhất — không cần biết người dùng khác đã làm gì. Giải quyết tốt cold-start cho item mới, nhưng bị giới hạn trong 'vùng an toàn' của sở thích đã biết."
 last_touched_by_task: "Bài mới (2026-07-10), bài đầu sub-module Nền tảng Content-based & CF — lấp lỗ hổng module Recommendation Systems thiếu hẳn trường phái content-based, khiến câu mở đầu bài Collaborative Filtering cũ ('không cần hiểu nội dung item, khác với...') không có gì để so sánh. Nguồn: D2L.ai recsys-intro.html (xác nhận CF vs content-based là 2 trường phái, content-based dùng 'content descriptions of items/users') + arxiv 1912.08932 'Collaborative Filtering vs. Content-Based Filtering: differences and similarities' (xác nhận qua WebFetch abstract: 2 trường phái nổi bật nhất cho recommendation, tính bổ trợ lẫn nhau giữa 2 hướng)."
 ---
@@ -65,7 +64,7 @@ nắm bắt ngữ nghĩa tốt hơn — nhưng nguyên lý "trung bình hoá vec
 Sau khi có vector cho hồ sơ người dùng và vector cho từng item ứng viên,
 bước gợi ý chỉ đơn giản là tính **cosine similarity** giữa chúng — đo góc
 giữa hai vector thay vì khoảng cách tuyệt đối (khác với khoảng cách Euclid
-đã dùng ở [k-NN](05-k-nearest-neighbors.mdx)), phù hợp hơn với vector
+đã dùng ở [k-NN](04-k-nearest-neighbors.mdx)), phù hợp hơn với vector
 TF-IDF vì không bị lệch bởi độ dài văn bản khác nhau giữa các item:
 
 ```
@@ -110,7 +109,7 @@ Content-based filtering có hai hạn chế cố hữu:
   xuất hiện từ, không học qua mạng nơ-ron), nhưng cùng mục tiêu: biến văn
   bản thành vector so sánh được.
 - Bước "so khớp hồ sơ người dùng với item gần nhất" về bản chất là bài toán
-  tìm hàng xóm gần nhất đã học ở [k-NN](05-k-nearest-neighbors.mdx) — chỉ
+  tìm hàng xóm gần nhất đã học ở [k-NN](04-k-nearest-neighbors.mdx) — chỉ
   khác không gian feature là không gian nội dung (TF-IDF/embedding) thay vì
   feature số cho sẵn, và dùng cosine similarity thay vì khoảng cách Euclid.
 - Bài tiếp theo, [Memory-based Collaborative Filtering](02-memory-based-collaborative-filtering.mdx),

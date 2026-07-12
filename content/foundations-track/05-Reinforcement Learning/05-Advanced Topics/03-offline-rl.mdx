@@ -4,7 +4,6 @@ track: foundations-track
 module: Reinforcement Learning
 order: 3
 status: stable
-prerequisites: ["01-model-based-rl", "08-sac"]
 summary: Toàn bộ RL đã học từ đầu module tới giờ đều là online RL — agent tương tác với môi trường trong quá trình học. Offline RL (batch RL) học policy hoàn toàn từ một dataset tĩnh thu thập trước, không cần tương tác thêm — rất quan trọng cho y tế, tài chính, robotics nơi thử-sai quá rủi ro. Bài này giới thiệu vấn đề distributional shift và 3 giải pháp: BCQ (policy constraint), CQL (value regularization), IQL (implicit).
 last_touched_by_task: Tái cấu trúc (2026-07-10) — chuyển từ submodule Overview (nhồi nhét, sai bản chất) sang submodule mới Advanced Topics, đặt cuối module vì phụ thuộc cả SAC (Policy-based) lẫn Model-based RL — bài phụ thuộc nặng nhất trong module. Nội dung không đổi. Nguồn: arxiv CQL 2006.04779 + arxiv IQL 2110.06169 + machinelearningmastery.com.
 submodule: Advanced Topics
@@ -29,8 +28,8 @@ vực rủi ro cao.
 
 ## Vấn đề cốt lõi: distributional shift
 
-Khi học offline, thuật toán off-policy thông thường (như [DQN](18-q-learning.mdx)
-hay [SAC](78-sac.mdx)) thất bại thảm hại vì **distributional shift
+Khi học offline, thuật toán off-policy thông thường (như [DQN](01-q-learning.mdx)
+hay [SAC](08-sac.mdx)) thất bại thảm hại vì **distributional shift
 (chênh lệch phân phối)**:
 
 1. Policy hiện tại π_θ chọn một action a ở state s
@@ -55,7 +54,7 @@ gần với những action đã thấy trong dataset**.
 
 ### Cách hoạt động
 
-BCQ dùng một **[VAE](03-vae-variational-autoencoder.mdx)**
+BCQ dùng một **[VAE](02-vae-variational-autoencoder.mdx)**
 (Variational Autoencoder) để học phân phối của behavior policy π_β(a|s)
 — tức là "trong dataset, ở state s thì người ta thường chọn action nào":
 
@@ -181,7 +180,7 @@ action đã có trong dataset.
 - **[SAC](08-sac.mdx):** CQL thường được implement trên nền SAC — chỉ
   thêm 1 regularization term. SAC thuần thất bại trong offline setting vì
   distributional shift.
-- **[VAE](03-vae-variational-autoencoder.mdx):**
+- **[VAE](02-vae-variational-autoencoder.mdx):**
   BCQ dùng VAE để học behavior policy distribution — một ứng dụng thú vị
   của generative model trong RL.
 - **[Model-based RL](01-model-based-rl.mdx):** model-based

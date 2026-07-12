@@ -1,0 +1,43 @@
+---
+quiz_for: 04-xu-ly-du-lieu-mat-can-bang
+---
+
+## Q1
+Một competition có dữ liệu 98% lớp âm, 2% lớp dương, dùng metric `f1_score`. Bạn dùng `class_weight='balanced'` cho model. Cách làm này thay đổi điều gì?
+
+- [ ] Số lượng dòng dữ liệu trong tập train
+- [x] Mức độ "phạt" của hàm loss khi mô hình đoán sai từng lớp
+- [ ] Số lượng feature đưa vào model
+- [ ] Ngưỡng quyết định (threshold) mặc định của model
+
+> `class_weight='balanced'` không thêm/bớt dòng dữ liệu nào — nó chỉ thay đổi hàm loss để việc đoán sai lớp thiểu số (2% lớp dương) bị phạt nặng hơn nhiều so với đoán sai lớp đa số, khiến mô hình có động lực học lớp thiểu số thay vì bỏ qua nó.
+
+## Q2
+SMOTE tạo một điểm dữ liệu tổng hợp mới bằng cách nào?
+
+- [ ] Sao chép nguyên văn một điểm dữ liệu lớp thiểu số đã có
+- [ ] Lấy trung bình cộng của toàn bộ điểm dữ liệu lớp thiểu số
+- [x] Nội suy một điểm mới trên đoạn thẳng nối một điểm lớp thiểu số với một trong k điểm gần nhất cùng lớp
+- [ ] Lấy ngẫu nhiên giá trị cho từng feature độc lập, không liên quan tới điểm dữ liệu gốc nào
+
+> SMOTE chọn một điểm `a` thuộc lớp thiểu số, tìm k điểm gần nhất cùng lớp, chọn ngẫu nhiên một điểm `b` trong số đó, rồi tạo điểm mới nằm trên đoạn thẳng nối `a` và `b` trong không gian feature — khác hẳn sao chép nguyên văn (random oversampling) hay lấy trung bình toàn bộ lớp.
+
+## Q3
+Vì sao SMOTE có rủi ro tạo ra dữ liệu nhiễu ở vùng hai lớp chồng lấn nhau?
+
+- [ ] Vì SMOTE luôn tạo điểm mới ở giữa toàn bộ dataset, không quan tâm lớp nào
+- [x] Vì SMOTE chỉ xét các điểm cùng lớp thiểu số khi tổng hợp, không xét vị trí của lớp đa số xung quanh
+- [ ] Vì SMOTE xoá bớt dữ liệu lớp đa số trước khi tổng hợp
+- [ ] Vì SMOTE yêu cầu chuẩn hoá dữ liệu trước, dễ gây sai số làm tròn
+
+> SMOTE tổng hợp điểm mới hoàn toàn dựa trên vị trí các điểm lớp thiểu số lân cận, không kiểm tra xem vùng đó có bị lớp đa số "lấn" vào không — nếu điểm `a` nằm gần ranh giới hai lớp, điểm tổng hợp mới có thể rơi vào đúng vùng mơ hồ, khó phân biệt.
+
+## Q4
+Bạn cần dùng cross-validation để kiểm chứng một pipeline có SMOTE. Bước SMOTE nên đặt ở đâu?
+
+- [ ] Áp dụng SMOTE trên toàn bộ dataset một lần, trước khi chia fold
+- [x] Áp dụng SMOTE riêng bên trong mỗi fold, chỉ trên phần train của fold đó
+- [ ] Áp dụng SMOTE trên tập validation của mỗi fold để cân bằng đánh giá
+- [ ] Không cần quan tâm thứ tự, SMOTE không ảnh hưởng gì tới cross-validation
+
+> Nếu SMOTE chạy trước khi chia fold, các điểm tổng hợp có thể "có họ hàng" (nội suy từ) với điểm gốc nằm ở fold validation của cùng vòng lặp — một dạng train-test contamination. Đúng cách là resample bên trong từng fold, chỉ trên phần train, giữ validation nguyên vẹn dữ liệu thật.

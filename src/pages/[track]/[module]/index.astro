@@ -2,7 +2,8 @@
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import SiteHeader from '../../../components/SiteHeader.astro';
 import LessonRow from '../../../components/LessonRow.astro';
-import { getModuleGroups, trackLabel, LEVEL_LABELS, type Track } from '../../../lib/content';
+import { getModuleGroups, getQuizFor, trackLabel, LEVEL_LABELS, type Track } from '../../../lib/content';
+import type { LockInfo } from '../../../lib/lockClient';
 
 export async function getStaticPaths() {
   const tracks: Track[] = ['exam-track', 'foundations-track'];
@@ -19,6 +20,19 @@ export async function getStaticPaths() {
 const { group, track } = Astro.props as { group: Awaited<ReturnType<typeof getModuleGroups>>[number]; track: Track };
 const base = import.meta.env.BASE_URL;
 const totalLessons = group.lessons.length + group.submodules.reduce((n, s) => n + s.lessons.length, 0);
+
+// LockInfo for gating: one entry per submodule (in display order), each
+// lesson tagged with whether it has a quiz (needed by isLessonComplete).
+const lockInfo: LockInfo = await Promise.all(
+  group.submodules.map((sub) =>
+    Promise.all(
+      sub.lessons.map(async (lesson) => ({
+        id: lesson.id,
+        hasQuiz: !!(await getQuizFor(lesson))?.data.questions.length,
+      })),
+    ),
+  ),
+);
 
 const levelClasses: Record<string, string> = {
   foundation: 'border-success/25 bg-success/10 text-success',
@@ -53,7 +67,7 @@ const levelClasses: Record<string, string> = {
 
       <div class="mt-6 flex items-center gap-4">
         <div class="h-2 flex-1 max-w-xs overflow-hidden rounded-full bg-bg-elevated">
-          <div data-module-progress-bar={`${track}/${group.slug}`} data-total={totalLessons} class="h-full w-0 rounded-full bg-gradient-to-r from-primary-blue to-accent-cyan-bright transition-all duration-500"></div>
+          <div data-module-progress-bar={`${track}/${group.slug}`} data-total={totalLessons} class="h-full w-0 rounded-full bg-primary-blue transition-all duration-500"></div>
         </div>
         <span data-module-progress-label={`${track}/${group.slug}`} class="font-mono text-[12.5px] font-bold text-text-tertiary">0 / {totalLessons} bài</span>
       </div>
@@ -70,13 +84,23 @@ const levelClasses: Record<string, string> = {
     {group.submodules.length > 0 && (
       <div class="flex flex-col gap-6">
         {group.submodules.map((sub, subIndex) => (
-          <section class="rounded-xl border border-border-default bg-bg-surface/40 p-5">
+          <section class="rounded-xl border border-border-default bg-bg-surface/40 p-5 transition-opacity" data-submodule-section={subIndex}>
             <div class="mb-3 flex items-center gap-2.5 border-b border-border-default pb-3">
-              <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-primary-blue to-accent-cyan-bright font-mono text-[12px] font-extrabold text-white">
+              <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary-blue font-mono text-[12px] font-extrabold text-white">
                 {subIndex + 1}
               </span>
               <h2 class="min-w-0 truncate text-[14.5px] font-bold text-text-primary" title={sub.name}>{sub.name}</h2>
-              <span class="ml-auto shrink-0 font-mono text-[11px] font-semibold text-text-disabled">{sub.lessons.length} bài</span>
+              <div class="ml-auto flex shrink-0 items-center gap-2">
+                <div class="h-1.5 w-16 overflow-hidden rounded-full bg-bg-elevated">
+                  <div
+                    data-submodule-progress-bar={`${track}/${group.slug}`}
+                    data-submodule-index={subIndex}
+                    data-total={sub.lessons.length}
+                    class="h-full w-0 rounded-full bg-primary-blue transition-all duration-500"
+                  ></div>
+                </div>
+                <span class="font-mono text-[11px] font-semibold text-text-disabled">{sub.lessons.length} bài</span>
+              </div>
             </div>
             <div class="flex flex-col">
               {sub.lessons.map((lesson, i) => <LessonRow lesson={lesson} index={i} />)}
@@ -87,13 +111,17 @@ const levelClasses: Record<string, string> = {
     )}
   </main>
 
+  <script define:vars={{ lockInfo }}>
+    window.__lockInfo = lockInfo;
+  </script>
   <script>
     import { getProgress, getAllProgress } from '../../../lib/progress';
+    import { applySubmoduleLocks } from '../../../lib/lockClient';
 
     document.querySelectorAll<HTMLElement>('[data-lesson-check]').forEach((el) => {
       const id = el.dataset.lessonCheck!;
       const state = getProgress(id);
-      if (state === 'quiz_done') {
+      if (state === 'quiz_done' || state === 'completed') {
         el.classList.add('border-transparent', 'bg-success', 'text-white');
       } else if (state === 'viewed') {
         el.classList.add('border-transparent', 'bg-accent-blue', 'text-white');
@@ -110,6 +138,20 @@ const levelClasses: Record<string, string> = {
       const pct = total > 0 ? Math.round((done / total) * 100) : 0;
       bar.style.width = `${pct}%`;
       if (label) label.textContent = `${done} / ${total} bài`;
+    }
+
+    const lockInfo = (window as any).__lockInfo as { id: string; hasQuiz: boolean }[][];
+    if (lockInfo) {
+      document.querySelectorAll<HTMLElement>('[data-submodule-progress-bar]').forEach((subBar) => {
+        const subIdx = Number(subBar.dataset.submoduleIndex);
+        const lessons = lockInfo[subIdx] ?? [];
+        const total = lessons.length;
+        const done = lessons.filter((l) => progress[l.id] === 'quiz_done' || progress[l.id] === 'completed').length;
+        const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+        subBar.style.width = `${pct}%`;
+      });
+
+      applySubmoduleLocks(document, lockInfo);
     }
   </script>
 </BaseLayout>

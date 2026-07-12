@@ -1,16 +1,16 @@
 ---
-import { getCollection } from 'astro:content';
 import LessonLayout from '../../../layouts/LessonLayout.astro';
 import QuizIsland from '../../../components/QuizIsland';
+import MarkCompleteButton from '../../../components/MarkCompleteButton';
 import {
   getModuleGroups,
-  getModuleGroup,
   getPrevNext,
   getQuizFor,
   trackLabel,
   type Track,
   type Lesson,
 } from '../../../lib/content';
+import type { LockInfo } from '../../../lib/lockClient';
 
 export async function getStaticPaths() {
   const tracks: Track[] = ['exam-track', 'foundations-track'];
@@ -42,10 +42,36 @@ const { lesson, group, track } = Astro.props as {
 
 const { prev, next } = await getPrevNext(track, lesson.id);
 const quiz = await getQuizFor(lesson);
+const hasQuiz = !!quiz && quiz.data.questions.length > 0;
 const base = import.meta.env.BASE_URL;
+
+// Which submodule (if any) this lesson belongs to, plus lock info for the
+// whole module — used by LessonLayout to show a "this submodule isn't
+// unlocked yet" banner when a locked lesson is opened directly via URL.
+const currentSubmoduleIndex = group.submodules.findIndex((sub) => sub.lessons.some((l) => l.id === lesson.id));
+const lockInfo: LockInfo = await Promise.all(
+  group.submodules.map((sub) =>
+    Promise.all(
+      sub.lessons.map(async (l) => ({
+        id: l.id,
+        hasQuiz: !!(await getQuizFor(l))?.data.questions.length,
+      })),
+    ),
+  ),
+);
+
+const wordCount = lesson.data.html ? lesson.data.html.replace(/<[^>]+>/g, ' ').trim().split(/\s+/).filter(Boolean).length : 0;
+const readingMinutes = Math.max(1, Math.round(wordCount / 200));
 ---
 
-<LessonLayout track={track} group={group} lesson={lesson} headings={lesson.data.headings ?? []}>
+<LessonLayout
+  track={track}
+  group={group}
+  lesson={lesson}
+  headings={lesson.data.headings ?? []}
+  lockInfo={lockInfo}
+  currentSubmoduleIndex={currentSubmoduleIndex}
+>
   <nav class="mb-6 flex flex-wrap items-center gap-2 text-[12.5px] text-text-disabled">
     <a href={base} class="transition hover:text-text-tertiary">Trang chủ</a>
     <span>/</span>
@@ -58,31 +84,29 @@ const base = import.meta.env.BASE_URL;
     <h1 class="font-display text-[26px] leading-tight tracking-tight text-text-primary sm:text-[30px]">
       {lesson.data.title}
     </h1>
-    {lesson.data.summary && (
-      <p class="mt-3.5 text-[14.5px] italic leading-relaxed text-text-tertiary">{lesson.data.summary}</p>
-    )}
+    <div class="mt-3.5 flex flex-wrap items-center gap-3">
+      {lesson.data.summary && (
+        <p class="text-[14.5px] italic leading-relaxed text-text-tertiary">{lesson.data.summary}</p>
+      )}
+    </div>
+    <span class="mt-2 inline-flex items-center gap-1.5 text-[12px] font-semibold text-text-disabled">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      ~{readingMinutes} phút đọc
+    </span>
   </header>
 
-  {quiz && quiz.data.questions.length > 0 ? (
-    <div id="tab-panels">
-      <div class="mb-7 inline-flex gap-1 rounded-xl border border-border-default bg-bg-inset p-1">
-        <button type="button" data-tab-btn="content" class="rounded-lg bg-[linear-gradient(135deg,#2563EB_0%,#06B6D4_100%)] px-4 py-2 text-[13px] font-bold text-white transition" data-active="true">
-          Nội dung bài
-        </button>
-        <button type="button" data-tab-btn="quiz" class="rounded-lg px-4 py-2 text-[13px] font-bold text-text-tertiary transition hover:text-text-secondary">
-          Quiz ({quiz.data.questions.length} câu)
-        </button>
-      </div>
+  <article id="lesson-article" class="prose prose-invert max-w-none prose-headings:font-bold prose-headings:tracking-tight prose-a:text-accent-cyan-bright prose-code:text-[#7dd3fc] prose-pre:bg-bg-inset prose-pre:border prose-pre:border-border-default" set:html={lesson.data.html} />
 
-      <div data-tab-panel="content">
-        <article class="prose max-w-none prose-headings:font-bold prose-headings:tracking-tight prose-pre:bg-bg-inset prose-pre:border prose-pre:border-border-default" set:html={lesson.data.html} />
-      </div>
-      <div data-tab-panel="quiz" class="hidden">
-        <QuizIsland client:visible lessonId={lesson.id} questions={quiz.data.questions} />
-      </div>
-    </div>
+  {hasQuiz ? (
+    <section class="mt-12">
+      <h2 class="mb-5 flex items-center gap-2 text-[16px] font-bold text-text-primary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 text-accent-cyan"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        Kiểm tra nhanh — {quiz!.data.questions.length} câu
+      </h2>
+      <QuizIsland client:visible lessonId={lesson.id} questions={quiz!.data.questions} />
+    </section>
   ) : (
-    <article class="prose prose-invert max-w-none prose-headings:font-bold prose-headings:tracking-tight prose-a:text-accent-cyan-bright prose-code:text-[#7dd3fc] prose-pre:bg-bg-inset prose-pre:border prose-pre:border-border-default" set:html={lesson.data.html} />
+    <MarkCompleteButton client:visible lessonId={lesson.id} />
   )}
 
   <nav class="mt-14 grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -93,29 +117,47 @@ const base = import.meta.env.BASE_URL;
       </a>
     ) : <span></span>}
     {next ? (
-      <a href={`${base}${next.id}/`} class="flex flex-col items-end gap-1 rounded-xl border border-border-default bg-bg-surface px-5 py-4 text-right transition hover:-translate-y-0.5 hover:border-border-subtle">
-        <span class="text-[10.5px] font-bold uppercase tracking-wide text-text-disabled">Tiếp →</span>
+      <a
+        href={`${base}${next.id}/`}
+        data-next-link={lesson.id}
+        data-has-quiz={String(hasQuiz)}
+        class="flex flex-col items-end gap-1 rounded-xl border border-border-default bg-bg-surface px-5 py-4 text-right transition hover:-translate-y-0.5 hover:border-border-subtle"
+      >
+        <span data-next-label class="text-[10.5px] font-bold uppercase tracking-wide text-text-disabled">Tiếp →</span>
         <span class="truncate text-[13.5px] font-bold text-text-primary">{next.data.title}</span>
       </a>
     ) : <span></span>}
   </nav>
 </LessonLayout>
 
+<div id="scroll-progress-track" class="fixed inset-x-0 top-0 z-40 h-[3px] bg-transparent">
+  <div id="scroll-progress-bar" class="h-full w-0 bg-primary-blue transition-[width] duration-100"></div>
+</div>
+
 <script>
-  const buttons = document.querySelectorAll<HTMLButtonElement>('[data-tab-btn]');
-  buttons.forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const target = btn.dataset.tabBtn!;
-      buttons.forEach((b) => {
-        const active = b === btn;
-        b.dataset.active = String(active);
-        b.classList.toggle('bg-[linear-gradient(135deg,#2563EB_0%,#06B6D4_100%)]', active);
-        b.classList.toggle('text-white', active);
-        b.classList.toggle('text-text-tertiary', !active);
-      });
-      document.querySelectorAll('[data-tab-panel]').forEach((panel) => {
-        panel.classList.toggle('hidden', panel.getAttribute('data-tab-panel') !== target);
-      });
-    });
-  });
+  import { isLessonComplete } from '../../../lib/progress';
+
+  const bar = document.getElementById('scroll-progress-bar');
+  const article = document.getElementById('lesson-article');
+  function updateScrollProgress() {
+    if (!bar || !article) return;
+    const rect = article.getBoundingClientRect();
+    const total = rect.height - window.innerHeight + rect.top;
+    const scrolled = -rect.top;
+    const pct = total > 0 ? Math.min(100, Math.max(0, (scrolled / total) * 100)) : 0;
+    bar.style.width = `${pct}%`;
+  }
+  document.addEventListener('scroll', updateScrollProgress, { passive: true });
+  updateScrollProgress();
+
+  const nextLink = document.querySelector<HTMLAnchorElement>('[data-next-link]');
+  if (nextLink) {
+    const id = nextLink.dataset.nextLink!;
+    const hasQuiz = nextLink.dataset.hasQuiz === 'true';
+    const label = nextLink.querySelector<HTMLElement>('[data-next-label]');
+    if (!isLessonComplete(id, hasQuiz) && label) {
+      nextLink.classList.add('opacity-70');
+      label.textContent = hasQuiz ? 'Làm quiz để tiếp tục →' : 'Đánh dấu hoàn thành để tiếp tục →';
+    }
+  }
 </script>

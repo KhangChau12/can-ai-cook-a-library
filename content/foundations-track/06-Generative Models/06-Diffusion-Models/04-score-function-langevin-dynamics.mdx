@@ -5,7 +5,6 @@ module: Generative Models
 submodule: Diffusion Models
 order: 4
 status: stable
-prerequisites: ["03-latent-diffusion"]
 summary: DDPM/DDIM học dự đoán nhiễu qua các bước rời rạc cố định (T bước). Trước khi học Score-based Models (bài tiếp theo) — vốn đòi hỏi nhìn diffusion qua lăng kính liên tục (SDE) — bài này dựng trực giác tối thiểu cho 2 khái niệm nền: score function (gradient của log-probability, "la bàn" chỉ hướng về vùng xác suất cao) và Langevin dynamics (thuật toán sample bằng cách lặp "đi theo la bàn + thêm nhiễu ngẫu nhiên"). Không cần stochastic calculus đầy đủ — chỉ cần hiểu đúng 2 công thức này trước khi ghép chúng vào một quy trình liên tục (SDE).
 last_touched_by_task: Bài đệm mới (2026-07-11) — lấp khoảng trống prerequisite nặng nhất phát hiện khi review chiều sâu module Generative Models. Bài Score-based Models nhắc SDE/score matching/Langevin dynamics như khái niệm đã biết, nhưng track chưa từng dạy stochastic calculus ở đâu (kể cả bài xác suất-thống kê nền tảng chỉ tới discrete probability + MLE). Bài này KHÔNG dạy đầy đủ SDE theory — chỉ dựng đủ trực giác (score function, Langevin dynamics) để bài Score-based Models không còn là bước nhảy đột ngột. Nguồn: arxiv NCSN 1907.05600 + Lilian Weng diffusion models blog (phần Langevin dynamics).
 ---

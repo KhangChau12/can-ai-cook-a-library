@@ -4,7 +4,6 @@ track: foundations-track
 module: Deep Learning Nền tảng
 order: 1
 status: stable
-prerequisites: ["03-logistic-regression"]
 summary: McCulloch và Pitts (1943) đề xuất 'đơn vị ngưỡng' — mô hình neuron nhân tạo đầu tiên, nền móng cho sigmoid sau này. Đơn vị tính toán cơ bản nhất của deep learning, giới hạn tuyến tính của một perceptron đơn (ví dụ XOR), và vì sao cần xếp nhiều lớp + hàm kích hoạt phi tuyến để vượt qua giới hạn đó.
 last_touched_by_task: Viết lại theo triết lý nội dung mới (2026-07-06): thêm bối cảnh lịch sử — McCulloch và Pitts (1943) đề xuất 'đơn vị ngưỡng' (threshold unit), mô hình neuron nhân tạo đầu tiên, đặt nền móng cho khái niệm sigmoid sau này như một xấp xỉ mượt/khả vi của đơn vị ngưỡng — trước đó bài chỉ nói perceptron 'giống hệt logistic regression' mà không có gốc lịch sử nào. Xác nhận qua WebFetch trực tiếp D2L.ai (nguồn cũ của bài, đọc kỹ hơn phát hiện chi tiết chưa dùng). Giữ nguyên toàn bộ nội dung XOR/universal approximation cũ (đã đúng).
 ---
@@ -22,7 +21,7 @@ có thể tính gradient và huấn luyện bằng backpropagation sau này.
 
 Tin tốt: đơn vị tính toán cơ bản nhất của mọi mạng nơ-ron hiện đại — gọi
 là **perceptron** — không phải khái niệm hoàn toàn mới hay xa lạ. Nó gần
-như giống hệt [Logistic Regression](03-logistic-regression.mdx) đã học,
+như giống hệt [Logistic Regression](02-logistic-regression.mdx) đã học,
 chỉ khác cách gọi tên và cách nó được dùng làm viên gạch xây dựng cho các
 cấu trúc lớn hơn.
 
@@ -54,7 +53,7 @@ nào — ví dụ kinh điển là hàm logic XOR (input `(0,0)` và `(1,1)` cho
 tách được 2 nhóm này ra khỏi nhau trên mặt phẳng.
 
 Đây là giới hạn nghiêm trọng hơn nhiều so với giới hạn "giả định quan hệ
-tuyến tính" đã nói ở bài [Linear Regression](02-linear-regression.mdx) —
+tuyến tính" đã nói ở bài [Linear Regression](01-linear-regression.mdx) —
 XOR là ví dụ cho thấy có những cấu trúc dữ liệu rất đơn giản mà một mô
 hình tuyến tính đơn lẻ hoàn toàn bất lực, bất kể tối ưu bao lâu.
 
@@ -110,7 +109,7 @@ luyện — chủ đề của bài tiếp theo (backpropagation).
   giới hạn của linear/logistic regression đã nói trước đó — nhưng ở đây
   được minh hoạ cụ thể bằng bài toán XOR không thể giải được bằng bất kỳ
   cách chọn `w, b` nào.
-- [Decision Tree](04-decision-tree.mdx) đã giải quyết giới hạn tuyến tính
+- [Decision Tree](03-decision-tree.mdx) đã giải quyết giới hạn tuyến tính
   theo một hướng hoàn toàn khác (rẽ nhánh dạng bậc thang thay vì tổ hợp
   tuyến tính). Neural network giải quyết theo hướng khác nữa: xếp chồng
   nhiều phép biến đổi tuyến tính + phi tuyến để tạo ra ranh giới quyết

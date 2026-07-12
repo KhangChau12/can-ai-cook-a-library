@@ -5,12 +5,11 @@ module: Reinforcement Learning
 submodule: Value-based
 order: 2
 status: stable
-prerequisites: ["01-q-learning"]
 summary: DQN (bài 18) là bước đột phá đưa Q-learning vào không gian trạng thái lớn bằng mạng nơ-ron — nhưng có 2 vấn đề độc lập mà 2 nhóm tác giả khác nhau phát hiện và giải quyết riêng biệt. Van Hasselt, Guez và Silver (2015) chỉ ra DQN có xu hướng HỆ THỐNG ước lượng quá cao (overestimate) giá trị action — vì dùng đúng một mạng vừa CHỌN action tốt nhất vừa ƯỚC LƯỢNG giá trị của action đó; Double DQN sửa bằng target `Y = r + γ·Q_{θ⁻}(s', argmax Q_θ(s',a'))` (mạng online chọn, mạng target đánh giá). Wang và cộng sự (2015, DeepMind) chỉ ra vấn đề khác: DQN học lại giá trị MỌI action từ đầu; Dueling DQN tách kiến trúc thành 2 nhánh V(s) và A(s,a), tổng hợp `Q(s,a) = V(s) + (A(s,a) − mean A)` để tránh identifiability.
 last_touched_by_task: Cải thiện Task 97 (2026-07-07): bổ sung công thức toán cụ thể (bài cũ tự thừa nhận 'không có công thức toán chi tiết') — Double DQN target `Y = r + γ·Q_{θ⁻}(s', argmax Q_θ(s',a'))` so với DQN gốc, Dueling `Q(s,a) = V(s) + (A(s,a) − mean A)` kèm giải thích vì sao phải trừ mean (vấn đề identifiability — vô số cặp V/A cho cùng Q). Nguồn: WebSearch whitelist (arxiv) xác nhận công thức chính xác. Bỏ đoạn Rainbow 'chưa đủ chuẩn 2 nguồn' vì giờ sub-module Value-based sẽ có bài PER + Rainbow riêng. Giữ nguyên cấu trúc 2 vấn đề/2 giải pháp độc lập (đã đúng).
 ---
 
-Bài [Q-learning](18-q-learning.mdx) đã học **DQN** — bước đột phá đưa
+Bài [Q-learning](01-q-learning.mdx) đã học **DQN** — bước đột phá đưa
 Q-learning vào không gian trạng thái lớn (như ảnh game Atari) bằng cách
 dùng mạng nơ-ron xấp xỉ Q-function thay vì bảng tra cứu. Nhưng DQN gốc có
 **hai vấn đề độc lập**, mỗi vấn đề được một nhóm tác giả khác nhau phát
@@ -32,7 +31,7 @@ overestimations" cụ thể khi áp dụng DQN trên các game Atari 2600.
 **Giải pháp — Double DQN:** áp dụng ý tưởng **Double Q-learning** (vốn đã
 có cho bảng tra cứu truyền thống) vào DQN dùng mạng nơ-ron sâu — **tách
 riêng** hai vai trò "chọn action" và "ước lượng giá trị action" ra **hai
-mạng khác nhau**. Trong DQN gốc (bài [18](18-q-learning.mdx)), TD target
+mạng khác nhau**. Trong DQN gốc (bài [18](01-q-learning.mdx)), TD target
 dùng target network `θ⁻` cho cả chọn lẫn đánh giá:
 
 ```
@@ -124,7 +123,7 @@ sub-module Value-based.
 
 ## Liên hệ lại với các bài trước
 
-- Cả hai đều xây dựng trực tiếp trên [DQN](18-q-learning.mdx) — không
+- Cả hai đều xây dựng trực tiếp trên [DQN](01-q-learning.mdx) — không
   thay thế mà **sửa lỗi/cải tiến** kiến trúc/thuật toán đã có, đúng tinh
   thần "dòng tiến hoá" đã áp dụng cho nhiều model khác trong track.
 - Vấn đề overestimation của Double DQN gợi nhớ nguyên tắc chung: **dùng
@@ -134,7 +133,7 @@ sub-module Value-based.
   quan quá mức.
 - Kiến trúc "tách nhánh rồi kết hợp lại" của Dueling DQN có tinh thần
   tương tự GMF+MLP hợp nhất qua concatenate ở
-  [NeuMF](44-neural-collaborative-filtering.mdx) — một mẫu hình kiến
+  [NeuMF](01-neural-collaborative-filtering.mdx) — một mẫu hình kiến
   trúc lặp lại: chia bài toán thành các thành phần dễ học hơn, rồi tổng
   hợp lại thay vì học trực tiếp một hàm phức tạp duy nhất.
 

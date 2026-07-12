@@ -5,12 +5,11 @@ module: Reinforcement Learning
 submodule: Value-based
 order: 1
 status: stable
-prerequisites: ["02-markov-decision-process"]
 summary: Phương trình Bellman biểu diễn đệ quy giá trị tối ưu, Q-learning ước lượng dần Q-function tối ưu qua trải nghiệm thực tế — và giới hạn cụ thể (bảng Q không scale được khi state space lớn/liên tục) dẫn tới DQN (Mnih et al., 2013→2015): dùng CNN xấp xỉ Q-function, chơi Atari trực tiếp từ pixel thô, với 2 kỹ thuật ổn định cốt lõi experience replay và target network.
 last_touched_by_task: Cải thiện Task 96 (2026-07-07): bổ sung phần 'Hai kỹ thuật ổn định DQN' — bản DQN 2013 trước đó chỉ nói 'dùng CNN xấp xỉ Q' mà bỏ qua vì sao huấn luyện không ổn định và 2 kỹ thuật cốt lõi của bản DQN 2015 Nature (experience replay phá tương quan thời gian, target network giải moving target), hàm loss MSE dạng gần supervised — khoảng trống lớn nhất agent chỉ ra. Nguồn: WebSearch whitelist (arxiv/d2l.ai/lilianweng) xác nhận DQN 2015 Nature human-level control 29/49 game. Giữ nguyên phần Q-table/Bellman/TD error/epsilon-greedy cũ (đã đúng).
 ---
 
-Bài [MDP](17-markov-decision-process.mdx) định nghĩa `Q^π(s, a)` — giá trị
+Bài [MDP](02-markov-decision-process.mdx) định nghĩa `Q^π(s, a)` — giá trị
 kỳ vọng khi thực hiện action `a` tại state `s` rồi tuân theo policy `π`
 sau đó. **Q-learning** là thuật toán cụ thể để **học** ra Q-function tối
 ưu `Q*` chỉ từ trải nghiệm thực tế (thử action, quan sát reward và state
@@ -44,7 +43,7 @@ Q(s, a) := Q(s, a) + α * ( r + γ * max_{a'} Q(s', a') - Q(s, a) )
 ```
 
 Trong đó `α` (alpha) là **learning rate** — giống hệt vai trò của nó ở
-gradient descent (bài [Linear Regression](02-linear-regression.mdx), nơi
+gradient descent (bài [Linear Regression](01-linear-regression.mdx), nơi
 ký hiệu là `η`): kiểm soát mỗi lần cập nhật thay đổi ước lượng bao nhiêu.
 Tài liệu RL theo quy ước dùng `α` cho learning rate thay vì `η` — cùng
 một vai trò, chỉ khác ký hiệu quen dùng trong từng nhánh tài liệu.
@@ -77,7 +76,7 @@ biến là chiến lược **epsilon-greedy**: phần lớn thời gian chọn a
 `Q` ước lượng cao nhất (exploitation), nhưng với một xác suất nhỏ `ε`
 (epsilon), chọn ngẫu nhiên một action bất kỳ (exploration) — đúng đánh đổi
 exploration/exploitation đã nhắc ở bài
-[RL Framework](16-reinforcement-learning-framework.mdx).
+[RL Framework](01-reinforcement-learning-framework.mdx).
 
 ## Giới hạn của Q-table: không scale được cho state space lớn
 
@@ -93,7 +92,7 @@ chỉ được quan sát đúng 1 lần (không đủ dữ liệu để ước l
 **Mnih và cộng sự (2013)**, trong bài báo "Playing Atari with Deep
 Reinforcement Learning", giải quyết đúng giới hạn này bằng **DQN** (Deep
 Q-Network): thay vì lưu `Q(s, a)` dưới dạng bảng, dùng một **mạng nơ-ron
-tích chập** (CNN, xem lại bài [CNN](11-convolutional-neural-network.mdx))
+tích chập** (CNN, xem lại bài [CNN](01-cnn.mdx))
 để **xấp xỉ** hàm `Q(s, a)` — nhận trực tiếp pixel thô của màn hình game
 làm input, học cách dự đoán giá trị Q cho từng action khả thi. Vì mạng
 nơ-ron có thể tổng quát hoá từ các state đã thấy sang các state tương tự
@@ -141,7 +140,7 @@ cập nhật Q-learning, TD target là `r + γ·max_{a'} Q(s', a')`. Khi Q-funct
 là mạng nơ-ron có tham số `θ`, mỗi lần cập nhật `θ` thay đổi, **chính
 target cũng thay đổi theo** — ta đang đuổi một mục tiêu vừa chạy vừa nhảy.
 Sự tương phản với supervised learning là rõ ràng: ở Linear Regression
-(bài [02](02-linear-regression.mdx)) nhãn `y` cố định, chỉ dự đoán `ŷ`
+(bài [02](01-linear-regression.mdx)) nhãn `y` cố định, chỉ dự đoán `ŷ`
 thay đổi; ở đây cả target lẫn dự đoán đều lệ thuộc vào cùng `θ`, tạo
 vòng phản hồi khiến Q-value dễ tự khuếch đại và bùng nổ.
 
@@ -168,12 +167,12 @@ trên 29/49 game Atari** (cùng kiến trúc, cùng hyperparameter cho mọi
 game — không tinh chỉnh riêng) — một bước ngoặt chứng minh deep RL có
 thể hoạt động tổng quát, không chỉ trên vài game được chọn. Hai kỹ thuật
 này sau này trở thành **thành phần tiêu chuẩn** của gần như mọi biến thể
-DQN: bài [Double/Dueling DQN](71-double-dueling-dqn.mdx) thêm sửa lỗi
+DQN: bài [Double/Dueling DQN](02-double-dueling-dqn.mdx) thêm sửa lỗi
 overestimation và tách Value/Advantage, nhưng vẫn giữ nguyên replay
 buffer + target network; bài [Prioritized Experience
-Replay](82-prioritized-experience-replay.mdx) chỉ đổi *cách lấy
+Replay](03-prioritized-experience-replay.mdx) chỉ đổi *cách lấy
 mẫu* từ uniform sang ưu tiên theo TD error, không bỏ replay buffer. Cuối
-cùng, bài [Rainbow DQN](83-rainbow-dqn.mdx) tổng hợp 6 cải tiến độc
+cùng, bài [Rainbow DQN](04-rainbow-dqn.mdx) tổng hợp 6 cải tiến độc
 lập (Double/Dueling/PER/multi-step/C51/Noisy Nets) thành một agent duy
 nhất — hoàn thiện dòng tiến hoá Value-based.
 

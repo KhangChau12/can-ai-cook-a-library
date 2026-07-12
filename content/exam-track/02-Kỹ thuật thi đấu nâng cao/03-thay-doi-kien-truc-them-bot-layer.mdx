@@ -4,12 +4,11 @@ track: exam-track
 module: Kỹ thuật thi đấu nâng cao
 order: 3
 status: stable
-prerequisites: ["01-transfer-learning-va-fine-tuning", "foundations-track/10-regularization"]
 summary: Ngoài freeze/fine-tune nguyên trạng, đôi khi cần chỉnh sửa trực tiếp kiến trúc của model pretrained: thay layer đầu ra cho đúng số lớp, thêm layer trung gian để tăng sức biểu diễn, hoặc cắt bớt để giảm overfit khi dữ liệu quá ít.
 last_touched_by_task: Rà lại dưới góc nhìn triết lý mới (2026-07-06): đọc kỹ, xác nhận bài đã đạt chuẩn đúng tiêu chí exam-track (mục 2.1 sườn A) — hướng dẫn cụ thể theo dạng bài toán (binary/multiclass/regression head), rủi ro overfit khi thêm layer liên hệ đúng Regularization. Không 'vỏ rỗng', không cần viết lại. Giữ nguyên nội dung, chỉ nâng status.
 ---
 
-Bài [Transfer Learning & Fine-tuning](04-transfer-learning-va-fine-tuning.mdx)
+Bài [Transfer Learning & Fine-tuning](01-transfer-learning-va-fine-tuning.mdx)
 đã nói tới việc **thay layer đầu ra** như một bước bắt buộc. Nhưng đó chỉ
 là mức chỉnh sửa kiến trúc tối thiểu. Trong nhiều tình huống thi đấu thực
 tế, bạn cần đi xa hơn: thêm layer mới, bớt layer có sẵn, hoặc thay đổi cấu

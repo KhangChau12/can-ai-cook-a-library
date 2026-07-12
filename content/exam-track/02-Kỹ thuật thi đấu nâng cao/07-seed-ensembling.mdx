@@ -1,0 +1,112 @@
+---
+title: Seed Ensembling — Kết hợp nhiều lần Train của Cùng một Model
+track: exam-track
+module: Kỹ thuật thi đấu nâng cao
+order: 7
+status: stable
+summary: Một biến thể rẻ nhất của ensembling — train cùng một kiến trúc nhiều lần với random seed khác nhau rồi lấy trung bình dự đoán — giảm phương sai (variance) do quá trình train ngẫu nhiên gây ra, khác hẳn bagging/stacking vốn cần thay đổi dữ liệu hoặc kiến trúc.
+last_touched_by_task: Viết mới 2026-07-12 theo yêu cầu người vận hành sau đợt review 2 tầng module — lấp khoảng trống "ensembling nói chung đã có (bài 06) nhưng chưa tách riêng biến thể seed ensembling cụ thể, rẻ và phổ biến nhất khi thi đấu". Nguồn: machinelearningmastery.com/ensemble-methods-for-deep-learning-neural-networks (cơ chế train nhiều lần với random init khác nhau, lý do giảm variance, số lượng model khuyến nghị 3-10, phân biệt với bagging).
+---
+
+Bài [Model Ensembling](06-model-ensembling.mdx) đã dạy ba kỹ thuật kết hợp
+nhiều model: voting/averaging, stacking, blending — và nhấn mạnh điều kiện
+quan trọng để ensembling có giá trị: **các model cần đủ khác nhau**. Bài
+này đào sâu vào cách tạo ra sự khác biệt đó **rẻ nhất có thể**: không đổi
+kiến trúc, không đổi dữ liệu, không đổi thuật toán — chỉ đổi đúng một thứ,
+**random seed**.
+
+## Vấn đề: cùng một kiến trúc, train hai lần, ra hai model khác nhau
+
+Huấn luyện một mạng nơ-ron là một quá trình có yếu tố ngẫu nhiên ở nhiều
+bước: khởi tạo trọng số ban đầu ngẫu nhiên, thứ tự xáo trộn (shuffle) dữ
+liệu qua từng epoch, và (nếu dùng dropout hoặc augmentation) cả những phép
+biến đổi ngẫu nhiên trong lúc train. Hệ quả: train **cùng một kiến trúc,
+cùng một dữ liệu** hai lần với hai random seed khác nhau, gần như chắc chắn
+cho ra **hai bộ trọng số khác nhau** — mỗi lần train hội tụ về một điểm
+khác nhau trong không gian tham số (thường gọi là rơi vào các local minima
+khác nhau), dẫn tới hai model có hành vi dự đoán hơi khác nhau, dù kiến
+trúc và dữ liệu huấn luyện giống hệt.
+
+Đây không phải lỗi hay điều gì bất thường — nó là bản chất ngẫu nhiên vốn
+có của quá trình train. Nhưng chính bản chất này lại là nguyên liệu miễn
+phí cho ensembling: các model khác nhau do random seed thường có sai số
+**không hoàn toàn tương quan** với nhau — mỗi model "rơi vào" một điểm hội
+tụ khác nhau nên có xu hướng sai ở những điểm dữ liệu khác nhau, đúng
+nguyên lý ensembling đã học ở bài trước.
+
+## Seed ensembling là gì
+
+**Seed ensembling** (hay multi-seed averaging): train cùng một kiến trúc,
+cùng một tập dữ liệu, nhiều lần với các random seed khác nhau, rồi kết hợp
+dự đoán của các lần train đó (thường bằng voting/averaging đơn giản — kỹ
+thuật 1 ở bài trước) thành một dự đoán cuối cùng.
+
+Quy trình cụ thể:
+
+1. Chọn `N` giá trị seed khác nhau (ví dụ `N = 5`: seed 0, 1, 2, 3, 4).
+2. Với mỗi seed, train lại **từ đầu** đúng một kiến trúc, đúng một cấu hình
+   hyperparameter, trên đúng một tập dữ liệu train — chỉ khác giá trị seed.
+3. Lưu checkpoint tốt nhất của mỗi lần train (đã học ở bài
+   [Checkpoint](02-load-va-dung-pretrained-checkpoint.mdx)).
+4. Với dữ liệu test, lấy dự đoán từ cả `N` checkpoint, rồi trung bình cộng
+   (regression, hoặc xác suất của classification) hoặc biểu quyết đa số
+   (nhãn classification trực tiếp).
+
+## Vì sao seed ensembling khác bagging
+
+Dễ nhầm seed ensembling với bagging (đã học ở
+[Ensemble Methods](../foundations-track/01-Nền tảng Toán & ML cổ điển/04-Ensemble-Methods/01-ensemble-methods.mdx))
+vì cả hai đều tạo nhiều model rồi kết hợp — nhưng khác nhau ở đúng một điểm
+mấu chốt: **cái gì được thay đổi giữa các lần train**.
+
+| | Bagging | Seed ensembling |
+|---|---|---|
+| Dữ liệu train mỗi model | Khác nhau (lấy mẫu có hoàn lại từ tập train gốc) | **Giống hệt nhau** |
+| Kiến trúc/thuật toán | Giống nhau | Giống hệt nhau |
+| Random seed | Có thể giống hoặc khác | **Khác nhau** — đây là nguồn khác biệt duy nhất |
+| Nguồn gốc sự khác biệt giữa các model | Từ việc thấy dữ liệu khác nhau | Từ việc hội tụ về điểm khác nhau trong không gian tham số dù thấy cùng dữ liệu |
+
+Nói cách khác: bagging tạo khác biệt bằng cách thay đổi **cái model nhìn
+thấy**; seed ensembling tạo khác biệt bằng cách thay đổi **cách model học**,
+dù nhìn thấy đúng một thứ. Hai cơ chế này không loại trừ nhau — hoàn toàn
+có thể kết hợp cả hai (bagging với nhiều seed khác nhau cho mỗi bag) để có
+đa dạng từ cả hai nguồn.
+
+## Chi phí và giới hạn: không có gì miễn phí
+
+Đánh đổi rõ ràng nhất của seed ensembling là **thời gian tính toán tuyến
+tính theo số lần train** — train 5 lần với 5 seed tốn gấp 5 lần thời gian
+train 1 lần (cộng thêm chi phí suy luận `N` lần khi dự đoán). Với deep
+learning, một lần train có thể đã tốn hàng giờ — nhân thêm 5-10 lần là chi
+phí đáng kể trong thời gian thi đấu có hạn.
+
+Mức độ cải thiện cũng có **giới hạn tự nhiên**: vì tất cả model đều dùng
+chung kiến trúc và dữ liệu, chúng thường "sai theo kiểu tương tự nhau" hơn
+so với ensembling các kiến trúc thực sự khác nhau (ví dụ một CNN + một
+gradient boosting) — cải thiện từ seed ensembling thường ổn định nhưng nhỏ
+hơn cải thiện từ ensembling đa dạng kiến trúc. Số lượng seed hợp lý thường
+là **3, 5, hoặc 10** — tăng thêm quá nhiều seed vượt qua ngưỡng này thường
+cho lợi ích giảm dần (diminishing returns) trong khi chi phí tính toán vẫn
+tăng tuyến tính.
+
+## Áp dụng vào chiến lược thi đấu
+
+- **Lựa chọn mặc định khi không còn ý tưởng cải thiện mô hình nào khác** ở
+  giai đoạn cuối competition — không cần thiết kế thêm kiến trúc mới hay
+  feature mới, chỉ cần thời gian tính toán để train lại vài lần.
+- **Đặc biệt hiệu quả khi kết hợp với gradient boosting cho dữ liệu
+  tabular** — đổi `random_state` của XGBoost/LightGBM/CatBoost giữa các lần
+  train, chi phí train một lần thường thấp hơn nhiều so với deep learning
+  nên dễ chạy đủ 5-10 seed trong thời gian ngắn.
+- **Kết hợp tự nhiên với các checkpoint đã lưu từ quá trình tuning** (bài
+  [Hyperparameter Tuning](05-hyperparameter-tuning.mdx)) — nếu trong lúc
+  tìm hyperparameter tốt nhất đã train nhiều model với cấu hình gần tương
+  đương, các checkpoint "gần tối ưu" đó cũng là nguyên liệu hợp lệ cho seed
+  ensembling, không cần train thêm từ đầu.
+- Luôn kiểm chứng bằng cross-validation trước khi kết luận seed ensembling
+  thực sự cải thiện điểm số — đúng nguyên tắc xuyên suốt track, không giả
+  định "ensembling luôn tốt hơn" mà không đo lại.
+
+## Nguồn tham khảo
+
+- [Ensemble Methods for Deep Learning Neural Networks (MachineLearningMastery)](https://machinelearningmastery.com/ensemble-methods-for-deep-learning-neural-networks/) — dùng cho cơ chế train nhiều lần với random initialization khác nhau (mỗi lần hội tụ về local minima khác nhau, sai số không tương quan mạnh), khuyến nghị số lượng model 3-10, và phân biệt rõ với bagging (bagging thay đổi dữ liệu train, seed ensembling chỉ thay đổi random seed).

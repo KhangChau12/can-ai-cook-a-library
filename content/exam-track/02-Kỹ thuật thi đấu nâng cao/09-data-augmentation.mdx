@@ -2,14 +2,13 @@
 title: Data Augmentation — Nhân bản Dữ liệu Ảnh Có Chủ đích Để Giảm Overfitting
 track: exam-track
 module: Kỹ thuật thi đấu nâng cao
-order: 7
+order: 9
 status: stable
-prerequisites: ["01-transfer-learning-va-fine-tuning"]
 summary: Bài Transfer Learning đã nhắc: dataset competition càng nhỏ, rủi ro overfit khi fine-tune càng cao. Data augmentation là kỹ thuật trực tiếp giảm rủi ro đó — tạo thêm biến thể của ảnh gốc (lật, cắt, đổi màu) để mô hình thấy nhiều 'phiên bản' khác nhau của cùng nội dung, gần như luôn là chuẩn mực trong các giải thi đấu ảnh chiến thắng kể từ AlexNet (ImageNet 2012).
 last_touched_by_task: Viết mới 2026-07-06: lấp khoảng trống kỹ thuật thi đấu phổ biến chưa được nhắc trong exam-track (đã thử pseudo-labeling trước đó nhưng không tìm đủ nguồn whitelist chất lượng, xem CLAUDE.md mục 1.2). Nguồn: machinelearningmastery.com/best-practices-for-preparing-and-augmenting-image-data-for-convolutional-neural-networks (xác nhận qua WebFetch: các phép biến đổi cụ thể dùng bởi các model ILSVRC top đầu — flip, crop, multi-scale, PCA color perturbation của AlexNet, multi-crop khi test).
 ---
 
-Bài [Transfer Learning & Fine-tuning](04-transfer-learning-va-fine-tuning.mdx)
+Bài [Transfer Learning & Fine-tuning](01-transfer-learning-va-fine-tuning.mdx)
 đã nhắc: dataset competition càng nhỏ, rủi ro overfit khi fine-tune một
 model pretrained càng cao — đó là lý do chọn full freezing thay vì mở hết
 layer. **Data augmentation** tấn công đúng nguyên nhân gốc của overfit
@@ -27,7 +26,7 @@ augmentation giải quyết vấn đề này bằng cách **tạo thêm biến t
 ## Các phép biến đổi cụ thể, đã chứng minh hiệu quả từ AlexNet
 
 Ngay từ AlexNet (2012, giải ImageNet Large Scale Visual Recognition
-Competition) — bài [AlexNet](../foundations-track/35-alexnet.mdx) đã học
+Competition) — bài [AlexNet](../../foundations-track/03-Computer Vision/01-Co-ban/02-alexnet.mdx) đã học
 — nhóm tác giả áp dụng augmentation làm một phần không thể thiếu của quy
 trình huấn luyện, không phải một mẹo phụ:
 
@@ -71,7 +70,7 @@ nhau), lấy dự đoán trên **từng** phiên bản, rồi **lấy trung bìn
 (TTA)** — không vi phạm nguyên tắc "không augment test set" ở trên, vì
 label thật của test không hề bị dùng để tính toán gì cả; TTA chỉ tạo thêm
 góc nhìn đa dạng cho **input** khi suy luận, tương tự tinh thần
-[voting/averaging](08-model-ensembling.mdx) đã học — nhưng ensemble nhiều
+[voting/averaging](06-model-ensembling.mdx) đã học — nhưng ensemble nhiều
 phiên bản của **cùng một** ảnh qua **cùng một** model, thay vì ensemble
 nhiều model khác nhau.
 

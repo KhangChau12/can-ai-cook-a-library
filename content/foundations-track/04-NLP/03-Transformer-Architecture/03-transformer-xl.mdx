@@ -5,12 +5,11 @@ module: Natural Language Processing
 submodule: Transformer Architecture
 order: 3
 status: stable
-prerequisites: ["02-transformer"]
 summary: Transformer gốc chỉ xử lý được chuỗi có độ dài cố định — với văn bản dài hơn, phải cắt thành nhiều đoạn (segment) độc lập, xử lý riêng rẽ. Cách này gây ra 'context fragmentation' (phân mảnh ngữ cảnh): mô hình không bao giờ học được phụ thuộc vượt ra ngoài ranh giới một đoạn, và việc đánh giá tốn kém vì phải xử lý lại từ đầu mỗi khi đoạn dịch chuyển. Dai và cộng sự (2019) giải quyết bằng Transformer-XL: tái sử dụng hidden state từ đoạn trước (segment-level recurrence) kèm relative positional encoding (vì vị trí tuyệt đối không còn nhất quán giữa các đoạn) — bắt được phụ thuộc dài hơn Transformer gốc tới 450%, và nhanh hơn tới 1800 lần khi đánh giá.
 last_touched_by_task: Bài mới (2026-07-06), theo chỉ đạo người vận hành chuyển hướng đào sâu Sequence Model sau khi hoàn thành đợt đào sâu CV. Lấp khoảng trống: track đã dạy Transformer (bài 15), BERT (45), T5 (54) nhưng chưa từng đề cập giới hạn độ dài chuỗi cố định của kiến trúc gốc — một hạn chế thực tế quan trọng khi xử lý văn bản dài (sách, tài liệu). Nguồn: arxiv 1901.02860 (paper gốc Dai et al. 2019, xác nhận qua WebFetch abstract: vấn đề context fragmentation, giải pháp segment-level recurrence + relative positional encoding, kết quả cụ thể) + lilianweng.github.io/posts/2020-04-07-the-transformer-family (Lil'Log, xác nhận qua WebFetch: chi tiết cơ chế tái sử dụng hidden state, công thức phân rã attention 4 thành phần cho relative positional encoding). Cập nhật (2026-07-10, tách module NLP/LLM): sửa link [RNN] trỏ nhầm slug "recurrent-neural-network" (không tồn tại) thành đúng "01-rnn.mdx".
 ---
 
-Bài [Transformer](15-transformer.mdx) giới thiệu kiến trúc dựa hoàn toàn
+Bài [Transformer](02-transformer.mdx) giới thiệu kiến trúc dựa hoàn toàn
 trên attention — nhưng có một giới hạn thực tế chưa được nhắc tới: kiến
 trúc gốc chỉ xử lý được chuỗi có **độ dài cố định** (một segment). Bài
 này kể cách một hạn chế cụ thể của giới hạn đó được giải quyết.
@@ -84,7 +83,7 @@ cố định) không làm được.
 ## Liên hệ lại với các bài trước
 
 - Transformer-XL không thay đổi cơ chế self-attention cốt lõi đã học ở
-  bài [Transformer](15-transformer.mdx) — nó chỉ thay đổi **cách quản lý
+  bài [Transformer](02-transformer.mdx) — nó chỉ thay đổi **cách quản lý
   ngữ cảnh qua nhiều segment** (tái sử dụng hidden state) và **cách mã
   hoá vị trí** (tương đối thay vì tuyệt đối).
 - Cơ chế tái sử dụng hidden state từ bước trước có tinh thần gần với

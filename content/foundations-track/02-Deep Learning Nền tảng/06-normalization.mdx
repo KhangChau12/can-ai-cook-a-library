@@ -4,7 +4,6 @@ track: foundations-track
 module: "Deep Learning Nền tảng"
 order: 6
 status: stable
-prerequisites: ["05-weight-initialization"]
 summary: "Weight initialization chỉ giữ phương sai ổn định tại bước khởi đầu — Batch Normalization (Ioffe & Szegedy, 2015) chuẩn hoá activation liên tục trong suốt quá trình train, giúp mạng sâu ổn định và hội tụ nhanh hơn nhiều, nhưng phụ thuộc thống kê theo batch nên yếu với batch nhỏ và lúng túng với dữ liệu chuỗi. Layer Normalization (Ba, Kiros, Hinton, 2016) chuẩn hoá theo từng ví dụ độc lập, không phụ thuộc batch — trở thành lựa chọn mặc định cho RNN/Transformer."
 last_touched_by_task: "Viết mới — nối tiếp bài Weight Initialization, cùng chủ đề 'ổn định phân phối activation qua các lớp' nhưng ở giai đoạn train liên tục thay vì chỉ lúc khởi tạo. Nguồn: d2l.ai (công thức BatchNorm, phê bình khái niệm internal covariate shift, giới hạn batch nhỏ), arxiv.org 1502.03167 (paper gốc BatchNorm, định nghĩa ICS nguyên văn), arxiv.org 1607.06450 (paper gốc LayerNorm, công thức + lý do áp dụng tốt cho RNN + không phân biệt train/inference). Đã kiểm tra: paper Santurkar et al. 2018 (phản biện ICS) chỉ xác nhận qua kết quả tìm kiếm arxiv, không fetch sâu — không trích chi tiết nội dung chưa đọc trực tiếp."
 ---

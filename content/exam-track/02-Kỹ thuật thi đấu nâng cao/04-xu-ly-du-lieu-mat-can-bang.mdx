@@ -1,0 +1,119 @@
+---
+title: Xử lý Dữ liệu Mất cân bằng — Class Weighting, Oversampling & SMOTE
+track: exam-track
+module: Kỹ thuật thi đấu nâng cao
+order: 4
+status: stable
+summary: Bài Leaderboard & Metric đã cảnh báo accuracy đánh lừa khi dữ liệu mất cân bằng — bài này dạy cách xử lý trực tiếp vấn đề đó bằng ba hướng tiếp cận (class weighting, oversampling/SMOTE, undersampling), cách chọn đúng hướng, và rủi ro cụ thể của từng cách.
+last_touched_by_task: Viết mới 2026-07-12 theo yêu cầu người vận hành sau đợt review 2 tầng module — lấp khoảng trống "biết mất cân bằng là vấn đề nhưng chưa biết cách xử lý". Nguồn: machinelearningmastery.com/smote-oversampling-for-imbalanced-classification (cơ chế SMOTE, k_neighbors, rủi ro overlap) + machinelearningmastery.com/multi-class-imbalanced-classification (class_weight='balanced', cost-sensitive learning).
+---
+
+Bài [Leaderboard, Metric & Lỗi nộp bài](01-leaderboard-metric-va-loi-nop-bai.mdx)
+đã cảnh báo: với dữ liệu mất cân bằng, `accuracy` có thể đạt 95% chỉ bằng
+cách luôn đoán lớp đa số, mà không học được gì hữu ích. Nhưng biết vấn đề
+tồn tại chỉ là bước đầu — bài này đi vào **cách xử lý cụ thể**, vì mất cân
+bằng dữ liệu là tình huống rất phổ biến trong các bài toán thi đấu thật
+(phát hiện gian lận, chẩn đoán bệnh hiếm, phát hiện lỗi sản xuất — lớp
+"dương" luôn là thiểu số).
+
+## Vì sao mô hình mặc định "thiên vị" lớp đa số
+
+Hầu hết thuật toán học máy (logistic regression, decision tree, mạng nơ-ron)
+tối ưu hoá một hàm loss tính trung bình trên toàn bộ dữ liệu train. Nếu 95%
+dữ liệu thuộc lớp âm, mô hình học được rằng "luôn đoán âm" đã tối thiểu hoá
+loss trung bình rất tốt — nó không có động lực nào để cố học nhận diện đúng
+5% dữ liệu dương, vì sai ở nhóm nhỏ đó chỉ đóng góp rất ít vào loss tổng.
+Ba hướng xử lý dưới đây đều nhắm vào đúng nguyên nhân này: thay đổi *trọng
+số* hoặc *tỷ lệ* để lớp thiểu số không còn bị "chìm" trong lớp đa số.
+
+## Hướng 1 — Class weighting: sửa hàm loss, không sửa dữ liệu
+
+**Class weighting** (còn gọi là cost-sensitive learning) gán trọng số lớn
+hơn cho lớp thiểu số ngay trong hàm loss, khiến mỗi lần mô hình đoán sai một
+điểm dữ liệu thuộc lớp thiểu số bị "phạt" nặng hơn nhiều so với đoán sai một
+điểm thuộc lớp đa số — về bản chất, dạy mô hình rằng bỏ sót lớp thiểu số là
+một cái giá đắt.
+
+Hầu hết thư viện phổ biến hỗ trợ sẵn tham số `class_weight='balanced'`
+(scikit-learn) tự động tính trọng số tỷ lệ nghịch với tần suất mỗi lớp —
+lớp càng hiếm, trọng số càng cao. Với mạng nơ-ron, nguyên lý tương tự áp
+dụng bằng cách nhân thêm hệ số vào loss function cho từng lớp.
+
+**Ưu điểm:** không cần tạo/xoá bất kỳ dòng dữ liệu nào — dữ liệu train giữ
+nguyên phân phối gốc, chỉ đổi cách mô hình "quan tâm" tới từng lớp. Đây là
+lựa chọn nên thử **đầu tiên** vì đơn giản nhất, gần như không có rủi ro phụ.
+
+## Hướng 2 — Oversampling: nhân bản hoặc tổng hợp thêm dữ liệu lớp thiểu số
+
+**Random oversampling** đơn giản nhất: sao chép ngẫu nhiên các dòng dữ liệu
+sẵn có của lớp thiểu số cho tới khi tỷ lệ hai lớp cân bằng hơn. Nhược điểm
+rõ ràng: sao chép y hệt không mang lại thông tin mới, dễ khiến mô hình
+overfit vào đúng vài điểm dữ liệu bị lặp lại nhiều lần.
+
+**SMOTE (Synthetic Minority Oversampling Technique)** giải quyết nhược
+điểm đó bằng cách **tổng hợp** điểm dữ liệu mới thay vì sao chép nguyên
+văn. Cơ chế cụ thể:
+
+1. Chọn ngẫu nhiên một điểm dữ liệu `a` thuộc lớp thiểu số.
+2. Tìm `k` điểm dữ liệu **gần nhất** cùng lớp thiểu số với `a` (mặc định
+   `k_neighbors = 5`).
+3. Chọn ngẫu nhiên một trong `k` điểm đó, gọi là `b`.
+4. Tạo điểm dữ liệu mới nằm trên đoạn thẳng nối `a` và `b` trong không gian
+   feature, tại một vị trí ngẫu nhiên giữa hai điểm.
+
+Kết quả: các điểm tổng hợp mới "hợp lý" hơn sao chép thuần tuý — chúng nằm
+trong đúng vùng không gian mà lớp thiểu số thực sự chiếm giữ, thay vì lặp
+lại y hệt các điểm đã có.
+
+### Rủi ro của SMOTE: tạo điểm nhiễu ở vùng chồng lấn giữa hai lớp
+
+SMOTE tổng hợp điểm mới **mà không xét gì tới lớp đa số** — nếu vùng không
+gian gần điểm `a` bị hai lớp chồng lấn nhau (dữ liệu lớp thiểu số nằm rất
+gần dữ liệu lớp đa số), điểm tổng hợp mới có thể rơi đúng vào vùng mơ hồ đó,
+tạo ra dữ liệu train khó phân biệt hơn, đôi khi gây hại nhiều hơn lợi. Cách
+khắc phục phổ biến: kết hợp SMOTE với **undersampling nhẹ trên lớp đa số**
+(ví dụ dùng `sampling_strategy` để chỉ oversample lớp thiểu số lên một tỷ
+lệ vừa phải, không ép về 1:1 tuyệt đối, rồi undersample bớt lớp đa số) —
+đúng khuyến nghị gốc của tác giả SMOTE, không dùng oversampling một mình.
+
+## Hướng 3 — Undersampling: giảm bớt lớp đa số
+
+Ngược lại với oversampling, **random undersampling** loại bỏ ngẫu nhiên một
+phần dữ liệu lớp đa số cho tới khi tỷ lệ cân bằng hơn. Ưu điểm: giảm kích
+thước dataset (train nhanh hơn), không tạo dữ liệu giả. Nhược điểm: nếu lớp
+đa số vốn không quá nhiều dữ liệu, undersampling có thể vứt bỏ thông tin
+hữu ích, khiến mô hình học kém hơn tổng thể vì thiếu dữ liệu.
+
+**Nguyên tắc bắt buộc giống các kỹ thuật đã học:** oversampling/SMOTE/
+undersampling **chỉ áp dụng trên tập train**, tuyệt đối không áp dụng lên
+validation/test — tương tự lý do augmentation chỉ áp dụng train (đã học ở
+bài [Data Augmentation](09-data-augmentation.mdx)): validation/test phải
+phản ánh đúng phân phối dữ liệu thật mô hình sẽ gặp khi dự đoán. Nếu dùng
+cross-validation, bước resampling phải nằm **bên trong** từng fold — resample
+trước rồi mới chia fold sẽ khiến dữ liệu tổng hợp/nhân bản từ cùng gốc lọt
+vào cả train và validation của một fold, một dạng train-test contamination
+cụ thể (đã học ở bài 1).
+
+## Chọn hướng nào — không có công thức cố định
+
+Không có kỹ thuật nào "luôn thắng" — nguyên tắc thực dụng xuyên suốt track
+vẫn áp dụng: thử, đo bằng cross-validation, giữ lại cái tốt hơn.
+
+- **Bắt đầu bằng class weighting** — chi phí thấp nhất, không sửa dữ liệu,
+  đáng thử trước tiên với mọi mô hình hỗ trợ tham số này (hầu hết thư viện
+  phổ biến đều có).
+- **Nếu class weighting chưa đủ và mất cân bằng nghiêm trọng** (ví dụ lớp
+  thiểu số dưới 5%), thử SMOTE kết hợp undersampling nhẹ trên lớp đa số.
+- **Tránh oversampling/SMOTE nếu dataset đã lớn và lớp thiểu số vẫn có đủ
+  vài trăm mẫu trở lên** — ở quy mô đó, class weighting thường đã đủ, thêm
+  resampling chỉ tăng thời gian train mà không chắc cải thiện tương xứng.
+- **Luôn đánh giá bằng đúng scoring metric của competition** (thường là
+  `f1_score`, `precision`, hoặc `recall` cho bài toán mất cân bằng — hiếm
+  khi dùng `accuracy`), không dựa vào accuracy để so sánh các hướng xử lý
+  — accuracy chính là thứ bị "đánh lừa" ngay từ đầu bởi mất cân bằng, dùng
+  nó để chọn hướng xử lý là vòng lặp sai lầm khép kín.
+
+## Nguồn tham khảo
+
+- [SMOTE for Imbalanced Classification with Python (MachineLearningMastery)](https://machinelearningmastery.com/smote-oversampling-for-imbalanced-classification/) — dùng cho cơ chế chính xác của SMOTE (chọn k nearest neighbor, nội suy điểm mới trên đoạn nối), tham số `k_neighbors`/`sampling_strategy`, rủi ro tạo điểm nhiễu ở vùng chồng lấn lớp, và khuyến nghị kết hợp với undersampling.
+- [Multi-Class Imbalanced Classification (MachineLearningMastery)](https://machinelearningmastery.com/multi-class-imbalanced-classification/) — dùng cho định nghĩa cost-sensitive learning/class weighting, cơ chế `class_weight='balanced'` tự động tính trọng số theo tần suất lớp.

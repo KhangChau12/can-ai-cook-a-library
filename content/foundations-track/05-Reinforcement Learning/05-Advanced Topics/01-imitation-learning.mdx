@@ -4,7 +4,6 @@ track: foundations-track
 module: Reinforcement Learning
 order: 1
 status: stable
-prerequisites: ["02-markov-decision-process", "02-actor-critic"]
 summary: RL thuần (thử-sai) cần rất nhiều tương tác với môi trường — quá tốn kém hoặc nguy hiểm trong nhiều tình huống thực tế. Imitation Learning cho phép agent học từ minh chứng (demonstrations) của chuyên gia thay vì phải tự mò mẫm. Bài này kể dòng tiến hoá từ Behavioral Cloning (đơn giản nhưng yếu) qua DAgger (sửa distribution shift) tới GAIL (kết hợp GAN với RL).
 last_touched_by_task: Tái cấu trúc (2026-07-10) — chuyển từ submodule Overview (nhồi nhét, sai bản chất) sang submodule mới Advanced Topics, đặt sau Model-based vì đây là chủ đề mở rộng cần actor-critic làm nền, không phải kiến thức nền tảng chung. Nội dung không đổi. Nguồn: arxiv DAgger 1011.0686 + arxiv GAIL 1606.03476 + machinelearningmastery.com.
 submodule: Advanced Topics
@@ -104,7 +103,7 @@ thay vì O(T²) của BC — nghĩa là lỗi không tích luỹ bậc hai theo 
 ## GAIL — GAN cho Imitation Learning
 
 **GAIL** (Generative Adversarial Imitation Learning, Ho & Ermon 2016)
-đưa ý tưởng đối kháng của [GAN](23-gan.mdx) vào imitation learning, loại bỏ
+đưa ý tưởng đối kháng của [GAN](01-gan.mdx) vào imitation learning, loại bỏ
 nhu cầu chuyên gia online.
 
 ### Kiến trúc
@@ -165,7 +164,7 @@ Không có phương pháp nào "luôn tốt nhất":
   trước, rồi fine-tune bằng RL thật. Cách này gọi là **RL từ demonstration
   (RLfD)**, kết hợp ưu điểm của cả hai: IL cho khởi đầu nhanh, RL cho tối
   ưu hoá tiếp.
-- **GAIL và [GAN](23-gan.mdx):**
+- **GAIL và [GAN](01-gan.mdx):**
   GAIL dùng trực tiếp kiến trúc GAN (generator + discriminator) nhưng
   thay đổi mục tiêu: GAN phân biệt ảnh thật/giả, GAIL phân biệt trajectory
   chuyên gia/agent.

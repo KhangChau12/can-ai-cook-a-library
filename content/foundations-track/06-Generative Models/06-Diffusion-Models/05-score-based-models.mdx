@@ -5,7 +5,6 @@ module: Generative Models
 submodule: Diffusion Models
 order: 5
 status: stable
-prerequisites: ["04-score-function-langevin-dynamics"]
 summary: DDPM có discrete timesteps và forward process Gaussian. Score-based Models (Song & Ermon 2019) tiếp cận từ góc nhìn khác: học score function (gradient của log probability) và dùng Langevin dynamics để sample — 2 khái niệm đã dựng trực giác ở bài đệm trước. Song et al. 2020 thống nhất DDPM và score matching vào một framework duy nhất — continuous-time SDE — cho phép ODE sampling (nhanh hơn) và exact likelihood.
 last_touched_by_task: Sửa (2026-07-11, review chiều sâu module): order đổi từ 4 sang 5 sau khi chèn bài đệm "Score Function & Langevin Dynamics" (order 4) — bài này đòi hỏi SDE/score matching/Langevin dynamics mà track chưa từng dạy, nay có bài đệm dẫn trước. Bỏ phần định nghĩa lại score function/Langevin dynamics đã trùng với bài đệm, thêm câu dẫn nhập ngắn cho Wiener process/Brownian motion trước khi vào công thức SDE (khái niệm này bài đệm không dạy, chỉ dừng ở discrete-time Langevin).
 ---

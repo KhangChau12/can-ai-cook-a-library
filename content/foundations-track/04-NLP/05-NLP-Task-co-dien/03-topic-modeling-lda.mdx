@@ -5,7 +5,6 @@ module: Natural Language Processing
 submodule: NLP Task cổ điển
 order: 3
 status: stable
-prerequisites: ["01-phan-loai-van-ban"]
 summary: Hai bài trước (phân loại văn bản, POS tagging/NER) đều là bài toán SUPERVISED — cần dữ liệu có nhãn sẵn. Topic Modeling đặt câu hỏi ngược lại hoàn toàn khác: cho một tập hợp văn bản KHÔNG có nhãn, có thể tự động khám phá các "chủ đề" ẩn bên trong hay không? Latent Dirichlet Allocation (LDA, Blei/Ng/Jordan 2003) trả lời bằng một mô hình sinh xác suất (generative probabilistic model): mỗi văn bản là một hỗn hợp các chủ đề, mỗi chủ đề là một hỗn hợp các từ — suy luận ngược từ dữ liệu quan sát được để tìm ra cấu trúc ẩn đó.
 last_touched_by_task: Bài mới (2026-07-10), sub-module "NLP Task cổ điển" — bài thứ 3, đối lập có chủ đích với 2 bài supervised trước đó (Phân loại văn bản, POS tagging/NER) bằng một bài toán unsupervised. Nguồn: scikit-learn.org (xác nhận qua WebFetch: định nghĩa LDA là generative probabilistic model, mô hình hoá document-topic và topic-word bằng phân phối Dirichlet, quy trình sinh dữ liệu (generative process) cụ thể, công thức ELBO cho variational inference, trích dẫn paper gốc Blei/Ng/Jordan 2003 JMLR). Không thuộc dạng "dòng tiến hoá nhiều model cạnh tranh" (LDA là một kỹ thuật đơn, không có tiền thân trực tiếp trong track) nên 1 nguồn đủ theo mục 2.5.
 ---

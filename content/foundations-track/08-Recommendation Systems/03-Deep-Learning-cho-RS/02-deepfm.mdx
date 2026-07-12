@@ -5,7 +5,6 @@ module: Recommendation Systems
 submodule: Deep Learning cho RS
 order: 2
 status: stable
-prerequisites: ["01-neural-collaborative-filtering"]
 summary: Collaborative Filtering/NeuMF chỉ dùng ID người dùng-item, bỏ lỡ thông tin ngữ cảnh phong phú (giới tính, độ tuổi, danh mục sản phẩm...) quan trọng cho bài toán dự đoán tỷ lệ click (CTR). Factorization Machines (FM) mô hình hoá tương tác feature bậc 2 nhưng cần feature engineering thủ công cho tương tác bậc cao/phi tuyến. Guo và cộng sự (2017) giải quyết bằng DeepFM: chạy song song 1 nhánh FM (tương tác bậc thấp) và 1 nhánh deep network (tương tác bậc cao, phi tuyến, tự động), chia sẻ chung input thô, không cần feature engineering thủ công.
 last_touched_by_task: Tái cấu trúc (2026-07-10) — chuyển vào submodule "Deep Learning cho RS" (order 3→2), sửa prerequisite trỏ đúng slug NeuMF sau khi module tách submodule. Nguồn: D2L.ai (chapter_recommender-systems/deepfm.html, xác nhận qua WebFetch: vấn đề CF chỉ dùng ID bỏ lỡ ngữ cảnh, kiến trúc FM/DeepFM song song, ưu điểm tự động học tương tác feature) + arxiv 1703.04247 (paper gốc Guo et al. 2017, xác nhận qua WebFetch abstract: vấn đề các phương pháp trước thiên về bậc thấp/cao hoặc cần feature engineering thủ công, kiến trúc chia sẻ input chung cho phần wide/deep).
 ---
@@ -86,7 +85,7 @@ năng "tổng quát hoá" các mẫu hình phức tạp bậc cao (từ mạng s
   lần trong track — tương tự cách CNN (bài 11) tự học đặc trưng ảnh thay
   vì thiết kế đặc trưng thủ công, DeepFM tự học tương tác feature phức
   tạp thay vì con người tự thiết kế.
-- Vẫn huấn luyện bằng [backpropagation](09-backpropagation.mdx) như mọi
+- Vẫn huấn luyện bằng [backpropagation](02-backpropagation.mdx) như mọi
   mạng nơ-ron khác trong track — điểm mới chỉ nằm ở cách kết hợp 2 nhánh
   kiến trúc, không phải kỹ thuật tối ưu hoá mới.
 

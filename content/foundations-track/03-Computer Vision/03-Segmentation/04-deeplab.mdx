@@ -5,13 +5,12 @@ module: Computer Vision
 submodule: Segmentation
 order: 4
 status: stable
-prerequisites: ["02-unet"]
 summary: FCN/U-Net thu nhỏ dần ảnh qua pooling để mở rộng receptive field (nhìn được ngữ cảnh rộng hơn), nhưng đánh đổi lại mất độ phân giải không gian — decoder phải 'đoán lại' chi tiết đã mất. Chen và cộng sự (2017) giải quyết bằng atrous (dilated) convolution: mở rộng receptive field bằng cách chèn khoảng trống vào kernel, KHÔNG cần giảm độ phân giải feature map. Kết hợp nhiều dilation rate song song (Atrous Spatial Pyramid Pooling — ASPP) nắm bắt vật thể ở nhiều tỷ lệ cùng lúc. DeepLabv3+ (2018) thêm một decoder nhẹ để tinh chỉnh ranh giới sắc nét — đạt 89.0% PASCAL VOC 2012, 82.1% Cityscapes.
 last_touched_by_task: Bài mới (2026-07-06), theo câu hỏi trực tiếp của người vận hành 'mảng segmentation hết gì đáng học rồi sao?' — rà lại nghiêm túc hơn thay vì dừng sau 1 lần thử thất bại ở Task 53. Xác nhận DeepLab (v3, v3+) là khoảng trống thật đáng giá (giải quyết đánh đổi ngữ cảnh/độ phân giải mà FCN/U-Net chưa xử lý triệt để). Nguồn: 2 paper arxiv riêng biệt của cùng nhóm tác giả — arxiv 1706.05587 (DeepLabv3, Chen et al. 2017, xác nhận qua WebFetch: atrous convolution, ASPP cascade+parallel) và arxiv 1802.02611 (DeepLabv3+, Chen et al. 2018, xác nhận qua WebFetch: thêm decoder module, Xception backbone, kết quả PASCAL VOC/Cityscapes cụ thể). Đã thử tìm nguồn giải thích trực giác trong 4 domain whitelist (D2L.ai, Lil'Log, cs231n, sebastianraschka.com) — không có nội dung phù hợp sau nhiều lần thử ở cả Task 53 và task này; paperswithcode.com bị chặn redirect ra ngoài whitelist. Người vận hành xác nhận dùng 2 paper arxiv làm 2 nguồn độc lập là chấp nhận được cho trường hợp này.
 ---
 
-Bài [Image Segmentation](34-image-segmentation.mdx) và
-[U-Net](40-unet.mdx) giải quyết semantic segmentation bằng kiến trúc
+Bài [Image Segmentation](01-image-segmentation.mdx) và
+[U-Net](02-unet.mdx) giải quyết semantic segmentation bằng kiến trúc
 encoder-decoder: encoder thu nhỏ dần ảnh qua pooling để "nhìn" được ngữ
 cảnh rộng hơn, decoder phóng to lại để khôi phục độ phân giải ban đầu.
 Cách tiếp cận này hoạt động tốt, nhưng có một đánh đổi cụ thể chưa được
@@ -78,7 +77,7 @@ for Semantic Image Segmentation") giải quyết bằng cách kết hợp thêm 
 U-Net — để tinh chỉnh lại ranh giới vật thể dựa trên thông tin chi tiết
 từ các lớp nông hơn trong mạng, tương tự vai trò skip connection ở U-Net.
 Ngoài ra, DeepLabv3+ còn dùng **depthwise separable convolution** (đã
-học ở bài [MobileNet](38-mobilenet.mdx)) cho cả module ASPP và decoder,
+học ở bài [MobileNet](05-mobilenet.mdx)) cho cả module ASPP và decoder,
 cùng backbone Xception, giúp mạng vừa nhanh hơn vừa mạnh hơn.
 
 Về bản chất, DeepLabv3+ chính là sự **hợp nhất** hai triết lý thiết kế
@@ -98,19 +97,19 @@ từng cần dùng thêm để làm mượt ranh giới).
 ## Liên hệ lại với các bài trước
 
 - DeepLab giải quyết đúng vấn đề "đánh đổi giữa ngữ cảnh và độ phân
-  giải" mà [U-Net](40-unet.mdx) xử lý bằng skip connection — nhưng bằng
+  giải" mà [U-Net](02-unet.mdx) xử lý bằng skip connection — nhưng bằng
   một công cụ toán học khác hẳn (atrous convolution thay vì transposed
   convolution + concatenate). Hai cách tiếp cận này không loại trừ nhau:
   DeepLabv3+ thực chất **kết hợp cả hai** ý tưởng (ASPP cho ngữ cảnh đa
   tỷ lệ, decoder kiểu U-Net cho ranh giới sắc nét).
 - Depthwise separable convolution dùng trong DeepLabv3+ là kỹ thuật đã
-  học nguyên vẹn ở bài [MobileNet](38-mobilenet.mdx) — một minh chứng
+  học nguyên vẹn ở bài [MobileNet](05-mobilenet.mdx) — một minh chứng
   khác cho thấy kỹ thuật tối ưu hiệu quả tính toán có thể tái sử dụng
   xuyên suốt nhiều bài toán CV khác nhau (classification, segmentation),
   không chỉ riêng bài toán ban đầu nó được đề xuất cho.
 - Atrous convolution vẫn là một phép convolution thông thường về bản
-  chất toán học — vẫn học được qua [backpropagation](09-backpropagation.mdx)
-  như mọi lớp convolution khác đã học ở bài [CNN](11-convolutional-neural-network.mdx),
+  chất toán học — vẫn học được qua [backpropagation](02-backpropagation.mdx)
+  như mọi lớp convolution khác đã học ở bài [CNN](01-cnn.mdx),
   chỉ khác ở cách bố trí trọng số trong kernel (có khoảng trống).
 
 ## Nguồn tham khảo

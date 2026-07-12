@@ -5,7 +5,6 @@ module: Natural Language Processing
 submodule: Recurrent Neural Network Family
 order: 1
 status: stable
-prerequisites: ["01-cnn", "01-tokenization-word-to-subword"]
 summary: Vì sao CNN/MLP không xử lý được input/output độ dài thay đổi, hidden state giải quyết vấn đề đó thế nào, và giới hạn cụ thể (vanishing gradient qua thời gian) khiến RNN thuần cần một kiến trúc kế nhiệm — mở đầu dòng tiến hoá RNN → LSTM/GRU.
 last_touched_by_task: Tách module "NLP & LLM" thành "NLP" + "LLM" (2026-07-10): sửa link [CNN] trỏ nhầm slug "convolutional-neural-network" (không tồn tại, file thật là 01-cnn.mdx) thành đúng slug thật. Nội dung kỹ thuật không đổi.
 ---
@@ -70,7 +69,7 @@ không lưu lại nguyên văn mọi từ đã đọc, mà nén thành một vec
 
 ## RNN vẫn dùng backpropagation — chỉ "trải" qua thời gian
 
-Việc huấn luyện RNN vẫn dựa trên [backpropagation](09-backpropagation.mdx)
+Việc huấn luyện RNN vẫn dựa trên [backpropagation](02-backpropagation.mdx)
 đã học — chỉ khác ở cách áp dụng: vì hidden state ở bước `t` phụ thuộc
 vào hidden state ở bước `t-1`, gradient phải được lan truyền ngược qua
 **từng bước thời gian**, từ bước cuối cùng về bước đầu tiên. Kỹ thuật này

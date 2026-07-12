@@ -3,7 +3,7 @@
 // "foundations-track/computer-vision/co-ban/cnn") rather than raw filename,
 // since ids are stable across any future content reshuffling and match how
 // the site actually addresses lessons.
-export type ProgressState = 'unread' | 'viewed' | 'quiz_done';
+export type ProgressState = 'unread' | 'viewed' | 'quiz_done' | 'completed';
 
 const STORAGE_KEY = 'ai-learn-progress-v3';
 
@@ -46,4 +46,21 @@ export function markQuizDone(id: string) {
   if (map[id] === 'quiz_done') return;
   map[id] = 'quiz_done';
   saveMap(map);
+}
+
+// For lessons with no quiz: an explicit "Mark as complete" action. Distinct
+// from 'viewed' (which fires automatically on page load) so completion
+// always requires a deliberate click, never just opening the page.
+export function markCompleted(id: string) {
+  const map = loadMap();
+  if (map[id] === 'quiz_done' || map[id] === 'completed') return;
+  map[id] = 'completed';
+  saveMap(map);
+}
+
+// A lesson counts as done for gating purposes: quiz lessons need quiz_done,
+// quiz-less lessons need the explicit 'completed' state (not just 'viewed').
+export function isLessonComplete(id: string, hasQuiz: boolean): boolean {
+  const state = getProgress(id);
+  return hasQuiz ? state === 'quiz_done' : state === 'completed' || state === 'quiz_done';
 }

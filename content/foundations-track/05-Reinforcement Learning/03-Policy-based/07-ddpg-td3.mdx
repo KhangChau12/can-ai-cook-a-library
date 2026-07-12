@@ -5,13 +5,12 @@ module: Reinforcement Learning
 submodule: Policy-based
 order: 7
 status: stable
-prerequisites: ["05-a3c"]
 summary: DQN/PPO/A3C đều giả định action rời rạc — nhưng robot điều khiển tay cơ khí cần action liên tục (góc xoay, lực). DDPG (Lillicrap et al. 2016) mở rộng DQN sang continuous action space bằng deterministic policy gradient + actor-critic off-policy, nhưng 'hội tụ giòn' (brittle). TD3 (Fujimoto et al. 2018) sửa 3 vấn đề cụ thể: twin critics bù overestimation, target policy smoothing chống khai thác lỗi Q, delayed policy updates. TD3 là tiền đề trực tiếp của SAC.
 last_touched_by_task: Đổi order 5→7 (2026-07-10) — TRPO và A2C giờ tách thành 2 bài riêng chen vào order 3 và 6, đẩy DDPG/TD3 xuống 7. Nội dung bài không đổi.
 ---
 
 Cho tới nay, các thuật toán đã học đều giả định **action rời rạc** —
-DQN (bài [Q-learning](18-q-learning.mdx)) chọn 1 trong 4-18 phím Atari,
+DQN (bài [Q-learning](01-q-learning.mdx)) chọn 1 trong 4-18 phím Atari,
 [PPO](04-ppo.mdx)/[A3C](05-a3c.mdx) tương tự. Nhưng nhiều bài toán điều
 khiển thực tế có **action liên tục**: robot điều khiển góc xoay từng
 khớp, ô tô điều khiển lực phanh/ga, tay cơ khí đặt vị trí trong không
@@ -47,7 +46,7 @@ model-free — đây là nền lý thuyết DDPG dựa vào.
 - **Actor `μ_θ(s)`** — chính sách, xuất action.
 - **Critic `Q_w(s, a)`** — đánh giá giá trị của cặp (s, a).
 
-Critic học theo đúng mẫu [DQN](18-q-learning.mdx) (replay buffer + target network),
+Critic học theo đúng mẫu [DQN](01-q-learning.mdx) (replay buffer + target network),
 nhưng vì action liên tục nên không `max` được — thay vào đó, **actor
 cung cấp action tốt nhất**: target = `r + γ·Q_{w⁻}(s', μ_{θ⁻}(s'))`, dùng
 chính target actor `μ_{θ⁻}` để chọn action ở trạng thái kế. Actor cập
@@ -65,7 +64,7 @@ quả dao động mạnh giữa các random seed, đôi khi Q-value bùng nổ. 
 **Fujimoto, van Hoof và Meger (2018)**, trong "Addressing Function
 Approximation Error in Actor-Critic Methods", phân tích gốc rễ sự giòn
 của DDPG là **Q-function bị overestimate** (giống vấn đề Double DQN nhắc
-ở bài [71](71-double-dueling-dqn.mdx), nhưng cơ chế khác) — và overestimate
+ở bài [71](02-double-dueling-dqn.mdx), nhưng cơ chế khác) — và overestimate
 này bị **khuếch đại qua vòng actor-critic**: critic ước lượng Q cao quá →
 actor bám theo action có Q ảo cao → critic lại học dựa trên action ảo đó
 → Q càng phồng. TD3 cắt đứt vòng này bằng 3 kỹ thuật:
@@ -130,14 +129,14 @@ exploration tự nhiên hơn, nhưng TD3 vẫn là baseline đơn giản mạnh.
 
 ## Liên hệ lại với các bài trước
 
-- DDPG/TD3 là **off-policy** (dùng replay buffer như [DQN](18-q-learning.mdx))
+- DDPG/TD3 là **off-policy** (dùng replay buffer như [DQN](01-q-learning.mdx))
   khác hẳn [PPO](04-ppo.mdx)/[A3C](05-a3c.mdx) on-policy — cùng module
   Policy-based nhưng 2 nhánh khác cơ chế dữ liệu.
-- Twin critics của TD3 là **cùng nguyên lý với [Double DQN](71-double-dueling-dqn.mdx)**:
+- Twin critics của TD3 là **cùng nguyên lý với [Double DQN](02-double-dueling-dqn.mdx)**:
   tách 2 nguồn ước lượng để chống overestimation, dù áp dụng vào
   actor-critic thay vì DQN thuần.
 - Target policy smoothing là 1 dạng **regularization** giống dropout
-  (bài [Regularization](10-regularization.mdx)) — ép model tin trung bình
+  (bài [Regularization](03-regularization.mdx)) — ép model tin trung bình
   lân cận thay vì overfit 1 điểm.
 
 ## Nguồn tham khảo

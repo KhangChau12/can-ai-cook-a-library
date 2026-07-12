@@ -2,9 +2,8 @@
 title: Model Ensembling — Kết hợp nhiều Model để tăng điểm số
 track: exam-track
 module: Kỹ thuật thi đấu nâng cao
-order: 5
+order: 6
 status: stable
-prerequisites: ["02-load-va-dung-pretrained-checkpoint", "foundations-track/01-ensemble-methods"]
 summary: Ba kỹ thuật kết hợp nhiều model đã huấn luyện trong thi đấu thật: voting/averaging đơn giản, stacking (meta-model học từ out-of-fold prediction), và blending (meta-model học từ holdout set) — cùng lưu ý về rủi ro leakage khi làm sai cách.
 last_touched_by_task: Rà lại dưới góc nhìn triết lý mới (2026-07-06): đọc kỹ, xác nhận bài đã đạt chuẩn đúng tiêu chí exam-track (mục 2.1 sườn A) — số liệu thực tế (Netflix Prize), quy trình chi tiết cho cả 3 kỹ thuật (voting/stacking/blending), bảng so sánh stacking vs blending rõ ràng, lưu ý leakage cụ thể. Không 'vỏ rỗng', không cần viết lại. Giữ nguyên nội dung, chỉ nâng status.
 ---
@@ -39,7 +38,7 @@ model (cùng kiến trúc, cùng dữ liệu, chỉ khác vài dòng code không
 kể) mang lại rất ít lợi ích so với ensembling các model thực sự khác biệt
 (ví dụ một CNN và một gradient boosting cho cùng bài toán, hoặc các
 checkpoint từ các lần train độc lập với random seed khác nhau — đã nhắc ở
-bài [Checkpoint](05-load-va-dung-pretrained-checkpoint.mdx)).
+bài [Checkpoint](02-load-va-dung-pretrained-checkpoint.mdx)).
 
 ## Kỹ thuật 1 — Voting / Averaging: đơn giản nhất, hiệu quả bất ngờ
 

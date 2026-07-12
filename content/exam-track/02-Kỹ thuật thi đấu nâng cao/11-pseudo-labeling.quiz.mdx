@@ -1,0 +1,43 @@
+---
+quiz_for: 11-pseudo-labeling
+---
+
+## Q1
+Trong quy trình pseudo-labeling, bước "lọc theo ngưỡng tin cậy (confidence threshold)" nhằm mục đích gì?
+
+- [ ] Giảm số lượng feature đưa vào model để train nhanh hơn
+- [x] Chỉ giữ lại những dự đoán trên tập test mà model rất chắc chắn, trước khi coi chúng là nhãn giả để train tiếp
+- [ ] Loại bỏ toàn bộ dữ liệu train gốc, chỉ giữ dữ liệu test
+- [ ] Xác định ngưỡng quyết định (0.5) để tính precision/recall
+
+> Không phải mọi dự đoán trên test đều đáng tin — lọc theo ngưỡng tin cậy cao (ví dụ >90-95%) giúp giảm khả năng đưa những dự đoán sai vào làm "nhãn giả", vì dự đoán càng tự tin thường (nhưng không chắc chắn tuyệt đối) càng có khả năng đúng.
+
+## Q2
+Confirmation bias trong pseudo-labeling là hiện tượng gì?
+
+- [ ] Model học quá chậm vì có quá ít dữ liệu train
+- [x] Model tự củng cố một lỗi dự đoán sai ban đầu qua nhiều vòng lặp, vì lỗi đó được gán làm nhãn giả rồi dùng để train lại
+- [ ] Model bị overfit vào tập validation do đánh giá quá nhiều lần
+- [ ] Model không hội tụ được vì learning rate quá lớn
+
+> Nếu model tự tin nhưng sai ở một số điểm test, pseudo-label sẽ ghi nhận đúng cái sai đó như nhãn thật. Train lại trên dữ liệu chứa lỗi này khiến model càng "tin" vào lỗi ban đầu hơn qua mỗi vòng lặp, thay vì tự sửa.
+
+## Q3
+Điểm khác biệt cốt lõi giữa pseudo-labeling và data leakage là gì?
+
+- [ ] Pseudo-labeling không bao giờ dùng dữ liệu test, data leakage luôn dùng dữ liệu test
+- [x] Pseudo-labeling chỉ dùng feature thật của test (hợp lệ) cộng nhãn do model tự suy ra; data leakage dùng nhãn thật hoặc thống kê tính trên test một cách trái phép
+- [ ] Pseudo-labeling chỉ áp dụng được cho bài toán regression, data leakage chỉ áp dụng cho classification
+- [ ] Không có khác biệt — pseudo-labeling thực chất là một dạng data leakage
+
+> Data leakage xảy ra khi thông tin không nên biết (nhãn thật của test, hoặc thống kê tính trên toàn bộ dữ liệu gồm cả test) lọt vào train. Pseudo-labeling chỉ dùng feature test đã được cung cấp hợp lệ, kết hợp với nhãn do chính model tạo ra — không chạm vào nhãn thật ẩn của test, nên không phải leakage.
+
+## Q4
+Competition nào sau đây phù hợp nhất để thử pseudo-labeling?
+
+- [ ] Tập train rất lớn, tập test rất nhỏ, model baseline đã đạt điểm gần như tối đa
+- [x] Tập train nhỏ, tập test lớn, đã có một model tốt qua transfer learning/tuning nhưng vẫn còn thời gian thử thêm kỹ thuật
+- [ ] Competition vừa mới mở, chưa có baseline nào được thử
+- [ ] Competition sắp đóng trong 10 phút, chưa có submission hợp lệ nào
+
+> Pseudo-labeling phát huy tác dụng rõ nhất khi train nhỏ (thiếu dữ liệu) và test lớn (nhiều dữ liệu tiềm năng để khai thác), và nên áp dụng sau khi đã có model đủ tốt (giảm rủi ro confirmation bias từ một model còn yếu) — không phải lựa chọn ưu tiên khi chưa có baseline hay khi gấp rút nộp bài lần đầu.

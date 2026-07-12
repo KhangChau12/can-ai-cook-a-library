@@ -5,7 +5,6 @@ module: Generative Models
 submodule: Diffusion Models
 order: 3
 status: stable
-prerequisites: ["02-ddim", "01-autoencoder", "01-clip"]
 summary: DDPM/DDIM khử nhiễu trực tiếp trong pixel space — tốn tính toán tỷ lệ với độ phân giải ảnh (256×256×3 = 196K chiều). Rombach và cộng sự (2022) giải bằng Latent Diffusion: nén ảnh qua autoencoder (perceptual compression) vào latent space nhỏ hơn ~64× (f=8), chạy diffusion trong latent space + CLIP text conditioning + cross-attention → text-to-image thực tế. Bản phát hành công khai (Stable Diffusion) chạy được trên GPU người dùng, dân chủ hoá sinh ảnh AI.
 last_touched_by_task: Sửa (2026-07-11, review chiều sâu module): thêm prerequisite CLIP (bài mới, sub-module Vision-Language Bridge) — bài này dùng CLIP như khái niệm đã biết nhưng trước đó track chưa từng dạy contrastive vision-language pretraining. Xoá đoạn văn bị lặp 2 lần (lỗi copy-paste cũ). Sửa toàn bộ link nội bộ theo vị trí file thật sau khi tách sub-module Likelihood-based Models.
 ---

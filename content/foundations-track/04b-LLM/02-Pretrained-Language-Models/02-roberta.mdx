@@ -5,7 +5,6 @@ module: Large Language Models
 submodule: Pretrained Language Models
 order: 2
 status: stable
-prerequisites: ["01-bert"]
 summary: Liu và cộng sự (2019) đặt câu hỏi ngược lại với hướng cải tiến kiến trúc: có phải BERT đã được huấn luyện ĐÚNG CÁCH và ĐỦ LÂU chưa? Câu trả lời: chưa — RoBERTa giữ nguyên kiến trúc Transformer encoder của BERT, chỉ thay đổi quy trình huấn luyện (bỏ Next Sentence Prediction, dynamic masking thay vì static, batch size lớn hơn, 10 lần dữ liệu, train lâu hơn nhiều) và vượt qua mọi model công bố sau BERT tại thời điểm đó.
 last_touched_by_task: Viết mới 2026-07-06: đóng khoảng trống 'RoBERTa' đã ghi ở _index.mdx từ lâu (từng đánh giá 'nguồn mờ nhạt'). Thử lại: WebFetch arxiv 1907.11692 chỉ trả về abstract (không có số liệu chi tiết trong nội dung đầy đủ, giống hạn chế đã gặp ở bài 67 WordPiece), và không tìm được nguồn giải thích trực giác (D2L.ai/Lil'Log) nào viết riêng về RoBERTa qua WebSearch giới hạn whitelist — theo đúng tiền lệ bài 67, viết bài ngắn hơn thường lệ với 1 nguồn chính (arxiv abstract + chi tiết kỹ thuật xác nhận qua WebSearch), không ép đủ 2 nguồn. Cập nhật (2026-07-09, tái cấu trúc module): chuyển từ Sequence Model/Transformer Architecture sang LLM/Pretrained Language Models cùng BERT — nội dung không đổi.
 ---

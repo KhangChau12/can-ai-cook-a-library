@@ -5,12 +5,11 @@ module: Computer Vision
 submodule: Cơ bản
 order: 4
 status: stable
-prerequisites: ["03-vgg"]
 summary: VGG chứng minh mạng sâu hơn thường tốt hơn, nhưng có giới hạn: mạng quá sâu gặp vấn đề degradation (không phải overfitting) — thêm lớp khiến training error tăng chứ không giảm. He và cộng sự (2015) giải quyết bằng skip connection: học phần dư (residual) thay vì học trực tiếp ánh xạ mong muốn, đảm bảo thêm lớp không bao giờ làm giảm khả năng biểu diễn — mạng 152 lớp đạt hạng nhất ILSVRC 2015.
 last_touched_by_task: Bài mới (2026-07-06) tiếp nối trực tiếp VGG (36) trong sub-module CV 'Cơ bản' — lấp khoảng trống dòng tiến hoá LeNet→AlexNet→VGG→ResNet→MobileNet→EfficientNet. 2 nguồn: arxiv (paper gốc He et al. 2015, xác nhận qua WebFetch trực tiếp abstract: 152 lớp, 3.57% error ImageNet, hạng nhất ILSVRC 2015) và D2L.ai (giải thích sâu về nested function classes và công thức residual mapping g(x)=f(x)-x, cũng xác nhận qua WebFetch trực tiếp). Không bịa số liệu — mọi con số lấy trực tiếp từ 2 nguồn đã đọc.
 ---
 
-Bài [VGG](36-vgg.mdx) chứng minh nguyên tắc "mạng sâu hơn thường tốt
+Bài [VGG](03-vgg.mdx) chứng minh nguyên tắc "mạng sâu hơn thường tốt
 hơn" bằng cách xếp chồng nhiều khối kernel 3×3. Câu hỏi tự nhiên tiếp
 theo: cứ xếp thêm khối mãi, mạng có tốt lên mãi không? Câu trả lời thực
 nghiệm là **không** — và lý do tại sao dẫn thẳng tới một trong những ý
@@ -81,7 +80,7 @@ không thể huấn luyện ổn định.
 ## Liên hệ lại với các bài trước
 
 - ResNet không thay đổi nguyên lý convolution đã học ở bài
-  [CNN](11-convolutional-neural-network.mdx) — nó giải quyết một vấn đề
+  [CNN](01-cnn.mdx) — nó giải quyết một vấn đề
   hoàn toàn khác: không phải "cách trích xuất đặc trưng", mà là "làm sao
   huấn luyện được một mạng rất sâu bằng gradient descent mà không bị
   thoái hoá hiệu năng".
@@ -90,7 +89,7 @@ không thể huấn luyện ổn định.
   chứng minh sâu hơn thường tốt hơn nhưng không giải thích được tại sao
   đôi khi sâu hơn lại tệ đi (degradation); ResNet giải quyết đúng câu hỏi
   đó bằng skip connection.
-- Vẫn huấn luyện bằng [backpropagation](09-backpropagation.mdx) như mọi
+- Vẫn huấn luyện bằng [backpropagation](02-backpropagation.mdx) như mọi
   mạng nơ-ron khác — skip connection chỉ thay đổi cấu trúc lan truyền
   (thêm một đường cộng trực tiếp), không thay đổi cơ chế tính gradient
   hay cập nhật tham số.

@@ -5,12 +5,11 @@ module: Large Language Models
 submodule: Huấn luyện & Alignment
 order: 5
 status: stable
-prerequisites: ["03-fine-tuning-instruction-tuning"]
 summary: Instruction tuning (bài 26) nói 'fine-tuning nhanh và cần ít dữ liệu hơn pretraining' nhưng không nói CÁCH cụ thể để làm điều đó hiệu quả về tham số. Hu và cộng sự (2021, Microsoft) đề xuất LoRA: giả định rằng thay đổi trọng số khi fine-tune có 'hạng nội tại' (intrinsic rank) thấp — thay vì cập nhật toàn bộ ma trận trọng số khổng lồ, chỉ cần học một cặp ma trận hạng thấp nhỏ hơn hàng nghìn lần, đóng băng hoàn toàn trọng số gốc.
 last_touched_by_task: Viết mới 2026-07-06: lấp khoảng trống — track chưa từng nhắc kỹ thuật fine-tuning hiệu quả tham số nào, dù đây là kỹ thuật fine-tuning phổ biến nhất hiện nay (liên hệ trực tiếp bài 26 và exam-track 04/06 freeze layer). Nguồn: arxiv 2106.09685 (Hu, Shen, Wallis, Allen-Zhu, Li, Wang, Wang, Chen 2021, Microsoft) — chỉ 1 nguồn vì không tìm được nguồn giải thích trực giác thứ 2 (sebastianraschka.com/lilianweng.github.io không có bài riêng qua WebSearch); LoRA là 1 kỹ thuật cụ thể, không phải dòng tiến hoá nhiều model cạnh tranh, áp dụng ngoại lệ mục 2.1 như tiền lệ RoBERTa/DPO/WordPiece.
 ---
 
-Bài [Fine-tuning & Instruction Tuning](26-fine-tuning-instruction-tuning.mdx)
+Bài [Fine-tuning & Instruction Tuning](03-fine-tuning-instruction-tuning.mdx)
 nói fine-tuning "nhanh hơn và cần ít dữ liệu hơn pretraining rất nhiều" —
 nhưng với các LLM hiện đại có hàng chục tới hàng trăm tỷ tham số, ngay cả
 fine-tuning **toàn bộ** tham số đó cũng đòi hỏi lượng bộ nhớ GPU khổng lồ
@@ -74,7 +73,7 @@ GPT-2, GPT-3), dù có ít tham số huấn luyện hơn và tốc độ huấn 
 ## Liên hệ lại với các bài trước
 
 - LoRA là câu trả lời cụ thể cho câu hỏi "làm sao fine-tune hiệu quả về
-  tham số" mà bài [Fine-tuning](26-fine-tuning-instruction-tuning.mdx)
+  tham số" mà bài [Fine-tuning](03-fine-tuning-instruction-tuning.mdx)
   chỉ nói chung chung ("nhanh hơn, ít dữ liệu hơn"). Kỹ thuật đóng băng
   trọng số gốc cũng cùng tinh thần với **full freezing** đã học ở bài
   exam-track [Transfer Learning & Fine-tuning](../exam-track/04-transfer-learning-va-fine-tuning.mdx)

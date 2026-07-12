@@ -5,7 +5,6 @@ module: Reinforcement Learning
 submodule: Policy-based
 order: 8
 status: stable
-prerequisites: ["01-policy-gradient", "04-ppo", "07-ddpg-td3"]
 summary: PPO (đã học) là on-policy — mỗi dữ liệu thu thập chỉ dùng được vài epoch rồi phải bỏ, kém hiệu quả dữ liệu. DDPG/TD3 (đã học) là off-policy nhưng deterministic. Haarnoja và cộng sự (2018) đề xuất SAC: off-policy (dùng lại được dữ liệu cũ qua replay buffer, như DQN) nhưng vẫn ổn định hơn DDPG nhờ mục tiêu maximum entropy — tối đa hoá reward VÀ độ ngẫu nhiên của policy cùng lúc, ép agent khám phá nhiều chiến lược gần-tối-ưu thay vì hội tụ sớm vào một chiến lược duy nhất.
 last_touched_by_task: Đổi order 6→8 (2026-07-10) — TRPO và A2C giờ tách thành 2 bài riêng chen vào order 3 và 6, đẩy SAC xuống 8. Nội dung bài không đổi.
 ---
@@ -16,7 +15,7 @@ Sub-module này đã đi qua 2 hướng: [Policy Gradient](01-policy-gradient.md
 được cho một số lần cập nhật giới hạn, rồi phải bỏ và thu thập lại); còn
 [DDPG & TD3](07-ddpg-td3.mdx) (bài trước) đã mở hướng **off-policy** cho
 action liên tục — tái sử dụng dữ liệu cũ qua replay buffer, như
-[Q-learning/DQN](18-q-learning.mdx) ở nhánh Value-based — nhưng dùng
+[Q-learning/DQN](01-q-learning.mdx) ở nhánh Value-based — nhưng dùng
 **deterministic policy** và vẫn "hội tụ giòn". SAC đi tiếp hướng
 off-policy đó, giải quyết đúng điểm giòn của DDPG.
 
@@ -88,7 +87,7 @@ giòn" của các phương pháp off-policy trước.
 
 - SAC tiếp nối [DDPG & TD3](07-ddpg-td3.mdx) (bài trước) trong nhánh
   **off-policy** của sub-module Policy-based — cùng cơ chế tái sử dụng dữ
-  liệu cũ đã học ở [Q-learning/DQN](18-q-learning.mdx), áp dụng cho policy
+  liệu cũ đã học ở [Q-learning/DQN](01-q-learning.mdx), áp dụng cho policy
   liên tục thay vì Q-table/Q-network rời rạc, nhưng đổi sang stochastic
   policy + mục tiêu entropy thay vì deterministic.
 - Mục tiêu maximum entropy là một cách khác để giải quyết vấn đề

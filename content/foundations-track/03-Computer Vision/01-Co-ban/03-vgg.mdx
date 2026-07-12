@@ -5,12 +5,11 @@ module: Computer Vision
 submodule: Cơ bản
 order: 3
 status: stable
-prerequisites: ["02-alexnet"]
 summary: AlexNet chứng minh CNN sâu hoạt động tốt nhưng không để lại nguyên tắc thiết kế rõ ràng cho người sau. Simonyan và Zisserman (2014, Oxford VGG group) giải quyết đúng khoảng trống đó: khối (block) lặp lại gồm các kernel 3×3 nhỏ xếp chồng, chứng minh mạng sâu-hẹp thắng mạng nông-rộng — đạt hạng nhất định vị ảnh tại ImageNet 2014.
 last_touched_by_task: Bài mới (2026-07-06) tiếp nối trực tiếp AlexNet (35) trong sub-module CV 'Cơ bản' — lấp khoảng trống dòng tiến hoá LeNet→AlexNet→VGG→ResNet→MobileNet→EfficientNet đã hoạch định ở CLAUDE.md mục 2.1/4. Viết ngay sau khi hoàn tất mốc 44/44 bài stable, theo đúng mục 3 bước 6 AUTOPILOT.md (chuyển hướng lấp khoảng trống thay vì dừng). 2 nguồn: D2L.ai (VGG chapter, vấn đề cụ thể AlexNet thiếu template thiết kế) và arxiv (paper gốc Simonyan & Zisserman 2014, kết quả ImageNet 2014 cụ thể). Lưu ý tự sửa trong task: bản nháp đầu có ghi con số '138 triệu tham số' cho VGG-16 nhưng khi kiểm tra lại qua WebFetch, D2L.ai không xác nhận con số này — đã xoá số liệu cụ thể chưa xác nhận lúc đó. Cập nhật (2026-07-06, Task 88): thử lại qua WebSearch (không phải WebFetch D2L.ai) — con số 138 triệu tham số VGG-16 được xác nhận nhất quán qua nhiều nguồn arxiv độc lập trích dẫn, đây là con số kinh điển được biết rộng rãi trong cộng đồng ML (tương tự MNIST ~99%, theo đúng ngoại lệ mục 2.2) — thêm lại vào bài.
 ---
 
-Bài [AlexNet](35-alexnet.mdx) kể câu chuyện: một kiến trúc CNN cụ thể
+Bài [AlexNet](02-alexnet.mdx) kể câu chuyện: một kiến trúc CNN cụ thể
 (8 lớp, ReLU, dropout) chứng minh nguyên lý convolution của LeNet mở
 rộng được lên quy mô lớn. Nhưng AlexNet để lại một khoảng trống quan
 trọng mà bài này giải quyết: **làm sao thiết kế một CNN sâu hơn nữa một
@@ -88,7 +87,7 @@ hướng khác nhau.
 ## Liên hệ lại với các bài trước
 
 - VGG không thay đổi nguyên lý convolution/translation invariance/
-  locality đã học ở bài [CNN](11-convolutional-neural-network.mdx) — nó
+  locality đã học ở bài [CNN](01-cnn.mdx) — nó
   chỉ đề xuất một **công thức thiết kế có hệ thống** (khối lặp lại, luôn
   dùng kernel 3×3) để áp dụng nguyên lý đó ở quy mô sâu hơn một cách nhất
   quán, thay vì phối hợp thủ công như AlexNet.
@@ -97,7 +96,7 @@ hướng khác nhau.
   trước nó (AlexNet thiếu template thiết kế có hệ thống → VGG đề xuất
   khối lặp lại), không phát minh lại nguyên lý từ đầu — giống cách Q-learning
   → DQN hay R-CNN → Fast R-CNN → Faster R-CNN đã tiến hoá.
-- Vẫn huấn luyện bằng [backpropagation](09-backpropagation.mdx) như mọi
+- Vẫn huấn luyện bằng [backpropagation](02-backpropagation.mdx) như mọi
   mạng nơ-ron khác — VGG chỉ thay đổi kiến trúc (số lớp, kích thước
   kernel, cách tổ chức khối), không thay đổi cơ chế tối ưu hoá.
 

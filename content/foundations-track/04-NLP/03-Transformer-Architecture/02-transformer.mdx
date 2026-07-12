@@ -5,12 +5,11 @@ module: Natural Language Processing
 submodule: Transformer Architecture
 order: 2
 status: stable
-prerequisites: ["01-attention"]
 summary: Vaswani và cộng sự (2017, 'Attention Is All You Need') giải quyết đúng giới hạn còn lại của attention kiểu Bahdanau: vẫn phải dùng RNN nên không song song hoá được khi huấn luyện. Transformer bỏ hẳn RNN, chỉ dùng self-attention + positional encoding + multi-head attention — huấn luyện song song hoàn toàn, đạt kết quả BLEU tốt hơn trong thời gian huấn luyện ngắn hơn nhiều.
 last_touched_by_task: Viết lại theo triết lý nội dung mới (2026-07-06): thêm bối cảnh lịch sử cụ thể — Vaswani et al. (2017), paper 'Attention Is All You Need', giải quyết giới hạn song song hoá của attention kiểu Bahdanau (bài 14, vẫn cần RNN encoder-decoder tuần tự) — trước đó bài chỉ nói 'Transformer đẩy ý tưởng attention đi xa hơn' mà không có tên/năm/vấn đề cụ thể đang giải quyết. Thêm số liệu kết quả cụ thể từ paper gốc (28.4 BLEU WMT 2014 Anh-Đức, huấn luyện 3.5 ngày trên 8 GPU) làm minh chứng cụ thể cho lợi ích song song hoá, không chỉ nói chung chung 'nhanh hơn'. Nguồn: arxiv (paper gốc) + giữ 2 nguồn D2L.ai cũ (đã có, đủ chi tiết kỹ thuật self-attention/positional encoding/multi-head).
 ---
 
-Bài [Attention](14-attention.mdx) giới thiệu framework Query/Key/Value —
+Bài [Attention](01-attention.mdx) giới thiệu framework Query/Key/Value —
 nhưng cơ chế attention nguyên bản của Bahdanau et al. (2015) vẫn được
 **cộng thêm** vào một kiến trúc encoder-decoder dùng RNN/LSTM, nghĩa là
 vẫn giữ nguyên giới hạn tuần tự của RNN: phải xử lý từng bước thời gian
@@ -108,7 +107,7 @@ qua lợi ích song song hoá.
 ## Liên hệ lại với các bài trước
 
 - Transformer không giới thiệu khái niệm toán học mới — nó là sự kết hợp
-  của framework Query/Key/Value đã học ở bài [Attention](14-attention.mdx),
+  của framework Query/Key/Value đã học ở bài [Attention](01-attention.mdx),
   áp dụng ở dạng self-attention, cộng thêm hai kỹ thuật bổ trợ (positional
   encoding, multi-head).
 - Việc bỏ hẳn cấu trúc tuần tự của RNN để đổi lấy khả năng xử lý song song
@@ -118,7 +117,7 @@ qua lợi ích song song hoá.
   trúc nào "luôn tốt nhất" — lựa chọn phụ thuộc vào đặc tính dữ liệu và
   bài toán cụ thể.
 - Việc huấn luyện Transformer vẫn là
-  [backpropagation](09-backpropagation.mdx) như mọi mạng nơ-ron khác trong
+  [backpropagation](02-backpropagation.mdx) như mọi mạng nơ-ron khác trong
   giáo trình — không có gì thay đổi ở bước tối ưu hoá tham số.
 
 ## Nguồn tham khảo

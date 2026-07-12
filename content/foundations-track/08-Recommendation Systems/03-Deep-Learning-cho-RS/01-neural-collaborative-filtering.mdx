@@ -5,7 +5,6 @@ module: Recommendation Systems
 submodule: Deep Learning cho RS
 order: 1
 status: stable
-prerequisites: ["03-collaborative-filtering-matrix-factorization", "01-perceptron-va-mang-no-ron"]
 summary: Matrix Factorization dự đoán rating chỉ bằng tích vô hướng giữa 2 vector latent factor — một hàm tuyến tính đơn giản, giới hạn khả năng biểu diễn các tương tác phức tạp giữa người dùng và item. He và cộng sự (2017) giải quyết bằng NeuMF: kết hợp song song một nhánh tái tạo Matrix Factorization (GMF) với một nhánh MLP học hàm tương tác phi tuyến tổng quát, rồi hợp nhất 2 nhánh ở lớp cuối.
 last_touched_by_task: Tái cấu trúc (2026-07-10) — chuyển vào submodule "Deep Learning cho RS" (bài đầu, order 2→1), đổi prerequisite trỏ đúng slug Matrix Factorization sau khi module tách submodule. Nguồn: D2L.ai (chapter_recommender-systems/neumf.html, xác nhận kiến trúc GMF+MLP/cách hợp nhất qua WebFetch) + arxiv 1708.05031 (paper gốc He et al. 2017 'Neural Collaborative Filtering', xác nhận đúng vấn đề tích vô hướng giới hạn biểu diễn + đề xuất MLP học hàm tương tác tổng quát qua WebFetch abstract) — đủ 2 nguồn theo chuẩn bài 'dòng tiến hoá' mục 2.1.
 ---
@@ -39,7 +38,7 @@ vô hướng, dù có tăng số chiều latent factor `k` lên bao nhiêu.
 
 Giải pháp của He và cộng sự: thay vì cố định dạng hàm tương tác là tích vô
 hướng, **dùng một mạng nơ-ron** (cụ thể là MLP — đã học ở bài
-[Perceptron & Mạng nơ-ron](08-perceptron-va-mang-no-ron.mdx)) để **tự học**
+[Perceptron & Mạng nơ-ron](01-perceptron-va-mang-no-ron.mdx)) để **tự học**
 hàm tương tác giữa người dùng và item từ dữ liệu, thay vì áp đặt trước một
 công thức toán cụ thể. Vì MLP có thể xấp xỉ được nhiều dạng hàm phi tuyến
 phức tạp (đã biết từ bài Perceptron/MLP), nó tổng quát hoá được nhiều hơn
@@ -108,8 +107,8 @@ negative tương ứng.
   Matrix Factorization (tích vô hướng, tuyến tính) → NeuMF (MLP, phi
   tuyến) đi đúng con đường tương tự.
 - Nhánh MLP của NeuMF không phải kỹ thuật huấn luyện mới — vẫn dùng
-  [backpropagation](09-backpropagation.mdx) như mọi mạng nơ-ron feedforward
-  đã học từ bài [Perceptron](08-perceptron-va-mang-no-ron.mdx).
+  [backpropagation](02-backpropagation.mdx) như mọi mạng nơ-ron feedforward
+  đã học từ bài [Perceptron](01-perceptron-va-mang-no-ron.mdx).
 - Việc "học hàm tương tác thay vì áp đặt công thức cố định" cũng là tinh
   thần chung khi so Matrix Factorization với kiến trúc [AutoRec](03-autorec.mdx)
   (dùng Autoencoder cho rating prediction) — một nhánh mở rộng song song

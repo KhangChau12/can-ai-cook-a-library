@@ -3,13 +3,24 @@ import SearchOverlay from './SearchOverlay.astro';
 const base = import.meta.env.BASE_URL;
 ---
 
-<header class="sticky top-0 z-30 border-b border-border-default/80 bg-bg-primary/85 backdrop-blur">
-  <div class="mx-auto flex max-w-6xl items-center gap-4 px-5 py-3.5">
-    <a href={base} class="flex items-center gap-2 text-sm font-extrabold tracking-tight text-text-primary">
-      <span class="h-2 w-2 rounded-full bg-gradient-to-br from-accent-blue to-accent-cyan-bright shadow-[0_0_10px_rgba(59,130,246,0.6)]"></span>
-      Can AI Cook a Library?
+<header class="sticky top-0 z-30 border-b border-border-default/60 bg-bg-primary/70 shadow-sm backdrop-blur-xl">
+  <div class="mx-auto flex max-w-6xl items-center gap-4 px-5 py-3">
+    <a href={base} class="flex items-center gap-2.5">
+      <img src={`${base}logo.png`} alt="" width="32" height="32" class="h-8 w-8 shrink-0" />
+      <span class="font-display text-xl tracking-tight text-text-primary sm:text-2xl">
+        Can AI Cook a Library?
+      </span>
     </a>
-    <div class="ml-auto">
+    <div class="ml-auto flex items-center gap-2">
+      <button
+        id="theme-toggle"
+        type="button"
+        aria-label="Đổi giao diện sáng/tối"
+        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border-default bg-bg-inset text-text-disabled transition hover:border-border-subtle hover:text-text-tertiary"
+      >
+        <svg id="theme-icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+        <svg id="theme-icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+      </button>
       <button
         id="search-trigger"
         type="button"
@@ -24,3 +35,29 @@ const base = import.meta.env.BASE_URL;
 </header>
 
 <SearchOverlay />
+
+<script>
+  import { getPreferredTheme, toggleTheme } from '../lib/theme';
+
+  const toggle = document.getElementById('theme-toggle');
+  const sunIcon = document.getElementById('theme-icon-sun');
+  const moonIcon = document.getElementById('theme-icon-moon');
+
+  function syncIcon() {
+    const theme = document.documentElement.dataset.theme === 'light' ? 'light' : 'dark';
+    sunIcon?.classList.toggle('hidden', theme !== 'light');
+    moonIcon?.classList.toggle('hidden', theme === 'light');
+  }
+
+  // BaseLayout's inline script already set data-theme before paint; this just
+  // ensures it's set (belt-and-suspenders for edge cases) and syncs the icon.
+  if (!document.documentElement.dataset.theme) {
+    document.documentElement.dataset.theme = getPreferredTheme();
+  }
+  syncIcon();
+
+  toggle?.addEventListener('click', () => {
+    toggleTheme();
+    syncIcon();
+  });
+</script>

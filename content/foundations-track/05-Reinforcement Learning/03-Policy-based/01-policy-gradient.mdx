@@ -5,12 +5,11 @@ module: Reinforcement Learning
 submodule: Policy-based
 order: 1
 status: stable
-prerequisites: ["01-q-learning"]
 summary: REINFORCE không thiên vị nhưng phương sai cao — bài này cụ thể hoá 2 bước cải tiến giảm phương sai: baseline (trừ một ước lượng tham chiếu khỏi return, không đổi kỳ vọng nhưng giảm phương sai) và Actor-Critic (thay hẳn Monte Carlo return bằng một critic học qua temporal difference), thay vì chỉ nói mập mờ 'các thuật toán nâng cao hơn nằm ngoài phạm vi bài này'.
 last_touched_by_task: Viết lại theo triết lý nội dung mới (2026-07-06): cụ thể hoá 'các thuật toán nâng cao hơn' mà bài cũ chỉ nhắc mập mờ — giờ nói rõ 2 bước cụ thể: baseline (xác nhận qua WebFetch trực tiếp abstract arxiv 1803.07246: policy gradient methods có phương sai cao, baseline giúp giảm phương sai không đổi kỳ vọng) và Actor-Critic (xác nhận qua WebFetch abstract arxiv 2005.01350: critic học qua temporal difference thay cho Monte Carlo return, giảm phương sai). Không khẳng định tên tác giả REINFORCE gốc (Williams) vì nguồn cs229 cũ là PDF không đọc được qua WebFetch — tránh khẳng định thiếu xác nhận trực tiếp, dù tên thuật toán REINFORCE giữ nguyên từ bài cũ.
 ---
 
-Bài [Q-learning](18-q-learning.mdx) học một Q-function trước, rồi suy ra
+Bài [Q-learning](01-q-learning.mdx) học một Q-function trước, rồi suy ra
 policy gián tiếp: tại mỗi state, chọn action có `Q` cao nhất. **Policy
 gradient** đi theo hướng hoàn toàn khác: bỏ qua bước trung gian Q-function,
 tối ưu hoá **trực tiếp** tham số của policy để tối đa hoá reward kỳ vọng.
@@ -21,7 +20,7 @@ Thay vì một bảng Q-value, policy gradient biểu diễn policy bằng một
 có tham số `θ` (theta) — thường là một mạng nơ-ron: `π_θ(a | s)` là xác
 suất chọn action `a` tại state `s`, theo tham số hiện tại `θ`. Đây chính
 là nơi kiến thức về mạng nơ-ron và
-[backpropagation](09-backpropagation.mdx) quay lại: `θ` chính là trọng số
+[backpropagation](02-backpropagation.mdx) quay lại: `θ` chính là trọng số
 của mạng, và mục tiêu là tìm `θ` tối ưu — về hình thức giống hệt việc tìm
 `w, b` tối ưu ở linear/logistic regression, chỉ khác **hàm mục tiêu** cần
 tối ưu.
@@ -110,7 +109,7 @@ giáo trình.
 ## Liên hệ lại với các bài trước
 
 - Policy gradient là ví dụ rõ ràng nhất cho thấy gradient ascent/descent
-  (đã học từ bài [Linear Regression](02-linear-regression.mdx)) là một
+  (đã học từ bài [Linear Regression](01-linear-regression.mdx)) là một
   công cụ tối ưu hoá tổng quát — áp dụng được cho bất kỳ hàm mục tiêu khả
   vi nào, không chỉ giới hạn ở việc tối thiểu hoá loss so với nhãn có sẵn.
 - Việc dùng mạng nơ-ron để biểu diễn `π_θ` nghĩa là toàn bộ kiến thức về

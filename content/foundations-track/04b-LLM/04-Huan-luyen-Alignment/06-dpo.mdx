@@ -5,12 +5,11 @@ module: Large Language Models
 submodule: Huấn luyện & Alignment
 order: 6
 status: stable
-prerequisites: ["04-rlhf-alignment"]
 summary: RLHF truyền thống (bài 27) cần duy trì nhiều mô hình cùng lúc và huấn luyện RL vốn dễ bất ổn định. Rafailov và cộng sự (2023) chứng minh một kết quả toán học đẹp: có thể viết lại chính xác reward function chỉ bằng policy hiện tại và policy tham chiếu — nghĩa là 'ngôn ngữ mô hình bí mật đã chính là reward model' — biến toàn bộ bài toán RLHF thành một hàm loss classification đơn giản, không cần bước RL riêng.
 last_touched_by_task: Viết mới 2026-07-06: đóng khoảng trống — DPO đã được nhắc ở bài 27 (RLHF) và 47 (PPO) như 'đơn giản hoá RLHF bằng cách bỏ hẳn bước RL' nhưng chưa có công thức toán/tên paper cụ thể. Nguồn: arxiv 2305.18290 (Rafailov, Sharma, Mitchell, Ermon, Manning, Finn 2023, NeurIPS) — chỉ 1 nguồn vì không tìm được nguồn giải thích trực giác thứ 2 (lilianweng.github.io không có bài riêng qua WebSearch); DPO là cải tiến trực tiếp 1 kỹ thuật (RLHF), không phải dòng tiến hoá nhiều model cạnh tranh, nên áp dụng ngoại lệ mục 2.1 (1 nguồn đủ) như tiền lệ RoBERTa/WordPiece.
 ---
 
-Bài [RLHF & Alignment](27-rlhf-alignment.mdx) đã nhắc: RLHF truyền thống
+Bài [RLHF & Alignment](04-rlhf-alignment.mdx) đã nhắc: RLHF truyền thống
 cần duy trì **nhiều mô hình cùng lúc** (policy đang tối ưu, policy tham
 chiếu, reward model, và một mô hình value) và huấn luyện bằng RL (PPO)
 vốn dễ bất ổn định hơn supervised learning thuần tuý. Bài này giải thích
@@ -73,7 +72,7 @@ L_DPO = -E[ log sigmoid( β*log(π_θ(y_w|x)/π_ref(y_w|x))
 
 Đây chính xác là một hàm loss **classification** thông thường (dạng
 binary cross-entropy quen thuộc từ bài
-[Logistic Regression](03-logistic-regression.mdx)) — huấn luyện bằng
+[Logistic Regression](02-logistic-regression.mdx)) — huấn luyện bằng
 gradient descent tiêu chuẩn, không cần vòng lặp sampling-đánh giá-cập nhật
 của RL, không cần huấn luyện reward model như một bước riêng, không cần
 duy trì nhiều mô hình phụ trong lúc huấn luyện (chỉ cần `π_θ` và
@@ -93,13 +92,13 @@ một lượt (single-turn dialogue) — trong khi đơn giản hơn đáng kể
   một bài toán tưởng chừng cần thuật toán phức tạp (RL đầy đủ với PPO)
   đôi khi giải được bằng công cụ đơn giản hơn (classification loss) nếu
   tìm đúng cách công thức hoá lại vấn đề — tương tự cách
-  [Ensemble Methods](20-ensemble-methods.mdx) dùng lại nguyên vẹn
+  [Ensemble Methods](01-ensemble-methods.mdx) dùng lại nguyên vẹn
   Decision Tree, hay [Autoencoder tuyến tính hội tụ về PCA](../../06-Generative Models/02-Likelihood-based-Models/01-autoencoder.mdx).
 - Hàm loss cuối cùng của DPO chính là **binary cross-entropy** đã học ở
-  bài [Logistic Regression](03-logistic-regression.mdx) — chỉ khác input
+  bài [Logistic Regression](02-logistic-regression.mdx) — chỉ khác input
   không phải feature thô, mà là hiệu số log-ratio giữa hai policy.
-- DPO không cần [PPO](47-ppo.mdx) — đây là điểm khác biệt cốt lõi so với
-  RLHF truyền thống đã học ở bài [27](27-rlhf-alignment.mdx): PPO giải
+- DPO không cần [PPO](04-ppo.mdx) — đây là điểm khác biệt cốt lõi so với
+  RLHF truyền thống đã học ở bài [27](04-rlhf-alignment.mdx): PPO giải
   quyết bài toán tối ưu RL một cách an toàn, còn DPO tránh hẳn việc phải
   giải bài toán RL đó bằng cách biến đổi toán học lại từ đầu.
 

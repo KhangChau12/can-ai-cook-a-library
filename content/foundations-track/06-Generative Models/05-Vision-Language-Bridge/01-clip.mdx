@@ -5,7 +5,6 @@ module: Generative Models
 submodule: Vision-Language Bridge
 order: 1
 status: stable
-prerequisites: ["foundations-track/07-vision-transformer", "04-conditional-gan"]
 summary: Mọi mô hình sinh ảnh đã học (GAN, VAE, Diffusion) chỉ biết "ảnh trông giống thật không" — không mô hình nào hiểu được ngôn ngữ tự nhiên để nhận lệnh "sinh ảnh con mèo màu cam". CLIP (Radford 2021, OpenAI) giải quyết bằng contrastive pretraining: học đồng thời một image encoder và một text encoder sao cho ảnh và caption đúng cặp có embedding gần nhau, cặp sai xa nhau — tạo ra không gian embedding chung ảnh-text dùng được cho zero-shot classification và, quan trọng nhất cho module này, làm "la bàn" điều kiện hoá text cho Diffusion Models (bài tiếp theo).
 last_touched_by_task: Bài đệm mới (2026-07-11) — lấp khoảng trống prerequisite phát hiện khi review chiều sâu module Generative Models. Bài Latent Diffusion dùng CLIP như khái niệm đã biết ("model encode text thành vector ngữ nghĩa, học đối ngẫu text-image") nhưng track chưa từng dạy contrastive vision-language pretraining ở đâu — tạo sub-module riêng "Vision-Language Bridge" vì CLIP không thuộc gọn về CV thuần (kiến trúc) hay LLM thuần (text) mà là cầu nối 2 modality dùng riêng cho mục đích sinh ảnh có điều kiện trong module này. Nguồn: arxiv CLIP 2103.00020 + lilianweng.github.io contrastive representation learning.
 ---

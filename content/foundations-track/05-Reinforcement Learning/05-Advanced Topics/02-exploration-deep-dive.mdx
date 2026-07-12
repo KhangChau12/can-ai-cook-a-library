@@ -4,13 +4,12 @@ track: foundations-track
 module: Reinforcement Learning
 order: 2
 status: stable
-prerequisites: ["01-q-learning", "01-policy-gradient", "02-actor-critic"]
 summary: Epsilon-greedy (bài 18) là exploration đơn giản nhất nhưng rất kém trong môi trường thưa thớt reward (sparse reward) — agent không bao giờ tình cờ gặp reward để biết hành động nào đáng học. Bài này giới thiệu các phương pháp exploration có cấu trúc: UCB (Upper Confidence Bound), Thompson sampling, và curiosity-driven exploration (ICM, RND) — những kỹ thuật giúp agent khám phá thông minh hơn là random.
 last_touched_by_task: Tái cấu trúc (2026-07-10) — chuyển từ submodule Overview (nhồi nhét, sai bản chất) sang submodule mới Advanced Topics, đặt sau Model-based vì cần actor-critic làm nền, không phải kiến thức nền tảng chung. Nội dung không đổi. Nguồn: Lilian Weng 'Exploration Strategies in DRL' + arxiv ICM 1705.05363 + arxiv RND 1810.12894.
 submodule: Advanced Topics
 ---
 
-Bài [Q-learning](18-q-learning.mdx) giới thiệu ε-greedy — cách đơn giản nhất
+Bài [Q-learning](01-q-learning.mdx) giới thiệu ε-greedy — cách đơn giản nhất
 để cân bằng exploration và exploitation: với xác suất ε, chọn action ngẫu
 nhiên thay vì action tốt nhất theo Q-function hiện tại. Cách này hoạt động
 tốt trong môi trường có reward dày đặc (mỗi bước đều có tín hiệu), nhưng
@@ -206,15 +205,15 @@ của game. Đây là cột mốc quan trọng trong exploration cho sparse rewa
 
 - **Exploration vs exploitation ([RL Framework](01-reinforcement-learning-framework.mdx)):**
   vấn đề cốt lõi của RL được nhắc lần đầu ở bài đó, và ε-greedy ở bài
-  [Q-learning](18-q-learning.mdx) là giải pháp đơn giản nhất. Bài này mở
+  [Q-learning](01-q-learning.mdx) là giải pháp đơn giản nhất. Bài này mở
   rộng thành 3 họ giải pháp có cấu trúc hơn.
 - **[Actor-Critic](02-actor-critic.mdx):** cả ICM và RND đều dùng
   Actor-Critic làm backbone (A3C cho ICM, PPO cho RND) — intrinsic reward
   được cộng vào extrinsic reward trước khi học.
-- **ICM và [GAN](23-gan.mdx):** cả hai đều dùng prediction error làm tín
+- **ICM và [GAN](01-gan.mdx):** cả hai đều dùng prediction error làm tín
   hiệu học — generator của GAN học để giảm discriminator accuracy,
   forward model của ICM học để giảm prediction error.
-- **RND và distillation ([LoRA](80-lora.mdx)):** cả hai đều dùng ý tưởng
+- **RND và distillation ([LoRA](05-lora.mdx)):** cả hai đều dùng ý tưởng
   "dạy một mạng nhỏ hơn bắt chước mạng lớn hơn" — RND distill target
   network vào predictor network trên cùng observation.
 

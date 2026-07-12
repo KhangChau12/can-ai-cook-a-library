@@ -5,7 +5,6 @@ module: Natural Language Processing
 submodule: NLP Task cổ điển
 order: 1
 status: stable
-prerequisites: ["01-rnn", "04-bidirectional-rnn"]
 summary: Bài toán NLP cụ thể đầu tiên áp dụng những gì đã học ở Tokenization/RNN Family. Cách tiếp cận cổ điển (TF-IDF + Naive Bayes/SVM) coi văn bản là "túi từ" không quan tâm thứ tự — nhanh, dễ hiểu, đạt baseline tốt nhưng bỏ lỡ ngữ cảnh. Biểu diễn bằng embedding học được (word2vec/GloVe) rồi cho qua Bidirectional RNN/LSTM nắm được thứ tự và ngữ cảnh hai chiều, cải thiện độ chính xác rõ rệt trên bài toán cụ thể (sentiment analysis IMDB) — đổi lại cần nhiều dữ liệu và compute hơn.
 last_touched_by_task: Bài mới (2026-07-10), sau khi tách module "NLP & LLM" thành "NLP" + "LLM" — mở sub-module "NLP Task cổ điển" (mới) để lấp khoảng trống: module trước đó dạy kiến trúc (RNN, Transformer) nhưng chưa từng áp dụng chúng để giải một bài toán NLP cụ thể có tên riêng. Nguồn: scikit-learn.org (xác nhận qua WebFetch: công thức TF-IDF, lý do dùng thay raw count, độ chính xác cụ thể MultinomialNB 83.48% vs SGDClassifier/SVM 91.01% trên 20 newsgroups 4 categories) + d2l.ai (xác nhận qua WebSearch: kiến trúc BiRNN+GloVe cho sentiment analysis IMDB, kết quả cụ thể 88.0% train/85.0% test accuracy).
 ---

@@ -5,14 +5,17 @@ import SidebarNav from '../components/SidebarNav.astro';
 import TableOfContents from '../components/TableOfContents.astro';
 import type { Heading } from '../lib/renderMarkdown';
 import type { ModuleGroup, Track, Lesson } from '../lib/content';
+import type { LockInfo } from '../lib/lockClient';
 
 interface Props {
   track: Track;
   group: ModuleGroup;
   lesson: Lesson;
   headings: Heading[];
+  lockInfo?: LockInfo;
+  currentSubmoduleIndex?: number;
 }
-const { track, group, lesson, headings } = Astro.props;
+const { track, group, lesson, headings, lockInfo = [], currentSubmoduleIndex = -1 } = Astro.props;
 ---
 
 <BaseLayout title={lesson.data.title} description={lesson.data.summary}>
@@ -49,7 +52,16 @@ const { track, group, lesson, headings } = Astro.props;
 
     <main class="min-w-0 flex-1 px-4 py-8 sm:px-8 sm:py-10 lg:px-10 lg:py-12">
       <div class="grid grid-cols-1 gap-10 xl:grid-cols-[minmax(0,1fr)_200px]">
-        <div class="min-w-0" id="lesson-content-col">
+        <div class="min-w-0" id="lesson-content-col" style="font-size: var(--reading-font-scale, 1em)">
+          <div id="lock-banner" class="mb-6 hidden items-center gap-2 rounded-xl border border-warning/25 bg-warning/10 px-4 py-3 text-[13px] font-semibold text-warning">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <span>Bạn đang xem trước bài thuộc submodule chưa mở khoá — nên hoàn thành các submodule trước để nắm nền tảng.</span>
+          </div>
+          <div class="mb-4 flex items-center justify-end gap-1">
+            <span class="mr-1 text-[11px] font-semibold text-text-disabled">Cỡ chữ</span>
+            <button type="button" id="font-scale-down" class="flex h-7 w-7 items-center justify-center rounded-md border border-border-default text-[12px] font-bold text-text-tertiary transition hover:bg-bg-elevated hover:text-text-primary" aria-label="Giảm cỡ chữ">A-</button>
+            <button type="button" id="font-scale-up" class="flex h-7 w-7 items-center justify-center rounded-md border border-border-default text-[12px] font-bold text-text-tertiary transition hover:bg-bg-elevated hover:text-text-primary" aria-label="Tăng cỡ chữ">A+</button>
+          </div>
           <slot />
         </div>
         <div class="hidden xl:block">
@@ -59,13 +71,57 @@ const { track, group, lesson, headings } = Astro.props;
     </main>
   </div>
 
-  <script define:vars={{ lessonId: lesson.id }} data-mark-viewed>
+  <script define:vars={{ lessonId: lesson.id, lockInfo, currentSubmoduleIndex }} data-mark-viewed>
     window.__lessonId = lessonId;
+    window.__lessonLockInfo = lockInfo;
+    window.__currentSubmoduleIndex = currentSubmoduleIndex;
   </script>
   <script>
     import { markViewed } from '../lib/progress';
+    import { firstIncompleteSubmoduleIndex } from '../lib/lockClient';
+
     const id = (window as any).__lessonId as string | undefined;
     if (id) markViewed(id);
+
+    const lockInfo = (window as any).__lessonLockInfo as { id: string; hasQuiz: boolean }[][];
+    const currentSubmoduleIndex = (window as any).__currentSubmoduleIndex as number;
+    if (lockInfo && lockInfo.length > 0 && currentSubmoduleIndex >= 0) {
+      const firstIncomplete = firstIncompleteSubmoduleIndex(lockInfo);
+      if (currentSubmoduleIndex > firstIncomplete) {
+        document.getElementById('lock-banner')?.classList.remove('hidden');
+        document.getElementById('lock-banner')?.classList.add('flex');
+      }
+    }
+
+    const FONT_SCALE_KEY = 'ai-learn-font-scale';
+    const contentCol = document.getElementById('lesson-content-col');
+    const steps = [0.9, 1, 1.1, 1.2, 1.3];
+    function applyScale(scale: number) {
+      contentCol?.style.setProperty('--reading-font-scale', `${scale}em`);
+      try {
+        localStorage.setItem(FONT_SCALE_KEY, String(scale));
+      } catch {
+        /* storage unavailable */
+      }
+    }
+    let current = 1;
+    try {
+      const saved = parseFloat(localStorage.getItem(FONT_SCALE_KEY) || '1');
+      if (steps.includes(saved)) current = saved;
+    } catch {
+      /* storage unavailable */
+    }
+    applyScale(current);
+    document.getElementById('font-scale-up')?.addEventListener('click', () => {
+      const idx = Math.min(steps.length - 1, steps.indexOf(current) + 1);
+      current = steps[idx];
+      applyScale(current);
+    });
+    document.getElementById('font-scale-down')?.addEventListener('click', () => {
+      const idx = Math.max(0, steps.indexOf(current) - 1);
+      current = steps[idx];
+      applyScale(current);
+    });
   </script>
   <script>
     const trigger = document.getElementById('mobile-nav-trigger');

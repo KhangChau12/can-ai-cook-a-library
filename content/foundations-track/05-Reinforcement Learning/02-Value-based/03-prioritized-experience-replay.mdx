@@ -5,12 +5,11 @@ module: Reinforcement Learning
 submodule: Value-based
 order: 3
 status: stable
-prerequisites: ["02-double-dueling-dqn"]
 summary: Experience replay của DQN (bài 18) lấy mẫu đều từ replay buffer — nhưng không phải transition nào cũng đáng học như nhau. Schaul và cộng sự (2015, DeepMind) đề xuất Prioritized Experience Replay (PER): ưu tiên các transition có TD error lớn (nhiều 'bất ngờ' → nhiều tín hiệu học), lấy mẫu theo xác suất P(i) ∝ |δ_i|^α, và bù thiên lệch bằng importance-sampling weights w_i = (1/(N·P(i)))^β để giữ ước lượng không chệch. Cải thiện trên 41/49 game Atari, đặc biệt khi reward thưa.
 last_touched_by_task: Bài mới (Task 98, 2026-07-07) — Phase 1 RL, lấp dòng tiến hoá Value-based: DQN (18) → Double/Dueling (71) → PER (82) → Rainbow (sau). Bài về 1 kỹ thuật cải tiến trực tiếp experience replay của DQN, không thuộc dạng 'dòng tiến hoá nhiều model' nên áp dụng ngoại lệ 1 nguồn mục 2.1 như tiền lệ LoRA/DPO/WordPiece. Nguồn: arxiv 1511.05952 (Schaul/Quan/Antonoglou/Silver 2015, 'Prioritized Experience Replay') — WebSearch whitelist xác nhận đủ chi tiết: động cơ (lấy mẫu đều bỏ qua độ hữu ích khác nhau), TD error làm priority, stochastic sampling P(i)∝|δ|^α, importance sampling weights bù bias, sum-tree O(log N), kết quả 41/49 game.
 ---
 
-Bài [Q-learning](18-q-learning.mdx) đã học **experience replay** — kỹ
+Bài [Q-learning](01-q-learning.mdx) đã học **experience replay** — kỹ
 thuật ổn định DQN cốt lõi: agent lưu transition vào replay buffer, lấy
 mẫu ngẫu nhiên mini-batch để huấn luyện, phá vỡ tương quan thời gian.
 Nhưng cách lấy mẫu của DQN gốc là **đều (uniform)** — mỗi transition có
@@ -143,7 +142,7 @@ experience replay.
 
 ## Liên hệ lại với các bài trước
 
-- PER không thay thế experience replay (bài [18](18-q-learning.mdx)) —
+- PER không thay thế experience replay (bài [18](01-q-learning.mdx)) —
   chỉ đổi **cách lấy mẫu** từ uniform sang ưu tiên theo `|δ|`, vẫn dùng
   đúng replay buffer. Đây là dạng "cải tiến 1 thành phần" điển hình:
   giữ nguyên khung, tinh chỉnh 1 bánh răng.
@@ -152,7 +151,7 @@ experience replay.
   cùng một nguyên lý toán, áp dụng vào bối cảnh RL.
 - PER là 1 trong 6 thành phần của **Rainbow DQN** (Hessel et al. 2017),
   bài tổng hợp kế tiếp của sub-module — kết hợp PER với Double/Dueling
-  DQN (bài [71](71-double-dueling-dqn.mdx)) và 3 cải tiến khác.
+  DQN (bài [71](02-double-dueling-dqn.mdx)) và 3 cải tiến khác.
 
 ## Nguồn tham khảo
 

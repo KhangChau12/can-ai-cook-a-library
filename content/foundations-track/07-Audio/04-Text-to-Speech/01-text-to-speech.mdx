@@ -5,7 +5,6 @@ module: Audio
 submodule: Text-to-Speech
 order: 1
 status: stable
-prerequisites: ["01-speech-to-text", "02-autoencoder"]
 summary: Bài cuối series Audio: chiều ngược lại của Speech-to-Text — sinh ra audio từ văn bản. Giai đoạn 1 (text→mel-spectrogram): Tacotron 2 (autoregressive, location-sensitive attention) → FastSpeech (non-autoregressive, duration predictor, sinh song song nhanh hơn nhiều). Giai đoạn 2 (vocoder, mel→waveform): WaveNet (dilated causal conv, chậm) → HiFi-GAN (GAN-based, multi-period discriminator, nhanh hơn hàng nghìn lần). Đánh giá bằng MOS (Mean Opinion Score, con người chấm điểm) vì chất lượng giọng nói mang tính chủ quan.
 last_touched_by_task: Cải thiện Task 112 (2026-07-07): Phase 3 Audio HOÀN THÀNH — bổ sung (1) Tacotron 2 cụ thể (Shen 2018, encoder-decoder + location-sensitive attention) cho giai đoạn 1 (bài cũ chỉ nói 'encoder-decoder tương tự'), (2) FastSpeech non-autoregressive (duration predictor, sinh song song, FastSpeech2 thêm pitch/energy), (3) HiFi-GAN cho giai đoạn 2 (GAN-based, multi-period/multi-scale discriminator, nhanh hơn WaveNet hàng nghìn lần) + nhắc Griffin-Lim/Parallel WaveNet, (4) mục đánh giá MOS. Nguồn: WebSearch whitelist (arxiv) xác nhận Tacotron 2/FastSpeech/HiFi-GAN. Giữ nguyên cấu trúc 2 giai đoạn + WaveNet (đã đúng).
 ---
@@ -36,7 +35,7 @@ hưởng lớn.** Kiến trúc encoder-decoder autoregressive: encoder (RNN) mã
 hoá chuỗi ký tự thành biểu diễn ẩn, decoder (RNN autoregressive, sinh
 từng frame mel-spectrogram một, giống cách LLM sinh từng token) dùng
 **location-sensitive attention** — biến thể attention (bài
-[14](14-attention.mdx)) có thêm thông tin "đã đi tới đâu ở bước trước" để
+[14](01-attention.mdx)) có thêm thông tin "đã đi tới đâu ở bước trước" để
 căn chỉnh đơn điệu (monotonic — đọc văn bản từ trái sang phải, không nhảy
 lung tung) giữa ký tự và frame audio. Tacotron 2 kết hợp trực tiếp với
 vocoder WaveNet (đã học bên dưới) thành hệ thống hoàn chỉnh, đạt độ tự
@@ -70,7 +69,7 @@ Một vocoder cụ thể, có ảnh hưởng lớn trong lịch sử TTS hiện 
 trực tiếp từng mẫu (sample) của waveform thô, dùng **dilated causal
 convolution** (tích chập giãn nở, nhân quả): "nhân quả" nghĩa là mỗi mẫu
 output chỉ phụ thuộc vào các mẫu input đã có trước đó (không nhìn "tương
-lai" — cùng nguyên tắc causal mask đã học ở [Pretraining](24-pretraining-llm.mdx)),
+lai" — cùng nguyên tắc causal mask đã học ở [Pretraining](01-pretraining-llm.mdx)),
 còn "giãn nở" nghĩa là khoảng cách giữa các điểm được tích chập tăng dần
 theo cấp số nhân qua mỗi lớp, giúp mở rộng phạm vi "nhìn thấy" (receptive
 field) rất xa mà không cần quá nhiều lớp. WaveNet là mô hình đầu tiên tạo
@@ -88,7 +87,7 @@ chậm cho ứng dụng thời gian thực. Các hướng cải tiến:
 - **Parallel WaveNet / WaveGlow** — chưng cất (distill) từ WaveNet đã
   train để sinh song song, giữ phần lớn chất lượng nhưng nhanh hơn nhiều.
 - **HiFi-GAN** (Kong, Kim, Bae 2020) — dùng cơ chế **GAN** (bài
-  [GAN](23-gan.mdx)) thay vì autoregressive: generator sinh **toàn bộ
+  [GAN](01-gan.mdx)) thay vì autoregressive: generator sinh **toàn bộ
   waveform song song** từ mel-spectrogram, discriminator gồm
   **multi-period discriminator** (đánh giá waveform downsample theo
   nhiều chu kỳ khác nhau, bắt được cấu trúc tuần hoàn của tín hiệu âm
@@ -149,7 +148,7 @@ toàn bộ đầu-cuối cùng lúc.
   modality (text ↔ audio).
 - Việc tách 2 giai đoạn (text→spectrogram, spectrogram→waveform) là một
   ví dụ khác của nguyên tắc module hoá đã gặp ở
-  [RAG/Agent](29-rag-embedding-agent.mdx) (tách retrieval và generation
+  [RAG/Agent](02-rag-embedding-agent.mdx) (tách retrieval và generation
   thành 2 bước riêng) — chia một bài toán phức tạp thành các bước con rõ
   ràng thường dễ huấn luyện và debug hơn một mô hình đơn khối làm tất cả.
 

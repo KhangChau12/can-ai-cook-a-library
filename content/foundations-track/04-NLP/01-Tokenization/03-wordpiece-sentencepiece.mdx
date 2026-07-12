@@ -5,7 +5,6 @@ module: Natural Language Processing
 submodule: Tokenization
 order: 3
 status: stable
-prerequisites: ["01-tokenization-word-to-subword"]
 summary: BPE ghép cặp ký hiệu theo tần suất thô — không phải cách duy nhất hợp lý. WordPiece (dùng trong BERT) đổi tiêu chí ghép sang "tăng khả năng (likelihood) của dữ liệu"; SentencePiece (dùng trong T5) đi xa hơn, bỏ luôn giả định "đã tách từ theo khoảng trắng" để xử lý trực tiếp từ Unicode thô, độc lập ngôn ngữ. Cả hai đều là biến thể thực dụng của cùng ý tưởng subword đã học ở bài BPE, và đều đang được dùng trong các mô hình SOTA hiện tại.
 last_touched_by_task: Bài mới (2026-07-09), tái cấu trúc module Sequence Model theo yêu cầu người vận hành — cắt gọn Tokenization xuống dòng chính dẫn tới SOTA, gộp 2 bài WordPiece + SentencePiece (trước đây tách riêng) thành 1 bài "biến thể subword hiện đại" vì cả hai cùng trả lời câu hỏi "BPE còn thiếu gì" theo 2 hướng bổ sung nhau, không phải 2 dòng tiến hoá độc lập. Nội dung kỹ thuật giữ nguyên từ 2 bài gốc (đã xác nhận nguồn qua lilianweng.github.io + arxiv 1808.06226 + machinelearningmastery.com), chỉ rút gọn phần dẫn nhập/liên hệ trùng lặp giữa 2 bài cũ.
 ---

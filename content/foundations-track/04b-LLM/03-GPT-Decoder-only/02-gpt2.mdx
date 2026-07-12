@@ -5,7 +5,6 @@ module: Large Language Models
 submodule: GPT & Decoder-only
 order: 2
 status: stable
-prerequisites: ["01-gpt1"]
 summary: GPT-1 vẫn cần fine-tune gần như toàn bộ tham số cho mỗi tác vụ downstream — vẫn một bước huấn luyện riêng cho mỗi bài toán. Radford và cộng sự (2019, OpenAI) đặt câu hỏi triệt để hơn: nếu mô hình đủ lớn và huấn luyện trên đủ đa dạng văn bản, liệu nó có thể thực hiện nhiều tác vụ mà KHÔNG CẦN fine-tune gì cả? GPT-2 (1.5 tỷ tham số, gấp 10 lần GPT-1, huấn luyện trên WebText — 8 triệu trang web từ Reddit) trả lời có: đạt SOTA zero-shot trên 7/8 bộ dữ liệu mô hình hoá ngôn ngữ, chỉ bằng cách đưa thẳng input của tác vụ vào mô hình và để nó tiếp tục sinh văn bản.
 last_touched_by_task: Bài mới (2026-07-10), sub-module "GPT & Decoder-only" — bài thứ 2 trong dòng tiến hoá GPT-1 → GPT-2 → GPT-3, giải quyết đúng hạn chế còn lại của GPT-1 (vẫn cần fine-tune per-task). Nguồn: lilianweng.github.io (xác nhận qua WebFetch trực tiếp posts/2019-01-31-lm: vấn đề cụ thể zero-shot transfer không cần fine-tune, kiến trúc giữ nguyên GPT nhưng scale 1.5B tham số = 10x GPT-1, dữ liệu WebText 8 triệu trang từ Reddit outbound link, kết quả SOTA 7/8 dataset zero-shot, cải thiện rõ rệt nhất trên dataset nhỏ và đo phụ thuộc dài hạn) + machinelearningmastery.com/encoders-and-decoders-in-transformer-models (đã dùng ở bài GPT-1, tiếp tục làm nguồn phụ cho khái niệm decoder-only, không lặp lại trích dẫn chi tiết ở bài này).
 ---

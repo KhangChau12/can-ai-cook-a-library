@@ -4,7 +4,6 @@ track: foundations-track
 module: "Deep Learning Nền tảng"
 order: 7
 status: stable
-prerequisites: ["04-optimization"]
 summary: "Learning rate cố định luôn là một đánh đổi: đủ lớn để học nhanh thì dễ dao động quanh điểm tối ưu, đủ nhỏ để hội tụ ổn định thì học chậm suốt quá trình. Learning rate schedule giải quyết bằng cách thay đổi learning rate theo thời gian train: step/exponential decay giảm dần cho hội tụ tinh, cosine annealing (Loshchilov & Hutter, 2016) giảm mượt theo hình cos kèm warm restart để thoát vùng tối ưu kém, và warmup (dùng trong Transformer, Vaswani et al. 2017) tăng dần learning rate ở giai đoạn đầu để tránh phân kỳ khi khởi tạo ngẫu nhiên."
 last_touched_by_task: "Viết mới — hoàn thiện bộ 3 bài mở rộng module Deep Learning Nền tảng (Optimizer → Weight Init → Normalization → LR Schedule), nối trực tiếp từ Optimizer ('vẫn cần tự chọn learning rate cơ sở'). Nguồn: d2l.ai (core tension, step/factor scheduler, công thức cosine đầy đủ, warmup), cs231n.github.io (step/exponential/1-over-t decay dạng liên tục), arxiv.org 1608.03983 (SGDR — chỉ xác nhận qua abstract, KHÔNG fetch được full-text formula trực tiếp, đã flag rõ trong bài), arxiv.org 1706.03762 (Transformer paper, công thức warmup chính xác từ §5.3), arxiv.org 1908.03265 (RAdam — chỉ xác nhận claim mức abstract 'variance lớn giai đoạn đầu', không khẳng định cơ chế chi tiết chưa đọc được full-text)."
 ---

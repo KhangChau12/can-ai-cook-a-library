@@ -5,7 +5,6 @@ module: Recommendation Systems
 submodule: Ranking & Evaluation
 order: 2
 status: stable
-prerequisites: ["03-collaborative-filtering-matrix-factorization", "01-evaluation-metrics-cold-start"]
 summary: Matrix Factorization và các phương pháp trước tối ưu để dự đoán chính xác giá trị rating hoặc điểm số — nhưng mục tiêu thực sự của gợi ý là xếp hạng đúng thứ tự item, không phải dự đoán điểm tuyệt đối. Rendle và cộng sự (2009) giải quyết bằng BPR: xây dựng bộ dữ liệu huấn luyện dạng cặp (item đã thích, item chưa quan sát), tối ưu hoá trực tiếp xác suất người dùng thích item này hơn item kia — đúng tiêu chí xếp hạng, thay vì một tiêu chí gián tiếp (dự đoán điểm) rồi hy vọng thứ tự đúng theo.
 last_touched_by_task: Tái cấu trúc (2026-07-10) — chuyển vào submodule "Ranking & Evaluation" (order 4→2, đứng sau bài Evaluation metrics mới để người đọc biết CÁCH ĐO ranking trước khi học kỹ thuật TỐI ƯU cho đúng tiêu chí đó), sửa prerequisite trỏ đúng slug Matrix Factorization sau khi module tách submodule. Nguồn: arxiv (paper gốc Rendle et al. 2009, 'BPR: Bayesian Personalized Ranking from Implicit Feedback', xác nhận qua WebFetch abstract: vấn đề MF/k-NN không tối ưu trực tiếp cho ranking, đóng góp BPR-Opt là Bayesian MAP estimator, kết quả vượt trội learning technique chuẩn) + D2L.ai (chapter_recommender-systems/ranking.html, xác nhận qua WebFetch: công thức chính xác BPR-Opt, vai trò sigmoid, cách lấy mẫu positive/negative, so sánh với Hinge loss).
 ---
@@ -75,7 +74,7 @@ năng người dùng `u` thích item `i` hơn item `j`. Tối đa hoá log của
 suất này (tương đương tối thiểu hoá âm của nó) khuyến khích mô hình đẩy
 điểm số dự đoán của item đã thích **cao hơn hẳn** so với item chưa quan
 sát. Số hạng `λ * ||Θ||^2` là regularization (đã học ở bài
-[10](10-regularization.mdx)), giúp tránh overfitting.
+[10](03-regularization.mdx)), giúp tránh overfitting.
 
 Về mặt lý thuyết, Rendle và cộng sự chứng minh BPR-Opt chính là **ước
 lượng hậu nghiệm cực đại** (maximum a posteriori — MAP estimator) rút ra
@@ -114,14 +113,14 @@ Factorization, đổi cách tối ưu hoá đã cải thiện đáng kể hiệu
 
 - BPR không phải một mô hình mới — nó là một **hàm mục tiêu (loss
   function) thay thế**, có thể áp dụng cho chính [Matrix Factorization](../02-Nen-tang-Content-based-va-CF/03-collaborative-filtering-matrix-factorization.mdx)
-  hoặc [k-NN](05-k-nearest-neighbors.mdx) đã học, chỉ thay đổi **cách
+  hoặc [k-NN](04-k-nearest-neighbors.mdx) đã học, chỉ thay đổi **cách
   huấn luyện** để đúng tiêu chí xếp hạng thay vì dự đoán điểm.
 - Cách xây dựng bộ ba `(u, i, j)` và tối ưu hoá trực tiếp thứ tự tương
   đối là một minh hoạ khác cho nguyên tắc "chọn đúng tiêu chí tối ưu
-  hoá cho đúng bài toán" — tương tự cách [SVM](06-svm.mdx) tối ưu trực
+  hoá cho đúng bài toán" — tương tự cách [SVM](05-svm.mdx) tối ưu trực
   tiếp margin lớn nhất thay vì chỉ tối thiểu hoá lỗi phân loại.
 - Regularization dùng trong BPR-Opt (`λ * ||Θ||^2`) chính là kỹ thuật đã
-  học ở bài [Regularization](10-regularization.mdx), áp dụng ở đây cho
+  học ở bài [Regularization](03-regularization.mdx), áp dụng ở đây cho
   bài toán xếp hạng thay vì bài toán phân loại/hồi quy thông thường.
 
 ## Nguồn tham khảo

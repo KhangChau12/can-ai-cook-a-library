@@ -5,7 +5,6 @@ module: Large Language Models
 submodule: Evaluation
 order: 1
 status: stable
-prerequisites: ["01-gpt3", "01-reasoning-models"]
 summary: Xuyên suốt module này, nhiều bài đã trích dẫn số liệu benchmark (GLUE, SQuAD, MMLU, GSM8K) như bằng chứng một mô hình "tốt" — nhưng chưa bài nào giải thích CÁCH các con số đó được đo, hay chúng đáng tin tới mức nào. Bài này lấp khoảng trống đó: các benchmark tự động phổ biến đo gì cụ thể, hạn chế nghiêm trọng nhất của chúng (data contamination — dữ liệu benchmark vô tình lọt vào dữ liệu huấn luyện, khiến điểm số trông tốt hơn thực tế), và LLM-as-judge — dùng chính một LLM khác để chấm điểm, đánh đổi giữa khả năng mở rộng và độ tin cậy.
 last_touched_by_task: Bài mới (2026-07-10), mở sub-module "Evaluation" — bài cuối cùng của module LLM, lấp khoảng trống: track đã trích dẫn số liệu benchmark (GLUE 80.5% ở bài BERT, MMLU 67.5% ở bài Scaling Laws, GSM8K ở bài Prompting/Reasoning models) xuyên suốt nhiều bài nhưng chưa từng giải thích cách đo hay giới hạn của phương pháp đo. Nguồn: machinelearningmastery.com (xác nhận qua WebFetch bài "Everything You Need to Know About LLM Evaluation Metrics": các benchmark cụ thể MMLU/GSM8K/ARC/TruthfulQA/HellaSwag đo gì, cơ chế LLM-as-judge (dùng GPT-4/Claude đánh giá theo rubric) kèm ưu/nhược điểm cụ thể, giới hạn data contamination, định nghĩa perplexity). Chỉ 1 nguồn: đây không phải bài "dòng tiến hoá nhiều model cạnh tranh" mà là một chủ đề phương pháp luận đơn, theo mục 2.5.
 ---

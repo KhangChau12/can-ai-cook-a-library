@@ -1,0 +1,120 @@
+---
+title: Pseudo-labeling — Tận dụng Dữ liệu Test Chưa có Nhãn
+track: exam-track
+module: Kỹ thuật thi đấu nâng cao
+order: 11
+status: stable
+summary: Kỹ thuật cuối cùng của track — dùng model đã train để tự gán nhãn cho dữ liệu test tin cậy cao, rồi đưa ngược vào tập train để học thêm. Tận dụng được lượng dữ liệu test lớn mà competition luôn cung cấp sẵn, nhưng đi kèm rủi ro confirmation bias nếu làm sai cách.
+last_touched_by_task: Viết mới 2026-07-12 theo yêu cầu người vận hành sau đợt review 2 tầng module — lấp khoảng trống đã ghi nhận từ trước (xem lịch sử ở bài Data Augmentation, từng thử viết pseudo-labeling nhưng thiếu nguồn whitelist chất lượng). Nguồn: machinelearningmastery.com/semi-supervised-learning-with-label-propagation (định nghĩa pseudo-labeling/self-training, quy trình 6 bước, rủi ro confirmation bias) + machinelearningmastery.com/data-leakage-machine-learning (đã dùng ở bài 1, đối chiếu nguyên tắc leakage khi đưa test vào train).
+---
+
+Toàn bộ track cho tới giờ đều dùng dữ liệu **train có nhãn** để cải thiện
+model — transfer learning, tuning, ensembling đều thao tác trên cùng một
+nguồn dữ liệu đó. Nhưng mỗi competition còn cung cấp một nguồn dữ liệu lớn
+khác mà phần lớn kỹ thuật trước giờ bỏ qua: **tập test**, không có nhãn thật
+nhưng có sẵn đặc trưng (feature) đầy đủ, và thường đông không kém tập train.
+**Pseudo-labeling** là kỹ thuật khai thác đúng nguồn dữ liệu bị bỏ quên này.
+
+## Ý tưởng cốt lõi: dùng model để tự tạo nhãn cho dữ liệu chưa có nhãn
+
+Pseudo-labeling (còn gọi là self-training) thuộc nhóm kỹ thuật **học bán
+giám sát (semi-supervised learning)** — nằm giữa học có giám sát thuần
+(chỉ dùng dữ liệu có nhãn) và học không giám sát (không dùng nhãn nào).
+Quy trình cơ bản:
+
+1. **Train model bình thường** trên tập train có nhãn thật — đúng quy trình
+   đã học từ đầu track (baseline, transfer learning, tuning...).
+2. **Dùng model đó dự đoán** trên tập test (chưa có nhãn thật).
+3. **Lọc theo ngưỡng tin cậy (confidence threshold)** — chỉ giữ lại những
+   dự đoán mà model "rất chắc chắn" (ví dụ xác suất dự đoán trên 90-95%),
+   bỏ qua các dự đoán mơ hồ.
+4. **Gán các dự đoán tin cậy cao đó làm "nhãn giả" (pseudo-label)** cho
+   đúng những dòng dữ liệu test tương ứng.
+5. **Gộp dữ liệu test đã gán nhãn giả vào tập train gốc**, train lại model
+   trên tập dữ liệu mở rộng này (train thật + pseudo-label).
+6. **Lặp lại nếu cần** — model mới (đã học thêm từ pseudo-label) có thể dự
+   đoán lại trên phần test còn lại, tiếp tục vòng lặp tới khi hiệu năng bão
+   hoà (không cải thiện thêm đáng kể).
+
+## Vì sao kỹ thuật này có thể hoạt động
+
+Trực giác: dữ liệu test thường có phân phối **gần giống** dữ liệu train
+(cùng một bài toán, cùng nguồn thu thập) nhưng model chưa từng "thấy" các
+đặc trưng cụ thể của những điểm dữ liệu đó trong lúc train. Với những điểm
+test mà model dự đoán rất tự tin, xác suất dự đoán đó đúng thường khá cao
+— đưa những điểm này vào train giống như mở rộng tập train bằng dữ liệu
+thật (đặc trưng thật, không tổng hợp như SMOTE), chỉ khác là nhãn không
+chắc chắn 100% như nhãn thật.
+
+Lợi ích rõ nhất khi tập train **nhỏ** so với tập test — tình huống khá phổ
+biến trong thi đấu (nhiều competition công bố tập train hạn chế nhưng tập
+test lớn để đánh giá công bằng). Pseudo-labeling cho phép mô hình "nhìn
+thấy" nhiều dữ liệu hơn tập train gốc, dù nhãn của phần mở rộng đó không
+hoàn hảo.
+
+## Rủi ro nghiêm trọng nhất: confirmation bias
+
+Nếu model mắc lỗi hệ thống (ví dụ luôn nhầm lẫn hai lớp cụ thể) nhưng vẫn
+dự đoán sai đó với độ tin cậy cao, pseudo-label sẽ **ghi nhận đúng cái sai
+đó** như một nhãn thật, rồi train lại khiến model **tin tưởng hơn vào chính
+lỗi sai ban đầu** — mỗi vòng lặp không sửa lỗi mà làm lỗi ăn sâu hơn. Đây
+gọi là **confirmation bias** (thiên lệch củng cố): mô hình tự huấn luyện
+dựa trên chính niềm tin sai của nó, không có cơ chế nào từ bên ngoài để
+sửa sai, khác hẳn nhãn thật (luôn đúng theo định nghĩa, dù có thể noisy).
+
+## Cách giảm rủi ro — không có cách loại bỏ hoàn toàn
+
+- **Ngưỡng tin cậy càng cao càng an toàn, nhưng đánh đổi số lượng pseudo-label
+  thu được.** Ngưỡng 99% cho ít dữ liệu mới hơn nhưng đáng tin hơn; ngưỡng
+  70% cho nhiều dữ liệu hơn nhưng rủi ro nhiễu cao hơn. Không có ngưỡng
+  "đúng" cố định — kiểm chứng bằng cross-validation trước khi chọn.
+- **Không lặp lại quá nhiều vòng.** Mỗi vòng lặp khuếch đại thêm rủi ro
+  confirmation bias — dừng lại sau 1-2 vòng, không lặp tới khi "hết dữ liệu
+  test để gán nhãn" bằng mọi giá.
+- **Theo dõi điểm validation (không phải điểm trên chính pseudo-label) sau
+  mỗi vòng** — nếu điểm validation thật giảm sau khi thêm pseudo-label, đó
+  là dấu hiệu confirmation bias đang xảy ra, nên dừng hoặc giảm ngưỡng tin
+  cậy chặt hơn.
+- **Cân nhắc trọng số nhỏ hơn cho pseudo-label so với nhãn thật** khi train
+  (nếu framework hỗ trợ sample weight) — thừa nhận rằng pseudo-label kém
+  tin cậy hơn nhãn thật, không nên có "tiếng nói" ngang bằng trong quá
+  trình học.
+
+## Phân biệt với data leakage — không vi phạm nguyên tắc đã học
+
+Dễ nhầm pseudo-labeling với data leakage (bài
+[Leaderboard, Metric & Lỗi nộp bài](01-leaderboard-metric-va-loi-nop-bai.mdx))
+vì cả hai đều "đưa thông tin từ test vào train". Khác biệt mấu chốt:
+data leakage là dùng **nhãn thật của test** (thứ mô hình không được phép
+biết) hoặc thống kê tính trên test để rò rỉ vào train; pseudo-labeling chỉ
+dùng **đặc trưng (feature) thật của test** (vốn đã được cung cấp hợp lệ để
+dự đoán) cộng với **nhãn do chính model tự suy ra** — không hề chạm vào
+nhãn thật ẩn của test. Đây là kỹ thuật hợp lệ, không phải một dạng ăn gian.
+
+## Áp dụng vào chiến lược thi đấu
+
+- Thử pseudo-labeling ở **giai đoạn cuối** competition, sau khi đã có một
+  model đủ tốt qua các kỹ thuật trước (transfer learning/tuning/ensembling)
+  — pseudo-label từ một model yếu mang rủi ro confirmation bias cao hơn
+  nhiều so với pseudo-label từ một model đã được tối ưu kỹ.
+- Hiệu quả rõ nhất khi **tập train nhỏ, tập test lớn** — nếu tập train đã
+  đủ lớn, lợi ích thu được từ pseudo-labeling thường không tương xứng với
+  rủi ro và chi phí tính toán thêm (train lại nhiều vòng).
+- Có thể kết hợp với ensembling (bài
+  [Model Ensembling](06-model-ensembling.mdx)): dùng dự đoán trung bình của
+  cả ensemble (thay vì một model đơn lẻ) để tạo pseudo-label, thường đáng
+  tin hơn dự đoán của một model riêng lẻ vì đã giảm bớt phương sai.
+- Luôn kiểm chứng bằng validation set tách riêng, không dùng chính điểm
+  trên pseudo-label để đánh giá — đúng nguyên tắc xuyên suốt track: tin
+  vào validation set tự tách hơn bất kỳ tín hiệu nào có thể tự đánh lừa
+  chính mình.
+
+Đây là bài cuối cùng của track — kết hợp cùng các kỹ thuật đã học (transfer
+learning, tuning, ensembling, xử lý mất cân bằng, xử lý tabular/ảnh/time
+series), bạn đã có đủ bộ công cụ thực chiến bao quát phần lớn tình huống
+gặp phải khi thi đấu trên The Noders Platform.
+
+## Nguồn tham khảo
+
+- [Semi-Supervised Learning With Label Propagation (MachineLearningMastery)](https://machinelearningmastery.com/semi-supervised-learning-with-label-propagation/) — dùng cho định nghĩa pseudo-labeling/self-training, quy trình 6 bước cụ thể (train → dự đoán trên unlabeled → lọc theo ngưỡng tin cậy → gộp vào train → train lại → lặp lại), và rủi ro confirmation bias khi mô hình củng cố chính dự đoán sai của nó.
+- [Data Leakage in Machine Learning (MachineLearningMastery)](https://machinelearningmastery.com/data-leakage-machine-learning/) — dùng để đối chiếu, phân biệt rõ pseudo-labeling (dùng feature thật + nhãn tự suy ra) với data leakage thật (dùng nhãn thật hoặc thống kê tính trên test một cách trái phép).

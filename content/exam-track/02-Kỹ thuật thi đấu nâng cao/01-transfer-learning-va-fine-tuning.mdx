@@ -4,7 +4,6 @@ track: exam-track
 module: Kỹ thuật thi đấu nâng cao
 order: 1
 status: stable
-prerequisites: ["03-baseline-nang-cap-mo-hinh-va-chien-luoc-nop-bai", "foundations-track/11-convolutional-neural-network"]
 summary: Vì sao gần như không bao giờ nên train một mạng nơ-ron từ đầu (from scratch) khi thi đấu có dữ liệu ảnh/văn bản, cách fine-tune một model pretrained, và ba chiến lược freeze layer phổ biến.
 last_touched_by_task: Rà lại dưới góc nhìn triết lý mới (2026-07-06): đọc kỹ, xác nhận bài đã đạt chuẩn đúng tiêu chí exam-track (mục 2.1 sườn A) — quy trình 4 bước fine-tuning rõ ràng, 3 chiến lược freeze layer cụ thể (full/partial/gradual unfreezing), nguyên tắc thực dụng chọn chiến lược theo kích thước dataset. Không 'vỏ rỗng', không cần viết lại. Giữ nguyên nội dung, chỉ nâng status.
 ---
@@ -18,7 +17,7 @@ lồ, thay vì train một kiến trúc mới từ số 0.
 
 ## Vì sao gần như không bao giờ nên train from scratch
 
-Nhớ lại [CNN](../foundations-track/11-convolutional-neural-network.mdx):
+Nhớ lại [CNN](../../foundations-track/03-Computer Vision/01-Co-ban/01-cnn.mdx):
 một mạng nơ-ron tích chập học cách nhận diện đặc trưng thị giác qua nhiều
 lớp — các lớp đầu học đặc trưng rất tổng quát (cạnh, góc, texture, màu
 sắc), các lớp sau học đặc trưng ngày càng cụ thể cho đúng bài toán đã

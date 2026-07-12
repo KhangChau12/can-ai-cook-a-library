@@ -5,7 +5,6 @@ module: Reinforcement Learning
 submodule: Value-based
 order: 5
 status: stable
-prerequisites: ["04-rainbow-dqn"]
 summary: Q-learning (bài 18) và mọi biến thể DQN chỉ học kỳ vọng E[Q] — bỏ qua thông tin về phân phối của returns. Distributional RL học toàn bộ phân phối xác suất, cho phép học ổn định hơn, kiểm soát rủi ro, và kết quả cuối cùng vượt trội trên Atari. Bài này kể dòng tiến hoá từ C51 (atoms cố định) qua QR-DQN (quantile regression) tới IQN (continuous quantile function).
 last_touched_by_task: Bài mới (2026-07-08): Phase 2.4 đào sâu RL — Distributional RL, hoàn thiện dòng Value-based sau Rainbow. Nguồn: arXiv C51 1710.10044 + arXiv IQN 1806.06923 + lilianweng.github.io.
 ---
@@ -178,10 +177,10 @@ target. Loss là quantile regression trên các cặp (τ_i, τ'_j).
 
 ## Liên hệ lại với các bài trước
 
-- **[Rainbow DQN](83-rainbow-dqn.mdx):** C51 là một trong 6 thành phần của
+- **[Rainbow DQN](04-rainbow-dqn.mdx):** C51 là một trong 6 thành phần của
   Rainbow. Rainbow ablation cho thấy C51 đóng góp nhiều thứ hai sau PER.
   Bài này đào sâu C51 và các biến thể mới hơn (QR-DQN, IQN).
-- **[Q-learning](18-q-learning.mdx):** từ scalar Q(s,a) → phân phối Z(s,a)
+- **[Q-learning](01-q-learning.mdx):** từ scalar Q(s,a) → phân phối Z(s,a)
   là một bước tổng quát hoá lớn. Công thức Bellman trên phân phối thay vì
   scalar.
 - **Distributional RL và [Imitation Learning](01-imitation-learning.mdx):** GAIL cũng học phân

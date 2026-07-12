@@ -5,7 +5,6 @@ module: Natural Language Processing
 submodule: Recurrent Neural Network Family
 order: 3
 status: stable
-prerequisites: ["02-lstm-gru"]
 summary: Sutskever, Vinyals, Le (2014) giải quyết bài toán RNN/LSTM thông thường không xử lý được: input và output là 2 chuỗi độ dài khác nhau, không tương ứng vị trí (dịch máy) — bằng cách ghép 1 LSTM encoder nén câu nguồn thành 1 vector cố định, và 1 LSTM decoder sinh câu đích từng từ một từ vector đó.
 last_touched_by_task: Tái cấu trúc module Sequence Model (2026-07-09): chuyển từ order 5 lên order 3 — đặt Seq2seq ngay sau LSTM/GRU (thay vì sau Bidirectional/Deep RNN) vì đây là câu trả lời tự nhiên cho câu hỏi "RNN/LSTM dùng để làm gì trong thực tế", tạo động lực rõ ràng hơn trước khi học các biến thể kỹ thuật (Bidirectional, Deep RNN) ở 2 bài sau. Nội dung không đổi.
 ---

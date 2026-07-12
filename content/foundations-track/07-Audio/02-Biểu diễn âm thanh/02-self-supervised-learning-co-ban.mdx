@@ -5,7 +5,6 @@ module: Audio
 submodule: Biểu diễn âm thanh
 order: 2
 status: stable
-prerequisites: ["01-bieu-dien-am-thanh", "foundations-track/04-NLP-LLM/01-bert"]
 summary: Bài đệm trước khi vào SSL cho audio — dạy ý tưởng chung của self-supervised learning bằng ví dụ phi-audio trước. Hai họ mục tiêu SSL chính, contrastive learning (kéo gần positive, đẩy xa negative, kiểu SimCLR) và masked prediction (đoán phần bị che, kiểu BERT), và vì sao SSL trên tín hiệu liên tục (audio, ảnh) cần một bước "rời rạc hoá" mà SSL trên văn bản (vốn đã rời rạc) không cần.
 last_touched_by_task: "Bài mới (2026-07-10): bài đệm lấp khoảng trống trước bài SSL Audio — người đọc gặp Gumbel softmax/NCE loss ngay sau bài mel-spectrogram cơ bản mà chưa từng học contrastive learning/SSL nói chung ở đâu trong track. Nguồn: lilianweng.github.io (tổng hợp contrastive learning) + arxiv SimCLR 2002.05709."
 ---

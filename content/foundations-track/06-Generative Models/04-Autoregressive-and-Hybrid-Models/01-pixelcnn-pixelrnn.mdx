@@ -5,7 +5,6 @@ module: Generative Models
 submodule: Autoregressive & Hybrid Models
 order: 1
 status: stable
-prerequisites: ["04-conditional-gan"]
 summary: GAN/VAE/Flow đều sinh toàn bộ ảnh trong một lần (hoặc vài bước cố định). PixelRNN/PixelCNN (van den Oord 2016) đi theo hướng hoàn toàn khác — autoregressive: phân rã p(x) thành tích các xác suất có điều kiện theo từng pixel bằng chain rule, sinh ảnh bằng cách dự đoán tuần tự pixel-by-pixel. Đổi lại exact likelihood tính được trực tiếp (không cần ELBO như VAE), nhưng sinh ảnh rất chậm — đây là bài đệm giải thích ý tưởng autoregressive mà bài VQ-VAE/VQ-GAN (bài tiếp theo) cần dùng làm "prior học riêng" cho discrete latent code.
 last_touched_by_task: Bài đệm mới (2026-07-11), sau đó tách khỏi sub-module GAN Family sang sub-module riêng "Autoregressive & Hybrid Models" (2026-07-11, review chiều sâu module) — PixelCNN không mang tính đối kháng, gộp chung GAN Family gây hiểu lầm dù bài tự giải thích rõ. Nguồn: arxiv PixelRNN 1601.06759 + arxiv Gated PixelCNN 1606.05328 + Lilian Weng (trực giác).
 ---
