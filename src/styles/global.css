@@ -2,9 +2,10 @@
 @plugin "@tailwindcss/typography";
 
 @theme {
-  --font-sans: "Nunito", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-sans: "Newsreader", ui-serif, "Segoe UI", system-ui, serif;
   --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
-  --font-display: "Shrikhand", "Nunito", ui-sans-serif, sans-serif;
+  --font-display: "Shrikhand", "Newsreader", ui-sans-serif, sans-serif;
+  --font-heading: "Fraunces", "Newsreader", ui-serif, serif;
 
   --color-bg-primary: #0f172a;
   --color-bg-surface: #1e293b;

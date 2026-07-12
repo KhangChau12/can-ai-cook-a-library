@@ -81,7 +81,7 @@ const readingMinutes = Math.max(1, Math.round(wordCount / 200));
   </nav>
 
   <header class="mb-8 border-b border-border-default pb-7">
-    <h1 class="font-display text-[26px] leading-tight tracking-tight text-text-primary sm:text-[30px]">
+    <h1 class="font-heading text-[26px] font-bold leading-tight tracking-tight text-text-primary sm:text-[30px]">
       {lesson.data.title}
     </h1>
     <div class="mt-3.5 flex flex-wrap items-center gap-3">
@@ -95,7 +95,7 @@ const readingMinutes = Math.max(1, Math.round(wordCount / 200));
     </span>
   </header>
 
-  <article id="lesson-article" class="prose prose-invert max-w-none prose-headings:font-bold prose-headings:tracking-tight prose-a:text-accent-cyan-bright prose-code:text-[#7dd3fc] prose-pre:bg-bg-inset prose-pre:border prose-pre:border-border-default" set:html={lesson.data.html} />
+  <article id="lesson-article" class="prose prose-invert max-w-none prose-headings:font-heading prose-headings:font-bold prose-headings:tracking-tight prose-a:text-accent-cyan-bright prose-code:text-[#7dd3fc] prose-pre:bg-bg-inset prose-pre:border prose-pre:border-border-default" set:html={lesson.data.html} />
 
   {hasQuiz ? (
     <section class="mt-12">
