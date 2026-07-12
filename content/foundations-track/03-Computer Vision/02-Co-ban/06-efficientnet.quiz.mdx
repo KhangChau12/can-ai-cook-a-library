@@ -33,11 +33,11 @@ Kết quả cụ thể của EfficientNet-B7 trên ImageNet là gì?
 > Đây là kết quả hiếm gặp: EfficientNet-B7 đạt SOTA về độ chính xác (84.3% top-1) trong khi vừa nhỏ hơn vừa nhanh hơn đáng kể so với kiến trúc tốt nhất trước đó — khác với xu hướng "chính xác hơn thường đi kèm nặng hơn" của AlexNet→VGG→ResNet.
 
 ## Q4
-EfficientNet là bài cuối cùng trong dòng tiến hoá nào của sub-module "Cơ bản"?
+EfficientNet là bài cuối cùng trong dòng tiến hoá nào của sub-module "Classification"?
 
 - [x] LeNet → AlexNet → VGG → ResNet → MobileNet → EfficientNet, mỗi bước giải quyết đúng một hạn chế cụ thể của bước ngay trước nó
 - [ ] EfficientNet không liên quan gì tới các bài trước trong sub-module
 - [ ] EfficientNet là bài đầu tiên, không phải bài cuối
 - [ ] EfficientNet thay thế hoàn toàn tất cả các kiến trúc trước, các bài trước không còn giá trị
 
-> Đây là dòng tiến hoá đã hoạch định từ đầu cho sub-module "Cơ bản" — mỗi kiến trúc mới nhắm đúng vào hạn chế cụ thể của kiến trúc trước: LeNet (nguyên lý) → AlexNet (quy mô) → VGG (template thiết kế) → ResNet (degradation) → MobileNet (hiệu quả tính toán) → EfficientNet (mở rộng quy mô có hệ thống).
+> Đây là dòng tiến hoá đã hoạch định từ đầu cho sub-module "Classification" — mỗi kiến trúc mới nhắm đúng vào hạn chế cụ thể của kiến trúc trước: LeNet (nguyên lý) → AlexNet (quy mô) → VGG (template thiết kế) → ResNet (degradation) → MobileNet (hiệu quả tính toán) → EfficientNet (mở rộng quy mô có hệ thống).

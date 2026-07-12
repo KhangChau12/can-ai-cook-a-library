@@ -6,7 +6,7 @@ submodule: Segmentation
 order: 2
 status: stable
 summary: FCN (Long et al. 2015) chứng minh 'toàn bộ tích chập' hoạt động cho segmentation nhưng chưa giải quyết vấn đề dữ liệu y tế khan hiếm nhãn. Ronneberger, Fischer, và Brox (2015) giải quyết đúng vấn đề đó: kiến trúc encoder-decoder đối xứng + skip connection, huấn luyện được từ rất ít ảnh, xử lý ảnh 512×512 dưới 1 giây trên GPU, thắng ISBI Cell Tracking Challenge 2015 với khoảng cách lớn.
-last_touched_by_task: Bài mới (2026-07-06) tách riêng U-Net từ tóm tắt đã có ở bài 34 (Image Segmentation) — đào sâu hơn kiến trúc cụ thể (contracting/expanding path, cơ chế skip connection) và bối cảnh so sánh trực tiếp với sliding-window cổ điển, không chỉ với FCN. Nguồn: arxiv (paper gốc Ronneberger et al. 2015, xác nhận qua WebFetch trực tiếp abstract — đã dùng 1 phần ở bài 34, giờ khai thác sâu hơn: so sánh với sliding-window, tốc độ xử lý cụ thể).
+last_touched_by_task: Sửa (2026-07-12, review chiều sâu module): dọn số "bài N" track-wide cũ (34) thay bằng link markdown chuẩn tới Image Segmentation.
 ---
 
 Bài [Image Segmentation](01-image-segmentation.mdx) đã tóm tắt dòng
@@ -16,7 +16,8 @@ vấn đề nó giải quyết.
 
 ## Bối cảnh: FCN giải quyết được "làm sao", nhưng chưa giải quyết "với bao nhiêu dữ liệu"
 
-FCN (Long, Shelhamer, Darrell, 2015 — đã kể ở bài 34) chứng minh nguyên
+FCN (Long, Shelhamer, Darrell, 2015 — đã kể ở bài
+[Image Segmentation](01-image-segmentation.mdx)) chứng minh nguyên
 lý quan trọng: thay lớp fully-connected bằng lớp tích chập `1×1` +
 transposed convolution giữ được tương ứng không gian pixel-to-pixel cần
 thiết cho segmentation. Nhưng khi áp dụng cho ảnh **y tế** (ví dụ ảnh

@@ -24,7 +24,7 @@ lý do lịch sử vào `CLAUDE.md`
 tắc chống phình to ở `CLAUDE.md` mục 6.
 
 **Maintain reading flow trong cùng submodule:** khi thêm/bổ sung bài vào 1
-submodule (ví dụ Computer Vision "Cơ bản", Sequence Model "RNN Family"),
+submodule (ví dụ Computer Vision "Classification", Sequence Model "RNN Family"),
 đảm bảo thứ tự `order` tuân theo độ khó/từ nền tảng → nâng cao, không nhảy
 số hoặc xếp bài lệch mức độ. Nếu cần thêm bài mới vào giữa các bài đã có,
 phải tính toán lại số thứ tự cho toàn bộ submodule đó — không để bị lệch.

@@ -54,7 +54,7 @@ chậm.
 ## PixelCNN: thay RNN bằng convolution có mặt nạ (masked convolution)
 
 **PixelCNN** giải quyết đúng hạn chế tốc độ huấn luyện của PixelRNN: thay
-RNN bằng [CNN](../../../03-Computer%20Vision/01-Co-ban/01-cnn.mdx) — nhưng
+RNN bằng [CNN](../../../03-Computer%20Vision/02-Co-ban/01-cnn.mdx) — nhưng
 không phải CNN thông thường, vì CNN chuẩn nhìn được toàn bộ receptive
 field xung quanh (kể cả pixel "trong tương lai" theo thứ tự raster, phá
 vỡ tính autoregressive).
@@ -114,7 +114,7 @@ hơn) — đây chính xác là điều bài tiếp theo dùng.
   latent trung gian nào cả: mô hình hoá trực tiếp `p(x)` trên không gian
   dữ liệu gốc bằng chain rule.
 - Masked convolution dùng lại đúng cơ chế convolution đã học ở
-  [CNN](../../../03-Computer%20Vision/01-Co-ban/01-cnn.mdx) — chỉ thêm
+  [CNN](../../../03-Computer%20Vision/02-Co-ban/01-cnn.mdx) — chỉ thêm
   một ràng buộc (mask) vào kernel, không cần kỹ thuật tích chập mới.
 - So với [GAN](../03-Generative-Adversarial-Network-Family/01-gan.mdx) (sinh
   1 pass, không có likelihood) và

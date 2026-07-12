@@ -4,10 +4,11 @@ track: foundations-track
 summary: "Lộ trình bài bản chinh phục AI/ML từ gốc, từ các thuật toán học máy cổ điển đến kiến trúc Deep Learning và LLM hiện đại."
 ---
 
-Mục lục dự kiến (cập nhật 2026-07-10 — tách module "NLP & LLM" cũ thành
-"Natural Language Processing" (module 4) và "Large Language Models"
-(module 4b); đổi tên module/submodule viết tắt sang dạng đầy đủ). Mỗi
-module là 1 thư mục, bài đánh số local trong module/submodule.
+Mục lục dự kiến (cập nhật 2026-07-12 — thêm sub-module "Overview" và
+bài đệm "Self-attention cho ảnh" cho module Computer Vision; đổi tên
+sub-module "Cơ bản" thành "Classification"; renumber các bài Classification/
+Detection/Segmentation theo đó). Mỗi module là 1 thư mục, bài đánh số
+local trong module/submodule.
 
 ## Module 1 — Nền tảng Toán & ML cổ điển
 
@@ -47,31 +48,36 @@ module là 1 thư mục, bài đánh số local trong module/submodule.
 
 ## Module 3 — Computer Vision
 
-### Cơ bản
+### Overview
 
-1. [CNN — Vì sao cần mạng nơ-ron tích chập cho ảnh](03-Computer Vision/01-Co-ban/01-cnn.mdx)
-2. [AlexNet — Bước ngoặt khiến Deep Learning thống trị Computer Vision](03-Computer Vision/01-Co-ban/02-alexnet.mdx)
-3. [VGG — Từ Thiết kế Thủ công tới Khối Kiến trúc Có hệ thống](03-Computer Vision/01-Co-ban/03-vgg.mdx)
-4. [ResNet — Skip Connection Giải quyết Vấn đề Degradation khi Mạng Quá Sâu](03-Computer Vision/01-Co-ban/04-resnet.mdx)
-5. [MobileNet — Depthwise Separable Convolution cho Thiết bị Hạn chế Tài nguyên](03-Computer Vision/01-Co-ban/05-mobilenet.mdx)
-6. [EfficientNet — Compound Scaling Cân bằng Có hệ thống Độ sâu/Rộng/Phân giải](03-Computer Vision/01-Co-ban/06-efficientnet.mdx)
-7. [Vision Transformer (ViT) — Thách thức Giả định 'CNN là Bắt buộc cho Ảnh'](03-Computer Vision/01-Co-ban/07-vision-transformer.mdx)
-8. [Swin Transformer — Shifted Window Attention Giải quyết Độ phức tạp Bậc hai của ViT](03-Computer Vision/01-Co-ban/08-swin-transformer.mdx)
+1. [Computer Vision — Tổng quan module và ba bài toán con](03-Computer Vision/01-Overview/01-computer-vision-overview.mdx)
+
+### Classification
+
+1. [CNN — Vì sao cần mạng nơ-ron tích chập cho ảnh](03-Computer Vision/02-Co-ban/01-cnn.mdx)
+2. [AlexNet — Bước ngoặt khiến Deep Learning thống trị Computer Vision](03-Computer Vision/02-Co-ban/02-alexnet.mdx)
+3. [VGG — Từ Thiết kế Thủ công tới Khối Kiến trúc Có hệ thống](03-Computer Vision/02-Co-ban/03-vgg.mdx)
+4. [ResNet — Skip Connection Giải quyết Vấn đề Degradation khi Mạng Quá Sâu](03-Computer Vision/02-Co-ban/04-resnet.mdx)
+5. [MobileNet — Depthwise Separable Convolution cho Thiết bị Hạn chế Tài nguyên](03-Computer Vision/02-Co-ban/05-mobilenet.mdx)
+6. [EfficientNet — Compound Scaling Cân bằng Có hệ thống Độ sâu/Rộng/Phân giải](03-Computer Vision/02-Co-ban/06-efficientnet.mdx)
+7. [Self-attention cho ảnh — Bài đệm trước Vision Transformer](03-Computer Vision/02-Co-ban/07-self-attention-cho-anh.mdx)
+8. [Vision Transformer (ViT) — Thách thức Giả định 'CNN là Bắt buộc cho Ảnh'](03-Computer Vision/02-Co-ban/08-vision-transformer.mdx)
+9. [Swin Transformer — Shifted Window Attention Giải quyết Độ phức tạp Bậc hai của ViT](03-Computer Vision/02-Co-ban/09-swin-transformer.mdx)
 
 ### Detection
 
-1. [Object Detection — Không chỉ Phân loại, mà còn Định vị Vật thể](03-Computer Vision/02-Detection/01-object-detection.mdx)
-2. [YOLO — Biến Object Detection thành Bài toán Hồi quy Một Bước](03-Computer Vision/02-Detection/02-yolo.mdx)
-3. [SSD — Multi-scale Feature Maps Giải quyết Vấn đề Phát hiện Vật thể Nhiều Kích thước](03-Computer Vision/02-Detection/03-ssd.mdx)
-4. [Anchor-free Detection — Bỏ hẳn Anchor Box, Dự đoán Trực tiếp Theo Điểm/Pixel](03-Computer Vision/02-Detection/04-anchor-free-detection.mdx)
+1. [Object Detection — Không chỉ Phân loại, mà còn Định vị Vật thể](03-Computer Vision/03-Detection/01-object-detection.mdx)
+2. [YOLO — Biến Object Detection thành Bài toán Hồi quy Một Bước](03-Computer Vision/03-Detection/02-yolo.mdx)
+3. [SSD — Multi-scale Feature Maps Giải quyết Vấn đề Phát hiện Vật thể Nhiều Kích thước](03-Computer Vision/03-Detection/03-ssd.mdx)
+4. [Anchor-free Detection — Bỏ hẳn Anchor Box, Dự đoán Trực tiếp Theo Điểm/Pixel](03-Computer Vision/03-Detection/04-anchor-free-detection.mdx)
 
 ### Segmentation
 
-1. [Image Segmentation — Gán nhãn tới từng Pixel](03-Computer Vision/03-Segmentation/01-image-segmentation.mdx)
-2. [U-Net — Encoder-Decoder Đối xứng Giải quyết Bài toán Dữ liệu Y tế Khan hiếm](03-Computer Vision/03-Segmentation/02-unet.mdx)
-3. [Mask R-CNN — Kết hợp Detection và Segmentation trong Một Kiến trúc](03-Computer Vision/03-Segmentation/03-mask-rcnn.mdx)
-4. [DeepLab — Atrous Convolution Giải quyết Đánh đổi Giữa Ngữ cảnh Đa tỷ lệ và Độ phân giải](03-Computer Vision/03-Segmentation/04-deeplab.mdx)
-5. [SegFormer — Kết hợp Transformer Phân cấp với Decoder MLP Nhẹ cho Segmentation](03-Computer Vision/03-Segmentation/05-segformer.mdx)
+1. [Image Segmentation — Gán nhãn tới từng Pixel](03-Computer Vision/04-Segmentation/01-image-segmentation.mdx)
+2. [U-Net — Encoder-Decoder Đối xứng Giải quyết Bài toán Dữ liệu Y tế Khan hiếm](03-Computer Vision/04-Segmentation/02-unet.mdx)
+3. [Mask R-CNN — Kết hợp Detection và Segmentation trong Một Kiến trúc](03-Computer Vision/04-Segmentation/03-mask-rcnn.mdx)
+4. [DeepLab — Atrous Convolution Giải quyết Đánh đổi Giữa Ngữ cảnh Đa tỷ lệ và Độ phân giải](03-Computer Vision/04-Segmentation/04-deeplab.mdx)
+5. [SegFormer — Kết hợp Transformer Phân cấp với Decoder MLP Nhẹ cho Segmentation](03-Computer Vision/04-Segmentation/05-segformer.mdx)
 
 ## Module 4 — Natural Language Processing
 

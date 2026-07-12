@@ -98,7 +98,7 @@ masking trước đó.
 ## Music Separation: Spleeter (thuần spectrogram) và Demucs (hybrid)
 
 **Spleeter** (Deezer, 2020): dùng
-[U-Net](../../03-Computer%20Vision/03-Segmentation/02-unet.mdx) (module
+[U-Net](../../03-Computer%20Vision/04-Segmentation/02-unet.mdx) (module
 Computer Vision) trên spectrogram, sinh ra 5 stems (vocals, bass, drums,
 piano, other). Vẫn là time-frequency masking — kế thừa đúng vấn đề mất
 pha đã nêu ở trên, nhưng bù lại đơn giản, nhanh, dễ dùng, mã nguồn mở —
@@ -129,7 +129,7 @@ state-of-the-art trong music separation nhờ đánh đổi này.
   WaveNet (bài Text-to-Speech) — mở rộng receptive field mà không cần
   quá nhiều lớp.
 - U-Net của Spleeter là kiến trúc đã gặp ở bài
-  [U-Net](../../03-Computer%20Vision/03-Segmentation/02-unet.mdx) (module
+  [U-Net](../../03-Computer%20Vision/04-Segmentation/02-unet.mdx) (module
   Computer Vision) — một ví dụ khác cho việc kiến trúc thiết kế cho ảnh
   (encoder-decoder với skip connection) áp dụng tốt cho spectrogram, vì
   bản chất đều là dữ liệu dạng lưới 2D.

@@ -36,7 +36,7 @@ trên AudioSet trước khi fine-tune cho tác vụ cụ thể.
 ## YAMNet — Nhẹ, nhanh, đánh đổi độ chính xác
 
 YAMNet (Google, 2019): dùng
-[MobileNet](../../03-Computer%20Vision/01-Co-ban/05-mobilenet.mdx)
+[MobileNet](../../03-Computer%20Vision/02-Co-ban/05-mobilenet.mdx)
 (depthwise separable convolution — tách tích chập thường thành 2 bước
 nhẹ hơn nhiều lần, đã học ở module Computer Vision) trên log-mel
 spectrogram, phân loại 521 lớp AudioSet.
@@ -81,7 +81,7 @@ Vision, hay CTC/encoder-decoder ở bài Speech-to-Text).
 ## Liên hệ lại với các bài trước
 
 - YAMNet dùng lại chính xác kiến trúc
-  [MobileNet](../../03-Computer%20Vision/01-Co-ban/05-mobilenet.mdx) đã
+  [MobileNet](../../03-Computer%20Vision/02-Co-ban/05-mobilenet.mdx) đã
   học ở Computer Vision — một ví dụ rõ cho việc kiến trúc CV hiệu quả
   cũng áp dụng tốt cho spectrogram (dữ liệu dạng lưới 2D tương tự ảnh).
 - PANNs dùng chiến lược pretrain-rồi-transfer giống tinh thần SSL Audio
@@ -90,7 +90,7 @@ Vision, hay CTC/encoder-decoder ở bài Speech-to-Text).
   có nhãn), còn SSL Audio học hoàn toàn không nhãn.
 - Bài toán multi-label classification khác biệt rõ so với phân loại
   single-label đã học ở
-  [CNN](../../03-Computer%20Vision/01-Co-ban/01-cnn.mdx) — mỗi clip cần
+  [CNN](../../03-Computer%20Vision/02-Co-ban/01-cnn.mdx) — mỗi clip cần
   một vector xác suất độc lập cho từng lớp (dùng sigmoid cho mỗi lớp,
   không phải softmax chọn 1 lớp duy nhất).
 

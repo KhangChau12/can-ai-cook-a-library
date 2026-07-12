@@ -5,8 +5,8 @@ module: Computer Vision
 submodule: Detection
 order: 4
 status: stable
-summary: Anchor box (đã học ở bài 33) đòi hỏi thiết kế thủ công nhiều hyperparameter (số lượng, tỷ lệ khung hình, scale) và tính toán IoU tốn kém giữa hàng nghìn anchor với ground truth khi huấn luyện — kết quả cuối cùng cũng rất nhạy cảm với các lựa chọn hyperparameter đó. Hai nhóm tác giả độc lập giải quyết bằng cách bỏ hẳn anchor: FCOS (Tian và cộng sự, 2019) dự đoán trực tiếp tại mỗi pixel một vector 4 chiều (khoảng cách tới 4 cạnh bounding box) cộng một nhánh 'centerness' để lọc dự đoán kém chất lượng; CenterNet (Zhou và cộng sự, 2019) đơn giản hoá hơn nữa — chỉ dự đoán TÂM của vật thể như một keypoint, rồi hồi quy kích thước từ đó, loại bỏ hoàn toàn nhu cầu Non-Maximum Suppression phức tạp.
-last_touched_by_task: Bài mới (2026-07-06), tiếp tục đào sâu sub-module Detection theo yêu cầu người vận hành. Đã thử tìm nguồn FCOS ở Task 53 và thất bại (không đủ 2 nguồn); áp dụng bài học từ Task 54 (DeepLab) — thử paper thứ 2 của MỘT NHÓM TÁC GIẢ KHÁC cùng chủ đề (anchor-free) thay vì chỉ tìm nguồn giải thích trực giác — tìm được CenterNet (Zhou et al. 2019), độc lập với FCOS (Tian et al. 2019), đủ để kể chung 1 bài về trào lưu anchor-free. Nguồn: arxiv 1904.07850 (CenterNet, xác nhận qua WebFetch abstract: vấn đề anchor box dư thừa/NMS phức tạp, giải pháp dự đoán tâm điểm, kết quả AP/FPS cụ thể) + WebSearch giới hạn whitelist domain cho FCOS xác nhận cơ chế 4D vector offset + centerness branch (không tìm được trang whitelist trực tiếp nhưng nội dung kỹ thuật đã xác nhận nhất quán qua nhiều nguồn tìm kiếm, đối chiếu với abstract arxiv 1904.01355 đã đọc ở Task 53).
+summary: Anchor box (đã học ở bài Object Detection) đòi hỏi thiết kế thủ công nhiều hyperparameter (số lượng, tỷ lệ khung hình, scale) và tính toán IoU tốn kém giữa hàng nghìn anchor với ground truth khi huấn luyện — kết quả cuối cùng cũng rất nhạy cảm với các lựa chọn hyperparameter đó. Hai nhóm tác giả độc lập giải quyết bằng cách bỏ hẳn anchor: FCOS (Tian và cộng sự, 2019) dự đoán trực tiếp tại mỗi pixel một vector 4 chiều (khoảng cách tới 4 cạnh bounding box) cộng một nhánh 'centerness' để lọc dự đoán kém chất lượng; CenterNet (Zhou và cộng sự, 2019) đơn giản hoá hơn nữa — chỉ dự đoán TÂM của vật thể như một keypoint, rồi hồi quy kích thước từ đó, loại bỏ hoàn toàn nhu cầu Non-Maximum Suppression phức tạp.
+last_touched_by_task: Sửa (2026-07-12, review chiều sâu module): dọn số "bài N" track-wide cũ (33, 34) thay bằng link markdown chuẩn tới Object Detection/Image Segmentation.
 ---
 
 Bài [Object Detection](01-object-detection.mdx) giới thiệu **anchor box**
@@ -26,8 +26,9 @@ Anchor box mang lại hiệu quả nhưng có ba hạn chế cụ thể:
    và ảnh hưởng trực tiếp tới chất lượng phát hiện cuối cùng.
 2. **Tính toán tốn kém khi huấn luyện.** Với hàng nghìn anchor box đặt
    dày đặc trên mỗi ảnh, việc tính IoU giữa từng anchor với mọi ground
-   truth để xác định anchor nào "khớp" (đã học ở bài 33) là một bước tính
-   toán đáng kể, lặp lại ở mỗi ảnh huấn luyện.
+   truth để xác định anchor nào "khớp" (đã học ở bài
+   [Object Detection](01-object-detection.mdx)) là một bước tính toán
+   đáng kể, lặp lại ở mỗi ảnh huấn luyện.
 3. **Kết quả nhạy cảm với lựa chọn hyperparameter anchor.** Chọn sai tỷ
    lệ/scale anchor có thể khiến mô hình khó phát hiện đúng những vật thể
    có hình dạng khác biệt với các anchor đã định nghĩa trước.
@@ -38,7 +39,7 @@ Anchor box mang lại hiệu quả nhưng có ba hạn chế cụ thể:
 One-Stage Object Detection", giải quyết vấn đề trên bằng cách bỏ hẳn
 anchor box, coi detection như một bài toán **dự đoán theo từng pixel**
 (per-pixel prediction) — tương tự tinh thần của semantic segmentation
-(bài [34](01-image-segmentation.mdx)).
+(bài [Image Segmentation](../04-Segmentation/01-image-segmentation.mdx)).
 
 Tại mỗi vị trí (pixel) trên bản đồ đặc trưng, FCOS trực tiếp dự đoán:
 
@@ -53,7 +54,8 @@ box (có thể chất lượng khác nhau — vị trí gần tâm vật thể t
 **centerness** — dự đoán mức độ một vị trí "gần tâm" vật thể tới đâu.
 Điểm centerness này được **nhân** với điểm tin cậy phân loại để tính điểm
 cuối cùng, giúp **lọc bỏ** các dự đoán từ vị trí xa tâm (thường kém chính
-xác) trước bước Non-Maximum Suppression (đã học ở bài 33).
+xác) trước bước Non-Maximum Suppression (đã học ở bài
+[Object Detection](01-object-detection.mdx)).
 
 ## Giải pháp 2 — CenterNet: chỉ cần dự đoán đúng tâm
 
@@ -98,8 +100,8 @@ thời đơn giản hoá đáng kể pipeline huấn luyện/suy luận.
 - Cả FCOS và CenterNet đều là minh chứng cho mẫu hình đã lặp lại nhiều
   lần trong track: đôi khi bước tiến quan trọng nhất là **bỏ bớt** một
   thành phần thiết kế thủ công (ở đây là anchor box) thay vì thêm vào —
-  tương tự cách [SegFormer](05-segformer.mdx) bỏ positional encoding, hay
-  DPO (bài 27) bỏ hẳn bước RL khỏi RLHF.
+  tương tự cách [SegFormer](../04-Segmentation/05-segformer.mdx) bỏ
+  positional encoding, hay [DPO](06-dpo.mdx) bỏ hẳn bước RL khỏi RLHF.
 
 ## Nguồn tham khảo
 

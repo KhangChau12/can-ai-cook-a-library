@@ -2,20 +2,21 @@
 title: Vision Transformer (ViT) — Thách thức Giả định 'CNN là Bắt buộc cho Ảnh
 track: foundations-track
 module: Computer Vision
-submodule: Cơ bản
-order: 7
+submodule: Classification
+order: 8
 status: stable
-summary: Toàn bộ dòng tiến hoá CNN (LeNet→AlexNet→VGG→ResNet→MobileNet→EfficientNet) dựa trên một giả định ngầm: convolution — với các thiên kiến quy nạp (inductive bias) như tính cục bộ và bất biến dịch chuyển — là cần thiết để xử lý ảnh hiệu quả. Dosovitskiy và cộng sự (2020) thách thức giả định đó: chia ảnh thành các patch, biến mỗi patch thành 1 token, rồi áp dụng thẳng kiến trúc Transformer thuần tuý (đã học ở bài 15) — không có convolution nào. Trên tập dữ liệu nhỏ, ViT thua CNN vì thiếu thiên kiến quy nạp hữu ích; nhưng khi pretrain trên dữ liệu đủ lớn (300 triệu ảnh), ViT vượt trội ResNet.
-last_touched_by_task: Bài mới (2026-07-06), theo yêu cầu người vận hành 'hoàn thiện các sub-module CV sâu hơn' — đây là khoảng trống lớn nhất trong sub-module 'Cơ bản': toàn bộ 6 bài trước (11, 35-38, 41) đều là kiến trúc CNN, chưa từng có kiến trúc dựa trên Transformer cho ảnh, dù track đã dạy Transformer đầy đủ ở bài 15 (module khác). ViT là bước ngoặt quan trọng nhất gần đây trong CV, thách thức chính giả định nền tảng của cả dòng tiến hoá CNN. Nguồn: arxiv 2010.11929 (paper gốc Dosovitskiy et al. 2020, xác nhận qua WebFetch abstract: vấn đề phụ thuộc CNN, ý tưởng patch sequence, kết quả vượt trội SOTA CNN với ít tài nguyên huấn luyện hơn) + D2L.ai (chapter_attention-mechanisms-and-transformers/vision-transformer.html, xác nhận qua WebFetch: cơ chế patch embedding chi tiết, kiến trúc đầy đủ, và dữ liệu thực nghiệm quan trọng — ViT thua CNN trên dữ liệu nhỏ như Fashion-MNIST nhưng vượt trội khi pretrain trên 300 triệu ảnh).
+summary: Toàn bộ dòng tiến hoá CNN (LeNet→AlexNet→VGG→ResNet→MobileNet→EfficientNet) dựa trên một giả định ngầm: convolution — với các thiên kiến quy nạp (inductive bias) như tính cục bộ và bất biến dịch chuyển — là cần thiết để xử lý ảnh hiệu quả. Dosovitskiy và cộng sự (2020) thách thức giả định đó: chia ảnh thành các patch, biến mỗi patch thành 1 token, rồi áp dụng thẳng kiến trúc Transformer thuần tuý (đã học ở bài đệm self-attention ngay trước) — không có convolution nào. Trên tập dữ liệu nhỏ, ViT thua CNN vì thiếu thiên kiến quy nạp hữu ích; nhưng khi pretrain trên dữ liệu đủ lớn (300 triệu ảnh), ViT vượt trội ResNet.
+last_touched_by_task: Sửa (2026-07-12, review chiều sâu module): trỏ lại 2 chỗ "đã học ở bài 15"/"đã học ở bài [Transformer]" về bài đệm self-attention-cho-anh mới thêm trong cùng sub-module — trước đó bài giả định người đọc đã học self-attention/Transformer ở module NLP (module 4), nhưng CV là module 3, đọc trước NLP theo đúng thứ tự track, nên khẳng định "đã học" là sai với người đọc tuần tự.
 ---
 
-Toàn bộ dòng tiến hoá đã học trong sub-module "Cơ bản" — từ
+Toàn bộ dòng tiến hoá đã học trong sub-module "Classification" — từ
 [CNN](01-cnn.mdx) tới
 [EfficientNet](06-efficientnet.mdx) — đều dựa trên một giả định ngầm
 chưa từng bị thách thức: **convolution là công cụ cần thiết** để xử lý
 ảnh hiệu quả. Bài này kể cách giả định đó bị thách thức trực tiếp bởi
-chính kiến trúc [Transformer](02-transformer.mdx) đã học ở một module
-khác — vốn được thiết kế ban đầu cho văn bản, không phải ảnh.
+kiến trúc Transformer — dùng cơ chế
+[self-attention](07-self-attention-cho-anh.mdx) đã học ở bài ngay
+trước — vốn ban đầu ra đời cho văn bản, không phải ảnh.
 
 ## Vấn đề: liệu thiên kiến quy nạp của CNN có thực sự cần thiết?
 
@@ -38,8 +39,9 @@ chuyển của CNN không cho phép biểu diễn tự nhiên.
 **Dosovitskiy và cộng sự (2020)**, trong bài báo "An Image is Worth 16x16
 Words: Transformers for Image Recognition at Scale", đề xuất **Vision
 Transformer (ViT)** — áp dụng kiến trúc Transformer gần như **nguyên
-vẹn** (đã học ở bài [Transformer](02-transformer.mdx)) cho ảnh, không hề
-dùng convolution.
+vẹn** (dùng cơ chế
+[self-attention](07-self-attention-cho-anh.mdx) vừa học) cho ảnh, không
+hề dùng convolution.
 
 Cơ chế cụ thể — **patch embedding**:
 
@@ -55,8 +57,9 @@ Cơ chế cụ thể — **patch embedding**:
 Sau khi có chuỗi embedding cho mọi patch (coi mỗi patch như một "từ" —
 token), thêm một token đặc biệt `<cls>` (dùng để tổng hợp thông tin cho
 phân loại cuối cùng) và **positional embedding** (để giữ thông tin vị trí
-patch, vì self-attention của Transformer vốn không có khái niệm thứ tự —
-đã học ở bài 15), rồi đưa toàn bộ chuỗi qua một **Transformer encoder**
+patch, vì self-attention vốn không có khái niệm thứ tự — đã nói ở bài
+[self-attention](07-self-attention-cho-anh.mdx)), rồi đưa toàn bộ chuỗi
+qua một **Transformer encoder**
 tiêu chuẩn (dùng thiết kế pre-normalization — chuẩn hoá trước khi qua
 attention/MLP, thay vì sau). Cuối cùng, biểu diễn của token `<cls>` được
 chiếu qua một lớp phân loại để cho ra nhãn dự đoán.
@@ -86,8 +89,8 @@ hơn.
 ## Liên hệ lại với các bài trước
 
 - ViT là ví dụ rõ ràng nhất trong track cho thấy một kiến trúc thiết kế
-  ban đầu cho một modality (Transformer cho văn bản, bài 15) có thể
-  chuyển sang modality khác (ảnh) chỉ bằng cách tìm đúng cách **biểu
+  ban đầu cho một modality (Transformer cho văn bản) có thể chuyển sang
+  modality khác (ảnh) chỉ bằng cách tìm đúng cách **biểu
   diễn dữ liệu thành chuỗi token** — patch embedding đóng đúng vai trò
   "tokenize ảnh" tương tự cách văn bản được tokenize thành từ/subword.
 - Phép chiếu tuyến tính patch tương đương một phép convolution — cho

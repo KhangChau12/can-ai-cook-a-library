@@ -5,8 +5,8 @@ module: Computer Vision
 submodule: Detection
 order: 1
 status: stable
-summary: Object detection là bài toán vừa phân loại vừa định vị vật thể — bounding box, IoU, anchor box, NMS — và dòng tiến hoá cụ thể R-CNN (2014, Girshick) → Fast R-CNN → Faster R-CNN, mỗi bước giải quyết đúng một bottleneck của bước trước. Bài mở đầu sub-module Detection.
-last_touched_by_task: Viết lại theo triết lý nội dung mới (2026-07-06): thêm dòng lịch sử ý tưởng cụ thể cho họ R-CNN — vấn đề sliding window truyền thống trước 2014, R-CNN (Girshick et al., selective search + CNN riêng biệt cho từng vùng, ~2000 vùng/ảnh), bottleneck tính toán lặp lại dẫn tới Fast R-CNN (RoI Pooling, 1 lần forward CNN cho cả ảnh), rồi bottleneck phụ thuộc selective search bên ngoài dẫn tới Faster R-CNN (Region Proposal Network, huấn luyện end-to-end) — trước đó bài chỉ nói 'two-stage vs one-stage' ở mức khái niệm chung, không kể được ai giải quyết vấn đề gì cụ thể. Gắn submodule 'Detection' — bài mở đầu sub-module. 2 nguồn: D2L.ai (R-CNN chapter, đủ chi tiết 4 bước quy trình + 3 phiên bản cải tiến) và Lil'Log (Object Detection for Dummies Part 3, trực giác vì sao mỗi bước cải tiến ra đời).
+summary: Object detection là bài toán vừa phân loại vừa định vị vật thể — bounding box, IoU, anchor box, NMS, mAP — và dòng tiến hoá cụ thể R-CNN (2014, Girshick) → Fast R-CNN → Faster R-CNN, mỗi bước giải quyết đúng một bottleneck của bước trước. Bài mở đầu sub-module Detection.
+last_touched_by_task: Sửa (2026-07-12, review chiều sâu module): thêm mục định nghĩa mAP (mean Average Precision) ngay sau NMS — metric trung tâm dùng liên tục từ bài YOLO trở đi nhưng trước đó chưa từng được định nghĩa trong track, dù IoU/NMS đã có sẵn ở đây. Nguồn: scikit-learn (average_precision_score, định nghĩa AP là diện tích dưới precision-recall curve).
 ---
 
 Bài [CNN](01-cnn.mdx) giải thích vì sao cần
@@ -85,6 +85,37 @@ gần nhau đều "nhìn thấy" đúng vật thể đó). **Non-Maximum Suppres
 Kết quả cuối cùng là một tập hợp nhỏ các bounding box, mỗi box đại diện
 cho đúng một vật thể thực sự, thay vì hàng chục box chồng chéo lên nhau.
 
+## mAP: thước đo trung tâm để so sánh các mô hình detection
+
+Trước khi so sánh các kiến trúc detection ở những bài tiếp theo (YOLO,
+SSD...), cần một con số duy nhất để đánh giá "mô hình này detect tốt tới
+đâu" — đó là **mAP (mean Average Precision)**, thước đo tiêu chuẩn của
+mọi benchmark object detection.
+
+Xây dựng từ dưới lên:
+
+1. Với một ngưỡng IoU cho trước (ví dụ `IoU >= 0.5`), mỗi dự đoán được
+   gán nhãn **true positive** (khớp đúng một vật thể thật, IoU đủ cao)
+   hoặc **false positive** (không khớp vật thể nào, hoặc trùng với một
+   dự đoán tốt hơn đã chọn). Từ đó tính được **precision** (trong số dự
+   đoán đưa ra, bao nhiêu phần trăm đúng) và **recall** (trong số vật
+   thể thật, bao nhiêu phần trăm được phát hiện) tại từng ngưỡng độ tự
+   tin (confidence threshold) khác nhau.
+2. Vẽ **precision-recall curve**: khi hạ dần ngưỡng độ tự tin (chấp
+   nhận càng nhiều dự đoán hơn), recall tăng dần nhưng precision thường
+   giảm dần — đánh đổi kinh điển giữa "phát hiện được nhiều" và "phát
+   hiện chính xác".
+3. **Average Precision (AP)** của một lớp là diện tích dưới đường cong
+   precision-recall đó — một con số duy nhất tóm tắt cả đường cong,
+   càng gần 1 càng tốt.
+4. **mAP (mean AP)** là trung bình AP qua **toàn bộ các lớp** trong bộ
+   dữ liệu — một con số duy nhất đại diện cho hiệu năng tổng thể của mô
+   hình trên mọi loại vật thể.
+
+Các bài sau sẽ liên tục dùng mAP (hoặc AP theo từng ngưỡng IoU cụ thể,
+ví dụ chuẩn COCO tính trung bình AP trên nhiều ngưỡng IoU từ 0.5 tới
+0.95) để so sánh trực tiếp giữa các kiến trúc detection khác nhau.
+
 ## Dòng tiến hoá R-CNN: mỗi phiên bản giải quyết đúng 1 bottleneck của phiên bản trước
 
 Trước 2014, object detection chủ yếu dựa vào **sliding window** —
@@ -161,5 +192,6 @@ loại), one-stage thường nhanh hơn và phù hợp ứng dụng thời gian 
 
 - [Dive into Deep Learning — Object Detection and Bounding Boxes](http://d2l.ai/chapter_computer-vision/bounding-box.html) — dùng cho định nghĩa bounding box (dạng góc/dạng tâm), và phân biệt object detection (classification + localization) với classification thuần.
 - [Dive into Deep Learning — Anchor Boxes](http://d2l.ai/chapter_computer-vision/anchor.html) — dùng cho khái niệm anchor box (nhiều scale/aspect ratio tại mỗi vị trí), công thức IoU (tỷ lệ giao/hợp), quy trình gán ground truth theo IoU cao nhất, và Non-Maximum Suppression để lọc dự đoán trùng lặp.
+- [scikit-learn — average_precision_score](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.average_precision_score.html) — dùng cho định nghĩa Average Precision (AP) là diện tích dưới precision-recall curve, làm nền tảng định nghĩa mAP (trung bình AP qua các lớp).
 - [Dive into Deep Learning — Region-based CNNs (R-CNNs)](https://d2l.ai/chapter_computer-vision/rcnn.html) — dùng cho quy trình 4 bước của R-CNN (Girshick et al., 2014: selective search, CNN riêng biệt, SVM, hồi quy bounding box), bottleneck tính toán lặp lại, và cách Fast R-CNN (RoI Pooling) và Faster R-CNN (Region Proposal Network) giải quyết từng bottleneck cụ thể.
 - [Lil'Log — Object Detection for Dummies Part 3: R-CNN Family](https://lilianweng.github.io/posts/2017-12-31-object-recognition-part-3/) — dùng đối chiếu trực giác vì sao sliding window truyền thống chậm và không tận dụng CNN, và cách diễn đạt rõ ràng lý do mỗi bước cải tiến (R-CNN → Fast → Faster) ra đời đúng để giải quyết bottleneck cụ thể của bước trước.

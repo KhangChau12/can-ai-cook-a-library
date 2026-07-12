@@ -26,7 +26,8 @@
     "Computer Vision": {
       "description": "Xử lý ảnh nâng cao qua các bài toán Classification, Object Detection và Image Segmentation.",
       "submodules": {
-        "Cơ bản": "Quá trình tiến hóa của các kiến trúc phân loại ảnh từ CNN đến Vision Transformers (ViT, Swin).",
+        "Overview": "Bản đồ tư duy module: lịch sử CV trước deep learning (hand-crafted feature), ba bài toán con (Classification/Detection/Segmentation), và ghi chú điều hướng cho nhánh Transformer-based.",
+        "Classification": "Quá trình tiến hóa của các kiến trúc phân loại ảnh từ CNN đến Vision Transformers (ViT, Swin), gồm bài đệm self-attention trước ViT.",
         "Detection": "Nhận diện vật thể: hai nhánh Two-stage (R-CNN), One-stage (YOLO, SSD) và Anchor-free.",
         "Segmentation": "Phân vùng ảnh cấp độ pixel: kiến trúc U-Net, Mask R-CNN, DeepLab và SegFormer."
       }

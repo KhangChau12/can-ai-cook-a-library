@@ -2,14 +2,14 @@
 title: Swin Transformer — Shifted Window Attention Giải quyết Độ phức tạp Bậc hai của ViT
 track: foundations-track
 module: Computer Vision
-submodule: Cơ bản
-order: 8
+submodule: Classification
+order: 9
 status: stable
 summary: ViT áp dụng self-attention toàn cục giữa mọi patch — độ phức tạp tính toán tăng theo BÌNH PHƯƠNG số patch, khiến ảnh độ phân giải cao trở nên quá tốn kém, và ViT chỉ cho ra biểu diễn ở một tỷ lệ duy nhất (không phù hợp cho detection/segmentation vốn cần đặc trưng đa tỷ lệ). Liu và cộng sự (2021) giải quyết bằng Swin Transformer: giới hạn self-attention trong các cửa sổ cục bộ không chồng lấn (độ phức tạp tuyến tính), rồi DỊCH CHUYỂN (shift) cửa sổ ở lớp kế tiếp để các cửa sổ liền kề có thể trao đổi thông tin — đồng thời tạo cấu trúc phân cấp (hierarchical) sinh ra đặc trưng đa tỷ lệ, biến Swin thành backbone tổng quát dùng được cho cả classification, detection, và segmentation.
 last_touched_by_task: Bài mới (2026-07-06), theo yêu cầu người vận hành đào sâu tiếp Detection/Segmentation — Swin là bước trung gian quan trọng cần học TRƯỚC SegFormer, vì nó là backbone Transformer tổng quát đầu tiên giải quyết đúng hạn chế của ViT (độ phức tạp bậc hai + thiếu đa tỷ lệ) mà cả detection lẫn segmentation dựa trên Transformer đều cần. Nguồn: arxiv 2103.14030 (paper gốc Liu et al. 2021, xác nhận qua WebFetch abstract: vấn đề độ phức tạp bậc hai + thiếu đa tỷ lệ của ViT, giải pháp shifted window attention, kết quả cụ thể trên cả 3 tác vụ classification/detection/segmentation) + D2L.ai (chapter_attention-mechanisms-and-transformers/vision-transformer.html, xác nhận qua WebFetch: đoạn tóm tắt về Swin Transformer giải quyết đúng độ phức tạp bậc hai của self-attention khi ảnh có độ phân giải cao, và mở rộng khả năng ứng dụng Transformer ra ngoài classification).
 ---
 
-Bài [Vision Transformer](07-vision-transformer.mdx) chứng minh Transformer
+Bài [Vision Transformer](08-vision-transformer.mdx) chứng minh Transformer
 thuần tuý có thể vượt trội CNN khi pretrain đủ lớn — nhưng ViT có hai hạn
 chế cụ thể khiến nó khó áp dụng trực tiếp cho các bài toán CV khác ngoài
 classification. Bài này kể cách một kiến trúc kế nhiệm giải quyết đúng
@@ -92,7 +92,7 @@ các tác vụ CV, không chỉ riêng classification.
 ## Liên hệ lại với các bài trước
 
 - Swin Transformer giải quyết đúng 2 hạn chế cụ thể của
-  [ViT](07-vision-transformer.mdx) — độ phức tạp bậc hai và thiếu đa tỷ
+  [ViT](08-vision-transformer.mdx) — độ phức tạp bậc hai và thiếu đa tỷ
   lệ — đúng mẫu hình "model kế nhiệm giải quyết hạn chế cụ thể của model
   trước" đã lặp lại xuyên suốt track (giống ResNet giải quyết degradation
   của VGG, hay Fast R-CNN giải quyết tính toán lặp lại của R-CNN).

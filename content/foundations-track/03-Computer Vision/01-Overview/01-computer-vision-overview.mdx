@@ -1,0 +1,128 @@
+---
+title: Computer Vision — Tổng quan module và ba bài toán con
+track: foundations-track
+module: Computer Vision
+submodule: Overview
+order: 1
+status: stable
+summary: Bài mở đầu module Computer Vision — sơ lược cách tiếp cận trước deep learning (hand-crafted feature như SIFT/HOG), bản đồ ba bài toán con (Classification → Detection → Segmentation) và vì sao chúng học theo đúng thứ tự đó, cùng ghi chú điều hướng cho phần Transformer-based (ViT/Swin) xuất hiện cuối sub-module Classification.
+last_touched_by_task: Sửa (2026-07-12): đổi tên sub-module "Cơ bản" thành "Classification" theo yêu cầu người vận hành — khớp trực tiếp tên bài toán, nhất quán với pattern đặt tên của Detection/Segmentation, và không còn "cơ bản" đúng nghĩa sau khi thêm ViT/Swin.
+---
+
+Các module trước dạy nền toán và kiến trúc mạng nơ-ron tổng quát — chưa
+module nào xử lý riêng dữ liệu **ảnh**. Bài mở đầu này không dạy kiến
+trúc cụ thể nào, mà vẽ bản đồ: **Computer Vision giải quyết bài toán
+gì**, gồm **những bài toán con nào**, và **vì sao track dạy chúng theo
+đúng thứ tự Classification → Detection → Segmentation**.
+
+## Trước deep learning: đặc trưng do con người tự thiết kế
+
+Trước khi CNN thắng thế (khoảng 2012 trở về trước), computer vision giải
+quyết classification/detection bằng một pipeline hai bước tách biệt:
+
+1. **Trích đặc trưng thủ công (hand-crafted feature extraction):** con
+   người tự thiết kế thuật toán để biến ảnh thô thành một vector đặc
+   trưng "có ý nghĩa" — ví dụ **SIFT** (Scale-Invariant Feature
+   Transform) tìm các điểm đặc trưng bất biến với tỷ lệ/góc xoay để so
+   khớp ảnh, hay **HOG** (Histogram of Oriented Gradients) mô tả phân bố
+   hướng gradient trong từng vùng cục bộ — dùng rộng rãi cho phát hiện
+   người đi bộ.
+2. **Bộ phân loại tuyến tính:** đưa vector đặc trưng đó qua một mô hình
+   đơn giản như SVM để phân loại.
+
+Vấn đề cốt lõi: chất lượng toàn hệ thống phụ thuộc hoàn toàn vào chất
+lượng bộ đặc trưng thủ công đó — tiến bộ của cả lĩnh vực gắn liền với
+việc con người nghĩ ra được đặc trưng tốt hơn, không phải máy tự học.
+Cách tiếp cận CNN (bài tiếp theo) đảo ngược hoàn toàn logic này: thay vì
+tự thiết kế đặc trưng, đưa thẳng ảnh thô vào mạng và để nó **tự học**
+đặc trưng nào hữu ích từ dữ liệu — cùng triết lý "data-driven" đã dùng
+xuyên suốt track từ [Linear Regression](../../01-Nền%20tảng%20Toán%20&%20ML%20cổ%20điển/02-Supervised-Learning/01-linear-regression.mdx)
+trở đi, chỉ khác ở quy mô và độ phức tạp của hàm cần học.
+
+## Ba bài toán con: từ "có gì" tới "ở đâu" tới "chính xác từng pixel"
+
+Computer Vision hiện đại xoay quanh ba bài toán, tăng dần độ chi tiết yêu
+cầu ở đầu ra:
+
+| Bài toán | Câu hỏi trả lời | Output |
+|---|---|---|
+| **Classification** | Ảnh này chứa gì? | 1 nhãn lớp cho cả ảnh |
+| **Object Detection** | Vật thể đó ở đâu, có bao nhiêu? | Bounding box + nhãn cho mỗi vật thể |
+| **Segmentation** | Ranh giới chính xác của từng vật thể ở đâu? | Nhãn lớp cho từng pixel |
+
+Ba bài toán này không độc lập — mỗi bài toán sau **mở rộng** bài toán
+trước bằng cách đòi hỏi nhiều thông tin không gian hơn, chứ không phải
+một hướng tiếp cận hoàn toàn khác.
+
+## Vì sao học theo thứ tự Classification → Detection → Segmentation
+
+Ba sub-module của module này xếp đúng theo thứ tự đó vì một lý do kỹ
+thuật cụ thể, không chỉ vì "dễ trước khó sau":
+
+- **Sub-module Classification** xây dựng dòng tiến hoá **backbone** —
+  kiến trúc trích xuất đặc trưng ảnh (CNN → AlexNet → VGG → ResNet →
+  MobileNet → EfficientNet → và cả hướng Transformer-based: ViT → Swin)
+  — giải đúng bài toán classification.
+- **Sub-module Detection** và **Sub-module Segmentation** đều **tái sử
+  dụng** một backbone đã học ở Classification làm phần trích đặc trưng,
+  rồi thêm "đầu ra" (head) chuyên biệt cho bài toán của mình lên trên —
+  object detection thêm đầu ra bounding box + lớp; segmentation thêm đầu
+  ra nhãn theo từng pixel. Không thể học Detection/Segmentation trước
+  Classification vì cả hai đều giả định đã hiểu backbone hoạt động
+  thế nào.
+
+## Ghi chú điều hướng: sub-module Classification có cả nhánh CNN và nhánh Transformer
+
+Sáu bài đầu của sub-module Classification (CNN → AlexNet → VGG → ResNet
+→ MobileNet → EfficientNet) đều là kiến trúc dựa trên convolution. Hai
+bài cuối (Vision Transformer, Swin Transformer) chuyển sang một cơ chế
+khác hẳn: **self-attention** — vốn ra đời cho xử lý văn bản (module
+Natural Language Processing của track, đọc **sau** module này).
+
+Để không phải đọc trước cả module NLP chỉ để hiểu 2 bài đó, sub-module
+Classification có một bài đệm — **self-attention cho ảnh** — đặt ngay trước
+Vision Transformer, dạy đủ cơ chế Query/Key/Value ở mức tối thiểu cần
+thiết. Ai muốn đào sâu đầy đủ cơ chế attention (multi-head chi tiết,
+ứng dụng cho văn bản, decoder attention) có thể đọc lại phần Transformer
+Architecture đầy đủ ở module Natural Language Processing sau này — bài
+đệm trong CV không thay thế nó, chỉ đủ dùng cho ViT/Swin/SegFormer.
+
+## Module này có gì?
+
+Bốn sub-module, theo đúng thứ tự học:
+
+**Sub-module: Classification** (9 bài) — dòng tiến hoá backbone, cả hai nhánh
+CNN-based và Transformer-based:
+[CNN](../02-Co-ban/01-cnn.mdx) →
+[AlexNet](../02-Co-ban/02-alexnet.mdx) →
+[VGG](../02-Co-ban/03-vgg.mdx) →
+[ResNet](../02-Co-ban/04-resnet.mdx) →
+[MobileNet](../02-Co-ban/05-mobilenet.mdx) →
+[EfficientNet](../02-Co-ban/06-efficientnet.mdx) →
+[Self-attention cho ảnh](../02-Co-ban/07-self-attention-cho-anh.mdx) →
+[Vision Transformer](../02-Co-ban/08-vision-transformer.mdx) →
+[Swin Transformer](../02-Co-ban/09-swin-transformer.mdx)
+
+**Sub-module: Detection** (4 bài) — nhận diện + định vị vật thể, dùng
+backbone từ Classification:
+[Object Detection](../03-Detection/01-object-detection.mdx) (họ R-CNN,
+two-stage) →
+[YOLO](../03-Detection/02-yolo.mdx) (one-stage) →
+[SSD](../03-Detection/03-ssd.mdx) (multi-scale one-stage) →
+[Anchor-free Detection](../03-Detection/04-anchor-free-detection.mdx)
+
+**Sub-module: Segmentation** (5 bài) — gán nhãn tới từng pixel, dùng
+backbone từ Classification:
+[Image Segmentation](../04-Segmentation/01-image-segmentation.mdx) (FCN,
+U-Net sơ lược) →
+[U-Net](../04-Segmentation/02-unet.mdx) (đào sâu) →
+[Mask R-CNN](../04-Segmentation/03-mask-rcnn.mdx) (kết hợp detection) →
+[DeepLab](../04-Segmentation/04-deeplab.mdx) (atrous convolution) →
+[SegFormer](../04-Segmentation/05-segformer.mdx) (Transformer-based)
+
+**Bài tiếp theo: CNN** — mở đầu sub-module Classification, giải thích vì
+sao cần convolution thay vì fully-connected layer thuần cho ảnh.
+
+## Nguồn tham khảo
+
+- [CS231n — Image Classification](https://cs231n.github.io/classification/) — triết lý "data-driven" (đưa nhiều ví dụ cho máy tự học thay vì tự viết thuật toán trích đặc trưng), nền tảng cho toàn bộ cách tiếp cận CNN trong module.

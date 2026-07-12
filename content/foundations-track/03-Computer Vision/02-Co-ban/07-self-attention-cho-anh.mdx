@@ -1,0 +1,112 @@
+---
+title: Self-attention cho ảnh — Bài đệm trước Vision Transformer
+track: foundations-track
+module: Computer Vision
+submodule: Classification
+order: 7
+status: stable
+summary: Bài đệm rút gọn về self-attention — cơ chế Query/Key/Value, công thức attention weight, multi-head attention — đủ để hiểu Vision Transformer/Swin/SegFormer, không cần đọc trước module Natural Language Processing (nơi self-attention được dạy đầy đủ cho văn bản, ở phần sau track). Trade-off trung tâm: độ phức tạp bậc hai theo số phần tử trong chuỗi.
+last_touched_by_task: Bài mới (2026-07-12), lấp khoảng trống kiến thức nền phát hiện khi review chiều sâu module — 3 bài (ViT, Swin, SegFormer) dùng self-attention làm nền tảng nhưng track (CV = module 3, NLP = module 4) chưa dạy khái niệm này ở đâu trước đó theo thứ tự đọc tuần tự. Theo yêu cầu người vận hành.
+---
+
+Sáu bài trước trong sub-module này (CNN → EfficientNet) đều dựa trên
+**convolution** — mỗi lớp chỉ "nhìn" được một vùng nhỏ cố định quanh mỗi
+vị trí (receptive field giới hạn bởi kernel size), muốn nhìn xa hơn phải
+xếp chồng nhiều lớp. Bài [Vision Transformer](08-vision-transformer.mdx)
+tiếp theo dùng một cơ chế hoàn toàn khác — **self-attention** — vốn ra
+đời cho xử lý văn bản, được dạy đầy đủ ở module Natural Language
+Processing (phần sau của track). Bài này là bản đệm rút gọn, chỉ đủ để
+hiểu ViT/Swin/SegFormer — ai muốn đào sâu (multi-head chi tiết,
+positional encoding gốc, ứng dụng cho văn bản) đọc lại phần Transformer
+Architecture đầy đủ sau này.
+
+## Vấn đề: convolution phải xếp chồng nhiều lớp mới "nhìn" được xa
+
+Một lớp convolution với kernel `3×3` chỉ tổng hợp thông tin từ 9 pixel
+lân cận. Để một vị trí trong ảnh "biết" về một vị trí ở xa (ví dụ góc
+trái trên và góc phải dưới của ảnh), thông tin phải lan truyền qua nhiều
+lớp convolution liên tiếp — mỗi lớp mở rộng receptive field thêm một
+chút. Muốn có tương tác toàn cục ngay từ đầu, cần rất nhiều lớp xếp
+chồng.
+
+**Self-attention** giải quyết vấn đề này theo cách ngược lại: cho phép
+**mỗi phần tử trong một chuỗi tính toán trực tiếp mức độ liên quan của
+nó với mọi phần tử khác trong chuỗi, chỉ qua đúng 1 lớp** — không cần
+xếp chồng để mở rộng phạm vi nhìn.
+
+## Cơ chế: Query, Key, Value
+
+Với một chuỗi gồm `n` phần tử (ví dụ `n` patch ảnh sau khi đã được biến
+thành vector — xem cách "cắt ảnh thành patch" ở bài Vision Transformer),
+self-attention biến mỗi phần tử thành ba vector khác nhau bằng ba phép
+chiếu tuyến tính (ba ma trận trọng số học được):
+
+- **Query (Q):** "phần tử này đang tìm kiếm thông tin gì?"
+- **Key (K):** "phần tử này có thể cung cấp thông tin gì?"
+- **Value (V):** "nội dung thực sự sẽ được lấy ra nếu được chú ý tới"
+
+Với mỗi phần tử, so sánh Query của nó với Key của **mọi** phần tử khác
+(kể cả chính nó) bằng tích vô hướng — điểm số càng cao nghĩa là hai phần
+tử càng "liên quan" tới nhau. Sau đó chuẩn hoá các điểm số này bằng
+`softmax` để thành trọng số (tổng bằng 1), rồi dùng trọng số đó để lấy
+**trung bình có trọng số** của mọi Value:
+
+```
+Attention(Q, K, V) = softmax(QK^T / √d) V
+```
+
+`d` là số chiều của vector Query/Key. Phép chia cho `√d` không phải chi
+tiết ngẫu nhiên: nếu bỏ qua, tích vô hướng `QK^T` có phương sai tăng
+theo `d` — với `d` lớn, một vài điểm số sẽ áp đảo hoàn toàn các điểm số
+còn lại sau `softmax`, khiến gradient khi huấn luyện trở nên cực nhỏ ở
+hầu hết vị trí. Chia cho `√d` giữ phương sai ổn định ở mức 1 bất kể `d`
+lớn hay nhỏ, giúp huấn luyện ổn định hơn.
+
+Kết quả: mỗi phần tử giờ có một biểu diễn mới, là tổng hợp thông tin từ
+**toàn bộ** chuỗi (có trọng số theo mức độ liên quan), thay vì chỉ từ
+vùng lân cận cố định như convolution.
+
+## Multi-head attention: nhiều "góc nhìn" song song
+
+Một bộ Query/Key/Value duy nhất chỉ học được **một kiểu** quan hệ giữa
+các phần tử. **Multi-head attention** chạy nhiều bộ Q/K/V độc lập song
+song (mỗi bộ gọi là một "head", dùng ma trận chiếu riêng, số chiều nhỏ
+hơn), rồi ghép kết quả của tất cả head lại. Trực giác: mỗi head có thể
+học chú ý vào một loại quan hệ khác nhau (ví dụ head này chú ý tới màu
+sắc tương đồng, head khác chú ý tới vị trí không gian gần nhau) — nhiều
+góc nhìn song song thường học được biểu diễn phong phú hơn một góc nhìn
+duy nhất.
+
+## Trade-off: độ phức tạp tăng theo bình phương độ dài chuỗi
+
+Cái giá của việc "mỗi phần tử nhìn được mọi phần tử khác chỉ qua 1 lớp":
+với chuỗi độ dài `n`, self-attention phải tính `n × n` cặp tương tác —
+độ phức tạp tính toán và bộ nhớ tăng theo **bình phương** số phần tử
+trong chuỗi, trong khi convolution chỉ tăng **tuyến tính** theo số pixel
+(vì mỗi vị trí chỉ tính với một vùng lân cận cố định, không phải toàn
+ảnh).
+
+Với ảnh, số "phần tử" trong chuỗi chính là số patch — ảnh càng lớn (càng
+nhiều patch), chi phí self-attention toàn cục càng tăng nhanh. Đây chính
+là hạn chế mà bài [Swin Transformer](09-swin-transformer.mdx) tiếp theo
+giải quyết, bằng cách giới hạn self-attention trong các cửa sổ cục bộ
+thay vì toàn ảnh.
+
+## Liên hệ lại với các bài trước
+
+- Self-attention và convolution giải quyết cùng một vấn đề tổng quát
+  (tổng hợp thông tin từ các vị trí khác nhau trong dữ liệu) theo hai
+  triết lý ngược nhau: convolution giới hạn phạm vi nhìn để đổi lấy chi
+  phí tính toán thấp và thiên kiến quy nạp hữu ích (tính cục bộ, bất
+  biến dịch chuyển — đã học ở bài [CNN](01-cnn.mdx)); self-attention mở
+  rộng phạm vi nhìn ra toàn cục ngay từ đầu, đổi lấy chi phí tính toán
+  cao hơn và ít thiên kiến quy nạp hơn.
+- Phép chiếu tuyến tính Query/Key/Value dùng đúng cơ chế
+  [backpropagation](../../02-Deep%20Learning%20Nền%20tảng/02-backpropagation.mdx)
+  để học như mọi trọng số khác trong mạng nơ-ron — self-attention không
+  phải một cơ chế "đặc biệt" nằm ngoài framework huấn luyện đã học từ
+  đầu track.
+
+## Nguồn tham khảo
+
+- [Dive into Deep Learning — Attention Scoring Functions](https://d2l.ai/chapter_attention-mechanisms-and-transformers/attention-scoring-functions.html) — công thức scaled dot-product attention `softmax(QK^T/√d)V`, và giải thích vì sao chia cho `√d` (giữ phương sai ổn định bất kể số chiều).

@@ -6,11 +6,11 @@ submodule: Segmentation
 order: 5
 status: stable
 summary: Áp dụng thẳng ViT cho segmentation gặp vấn đề cụ thể: positional encoding cố định gây giảm hiệu năng khi độ phân giải test khác lúc train, và các decoder phức tạp (như DeepLab/U-Net) làm chậm mô hình. Xie và cộng sự (2021) giải quyết bằng SegFormer: một encoder Transformer phân cấp (không cần positional encoding) sinh đặc trưng đa tỷ lệ, kết hợp với một decoder MLP cực nhẹ (chỉ vài lớp fully-connected) tổng hợp thông tin từ mọi tầng — đạt 50.3% mIoU trên ADE20K với model nhỏ hơn 5 lần và chính xác hơn 2.2% so với phương pháp tốt nhất trước đó.
-last_touched_by_task: Bài mới (2026-07-06), theo yêu cầu người vận hành đào sâu Detection/Segmentation không dừng lại chờ phản hồi. SegFormer là bước hoàn thiện nhánh Transformer-cho-segmentation, nối tiếp trực tiếp Swin Transformer (58, vừa viết) và đối chiếu với DeepLab (57, đã viết) — 2 triết lý khác nhau cho cùng bài toán segmentation nâng cao. Nguồn: arxiv 2105.15203 (paper gốc Xie et al. 2021, NeurIPS, xác nhận qua WebFetch abstract: vấn đề positional encoding + decoder phức tạp, giải pháp hierarchical Transformer encoder + MLP decoder nhẹ, kết quả mIoU cụ thể trên ADE20K/Cityscapes) + D2L.ai (vision-transformer.html, dùng lại làm nguồn phụ xác nhận vấn đề chung của positional encoding/độ phức tạp Transformer cho ảnh, đã dùng ở bài 55/58).
+last_touched_by_task: Sửa (2026-07-12, review chiều sâu module): dọn số "bài N" track-wide cũ (55, 58, 27) thay bằng link markdown chuẩn; sửa link Swin Transformer/ViT theo số file mới sau khi thêm sub-module Overview + bài đệm self-attention.
 ---
 
 Bài [DeepLab](04-deeplab.mdx) giải quyết segmentation bằng atrous
-convolution trên nền CNN. Bài [Swin Transformer](08-swin-transformer.mdx)
+convolution trên nền CNN. Bài [Swin Transformer](../02-Co-ban/09-swin-transformer.mdx)
 chứng minh kiến trúc Transformer phân cấp có thể làm backbone tổng quát
 cho cả detection lẫn segmentation. Bài này kể cách một kiến trúc thiết
 kế **riêng cho segmentation** dựa trên Transformer giải quyết những vấn
@@ -22,9 +22,10 @@ pixel.
 Hai vấn đề cụ thể khi áp dụng kiến trúc Transformer (kiểu ViT) cho bài
 toán segmentation:
 
-1. **Positional encoding cố định gây lỗi khi đổi độ phân giải.** ViT gốc
-   (bài [55](07-vision-transformer.mdx)) dùng positional embedding học
-   sẵn theo đúng số lượng patch cố định lúc huấn luyện. Nếu ảnh test có
+1. **Positional encoding cố định gây lỗi khi đổi độ phân giải.**
+   [ViT gốc](../02-Co-ban/08-vision-transformer.mdx) dùng positional
+   embedding học sẵn theo đúng số lượng patch cố định lúc huấn luyện.
+   Nếu ảnh test có
    độ phân giải khác lúc train (số patch khác), cần **nội suy** lại
    positional embedding — và việc nội suy này gây **giảm hiệu năng** rõ
    rệt, một vấn đề đặc biệt nghiêm trọng với segmentation (nơi độ phân
@@ -56,10 +57,11 @@ một decoder **cực kỳ đơn giản** — chỉ gồm vài lớp **MLP** (fu
 không có convolution/attention nào trong decoder) — **tổng hợp** (aggregate)
 đặc trưng từ **tất cả các tầng** của encoder phân cấp. Vì đặc trưng ở
 tầng nông mang thông tin cục bộ chi tiết còn đặc trưng ở tầng sâu mang
-thông tin ngữ cảnh toàn cục (kết hợp cả **local attention và global
-attention**, theo đúng cách nhóm tác giả mô tả), decoder MLP đơn giản này
-vẫn tạo ra biểu diễn đủ mạnh cho segmentation mà không cần cơ chế phức
-tạp nào — giải quyết đúng vấn đề thứ hai.
+thông tin ngữ cảnh toàn cục hơn (kết quả tự nhiên của cơ chế
+[self-attention](../02-Co-ban/07-self-attention-cho-anh.mdx) — mỗi tầng
+tổng hợp thông tin ở phạm vi rộng dần), decoder MLP đơn giản này vẫn tạo
+ra biểu diễn đủ mạnh cho segmentation mà không cần cơ chế phức tạp nào —
+giải quyết đúng vấn đề thứ hai.
 
 ## Kết quả: chính xác hơn, nhỏ hơn nhiều so với phương pháp trước
 
@@ -85,17 +87,17 @@ lúc.
   SegFormer dựa trên Transformer phân cấp + decoder MLP tối giản — hai
   công cụ hoàn toàn khác nhau, cùng đạt kết quả SOTA cho segmentation.
 - SegFormer dùng cấu trúc phân cấp sinh đặc trưng đa tỷ lệ tương tự
-  [Swin Transformer](08-swin-transformer.mdx) — cả hai đều giải quyết
+  [Swin Transformer](../02-Co-ban/09-swin-transformer.mdx) — cả hai đều giải quyết
   vấn đề "Transformer cần đặc trưng đa tỷ lệ cho các tác vụ dense
   prediction", dù SegFormer không nhất thiết dùng đúng cơ chế shifted
   window của Swin.
 - Việc loại bỏ positional encoding phức tạp để đơn giản hoá và tăng khả
   năng tổng quát hoá là một minh hoạ khác cho nguyên tắc đã lặp lại
   trong track: đôi khi bớt đi một thành phần (thay vì thêm vào) mới là
-  cách cải tiến đúng — tương tự cách [DPO](04-rlhf-alignment.mdx) đơn
-  giản hoá RLHF bằng cách bỏ hẳn bước RL.
+  cách cải tiến đúng — tương tự cách [DPO](06-dpo.mdx) đơn giản hoá RLHF
+  bằng cách bỏ hẳn bước RL.
 
 ## Nguồn tham khảo
 
 - [arXiv — SegFormer: Simple and Efficient Design for Semantic Segmentation with Transformers](https://arxiv.org/abs/2105.15203) — paper gốc của Xie và cộng sự (2021, NeurIPS), dùng cho vấn đề cụ thể (positional encoding gây giảm hiệu năng khi đổi độ phân giải, decoder phức tạp), giải pháp (hierarchical Transformer encoder không cần vị trí + MLP decoder nhẹ), và kết quả (SegFormer-B4: 50.3% mIoU ADE20K với 64M tham số, nhỏ hơn 5 lần/chính xác hơn 2.2% so với SOTA trước; SegFormer-B5: 84.0% mIoU Cityscapes).
-- [Dive into Deep Learning — Transformers for Vision](http://d2l.ai/chapter_attention-mechanisms-and-transformers/vision-transformer.html) — dùng lại làm nguồn phụ xác nhận vấn đề chung (positional encoding, độ phức tạp) của việc áp dụng Transformer cho ảnh, đã dùng cho bài 55/58.
+- [Dive into Deep Learning — Transformers for Vision](http://d2l.ai/chapter_attention-mechanisms-and-transformers/vision-transformer.html) — dùng lại làm nguồn phụ xác nhận vấn đề chung (positional encoding, độ phức tạp) của việc áp dụng Transformer cho ảnh, đã dùng cho bài Vision Transformer/Swin Transformer.

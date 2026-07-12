@@ -2,7 +2,7 @@
 title: EfficientNet — Compound Scaling Cân bằng Có hệ thống Độ sâu/Rộng/Phân giải
 track: foundations-track
 module: Computer Vision
-submodule: Cơ bản
+submodule: Classification
 order: 6
 status: stable
 summary: MobileNet giải quyết bài toán hiệu quả cho thiết bị hạn chế, nhưng cách tăng quy mô một mô hình (sâu hơn, rộng hơn, hay ảnh phân giải cao hơn) trước EfficientNet vẫn thiếu hệ thống — mỗi hướng thường được thử riêng lẻ, không cân bằng. Tan và Le (2019) giải quyết bằng compound scaling: một hệ số hợp chất duy nhất mở rộng đồng đều cả 3 chiều. EfficientNet-B7 đạt 84.3% top-1 ImageNet, nhỏ hơn 8.4 lần và nhanh hơn 6.1 lần so với ConvNet tốt nhất trước đó.
@@ -64,6 +64,15 @@ không thực sự cần thiết. Nhóm tác giả cũng ghi nhận EfficientNet
 giao (transfer) tốt sang nhiều bộ dữ liệu khác với số lượng tham số ít
 hơn đáng kể so với các kiến trúc trước.
 
+Đánh đổi không hoàn toàn biến mất, chỉ chuyển sang giai đoạn khác: hệ số
+hợp chất được **tìm bằng grid search một lần duy nhất** trên mạng gốc
+nhỏ nhất (EfficientNet-B0), rồi áp dụng suy rộng cho mọi biến thể lớn
+hơn (B1-B7) — tỷ lệ này không được đảm bảo tối ưu tuyệt đối cho từng quy
+mô cụ thể, chỉ là một tỷ lệ cân bằng tốt tìm được ở một điểm neo. Chi phí
+"tìm ra tỷ lệ đúng" được trả một lần khi thiết kế, không phải trả lại
+mỗi khi mở rộng — đổi lại, không chắc đó là tỷ lệ tối ưu nhất có thể cho
+mọi ngân sách tính toán.
+
 ## Liên hệ lại với các bài trước
 
 - EfficientNet không thay đổi nguyên lý convolution đã học ở bài
@@ -73,13 +82,17 @@ hơn đáng kể so với các kiến trúc trước.
   thể của mạng (bao nhiêu lớp, bao nhiêu kênh, ảnh đầu vào lớn cỡ nào),
   giải quyết đúng khoảng trống mà các kiến trúc trước để lại: thiếu
   nguyên tắc cân bằng khi mở rộng quy mô.
-- Đây là bài cuối cùng hoàn thiện dòng tiến hoá đã hoạch định cho
-  sub-module "Cơ bản": LeNet (kể trong bài 11) → AlexNet (35, mở rộng
-  quy mô với ReLU/dropout/GPU) → VGG (36, template thiết kế có hệ thống)
-  → ResNet (37, giải quyết degradation bằng skip connection) →
-  MobileNet (38, hiệu quả tính toán bằng depthwise separable convolution)
-  → EfficientNet (41, mở rộng quy mô có hệ thống bằng compound scaling)
-  — mỗi bước giải quyết đúng một hạn chế cụ thể của bước ngay trước nó.
+- EfficientNet là bài cuối cùng thuộc nhánh CNN của dòng tiến hoá
+  sub-module "Classification" — [CNN](01-cnn.mdx) (nền tảng) →
+  [AlexNet](02-alexnet.mdx) (mở rộng quy mô với ReLU/dropout/GPU) →
+  [VGG](03-vgg.mdx) (template thiết kế có hệ thống) →
+  [ResNet](04-resnet.mdx) (giải quyết degradation bằng skip connection)
+  → [MobileNet](05-mobilenet.mdx) (hiệu quả tính toán bằng depthwise
+  separable convolution) → EfficientNet (mở rộng quy mô có hệ thống
+  bằng compound scaling) — mỗi bước giải quyết đúng một hạn chế cụ thể
+  của bước ngay trước nó. Hai bài tiếp theo chuyển sang nhánh
+  Transformer-based (ViT, Swin), sau một bài đệm về
+  [self-attention](07-self-attention-cho-anh.mdx).
 - Vẫn huấn luyện bằng [backpropagation](02-backpropagation.mdx) như mọi
   kiến trúc CNN khác — compound scaling chỉ là một phương pháp xác định
   **kiến trúc** (số lớp, số kênh, độ phân giải input) trước khi huấn

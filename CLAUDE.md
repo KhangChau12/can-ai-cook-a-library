@@ -14,26 +14,27 @@
 
 ## 1. STATUS (đọc đầu mỗi task, không ngoại lệ)
 
-- **Version:** v13.3
-- **Phiên gần nhất:** RENUMBER TOÀN BỘ LINK NỘI BỘ `(NN-slug.mdx)`
-  (2026-07-12) — nối tiếp việc xoá field `prerequisites` (dead metadata,
-  chưa từng render/resolve ở đâu, xoá khỏi 149 file + schema
-  `src/content.config.ts` trong task trước) cùng phiên, người vận hành
-  muốn dọn luôn số thứ tự cũ còn sót trong 539 link `(NN-slug.mdx)` ở
-  nội dung bài (an toàn về mặt kỹ thuật theo mục 1.2 rule 5 vì resolve
-  bằng bare-slug, nhưng đọc source thấy số lệch/rối). Viết script Node
-  quét toàn bộ `content/`, build map bare-slug → số thật hiện tại theo
-  từng track, sửa lại số trong 326 link bị lệch; tìm thêm 4 link thật sự
-  gãy (bare-slug không khớp file nào, không phải chỉ lệch số — 3 do
-  module CNN/RNN/seq2seq đổi tên file, 1 do TRPO+A2C tách thành 2 bài
-  riêng) và sửa trỏ đúng file. Xác minh: 0 mismatch số sau khi chạy,
-  build 161 trang vẫn sạch, diff spot-check chỉ đổi số trong href, không
-  đụng link text/prose.
-- **Tổng số bài hiện có:** 149 (14 exam-track + 135 foundations-track) —
+- **Version:** v13.4
+- **Phiên gần nhất:** LẤP KHOẢNG TRỐNG CHIỀU SÂU MODULE COMPUTER VISION
+  (2026-07-12) — review 2 tầng (cấu trúc + chiều sâu) toàn bộ 17 bài CV
+  theo yêu cầu người vận hành, phát hiện 3 bài (ViT/Swin/SegFormer) phụ
+  thuộc self-attention/Transformer nhưng track chưa dạy trước đó (CV =
+  module 3, NLP = module 4), và module CV thiếu sub-module Overview mà
+  mọi module có submodule khác đều có. Thêm sub-module Overview mới (1
+  bài, renumber sub-module cũ "Cơ bản" thành "Classification" — khớp tên
+  bài toán, đồng bộ pattern đặt tên với Detection/Segmentation — và đổi
+  số thư mục thành 02/03/04) + bài đệm "Self-attention cho ảnh" (order 7,
+  trước ViT) trong sub-module Classification. Đồng thời: thêm định nghĩa
+  mAP vào bài Object Detection, dọn số "bài N" track-wide cũ còn sót ở
+  6 file, thêm trade-off còn thiếu ở ResNet/EfficientNet/DeepLab. Cập
+  nhật mọi link nội bộ (bare-slug lẫn full relative path) trỏ tới các
+  file/thư mục đã đổi số/tên trên toàn bộ 2 track.
+- **Tổng số bài hiện có:** 151 (14 exam-track + 137 foundations-track) —
   tổ chức thành **9 module** cho foundations-track:
   ML cổ điển (12 bài, 4 sub-module: Overview 1/Supervised Learning 6/
   Unsupervised Learning 4/Ensemble Methods 1), DL Nền tảng (7, phẳng),
-  Computer Vision (17 bài, 3 sub-module: Cơ bản 8/Detection 4/Segmentation 5),
+  Computer Vision (19 bài, 4 sub-module: Overview 1/Classification 9/
+  Detection 4/Segmentation 5),
   Natural Language Processing (17 bài, 5 sub-module: Overview 1/
   Tokenization 3/Recurrent Neural Network Family 5/Transformer
   Architecture 5/NLP Task cổ điển 3),
@@ -87,6 +88,8 @@
    bài đó thay vì ép viết bài mới yếu.
 4. Quy tắc bắt buộc khi sửa mục 1 "Phiên gần nhất": `old_string` PHẢI
    khớp và thay thế TOÀN BỘ entry cũ, không chỉ prepend.
+4b. 2 bài mới trong Computer Vision (Overview, Self-attention cho ảnh)
+   chưa có quiz đi kèm — làm khi tới lượt batch quiz theo mục 2.6.
 5. Link nội bộ dạng `(NN-slug.mdx)` được `src/lib/renderMarkdown.ts` resolve
    bằng bare-slug (bỏ số thứ tự đầu) qua map toàn track, không quan tâm số
    hiển thị trong link có đúng số thật của file đích hay không — về mặt kỹ
@@ -165,7 +168,10 @@ trúc/công thức cuối cùng. Cụ thể:
 module có ≥2 nhánh/giai đoạn/trường phái đủ khác biệt về bản chất, không
 có ngưỡng số bài tối thiểu cứng. Danh sách hiện tại (chi tiết bài nào ở
 mục 4, hoặc đọc trực tiếp `content/modules.json` + thư mục bài):
-- **Computer Vision**: "Cơ bản" / "Detection" / "Segmentation"
+- **Computer Vision**: "Overview" (lịch sử CV trước deep learning, bản đồ
+  3 bài toán con, điều hướng nhánh Transformer-based) / "Classification"
+  (dòng tiến hoá backbone CNN→...→EfficientNet, rồi bài đệm self-attention
+  →ViT→Swin) / "Detection" / "Segmentation"
 - **Natural Language Processing**: "Overview" / "Tokenization" (tiền xử lý
   text→token→vector) / "Recurrent Neural Network Family" (kiến trúc hồi
   quy) / "Transformer Architecture" (kiến trúc dựa attention) / "NLP Task
@@ -300,7 +306,8 @@ khác (xem mục 2.1).
 
 `submodule` là field **tuỳ chọn** (từ 2026-07-06) — chỉ áp dụng cho các
 module đã tách nhánh con theo mục 2.1 (hiện tại: `"Computer Vision"` với
-3 sub-module `"Cơ bản"` / `"Detection"` / `"Segmentation"`). Khi bài có
+4 sub-module `"Overview"` / `"Classification"` / `"Detection"` /
+`"Segmentation"`). Khi bài có
 `submodule`, viewer group theo `module` → `submodule` → bài (3 cấp thay
 vì 2). Không thêm `submodule` cho module chưa được quyết định tách nhánh
 ở mục 2.1 — tự ý thêm sẽ tạo nhóm mồ côi không nhất quán trong viewer.
@@ -470,7 +477,7 @@ chặn các công việc khác của autopilot.
 3. **Luân phiên giữa viết lại bài `needs-review` và lấp khoảng trống
    sub-module mới (2026-07-06):** nếu task gần nhất (xem mục 1.2) là viết
    lại 1 bài `needs-review`, task này ưu tiên lấp khoảng trống ở mục 4
-   (đặc biệt các sub-module CV mới: Cơ bản/Detection/Segmentation) — và
+   (đặc biệt các sub-module CV mới: Classification/Detection/Segmentation) — và
    ngược lại. Mục đích: thấy tiến độ cả 2 hướng song song, không dồn
    nhiều phiên liên tiếp chỉ để viết lại bài cũ trước khi chạm nội dung
    nâng cao mới. Nếu không rõ task gần nhất là gì (đầu phiên mới), mặc
@@ -479,12 +486,12 @@ chặn các công việc khác của autopilot.
 4. Trong mỗi nhánh của bước 3:
    - **Viết lại bài cũ:** chọn bài `needs-review` theo thứ tự `order`
      trong track, ưu tiên bài đang là nền cho sub-module mới (ví dụ bài
-     11 CNN, 33 Detection, 34 Segmentation ưu tiên trước các bài
-     `needs-review` khác) vì viết lại chúng trước sẽ mở khoá ngữ cảnh rõ
-     ràng hơn cho bài mới nối tiếp.
+     mở đầu mỗi sub-module CV — CNN, Object Detection, Image Segmentation
+     — ưu tiên trước các bài `needs-review` khác) vì viết lại chúng trước
+     sẽ mở khoá ngữ cảnh rõ ràng hơn cho bài mới nối tiếp.
    - **Lấp khoảng trống sub-module:** rà mục 4 (và thư mục bài `.mdx`
      thật nếu cần chi tiết), viết bài tiếp theo còn thiếu trong dòng tiến
-     hoá đã định (mục 2.1 phần C) — ví dụ nếu CV "Cơ bản" đã có
+     hoá đã định (mục 2.1 phần C) — ví dụ nếu CV "Classification" đã có
      CNN+LeNet+AlexNet, bài tiếp theo là VGG.
 5. Không còn bài `needs-review` nào VÀ không còn khoảng trống sub-module
    rõ ràng → agent tự đề xuất cải thiện: đọc lại 1 bài `stable` cũ dưới
@@ -519,7 +526,7 @@ bài này bị sửa mà không phải vì nó sai.
   (Target Encoding & Feature Interaction)/Data Augmentation/Walk-Forward
   CV/Pseudo-labeling
 
-### foundations-track — 135 bài, 9 module
+### foundations-track — 137 bài, 9 module
 
 1. `"Nền tảng Toán & ML cổ điển"` — 12 bài, 4 sub-module: Overview 1
    (Xác suất & thống kê)/Supervised Learning 6 (Linear/Logistic
@@ -528,7 +535,9 @@ bài này bị sửa mà không phải vì nó sai.
 2. `"Deep Learning Nền tảng"` — 7 bài, phẳng (Perceptron/Backpropagation/
    Regularization/Optimizer/Weight Initialization/Normalization/
    Learning Rate Schedule)
-3. `"Computer Vision"` — 17 bài, 3 sub-module: Cơ bản 8/Detection 4/Segmentation 5
+3. `"Computer Vision"` — 19 bài, 4 sub-module: Overview 1/Classification 9
+   (CNN→AlexNet→VGG→ResNet→MobileNet→EfficientNet→Self-attention cho
+   ảnh→ViT→Swin)/Detection 4/Segmentation 5
 4. `"Natural Language Processing"` — 17 bài, 5 sub-module: Overview 1/Tokenization 3/Recurrent Neural Network Family 5/Transformer Architecture 5/NLP Task cổ điển 3 (Phân loại văn bản, POS Tagging & NER, Topic Modeling)
 5. `"Large Language Models"` — 19 bài, 7 sub-module: Overview 1/Pretrained Language Models 4 (BERT/RoBERTa/ALBERT/T5)/GPT & Decoder-only 4 (GPT-1/GPT-2/GPT-3, Mixture-of-Experts)/Huấn luyện & Alignment 6 (Pretraining, Scaling Laws, Fine-tuning, RLHF, LoRA, DPO)/Reasoning & Test-time Compute 1/Ứng dụng & Inference-time 2/Evaluation 1
 6. `"Reinforcement Learning"` — 22 bài, 5 sub-module: Overview 2/Value-based 5/Policy-based 9 (Policy Gradient, Actor-Critic, TRPO, PPO, A3C, A2C, DDPG/TD3, SAC, Synthesis)/Model-based 2/Advanced Topics 4
