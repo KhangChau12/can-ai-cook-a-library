@@ -40,7 +40,7 @@ const levelHint: Record<string, string> = {
       {examGroups.length > 0 && (
         <section id="exam-track">
           <div class="mb-5 flex items-baseline justify-between gap-3">
-            <h2 class="font-heading flex items-center gap-2.5 text-xl font-extrabold tracking-tight text-text-primary">
+            <h2 class="font-heading flex items-center gap-2.5 text-2xl font-extrabold tracking-tight text-text-primary">
               Bổ trợ thi đấu
             </h2>
             <span class="text-[12.5px] text-text-disabled">Áp dụng ngay vào bài nộp thật trên The Noders platform.</span>
@@ -55,7 +55,7 @@ const levelHint: Record<string, string> = {
       {levels.map(({ level, label, groups }) => groups.length > 0 && (
         <section>
           <div class="mb-5 flex items-baseline justify-between gap-3">
-            <h2 class="font-heading flex items-center gap-2.5 text-xl font-extrabold tracking-tight text-text-primary">
+            <h2 class="font-heading flex items-center gap-2.5 text-2xl font-extrabold tracking-tight text-text-primary">
               {label}
             </h2>
             <span class="text-[12.5px] text-text-disabled">{levelHint[level]}</span>
