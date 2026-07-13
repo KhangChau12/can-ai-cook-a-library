@@ -7,6 +7,7 @@ import {
   getPrevNext,
   getQuizFor,
   trackLabel,
+  estimateReadingMinutes,
   type Track,
   type Lesson,
 } from '../../../lib/content';
@@ -49,6 +50,7 @@ const base = import.meta.env.BASE_URL;
 // whole module — used by LessonLayout to show a "this submodule isn't
 // unlocked yet" banner when a locked lesson is opened directly via URL.
 const currentSubmoduleIndex = group.submodules.findIndex((sub) => sub.lessons.some((l) => l.id === lesson.id));
+const currentSubmodule = currentSubmoduleIndex >= 0 ? group.submodules[currentSubmoduleIndex] : undefined;
 const lockInfo: LockInfo = await Promise.all(
   group.submodules.map((sub) =>
     Promise.all(
@@ -60,8 +62,7 @@ const lockInfo: LockInfo = await Promise.all(
   ),
 );
 
-const wordCount = lesson.data.html ? lesson.data.html.replace(/<[^>]+>/g, ' ').trim().split(/\s+/).filter(Boolean).length : 0;
-const readingMinutes = Math.max(1, Math.round(wordCount / 200));
+const readingMinutes = estimateReadingMinutes(lesson);
 ---
 
 <LessonLayout
@@ -78,6 +79,12 @@ const readingMinutes = Math.max(1, Math.round(wordCount / 200));
     <a href={`${base}#${track}`} class="transition hover:text-text-tertiary">{trackLabel(track)}</a>
     <span>/</span>
     <a href={`${base}${track}/${group.slug}/`} class="transition hover:text-text-tertiary">{group.name}</a>
+    {currentSubmodule && (
+      <>
+        <span>/</span>
+        <a href={`${base}${track}/${group.slug}/#${currentSubmodule.slug}`} class="transition hover:text-text-tertiary">{currentSubmodule.name}</a>
+      </>
+    )}
   </nav>
 
   <header class="mb-8 border-b border-border-default pb-7">

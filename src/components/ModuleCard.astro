@@ -1,6 +1,6 @@
 ---
 import type { ModuleGroup, Track } from '../lib/content';
-import { LEVEL_LABELS, trackLabel } from '../lib/content';
+import { LEVEL_LABELS, trackLabel, totalReadingMinutes } from '../lib/content';
 import { ICON_PATHS } from './icons';
 
 interface Props {
@@ -12,6 +12,7 @@ const { track, group, showTrackChip = false } = Astro.props;
 const base = import.meta.env.BASE_URL;
 
 const totalLessons = group.lessons.length + group.submodules.reduce((n, s) => n + s.lessons.length, 0);
+const totalMinutes = totalReadingMinutes([...group.lessons, ...group.submodules.flatMap((s) => s.lessons)]);
 const sectionCount = group.submodules.length;
 const iconPath = ICON_PATHS[group.icon] ?? ICON_PATHS['book-open'];
 
@@ -71,12 +72,18 @@ const levelStyle: Record<string, { badge: string; icon: string; ring: string }> 
   </p>
 
   <div class="relative mt-auto flex items-center justify-between gap-3 border-t border-border-default pt-4">
-    {sectionCount > 0 ? (
+    <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+      {sectionCount > 0 && (
+        <span class="inline-flex items-center gap-1.5 text-[11.5px] font-semibold text-text-disabled">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          {sectionCount} phần
+        </span>
+      )}
       <span class="inline-flex items-center gap-1.5 text-[11.5px] font-semibold text-text-disabled">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-        {sectionCount} phần
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        ~{totalMinutes} phút
       </span>
-    ) : <span></span>}
+    </div>
     <div class="flex items-center gap-1" data-module-dots={`${track}/${group.slug}`} data-total={totalLessons}>
       {Array.from({ length: Math.min(totalLessons, 10) }).map(() => (
         <span class="h-1.5 w-1.5 rounded-full bg-bg-elevated" data-dot></span>

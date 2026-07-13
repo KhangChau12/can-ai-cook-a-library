@@ -261,6 +261,16 @@ export async function getQuizFor(lesson: Lesson): Promise<Quiz | undefined> {
   return index.get(lessonFileSlug);
 }
 
+export function estimateReadingMinutes(lesson: Lesson): number {
+  const html = lesson.data.html;
+  const wordCount = html ? html.replace(/<[^>]+>/g, ' ').trim().split(/\s+/).filter(Boolean).length : 0;
+  return Math.max(1, Math.round(wordCount / 200));
+}
+
+export function totalReadingMinutes(lessons: Lesson[]): number {
+  return lessons.reduce((sum, l) => sum + estimateReadingMinutes(l), 0);
+}
+
 export function lessonUrl(lesson: Lesson): string {
   return `/${lesson.id}/`;
 }
