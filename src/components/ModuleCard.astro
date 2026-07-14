@@ -1,7 +1,6 @@
 ---
 import type { ModuleGroup, Track } from '../lib/content';
 import { LEVEL_LABELS, trackLabel, totalReadingMinutes } from '../lib/content';
-import { ICON_PATHS } from './icons';
 
 interface Props {
   track: Track;
@@ -14,80 +13,28 @@ const base = import.meta.env.BASE_URL;
 const totalLessons = group.lessons.length + group.submodules.reduce((n, s) => n + s.lessons.length, 0);
 const totalMinutes = totalReadingMinutes([...group.lessons, ...group.submodules.flatMap((s) => s.lessons)]);
 const sectionCount = group.submodules.length;
-const iconPath = ICON_PATHS[group.icon] ?? ICON_PATHS['book-open'];
 
-const levelStyle: Record<string, { badge: string; icon: string; ring: string }> = {
-  foundation: {
-    badge: 'border-success/25 bg-success/10 text-success',
-    icon: 'text-success',
-    ring: 'group-hover:shadow-[0_0_0_1px_rgba(16,185,129,0.35),0_16px_40px_-20px_rgba(16,185,129,0.4)]',
-  },
-  intermediate: {
-    badge: 'border-primary-blue/25 bg-primary-blue/10 text-accent-blue',
-    icon: 'text-accent-blue',
-    ring: 'group-hover:shadow-[0_0_0_1px_rgba(37,99,235,0.35),0_16px_40px_-20px_rgba(37,99,235,0.4)]',
-  },
-  advanced: {
-    badge: 'border-warning/25 bg-warning/10 text-warning',
-    icon: 'text-warning',
-    ring: 'group-hover:shadow-[0_0_0_1px_rgba(245,158,11,0.35),0_16px_40px_-20px_rgba(245,158,11,0.4)]',
-  },
-}[group.level];
+const levelDotCount: Record<string, number> = { foundation: 1, intermediate: 2, advanced: 3 };
+const activeDots = levelDotCount[group.level] ?? 1;
 ---
 
-<a
-  href={`${base}${track}/${group.slug}/`}
-  data-module-card={`${track}/${group.slug}`}
-  class={`group relative flex h-full flex-col gap-4 overflow-hidden rounded-xl border border-border-default bg-bg-surface p-6 transition-all duration-150 hover:-translate-y-0.5 hover:border-border-subtle hover:bg-bg-surface-2 ${levelStyle.ring}`}
->
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    stroke-width="1.5"
-    class={`pointer-events-none absolute -right-4 -top-4 h-28 w-28 opacity-[0.09] transition-opacity duration-150 group-hover:opacity-[0.16] ${levelStyle.icon}`}
-    set:html={iconPath}
-  />
-
-  <div class="relative flex items-start justify-between gap-3">
-    <div class="flex flex-wrap items-center gap-1.5">
-      <span class={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${levelStyle.badge}`}>
-        {LEVEL_LABELS[group.level]}
-      </span>
-      {showTrackChip && (
-        <span class="inline-flex items-center rounded-full border border-border-default bg-bg-inset px-2 py-0.5 text-[10px] font-semibold text-text-disabled">
-          {trackLabel(track)}
-        </span>
-      )}
-    </div>
-    <span class="shrink-0 rounded-full border border-border-default bg-bg-inset px-2.5 py-1 font-mono text-[10.5px] font-bold text-text-tertiary">
-      {totalLessons} bài
+<a href={`${base}${track}/${group.slug}/`} data-module-card={`${track}/${group.slug}`} class="course-card">
+  <span class="card-kicker">
+    {totalLessons} bài{sectionCount > 0 ? ` · ${sectionCount} phần` : ''}
+    <span class="level-dots">
+      {Array.from({ length: 3 }).map((_, i) => <span class={i >= activeDots ? 'off' : ''}></span>)}
     </span>
+    {showTrackChip && <span class="tag tag-neutral">{trackLabel(track)}</span>}
+  </span>
+
+  <span class="tag tag-outline w-max">{LEVEL_LABELS[group.level]}</span>
+
+  <h3 class="card-title">{group.name}</h3>
+
+  <p class="card-body line-clamp-2">{group.meta?.description}</p>
+
+  <div class="progress-track">
+    <div data-module-progress-fill={`${track}/${group.slug}`} data-total={totalLessons} class="progress-fill" style="width: 0%"></div>
   </div>
-
-  <h3 class="font-heading relative text-[19px] font-bold leading-snug text-text-primary">{group.name}</h3>
-
-  <p class="relative line-clamp-2 min-h-[2.6em] text-[14.5px] leading-relaxed text-text-tertiary">
-    {group.meta?.description}
-  </p>
-
-  <div class="relative mt-auto flex items-center justify-between gap-3 border-t border-border-default pt-4">
-    <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
-      {sectionCount > 0 && (
-        <span class="inline-flex items-center gap-1.5 text-[11.5px] font-semibold text-text-disabled">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-          {sectionCount} phần
-        </span>
-      )}
-      <span class="inline-flex items-center gap-1.5 text-[11.5px] font-semibold text-text-disabled">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        ~{totalMinutes} phút
-      </span>
-    </div>
-    <div class="flex items-center gap-1" data-module-dots={`${track}/${group.slug}`} data-total={totalLessons}>
-      {Array.from({ length: Math.min(totalLessons, 10) }).map(() => (
-        <span class="h-1.5 w-1.5 rounded-full bg-bg-elevated" data-dot></span>
-      ))}
-    </div>
-  </div>
+  <span data-module-progress-label={`${track}/${group.slug}`} class="card-meta">Chưa bắt đầu · ~{totalMinutes} phút</span>
 </a>

@@ -1,8 +1,7 @@
 ---
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import SiteHeader from '../../../components/SiteHeader.astro';
-import LessonRow from '../../../components/LessonRow.astro';
-import { getModuleGroups, getQuizFor, trackLabel, totalReadingMinutes, LEVEL_LABELS, type Track } from '../../../lib/content';
+import { getModuleGroups, getQuizFor, trackLabel, estimateReadingMinutes, totalReadingMinutes, LEVEL_LABELS, type Track } from '../../../lib/content';
 import type { LockInfo } from '../../../lib/lockClient';
 
 export async function getStaticPaths() {
@@ -22,6 +21,7 @@ const base = import.meta.env.BASE_URL;
 const totalLessons = group.lessons.length + group.submodules.reduce((n, s) => n + s.lessons.length, 0);
 const allGroupLessons = [...group.lessons, ...group.submodules.flatMap((s) => s.lessons)];
 const totalMinutes = totalReadingMinutes(allGroupLessons);
+const firstLesson = allGroupLessons[0];
 
 // LockInfo for gating: one entry per submodule (in display order), each
 // lesson tagged with whether it has a quiz (needed by isLessonComplete).
@@ -36,127 +36,125 @@ const lockInfo: LockInfo = await Promise.all(
   ),
 );
 
-const levelClasses: Record<string, string> = {
-  foundation: 'border-success/25 bg-success/10 text-success',
-  intermediate: 'border-primary-blue/25 bg-primary-blue/10 text-accent-blue',
-  advanced: 'border-warning/25 bg-warning/10 text-warning',
-};
+// Flat lesson list (module has no submodules) is rendered as a single
+// pseudo-section so it uses the same .sec-card markup as real submodules.
+const sections =
+  group.submodules.length > 0
+    ? group.submodules
+    : group.lessons.length > 0
+      ? [{ name: group.name, slug: group.slug, lessons: group.lessons, description: undefined }]
+      : [];
 ---
 
 <BaseLayout title={group.name}>
   <SiteHeader />
 
-  <main class="mx-auto max-w-4xl px-5 py-12 sm:py-16">
-    <nav class="mb-6 flex flex-wrap items-center gap-2 text-[12.5px] text-text-disabled">
-      <a href={base} class="transition hover:text-text-tertiary">Trang chủ</a>
-      <span>/</span>
-      <a href={`${base}#${track}`} class="transition hover:text-text-tertiary">{trackLabel(track)}</a>
-      <span>/</span>
-      <span class="text-text-tertiary">{group.name}</span>
-    </nav>
-
-    <div class="mb-10 border-b border-border-default pb-8">
-      <div class="flex flex-wrap items-center gap-2">
-        <span class={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10.5px] font-bold uppercase tracking-wide ${levelClasses[group.level]}`}>
-          {LEVEL_LABELS[group.level]}
-        </span>
-        <span class="text-[12px] font-semibold text-text-disabled">{trackLabel(track)}</span>
-      </div>
-      <h1 class="font-heading mt-3 text-4xl font-bold tracking-tight text-text-primary">{group.name}</h1>
-      {group.meta?.description && (
-        <p class="mt-3 max-w-2xl text-[16px] leading-relaxed text-text-tertiary">{group.meta.description}</p>
-      )}
-
-      <div class="mt-6 flex flex-wrap items-center gap-4">
-        <div class="h-2 flex-1 max-w-xs overflow-hidden rounded-full bg-bg-elevated">
-          <div data-module-progress-bar={`${track}/${group.slug}`} data-total={totalLessons} class="h-full w-0 rounded-full bg-primary-blue transition-all duration-500"></div>
-        </div>
-        <span data-module-progress-label={`${track}/${group.slug}`} class="font-mono text-[12.5px] font-bold text-text-tertiary">0 / {totalLessons} bài</span>
-        <span class="inline-flex items-center gap-1.5 text-[12px] font-semibold text-text-disabled">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          ~{totalMinutes} phút đọc tổng
-        </span>
+  <div class="page-wrap">
+    <div style="padding: var(--cl-space-4) var(--cl-space-6) 0">
+      <div class="crumb">
+        <a href={base}>Trang chủ</a> / <a href={`${base}#${track}`}>{trackLabel(track)}</a> / {group.name}
       </div>
     </div>
 
-    {group.lessons.length > 0 && (
-      <div class="mb-12">
-        <div class="flex flex-col">
-          {group.lessons.map((lesson, i) => <LessonRow lesson={lesson} index={i} />)}
+    <div class="layout-grid">
+      <aside class="info-card" style="position: sticky; top: var(--cl-space-4); align-self: start;">
+        <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+          <span class="tag tag-neutral">{LEVEL_LABELS[group.level]}</span>
+          <span class="tag tag-outline">{trackLabel(track)}</span>
         </div>
-      </div>
-    )}
+        <h1 style="font-family: var(--cl-font-heading); font-weight: 800; font-size: 24px; letter-spacing: -0.01em; margin: 0;">{group.name}</h1>
+        <hr class="hr" style="margin: var(--cl-space-1) 0;" />
+        <div style="display: flex; align-items: center; gap: var(--cl-space-3);">
+          <div class="ring" data-module-ring={`${track}/${group.slug}`} style="background: conic-gradient(var(--cl-accent) 0deg, var(--cl-divider) 0deg);">
+            <div data-module-ring-label={`${track}/${group.slug}`} style="width: 56px; height: 56px; border-radius: 50%; background: var(--cl-bg); display: flex; align-items: center; justify-content: center; font-feature-settings: 'tnum' 1; color: var(--cl-text);">0%</div>
+          </div>
+          <div>
+            <div data-module-progress-count={`${track}/${group.slug}`} data-total={totalLessons} style="font-family: var(--cl-font-heading); font-weight: 700; font-size: 15px; font-feature-settings: 'tnum' 1; color: var(--cl-text);">0 / {totalLessons} bài</div>
+            <div style="font-size: 12px; color: color-mix(in srgb, var(--cl-text) 55%, transparent);">{group.submodules.length > 0 ? `${group.submodules.length} phần · ` : ''}~{totalMinutes} phút</div>
+          </div>
+        </div>
+        {group.meta?.description && (
+          <p style="font-family: var(--cl-font-body); font-style: italic; font-size: 13px; line-height: 1.55; color: color-mix(in srgb, var(--cl-text) 72%, transparent); margin: 0;">{group.meta.description}</p>
+        )}
+        {firstLesson && (
+          <a data-module-cta={`${track}/${group.slug}`} href={`${base}${firstLesson.id}/`} class="btn btn-primary btn-block">
+            Bắt đầu học →
+          </a>
+        )}
+      </aside>
 
-    {group.submodules.length > 0 && (
-      <div class="flex flex-col gap-6">
-        {group.submodules.map((sub, subIndex) => (
-          <section id={sub.slug} class="scroll-mt-20 rounded-xl border border-border-default bg-bg-surface/40 p-5 transition-opacity" data-submodule-section={subIndex}>
-            <div class="mb-3 flex items-center gap-2.5 border-b border-border-default pb-3">
-              <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary-blue font-mono text-[12px] font-extrabold text-white">
-                {subIndex + 1}
+      <div>
+        {sections.map((sub, subIndex) => (
+          <div class="sec-card" style="margin-bottom: var(--cl-space-4);" id={sub.slug} data-submodule-section={subIndex}>
+            <div class="sec-card-head">
+              <span style="font-family: var(--cl-font-heading); font-weight: 700; font-size: 15px; color: var(--cl-accent);">{String(subIndex + 1).padStart(2, '0')}</span>
+              <h3 style="font-family: var(--cl-font-heading); font-weight: 700; font-size: 16px; margin: 0; flex: 1;" title={sub.name}>{sub.name}</h3>
+              <span data-submodule-count={`${track}/${group.slug}`} data-submodule-index={subIndex} data-total={sub.lessons.length} style="font-size: 12px; color: color-mix(in srgb, var(--cl-text) 55%, transparent);">
+                0/{sub.lessons.length}
               </span>
-              <h2 class="min-w-0 truncate text-[15px] font-bold uppercase tracking-wide text-text-primary" title={sub.name}>{sub.name}</h2>
-              <div class="ml-auto flex shrink-0 items-center gap-2">
-                <div class="h-1.5 w-16 overflow-hidden rounded-full bg-bg-elevated">
-                  <div
-                    data-submodule-progress-bar={`${track}/${group.slug}`}
-                    data-submodule-index={subIndex}
-                    data-total={sub.lessons.length}
-                    class="h-full w-0 rounded-full bg-primary-blue transition-all duration-500"
-                  ></div>
+            </div>
+            {sub.lessons.map((lesson) => (
+              <a class="lesson-row" href={`${base}${lesson.id}/`} data-lesson-row={lesson.id}>
+                <span class="status-dot status-todo" data-lesson-check={lesson.id}></span>
+                <div style="flex: 1;">
+                  <div style="font-family: var(--cl-font-heading); font-weight: 600; font-size: 14px; color: var(--cl-text);">{lesson.data.title}</div>
                 </div>
-                <span class="font-mono text-[11px] font-semibold text-text-disabled">{sub.lessons.length} bài</span>
-              </div>
-            </div>
-            <div class="flex flex-col">
-              {sub.lessons.map((lesson, i) => <LessonRow lesson={lesson} index={i} />)}
-            </div>
-          </section>
+                <span style="font-size: 12px; color: color-mix(in srgb, var(--cl-text) 50%, transparent);">{estimateReadingMinutes(lesson)} phút</span>
+              </a>
+            ))}
+          </div>
         ))}
       </div>
-    )}
-  </main>
+    </div>
+  </div>
 
-  <script define:vars={{ lockInfo }}>
+  <script is:inline define:vars={{ lockInfo }}>
     window.__lockInfo = lockInfo;
   </script>
   <script>
-    import { getProgress, getAllProgress } from '../../../lib/progress';
+    import { getAllProgress, isLessonComplete } from '../../../lib/progress';
     import { applySubmoduleLocks } from '../../../lib/lockClient';
 
     document.querySelectorAll<HTMLElement>('[data-lesson-check]').forEach((el) => {
       const id = el.dataset.lessonCheck!;
-      const state = getProgress(id);
+      const progress = getAllProgress();
+      const state = progress[id];
+      el.classList.remove('status-todo');
       if (state === 'quiz_done' || state === 'completed') {
-        el.classList.add('border-transparent', 'bg-success', 'text-white');
+        el.classList.add('status-done');
+        el.textContent = '✓';
       } else if (state === 'viewed') {
-        el.classList.add('border-transparent', 'bg-accent-blue', 'text-white');
+        el.classList.add('status-progress');
+        el.textContent = '●';
+      } else {
+        el.classList.add('status-todo');
       }
     });
 
     const progress = getAllProgress();
-    const bar = document.querySelector<HTMLElement>('[data-module-progress-bar]');
-    const label = document.querySelector<HTMLElement>('[data-module-progress-label]');
-    if (bar) {
-      const key = bar.dataset.moduleProgressBar!;
-      const total = parseInt(bar.dataset.total || '0', 10);
+    const ring = document.querySelector<HTMLElement>('[data-module-ring]');
+    const countEl = document.querySelector<HTMLElement>('[data-module-progress-count]');
+    if (ring && countEl) {
+      const key = ring.dataset.moduleRing!;
+      const total = parseInt(countEl.dataset.total || '0', 10);
       const done = Object.keys(progress).filter((id) => id.startsWith(`${key}/`) && progress[id] !== 'unread').length;
       const pct = total > 0 ? Math.round((done / total) * 100) : 0;
-      bar.style.width = `${pct}%`;
-      if (label) label.textContent = `${done} / ${total} bài`;
+      ring.style.background = `conic-gradient(var(--cl-accent) ${pct * 3.6}deg, var(--cl-divider) 0deg)`;
+      countEl.textContent = `${done} / ${total} bài`;
+      const ringLabel = document.querySelector<HTMLElement>(`[data-module-ring-label="${key}"]`);
+      if (ringLabel) ringLabel.textContent = `${pct}%`;
     }
+
+    document.querySelectorAll<HTMLElement>('[data-submodule-count]').forEach((el) => {
+      const subIdx = Number(el.dataset.submoduleIndex);
+      const lockInfo = (window as any).__lockInfo as { id: string; hasQuiz: boolean }[][];
+      const lessons = lockInfo?.[subIdx] ?? [];
+      const done = lessons.filter((l) => isLessonComplete(l.id, l.hasQuiz)).length;
+      el.textContent = done === lessons.length && lessons.length > 0 ? `${done}/${lessons.length} ✓` : `${done}/${lessons.length}`;
+    });
 
     const lockInfo = (window as any).__lockInfo as { id: string; hasQuiz: boolean }[][];
     if (lockInfo) {
-      document.querySelectorAll<HTMLElement>('[data-submodule-progress-bar]').forEach((subBar) => {
-        const subIdx = Number(subBar.dataset.submoduleIndex);
-        const lessons = lockInfo[subIdx] ?? [];
-        const total = lessons.length;
-        const done = lessons.filter((l) => progress[l.id] === 'quiz_done' || progress[l.id] === 'completed').length;
-        const pct = total > 0 ? Math.round((done / total) * 100) : 0;
-        subBar.style.width = `${pct}%`;
-      });
-
       applySubmoduleLocks(document, lockInfo);
     }
   </script>

@@ -16,77 +16,83 @@ const levelHint: Record<string, string> = {
   intermediate: 'Cần nắm nền tảng toán & DL trước khi vào đây.',
   advanced: 'Xây trên cả một module khác — đọc kỹ prerequisites từng bài.',
 };
+
+const shelves = [
+  ...(examGroups.length > 0 ? [{ id: 'exam-track', title: 'Bổ trợ thi đấu', hint: 'Áp dụng ngay vào bài nộp thật trên The Noders platform.', groups: examGroups }] : []),
+  ...levels
+    .filter((l) => l.groups.length > 0)
+    .map((l) => ({
+      id: l.level,
+      title: l.label,
+      hint: levelHint[l.level],
+      groups: l.groups,
+    })),
+];
+
+const firstGroup = shelves[0]?.groups[0];
+const base = import.meta.env.BASE_URL;
 ---
 
 <BaseLayout title="Trang chủ" description="Thư viện bài học AI/ML song ngữ Việt, viết bởi Claude Code chạy autopilot.">
   <SiteHeader />
 
-  <main class="mx-auto max-w-6xl px-5 py-16 sm:py-20">
-    <div class="relative mx-auto max-w-2xl text-center">
-      <div
-        class="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-105 w-155 -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl"
-        style="background: radial-gradient(circle, rgba(37,99,235,0.15) 0%, rgba(6,182,212,0.12) 45%, transparent 70%);"
-      ></div>
-      <h1 class="font-display mt-5 text-4xl tracking-tight text-text-primary sm:text-5xl">
+  <main>
+    <div class="hero-band relative overflow-hidden" style="background: var(--cl-neutral-900); color: #f3f2f2; padding: var(--cl-space-8) var(--cl-space-6);">
+      <span class="pointer-events-none absolute -top-8 right-6 font-normal leading-none text-white/5" style="font-family: var(--cl-font-heading); font-size: 220px;">01</span>
+      <span class="tag tag-outline relative" style="border-color: var(--cl-accent); color: var(--cl-accent);">Thư viện mở · song ngữ Việt–Anh</span>
+      <h1 class="relative max-w-[16ch]" style="font-family: var(--cl-font-heading); font-weight: 700; font-size: 46px; line-height: 1.1; letter-spacing: -0.02em; margin: var(--cl-space-3) 0;">
         Can AI Cook a Library?
       </h1>
-      <p class="mt-4 text-[15.5px] leading-relaxed text-text-tertiary">
-        Một thư viện bài học AI/ML song ngữ Việt — từ Linear Regression tới Transformer,
-        LLM và Reinforcement Learning hiện đại. Xếp theo cấp độ để bạn biết nên học gì trước.
+      <p class="relative max-w-[50ch]" style="font-family: var(--cl-font-body); font-style: italic; font-size: 17px; line-height: 1.6; color: rgba(255,255,255,0.72); margin: 0 0 var(--cl-space-4);">
+        Một thư viện bài học AI/ML được xếp giá theo cấp độ — cứ đi từ trái sang phải, bạn sẽ luôn học đúng thứ tự.
       </p>
+      <div class="relative flex flex-wrap gap-3">
+        {firstGroup && (
+          <a href={`${base}${firstGroup.track}/${firstGroup.slug}/`} class="btn btn-primary" style="font-size: 14px; padding: 11px 20px;">
+            Bắt đầu học →
+          </a>
+        )}
+        <a href={`#${shelves[0]?.id ?? ''}`} class="btn" style="font-size: 14px; padding: 11px 20px; color: #f3f2f2; border-color: rgba(255,255,255,0.3);">
+          Xem giáo trình
+        </a>
+      </div>
     </div>
 
-    <div class="mt-10 flex flex-col gap-14 sm:mt-14">
-      {examGroups.length > 0 && (
-        <section id="exam-track">
-          <div class="mb-5 flex items-baseline justify-between gap-3">
-            <h2 class="font-heading flex items-center gap-2.5 text-2xl font-extrabold tracking-tight text-text-primary">
-              Bổ trợ thi đấu
-            </h2>
-            <span class="text-[12.5px] text-text-disabled">Áp dụng ngay vào bài nộp thật trên The Noders platform.</span>
+    {shelves.map((shelf, i) => (
+      <>
+        <section id={shelf.id} style="padding: var(--cl-space-6) 0 0">
+          <div class="shelf-head">
+            <h2 style="font-family: var(--cl-font-heading); font-weight: 700; font-size: 24px; margin: 0 0 4px;">{shelf.title}</h2>
+            <p style={`font-family: var(--cl-font-body); font-size: 14px; color: color-mix(in srgb, var(--cl-text) 65%, transparent); margin: 0;`}>{shelf.hint}</p>
           </div>
-          <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {examGroups.map((group) => (
+          <div class="shelf">
+            {shelf.groups.map((group) => (
               <ModuleCard track={group.track} group={group} />
             ))}
           </div>
         </section>
-      )}
-      {levels.map(({ level, label, groups }) => groups.length > 0 && (
-        <section>
-          <div class="mb-5 flex items-baseline justify-between gap-3">
-            <h2 class="font-heading flex items-center gap-2.5 text-2xl font-extrabold tracking-tight text-text-primary">
-              {label}
-            </h2>
-            <span class="text-[12.5px] text-text-disabled">{levelHint[level]}</span>
-          </div>
-          <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {groups.map((group) => (
-              <ModuleCard track={group.track} group={group} />
-            ))}
-          </div>
-        </section>
-      ))}
-    </div>
+        {i < shelves.length - 1 && <hr class="hr" style="margin: 0 var(--cl-space-6);" />}
+      </>
+    ))}
   </main>
 
   <script>
     import { getAllProgress } from '../lib/progress';
 
     const progress = getAllProgress();
-    document.querySelectorAll<HTMLElement>('[data-module-dots]').forEach((wrap) => {
-      const key = wrap.dataset.moduleDots!;
-      const total = parseInt(wrap.dataset.total || '0', 10);
-      const ids = Object.keys(progress).filter((id) => id.startsWith(`${key}/`) && progress[id] !== 'unread');
-      const dots = wrap.querySelectorAll<HTMLElement>('[data-dot]');
-      const shownTotal = dots.length;
-      const doneScaled = total > 0 ? Math.round((ids.length / total) * shownTotal) : 0;
-      dots.forEach((dot, i) => {
-        if (i < doneScaled) {
-          dot.classList.remove('bg-bg-elevated');
-          dot.classList.add('bg-accent-blue');
-        }
-      });
+    document.querySelectorAll<HTMLElement>('[data-module-progress-fill]').forEach((fill) => {
+      const key = fill.dataset.moduleProgressFill!;
+      const total = parseInt(fill.dataset.total || '0', 10);
+      const done = Object.keys(progress).filter((id) => id.startsWith(`${key}/`) && progress[id] !== 'unread').length;
+      const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+      fill.style.width = `${pct}%`;
+
+      const label = document.querySelector<HTMLElement>(`[data-module-progress-label="${key}"]`);
+      if (label) {
+        if (done === 0) label.textContent = 'Chưa bắt đầu';
+        else if (done >= total && total > 0) label.textContent = 'Hoàn thành ✓';
+        else label.textContent = `${done}/${total} bài`;
+      }
     });
   </script>
 </BaseLayout>

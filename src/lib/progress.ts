@@ -24,6 +24,11 @@ function saveMap(map: ProgressMap) {
   } catch {
     /* storage unavailable (private mode, quota) — progress just won't persist */
   }
+  // Same-tab listeners (e.g. the prev/next nav label) can't rely on the
+  // browser's cross-tab `storage` event, which never fires in the tab that
+  // made the change — dispatch our own so in-page UI can react immediately
+  // after markQuizDone/markCompleted without a full reload.
+  window.dispatchEvent(new CustomEvent('ai-learn-progress-change'));
 }
 
 export function getProgress(id: string): ProgressState {

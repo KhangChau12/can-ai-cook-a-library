@@ -38,83 +38,68 @@ export default function QuizIsland({ lessonId, questions }: Props) {
   }
 
   return (
-    <div className="mt-2">
-      <div className="mb-5 flex items-center gap-3">
-        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-bg-inset">
-          <div
-            className="h-full rounded-full bg-primary-blue transition-all duration-300"
-            style={{ width: `${(answeredCount / questions.length) * 100}%` }}
-          />
-        </div>
-        <span className="shrink-0 font-mono text-[12px] font-semibold text-text-tertiary">
-          {answeredCount}/{questions.length} · đúng {correctCount}
-        </span>
+    <div>
+      <div className="progress-track" style={{ marginBottom: 'var(--cl-space-4)' }}>
+        <div
+          className="progress-fill"
+          style={{ width: `${(answeredCount / questions.length) * 100}%` }}
+        />
       </div>
 
-      <div className="flex flex-col gap-3">
-        {questions.map((q, qIdx) => {
-          const selected = answers[qIdx];
-          const answered = selected !== undefined;
-          return (
-            <div key={qIdx} className="rounded-xl border border-border-default bg-bg-surface p-5">
-              <p className="mb-3.5 text-[14.5px] font-bold leading-relaxed text-text-primary">
-                Câu {qIdx + 1}. {q.prompt}
+      {questions.map((q, qIdx) => {
+        const selected = answers[qIdx];
+        const answered = selected !== undefined;
+        return (
+          <div key={qIdx} className="quiz-q">
+            <p style={{ fontFamily: 'var(--cl-font-heading)', fontWeight: 600, fontSize: 15, margin: '0 0 4px', color: 'var(--cl-text)' }}>
+              Câu {qIdx + 1}. {q.prompt}
+            </p>
+            {q.options.map((opt, optIdx) => {
+              const isSelected = selected === optIdx;
+              let stateClass = '';
+              if (answered && opt.correct) stateClass = 'correct';
+              else if (answered && isSelected && !opt.correct) stateClass = 'wrong';
+              return (
+                <button
+                  key={optIdx}
+                  type="button"
+                  disabled={answered}
+                  onClick={() => select(qIdx, optIdx)}
+                  className={`quiz-opt ${stateClass}`}
+                  style={{ width: '100%', textAlign: 'left', background: 'transparent', font: 'inherit', color: 'inherit' }}
+                >
+                  <span className="opt-dot"></span>
+                  <span>{opt.text}</span>
+                </button>
+              );
+            })}
+            {answered && (
+              <p
+                style={{
+                  marginTop: 'var(--cl-space-3)',
+                  fontSize: 13,
+                  fontStyle: 'italic',
+                  lineHeight: 1.55,
+                  color: 'color-mix(in srgb, var(--cl-text) 72%, transparent)',
+                }}
+              >
+                {q.explanation}
               </p>
-              <div className="flex flex-col gap-2">
-                {q.options.map((opt, optIdx) => {
-                  const isSelected = selected === optIdx;
-                  let stateClasses = 'border-border-default hover:border-border-subtle hover:bg-bg-elevated';
-                  if (answered && opt.correct) {
-                    stateClasses = 'border-success bg-success/10';
-                  } else if (answered && isSelected && !opt.correct) {
-                    stateClasses = 'border-error bg-error/10';
-                  }
-                  return (
-                    <button
-                      key={optIdx}
-                      type="button"
-                      disabled={answered}
-                      onClick={() => select(qIdx, optIdx)}
-                      className={`flex items-start gap-2.5 rounded-lg border px-3.5 py-2.5 text-left text-[13.5px] transition ${stateClasses} ${answered ? 'cursor-default' : 'cursor-pointer'}`}
-                    >
-                      <span
-                        className={`mt-0.5 h-4 w-4 shrink-0 rounded-full border ${
-                          answered && opt.correct
-                            ? 'border-success bg-success'
-                            : answered && isSelected
-                              ? 'border-error bg-error'
-                              : 'border-border-subtle'
-                        }`}
-                      />
-                      <span className="text-text-secondary">{opt.text}</span>
-                    </button>
-                  );
-                })}
-              </div>
-              {answered && (
-                <p className="mt-3.5 rounded-lg border-l-2 border-accent-cyan bg-accent-cyan/10 px-3.5 py-2.5 text-[13px] leading-relaxed text-text-secondary">
-                  {q.explanation}
-                </p>
-              )}
-            </div>
-          );
-        })}
-      </div>
+            )}
+          </div>
+        );
+      })}
 
-      {answeredCount === questions.length && (
-        <div className="mt-5 flex items-center justify-between rounded-xl border border-border-subtle bg-bg-elevated px-5 py-4">
-          <span className="text-[14px] font-bold text-text-primary">
-            Hoàn thành! Đúng {correctCount}/{questions.length}
-          </span>
-          <button
-            type="button"
-            onClick={retry}
-            className="rounded-md border border-border-subtle bg-bg-inset px-3.5 py-1.5 text-[12.5px] font-bold text-text-secondary transition hover:bg-border-subtle hover:text-text-primary"
-          >
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: 'var(--cl-space-3)' }}>
+        <span style={{ fontSize: 12, color: 'color-mix(in srgb, var(--cl-text) 55%, transparent)', fontFeatureSettings: "'tnum' 1" }}>
+          {answeredCount}/{questions.length} câu · đúng {correctCount}
+        </span>
+        {answeredCount === questions.length && (
+          <button type="button" onClick={retry} className="btn btn-secondary">
             Làm lại
           </button>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

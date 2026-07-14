@@ -3,35 +3,28 @@ import SearchOverlay from './SearchOverlay.astro';
 const base = import.meta.env.BASE_URL;
 ---
 
-<header class="sticky top-0 z-30 border-b border-border-default/60 bg-bg-primary/70 shadow-sm backdrop-blur-xl">
-  <div class="mx-auto flex w-full max-w-screen-2xl items-center gap-4 px-4 py-3 sm:px-8 lg:px-12">
-    <a href={base} class="flex min-w-0 items-center gap-2.5">
-      <img src={`${base}logo.png`} alt="" width="32" height="32" class="h-8 w-8 shrink-0" />
-      <span class="truncate font-display text-base tracking-tight text-text-primary sm:text-xl lg:text-2xl">
-        Can AI Cook a Library?
-      </span>
-    </a>
-    <div class="ml-auto flex shrink-0 items-center gap-2">
-      <button
-        id="theme-toggle"
-        type="button"
-        aria-label="Đổi giao diện sáng/tối"
-        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border-default bg-bg-inset text-text-disabled transition hover:border-border-subtle hover:text-text-tertiary"
-      >
-        <svg id="theme-icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
-        <svg id="theme-icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
-      </button>
-      <button
-        id="search-trigger"
-        type="button"
-        class="flex items-center gap-2 rounded-lg border border-border-default bg-bg-inset px-2.5 py-1.5 text-xs text-text-disabled transition hover:border-border-subtle hover:text-text-tertiary sm:px-3"
-      >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <span class="hidden md:inline">Tìm bài viết…</span>
-        <kbd class="hidden rounded border border-border-subtle bg-bg-elevated px-1.5 py-0.5 font-mono text-[10px] md:inline">/</kbd>
-      </button>
-    </div>
+<header class="nav sticky top-0 z-30 backdrop-blur-xl">
+  <a href={base} class="flex min-w-0 shrink-0 items-center gap-2">
+    <img src={`${base}logo.png`} alt="" width="24" height="24" class="h-6 w-6 shrink-0" />
+    <span class="brand-mark truncate text-(--cl-text)">Can AI Cook a Library?</span>
+  </a>
+  <slot name="crumb" />
+  <div class="search-box ml-auto flex max-w-[320px] flex-1 items-center gap-2.5">
+    <button
+      id="search-trigger"
+      type="button"
+      class="input flex w-full items-center gap-2 py-1.5! text-left text-[13px]"
+      style="color: color-mix(in srgb, var(--cl-text) 55%, transparent)"
+    >
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="shrink-0"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <span class="hidden md:inline">Tìm bài viết…</span>
+      <kbd class="ml-auto hidden rounded border px-1.5 py-0.5 font-mono text-[10px] md:inline" style="border-color: var(--cl-divider)">/</kbd>
+    </button>
   </div>
+  <button id="theme-toggle" type="button" aria-label="Đổi giao diện sáng/tối" class="btn btn-icon btn-secondary shrink-0">
+    <svg id="theme-icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+    <svg id="theme-icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+  </button>
 </header>
 
 <SearchOverlay />
