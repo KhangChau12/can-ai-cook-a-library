@@ -112,7 +112,7 @@ const { track, group, lesson, headings, lockInfo = [], currentSubmoduleIndex = -
       </div>
     </main>
 
-    <aside class="toc-aside hidden lg:block" style="border-left: 1px solid var(--cl-divider); padding: var(--cl-space-6) var(--cl-space-4); overflow-y: auto;">
+    <aside class="toc-aside sticky top-14.25 hidden h-[calc(100vh-57px)] overflow-y-auto lg:block" style="border-left: 1px solid var(--cl-divider); padding: var(--cl-space-6) var(--cl-space-4);">
       <TableOfContents headings={headings} />
     </aside>
   </div>
